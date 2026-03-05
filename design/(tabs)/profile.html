@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>My Profile</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/>
+<script>
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "primary": "#2b8cee",
+              "background-light": "#f6f7f8",
+              "background-dark": "#101922",
+            },
+            fontFamily: {
+              "display": ["Inter", "sans-serif"]
+            },
+            borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="font-display">
+<div class="relative flex min-h-screen w-full flex-col bg-background-light dark:bg-background-dark group/design-root overflow-x-hidden">
+<!-- TopAppBar -->
+<div class="flex items-center bg-background-light dark:bg-background-dark p-4 pb-2 justify-between sticky top-0 z-10">
+<div class="flex size-12 shrink-0 items-center">
+<!-- Intentionally empty for layout -->
+</div>
+<h1 class="text-slate-900 dark:text-white text-lg font-bold leading-tight tracking-[-0.015em] flex-1 text-center">My Profile</h1>
+<div class="flex w-12 items-center justify-end">
+<button class="flex max-w-[480px] cursor-pointer items-center justify-center overflow-hidden rounded-full h-10 w-10 bg-transparent text-slate-600 dark:text-white gap-2 text-base font-bold leading-normal tracking-[0.015em] min-w-0 p-0 hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors">
+<span class="material-symbols-outlined">settings</span>
+</button>
+</div>
+</div>
+<!-- ProfileHeader -->
+<div class="flex p-4 @container">
+<div class="flex w-full flex-col gap-4 @[520px]:flex-row @[520px]:justify-between @[520px]:items-center">
+<div class="flex gap-4 items-center">
+<div class="bg-center bg-no-repeat aspect-square bg-cover rounded-full h-20 w-20 min-w-[5rem]" data-alt="User avatar with a colorful gradient background" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuCYX0GCSklgG45NSTT0QWLeiG2EwzkirHDYhCyqHQXRfGNcU-LPiDMN43UY1mPErmqmqUj8i2XaML7xPw3HL3O5wSGXnRW9voAwbp2wq2Oj-GUPOHZfH0m9f2RTiSCFQDa6oXNLqH5g6MD3TR1k5s73e-UDg-8bWV6sjtKl0J45ztBmdnl_LtlknNVqsfmqo7kHcN2wHFPf-d-wv-bmIFcbsQxKbYFyiZ_i9zZIuhSpfCs0XOuolZAo2sRar9qQR7P4BoicwyF8CvQ");'></div>
+<div class="flex flex-col justify-center">
+<p class="text-slate-900 dark:text-white text-[22px] font-bold leading-tight tracking-[-0.015em]">Alex Doe</p>
+<p class="text-slate-500 dark:text-slate-400 text-base font-normal leading-normal">@alex_doe</p>
+</div>
+</div>
+</div>
+</div>
+<!-- Points Balance Card -->
+<div class="p-4 @container">
+<div class="flex flex-col items-stretch justify-start rounded-xl @xl:flex-row @xl:items-start shadow-[0_0_4px_rgba(0,0,0,0.1)] bg-primary/90 dark:bg-primary">
+<div class="flex w-full min-w-72 grow flex-col items-stretch justify-center gap-1 p-6">
+<p class="text-white/80 text-sm font-normal leading-normal">CURRENT BALANCE</p>
+<p class="text-white text-4xl font-bold leading-tight tracking-[-0.015em]">1,250</p>
+<div class="flex items-end gap-3 justify-between mt-1">
+<div class="flex flex-col gap-1">
+<p class="text-white/80 text-base font-normal leading-normal">Well done! Keep up the great work.</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Quick Action Buttons -->
+<div class="grid grid-cols-[repeat(auto-fit,minmax(100px,1fr))] gap-3 px-4 py-2">
+<div class="flex flex-1 gap-3 rounded-lg bg-slate-200/60 dark:bg-slate-800/80 p-4 flex-col items-center text-center">
+<span class="material-symbols-outlined text-primary text-2xl">backpack</span>
+<div class="flex flex-col gap-1">
+<h2 class="text-slate-800 dark:text-white text-sm font-bold leading-tight">My Backpack</h2>
+</div>
+</div>
+<div class="flex flex-1 gap-3 rounded-lg bg-slate-200/60 dark:bg-slate-800/80 p-4 flex-col items-center text-center">
+<span class="material-symbols-outlined text-primary text-2xl">history</span>
+<div class="flex flex-col gap-1">
+<h2 class="text-slate-800 dark:text-white text-sm font-bold leading-tight">Task History</h2>
+</div>
+</div>
+<div class="flex flex-1 gap-3 rounded-lg bg-slate-200/60 dark:bg-slate-800/80 p-4 flex-col items-center text-center">
+<span class="material-symbols-outlined text-primary text-2xl">edit</span>
+<div class="flex flex-col gap-1">
+<h2 class="text-slate-800 dark:text-white text-sm font-bold leading-tight">Edit Profile</h2>
+</div>
+</div>
+</div>
+<!-- Progress Stats Section -->
+<h2 class="text-slate-900 dark:text-white text-[22px] font-bold leading-tight tracking-[-0.015em] px-4 pb-3 pt-5">Progress Stats</h2>
+<div class="p-4 pt-0 @container">
+<div class="grid grid-cols-2 gap-4">
+<div class="flex flex-col items-start justify-start rounded-xl shadow-[0_0_4px_rgba(0,0,0,0.1)] bg-white dark:bg-slate-800/50 p-4">
+<p class="text-slate-500 dark:text-slate-400 text-sm font-medium leading-normal mb-1">Total Points Earned</p>
+<p class="text-slate-900 dark:text-white text-2xl font-bold leading-tight">2,480</p>
+</div>
+<div class="flex flex-col items-start justify-start rounded-xl shadow-[0_0_4px_rgba(0,0,0,0.1)] bg-white dark:bg-slate-800/50 p-4">
+<p class="text-slate-500 dark:text-slate-400 text-sm font-medium leading-normal mb-1">Tasks Completed</p>
+<p class="text-slate-900 dark:text-white text-2xl font-bold leading-tight">112</p>
+</div>
+<div class="flex flex-col items-start justify-start rounded-xl shadow-[0_0_4px_rgba(0,0,0,0.1)] bg-white dark:bg-slate-800/50 p-4">
+<p class="text-slate-500 dark:text-slate-400 text-sm font-medium leading-normal mb-1">Items Redeemed</p>
+<p class="text-slate-900 dark:text-white text-2xl font-bold leading-tight">15</p>
+</div>
+<div class="flex flex-col items-start justify-start rounded-xl shadow-[0_0_4px_rgba(0,0,0,0.1)] bg-white dark:bg-slate-800/50 p-4">
+<p class="text-slate-500 dark:text-slate-400 text-sm font-medium leading-normal mb-1">Current Streak</p>
+<p class="text-slate-900 dark:text-white text-2xl font-bold leading-tight">21 Days</p>
+</div>
+</div>
+</div>
+<!-- Recent Activity -->
+<h2 class="text-slate-900 dark:text-white text-[22px] font-bold leading-tight tracking-[-0.015em] px-4 pb-3 pt-2">Recent Activity</h2>
+<div class="flex flex-col px-4 gap-2 pb-8">
+<div class="flex items-center gap-4 rounded-lg bg-white dark:bg-slate-800/50 p-3">
+<div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/20 text-primary">
+<span class="material-symbols-outlined text-xl">menu_book</span>
+</div>
+<div class="flex-1">
+<p class="text-slate-800 dark:text-white font-medium">Read a chapter</p>
+<p class="text-slate-500 dark:text-slate-400 text-sm">Completed today</p>
+</div>
+<p class="font-bold text-green-500 dark:text-green-400">+10</p>
+</div>
+<div class="flex items-center gap-4 rounded-lg bg-white dark:bg-slate-800/50 p-3">
+<div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/20 text-primary">
+<span class="material-symbols-outlined text-xl">coffee</span>
+</div>
+<div class="flex-1">
+<p class="text-slate-800 dark:text-white font-medium">Redeemed 'Coffee'</p>
+<p class="text-slate-500 dark:text-slate-400 text-sm">2 days ago</p>
+</div>
+<p class="font-bold text-red-500 dark:text-red-400">-50</p>
+</div>
+<div class="flex items-center gap-4 rounded-lg bg-white dark:bg-slate-800/50 p-3">
+<div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/20 text-primary">
+<span class="material-symbols-outlined text-xl">fitness_center</span>
+</div>
+<div class="flex-1">
+<p class="text-slate-800 dark:text-white font-medium">30-minute workout</p>
+<p class="text-slate-500 dark:text-slate-400 text-sm">3 days ago</p>
+</div>
+<p class="font-bold text-green-500 dark:text-green-400">+25</p>
+</div>
+</div>
+</div>
+</body></html>

@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Home/Task List</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>
+    body {
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+  </style>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            "primary": "#2b8cee",
+            "background-light": "#f6f7f8",
+            "background-dark": "#101922",
+          },
+          fontFamily: {
+            "display": ["Inter", "sans-serif"]
+          },
+          borderRadius: {
+            "DEFAULT": "0.25rem",
+            "lg": "0.5rem",
+            "xl": "0.75rem",
+            "full": "9999px"
+          },
+        },
+      },
+    }
+  </script>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark font-display">
+<div class="relative flex min-h-screen w-full flex-col group/design-root">
+<main class="flex-1 pb-24 px-4 pt-6">
+<div class="flex items-center justify-between mb-6">
+<div class="flex items-center gap-3">
+<div class="bg-center bg-no-repeat aspect-square bg-cover rounded-full size-10" data-alt="User profile avatar placeholder" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuA8FjyggINvGTsj3CN9aCnRyxyz3E1lEwJCD3Y1HbCZLlN6WfHd3JAMChioB-ZaCXw4SFCVUBNy2lgc8YOw2sXiZD0TGBZFU4SzcUDHoP0z2kF4wsCkbDAFnnniBFe5WAtf4M6NvsT1PSMVpVhNN08XPiok-3VwhphQB74YPpts56bUPuOO29J9hQY4NdWFEc2jrV-eK8vTOYt1l5jom1-6HCqMdg6Q6-BcTSk_mBkdZQqfwks17cmrDJKX5HMdPatyuHq0kypYywU");'></div>
+<div class="flex flex-col">
+<p class="text-zinc-500 dark:text-zinc-400 text-sm font-normal leading-normal font-display">Good Morning!</p>
+<h1 class="text-zinc-900 dark:text-white text-xl font-bold leading-tight tracking-tight font-display">Alex</h1>
+</div>
+</div>
+<div class="flex items-center gap-2 rounded-full bg-primary/10 dark:bg-primary/20 px-3 py-1.5">
+<span class="material-symbols-outlined text-primary text-lg">star</span>
+<p class="text-primary text-sm font-bold leading-normal tracking-[-0.015em] shrink-0">1,250 exp</p>
+</div>
+</div>
+<div class="mb-6">
+<p class="text-zinc-900 dark:text-white text-base font-normal leading-normal mb-2 font-display">You've completed 3 of 5 tasks today.</p>
+<div class="w-full rounded-full bg-zinc-200 dark:bg-zinc-700">
+<div class="h-2 rounded-full bg-primary" style="width: 60%;"></div>
+</div>
+</div>
+<div class="flex flex-col gap-3">
+<div class="flex items-center justify-between mb-2">
+<h2 class="text-zinc-900 dark:text-white text-lg font-bold leading-tight tracking-tight font-display">Today's Tasks</h2>
+<button class="flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-medium text-primary hover:bg-primary/10 dark:hover:bg-primary/20 transition-colors">
+<span class="material-symbols-outlined text-lg">list_alt</span>
+<span>All Tasks</span>
+</button>
+</div>
+<div class="flex items-center gap-4 bg-white dark:bg-zinc-800/50 rounded-xl p-4 min-h-[72px] justify-between shadow-sm">
+<div class="flex items-center gap-4">
+<div class="flex size-7 items-center justify-center">
+<input checked="" class="h-5 w-5 rounded-md border-zinc-300 dark:border-zinc-600 border-2 bg-transparent text-primary checked:bg-primary checked:border-primary checked:bg-no-repeat checked:bg-center checked:bg-[url('data:image/svg+xml,%3csvg_viewBox=%270_0_16_16%27_fill=%27white%27_xmlns=%27http://www.w3.org/2000/svg%27%3e%3cpath_d=%27M12.207_4.793a1_1_0_010_1.414l-5_5a1_1_0_01-1.414_0l-2-2a1_1_0_011.414-1.414L6.5_9.086l4.293-4.293a1_1_0_011.414_0z%27/%3e%3c/svg%3e')] focus:ring-1 focus:ring-primary/50 focus:ring-offset-0 focus:ring-offset-background-light dark:focus:ring-offset-background-dark" type="checkbox"/>
+</div>
+<div class="flex flex-col justify-center">
+<p class="text-zinc-900 dark:text-white text-base font-medium leading-normal line-clamp-1 font-display line-through opacity-60">Morning Jogging</p>
+<p class="text-zinc-500 dark:text-zinc-400 text-sm font-normal leading-normal line-clamp-2 font-display opacity-60">30-minute run around the park (+20 exp)</p>
+</div>
+</div>
+<div class="shrink-0">
+<div class="text-zinc-400 dark:text-zinc-500 flex size-7 items-center justify-center" data-icon="CaretRight" data-size="24px" data-weight="regular">
+<span class="material-symbols-outlined">chevron_right</span>
+</div>
+</div>
+</div>
+<div class="flex items-center gap-4 bg-white dark:bg-zinc-800/50 rounded-xl p-4 min-h-[72px] justify-between shadow-sm">
+<div class="flex items-center gap-4">
+<div class="flex size-7 items-center justify-center">
+<input checked="" class="h-5 w-5 rounded-md border-zinc-300 dark:border-zinc-600 border-2 bg-transparent text-primary checked:bg-primary checked:border-primary checked:bg-no-repeat checked:bg-center checked:bg-[url('data:image/svg+xml,%3csvg_viewBox=%270_0_16_16%27_fill=%27white%27_xmlns=%27http://www.w3.org/2000/svg%27%3e%3cpath_d=%27M12.207_4.793a1_1_0_010_1.414l-5_5a1_1_0_01-1.414_0l-2-2a1_1_0_011.414-1.414L6.5_9.086l4.293-4.293a1_1_0_011.414_0z%27/%3e%3c/svg%3e')] focus:ring-1 focus:ring-primary/50 focus:ring-offset-0 focus:ring-offset-background-light dark:focus:ring-offset-background-dark" type="checkbox"/>
+</div>
+<div class="flex flex-col justify-center">
+<p class="text-zinc-900 dark:text-white text-base font-medium leading-normal line-clamp-1 font-display line-through opacity-60">Read a Chapter</p>
+<p class="text-zinc-500 dark:text-zinc-400 text-sm font-normal leading-normal line-clamp-2 font-display opacity-60">Read at least one chapter of 'Atomic Habits' (+15 exp)</p>
+</div>
+</div>
+<div class="shrink-0">
+<div class="text-zinc-400 dark:text-zinc-500 flex size-7 items-center justify-center" data-icon="CaretRight" data-size="24px" data-weight="regular">
+<span class="material-symbols-outlined">chevron_right</span>
+</div>
+</div>
+</div>
+<div class="flex items-center gap-4 bg-white dark:bg-zinc-800/50 rounded-xl p-4 min-h-[72px] justify-between shadow-sm">
+<div class="flex items-center gap-4">
+<div class="flex size-7 items-center justify-center">
+<input checked="" class="h-5 w-5 rounded-md border-zinc-300 dark:border-zinc-600 border-2 bg-transparent text-primary checked:bg-primary checked:border-primary checked:bg-no-repeat checked:bg-center checked:bg-[url('data:image/svg+xml,%3csvg_viewBox=%270_0_16_16%27_fill=%27white%27_xmlns=%27http://www.w3.org/2000/svg%27%3e%3cpath_d=%27M12.207_4.793a1_1_0_010_1.414l-5_5a1_1_0_01-1.414_0l-2-2a1_1_0_011.414-1.414L6.5_9.086l4.293-4.293a1_1_0_011.414_0z%27/%3e%3c/svg%3e')] focus:ring-1 focus:ring-primary/50 focus:ring-offset-0 focus:ring-offset-background-light dark:focus:ring-offset-background-dark" type="checkbox"/>
+</div>
+<div class="flex flex-col justify-center">
+<p class="text-zinc-900 dark:text-white text-base font-medium leading-normal line-clamp-1 font-display line-through opacity-60">Plan Tomorrow</p>
+<p class="text-zinc-500 dark:text-zinc-400 text-sm font-normal leading-normal line-clamp-2 font-display opacity-60">Organize tasks and schedule for the next day (+10 exp)</p>
+</div>
+</div>
+<div class="shrink-0">
+<div class="text-zinc-400 dark:text-zinc-500 flex size-7 items-center justify-center" data-icon="CaretRight" data-size="24px" data-weight="regular">
+<span class="material-symbols-outlined">chevron_right</span>
+</div>
+</div>
+</div>
+<div class="flex items-center gap-4 bg-white dark:bg-zinc-800/50 rounded-xl p-4 min-h-[72px] justify-between shadow-sm">
+<div class="flex items-center gap-4">
+<div class="flex size-7 items-center justify-center">
+<input class="h-5 w-5 rounded-md border-zinc-300 dark:border-zinc-600 border-2 bg-transparent text-primary checked:bg-primary checked:border-primary checked:bg-no-repeat checked:bg-center checked:bg-[url('data:image/svg+xml,%3csvg_viewBox=%270_0_16_16%27_fill=%27white%27_xmlns=%27http://www.w3.org/2000/svg%27%3e%3cpath_d=%27M12.207_4.793a1_1_0_010_1.414l-5_5a1_1_0_01-1.414_0l-2-2a1_1_0_011.414-1.414L6.5_9.086l4.293-4.293a1_1_0_011.414_0z%27/%3e%3c/svg%3e')] focus:ring-1 focus:ring-primary/50 focus:ring-offset-0 focus:ring-offset-background-light dark:focus:ring-offset-background-dark" type="checkbox"/>
+</div>
+<div class="flex flex-col justify-center">
+<p class="text-zinc-900 dark:text-white text-base font-medium leading-normal line-clamp-1 font-display">Drink 8 glasses of water</p>
+<p class="text-zinc-500 dark:text-zinc-400 text-sm font-normal leading-normal line-clamp-2 font-display">Stay hydrated throughout the day (+5 exp)</p>
+</div>
+</div>
+<div class="shrink-0">
+<div class="text-zinc-400 dark:text-zinc-500 flex size-7 items-center justify-center" data-icon="CaretRight" data-size="24px" data-weight="regular">
+<span class="material-symbols-outlined">chevron_right</span>
+</div>
+</div>
+</div>
+<div class="flex items-center gap-4 bg-white dark:bg-zinc-800/50 rounded-xl p-4 min-h-[72px] justify-between shadow-sm">
+<div class="flex items-center gap-4">
+<div class="flex size-7 items-center justify-center">
+<input class="h-5 w-5 rounded-md border-zinc-300 dark:border-zinc-600 border-2 bg-transparent text-primary checked:bg-primary checked:border-primary checked:bg-no-repeat checked:bg-center checked:bg-[url('data:image/svg+xml,%3csvg_viewBox=%270_0_16_16%27_fill=%27white%27_xmlns=%27http://www.w3.org/2000/svg%27%3e%3cpath_d=%27M12.207_4.793a1_1_0_010_1.414l-5_5a1_1_0_01-1.414_0l-2-2a1_1_0_011.414-1.414L6.5_9.086l4.293-4.293a1_1_0_011.414_0z%27/%3e%3c/svg%3e')] focus:ring-1 focus:ring-primary/50 focus:ring-offset-0 focus:ring-offset-background-light dark:focus:ring-offset-background-dark" type="checkbox"/>
+</div>
+<div class="flex flex-col justify-center">
+<p class="text-zinc-900 dark:text-white text-base font-medium leading-normal line-clamp-1 font-display">Practice coding for 1 hour</p>
+<p class="text-zinc-500 dark:text-zinc-400 text-sm font-normal leading-normal line-clamp-2 font-display">Work on a personal project or do a coding challenge (+30 exp)</p>
+</div>
+</div>
+<div class="shrink-0">
+<div class="text-zinc-400 dark:text-zinc-500 flex size-7 items-center justify-center" data-icon="CaretRight" data-size="24px" data-weight="regular">
+<span class="material-symbols-outlined">chevron_right</span>
+</div>
+</div>
+</div>
+</div>
+</main>
+<button class="fixed bottom-24 right-4 flex items-center justify-center size-14 bg-primary text-white rounded-full shadow-lg hover:bg-primary/90 transition-colors">
+<span class="material-symbols-outlined text-3xl">add</span>
+</button>
+<nav class="fixed bottom-0 left-0 right-0 h-20 bg-white/80 dark:bg-background-dark/80 backdrop-blur-lg border-t border-zinc-200 dark:border-zinc-800 flex items-center justify-around px-4">
+<a class="flex flex-col items-center gap-1 text-primary w-16" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">home</span>
+<span class="text-xs font-medium font-display">Home</span>
+</a>
+<a class="flex flex-col items-center gap-1 text-zinc-500 dark:text-zinc-400 w-16" href="#">
+<span class="material-symbols-outlined">storefront</span>
+<span class="text-xs font-medium font-display">Store</span>
+</a>
+<a class="flex flex-col items-center gap-1 text-zinc-500 dark:text-zinc-400 w-16" href="#">
+<span class="material-symbols-outlined">bar_chart</span>
+<span class="text-xs font-medium font-display">Stats</span>
+</a>
+<a class="flex flex-col items-center gap-1 text-zinc-500 dark:text-zinc-400 w-16" href="#">
+<span class="material-symbols-outlined">settings</span>
+<span class="text-xs font-medium font-display">Settings</span>
+</a>
+</nav>
+</div>
+</body></html>

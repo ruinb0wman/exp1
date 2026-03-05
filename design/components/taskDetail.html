@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Home/Task List</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>
+    body {
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+  </style>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            "primary": "#2b8cee",
+            "background-light": "#f6f7f8",
+            "background-dark": "#101922",
+          },
+          fontFamily: {
+            "display": ["Inter", "sans-serif"]
+          },
+          borderRadius: {
+            "DEFAULT": "0.25rem",
+            "lg": "0.5rem",
+            "xl": "0.75rem",
+            "full": "9999px"
+          },
+        },
+      },
+    }
+  </script>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark font-display">
+<div class="relative flex min-h-screen w-full flex-col group/design-root">
+<nav class="fixed bottom-0 left-0 right-0 h-20 bg-white/80 dark:bg-background-dark/80 backdrop-blur-lg border-t border-zinc-200 dark:border-zinc-800 flex items-center justify-around px-4">
+<a class="flex flex-col items-center gap-1 text-primary w-16" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">home</span>
+<span class="text-xs font-medium font-display">Home</span>
+</a>
+<a class="flex flex-col items-center gap-1 text-zinc-500 dark:text-zinc-400 w-16" href="#">
+<span class="material-symbols-outlined">storefront</span>
+<span class="text-xs font-medium font-display">Store</span>
+</a>
+<a class="flex flex-col items-center gap-1 text-zinc-500 dark:text-zinc-400 w-16" href="#">
+<span class="material-symbols-outlined">bar_chart</span>
+<span class="text-xs font-medium font-display">Stats</span>
+</a>
+<a class="flex flex-col items-center gap-1 text-zinc-500 dark:text-zinc-400 w-16" href="#">
+<span class="material-symbols-outlined">settings</span>
+<span class="text-xs font-medium font-display">Settings</span>
+</a>
+</nav>
+<div class="fixed inset-0 z-50 flex items-end justify-center bg-black/60">
+
+<div class="w-full bg-white dark:bg-[#1C2937] rounded-t-2xl shadow-lg flex flex-col pt-3 pb-8 px-4">
+<div class="w-12 h-1.5 bg-zinc-300 dark:bg-zinc-600 rounded-full mx-auto mb-4"></div>
+<div class="flex items-start justify-between mb-4">
+<h2 class="text-2xl font-bold text-zinc-900 dark:text-white flex-1 pr-4">Practice coding for 1 hour</h2>
+<div class="flex items-center gap-2 rounded-full bg-primary/10 dark:bg-primary/20 px-3 py-1.5 shrink-0">
+<span class="material-symbols-outlined text-primary text-lg">star</span>
+<p class="text-primary text-sm font-bold leading-normal">+30 exp</p>
+</div>
+</div>
+<p class="text-zinc-600 dark:text-zinc-300 mb-6 text-base">Work on a personal project or do a coding challenge on a platform like LeetCode or HackerRank to improve problem-solving skills.</p>
+<div class="space-y-4 mb-8">
+<div class="flex items-center gap-4">
+<span class="material-symbols-outlined text-zinc-500 dark:text-zinc-400">repeat</span>
+<div class="flex flex-col">
+<p class="text-sm text-zinc-500 dark:text-zinc-400">Repetition</p>
+<p class="text-base font-medium text-zinc-900 dark:text-white">Daily</p>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<span class="material-symbols-outlined text-zinc-500 dark:text-zinc-400">flag</span>
+<div class="flex flex-col">
+<p class="text-sm text-zinc-500 dark:text-zinc-400">End Condition</p>
+<p class="text-base font-medium text-zinc-900 dark:text-white">Never</p>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<span class="material-symbols-outlined text-zinc-500 dark:text-zinc-400">event_upcoming</span>
+<div class="flex flex-col">
+<p class="text-sm text-zinc-500 dark:text-zinc-400">Next Due</p>
+<p class="text-base font-medium text-zinc-900 dark:text-white">Today, 5:00 PM</p>
+</div>
+</div>
+</div>
+<button class="w-full bg-primary text-white font-bold py-4 rounded-xl text-lg hover:bg-primary/90 transition-colors focus:outline-none focus:ring-2 focus:ring-primary/50 focus:ring-offset-2 dark:focus:ring-offset-background-dark">
+        Complete Task
+      </button>
+</div>
+</div>
+</div>
+
+</body></html>

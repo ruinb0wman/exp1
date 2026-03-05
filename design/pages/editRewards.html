@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Add New Product</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            "primary": "#2b8cee",
+            "background-light": "#f6f7f8",
+            "background-dark": "#101922",
+          },
+          fontFamily: {
+            "display": ["Inter", "sans-serif"]
+          },
+          borderRadius: {
+            "DEFAULT": "0.25rem",
+            "lg": "0.5rem",
+            "xl": "0.75rem",
+            "full": "9999px"
+          },
+        },
+      },
+    }
+  </script>
+<style>
+    body {
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+  </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark font-display">
+<div class="relative flex h-auto min-h-screen w-full flex-col">
+<!-- Top App Bar -->
+<div class="flex items-center bg-background-light dark:bg-background-dark p-4 pb-2 justify-between sticky top-0 z-10 border-b border-white/5">
+<div class="text-slate-800 dark:text-white flex size-12 shrink-0 items-center justify-start -ml-2">
+<span class="material-symbols-outlined text-2xl">arrow_back_ios_new</span>
+</div>
+<h2 class="text-slate-900 dark:text-white text-lg font-bold leading-tight tracking-[-0.015em] flex-1 text-center">Add New Product</h2>
+<div class="flex w-12 items-center justify-end">
+<p class="text-primary text-base font-bold leading-normal tracking-[0.015em] shrink-0">Save</p>
+</div>
+</div>
+<!-- Main Content -->
+<main class="flex flex-1 flex-col p-4 gap-6">
+<!-- Image Uploader -->
+<div class="flex flex-col items-center gap-6 rounded-xl border-2 border-dashed border-slate-300 dark:border-slate-700 px-6 py-10">
+<div class="flex max-w-[480px] flex-col items-center gap-2 text-center">
+<p class="text-slate-900 dark:text-white text-lg font-bold leading-tight tracking-[-0.015em]">Upload Product Image</p>
+<p class="text-slate-600 dark:text-slate-400 text-sm font-normal leading-normal">Tap to add an image for your new product.</p>
+</div>
+<button class="flex min-w-[84px] cursor-pointer items-center justify-center overflow-hidden rounded-lg h-10 px-4 bg-primary/20 dark:bg-primary/20 text-primary text-sm font-bold leading-normal tracking-[0.015em]">
+<span class="truncate">Upload Image</span>
+</button>
+</div>
+<!-- Core Information Section -->
+<div class="flex flex-col gap-4">
+<label class="flex flex-col w-full">
+<p class="text-slate-800 dark:text-white text-base font-medium leading-normal pb-2">Product Name</p>
+<input class="form-input flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-lg text-slate-900 dark:text-white focus:outline-0 focus:ring-2 focus:ring-primary/50 border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 focus:border-primary h-14 placeholder:text-slate-400 dark:placeholder:text-slate-500 p-[15px] text-base font-normal leading-normal" placeholder="Enter product name" value=""/>
+</label>
+<label class="flex flex-col w-full">
+<p class="text-slate-800 dark:text-white text-base font-medium leading-normal pb-2">Description</p>
+<textarea class="form-input flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-lg text-slate-900 dark:text-white focus:outline-0 focus:ring-2 focus:ring-primary/50 border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 focus:border-primary min-h-36 placeholder:text-slate-400 dark:placeholder:text-slate-500 p-[15px] text-base font-normal leading-normal" placeholder="Enter a detailed description"></textarea>
+</label>
+<label class="flex flex-col w-full">
+<p class="text-slate-800 dark:text-white text-base font-medium leading-normal pb-2">Point Cost</p>
+<input class="form-input flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-lg text-slate-900 dark:text-white focus:outline-0 focus:ring-2 focus:ring-primary/50 border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 focus:border-primary h-14 placeholder:text-slate-400 dark:placeholder:text-slate-500 p-[15px] text-base font-normal leading-normal" placeholder="e.g., 500" type="number" value=""/>
+</label>
+</div>
+<!-- Inventory & Restock Section -->
+<div class="flex flex-col gap-4">
+<p class="text-slate-800 dark:text-white text-base font-medium leading-normal">Restock Cycle</p>
+<div class="grid grid-cols-4 gap-2">
+<button class="flex items-center justify-center rounded-lg p-2.5 text-sm font-medium bg-primary text-white">None</button>
+<button class="flex items-center justify-center rounded-lg p-2.5 text-sm font-medium bg-white dark:bg-slate-800 text-slate-800 dark:text-white border border-slate-300 dark:border-slate-700">Daily</button>
+<button class="flex items-center justify-center rounded-lg p-2.5 text-sm font-medium bg-white dark:bg-slate-800 text-slate-800 dark:text-white border border-slate-300 dark:border-slate-700">Weekly</button>
+<button class="flex items-center justify-center rounded-lg p-2.5 text-sm font-medium bg-white dark:bg-slate-800 text-slate-800 dark:text-white border border-slate-300 dark:border-slate-700">Monthly</button>
+</div>
+</div>
+<!-- Limited Stock Section -->
+<div class="flex flex-col gap-4">
+<div class="flex items-center justify-between">
+<p class="text-slate-800 dark:text-white text-base font-medium leading-normal">Limited Stock</p>
+<label class="relative inline-flex cursor-pointer items-center">
+<input checked="" class="peer sr-only" type="checkbox" value=""/>
+<div class="peer h-6 w-11 rounded-full bg-slate-200 dark:bg-slate-700 after:absolute after:top-[2px] after:left-[2px] after:h-5 after:w-5 after:rounded-full after:border after:border-slate-300 after:bg-white after:transition-all after:content-[''] peer-checked:bg-primary peer-checked:after:translate-x-full peer-checked:after:border-white peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary/30 dark:border-slate-600 dark:peer-focus:ring-blue-800"></div>
+</label>
+</div>
+<label class="flex flex-col w-full">
+<p class="text-slate-800 dark:text-white text-base font-medium leading-normal pb-2">Inventory Quantity</p>
+<input class="form-input flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-lg text-slate-900 dark:text-white focus:outline-0 focus:ring-2 focus:ring-primary/50 border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 focus:border-primary h-14 placeholder:text-slate-400 dark:placeholder:text-slate-500 p-[15px] text-base font-normal leading-normal" placeholder="e.g., 10" type="number" value="10"/>
+</label>
+</div>
+<!-- Spacer to push button to bottom -->
+<div class="flex-grow"></div>
+<!-- Add Product Button -->
+<div class="py-2">
+<button class="flex w-full min-w-[84px] cursor-pointer items-center justify-center overflow-hidden rounded-xl h-14 px-4 bg-primary text-white text-base font-bold leading-normal tracking-[0.015em]">
+<span class="truncate">Add Product</span>
+</button>
+</div>
+</main>
+</div>
+</body></html>

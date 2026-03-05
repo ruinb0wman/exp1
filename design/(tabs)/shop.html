@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Shop/Rewards Store</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#2b8cee",
+                        "background-light": "#f6f7f8",
+                        "background-dark": "#101922",
+                    },
+                    fontFamily: {
+                        "display": ["Inter", "sans-serif"]
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                },
+            },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="font-display">
+<div class="relative flex h-auto min-h-screen w-full flex-col bg-background-light dark:bg-background-dark group/design-root overflow-x-hidden">
+<div class="sticky top-0 z-10 flex flex-col bg-background-light dark:bg-background-dark">
+<!-- Top App Bar -->
+<div class="flex items-center p-4 pb-2 justify-between">
+<div class="flex size-12 shrink-0 items-center justify-start"></div>
+<h1 class="text-black dark:text-white text-lg font-bold leading-tight tracking-[-0.015em] flex-1 text-center">Rewards Store</h1>
+<div class="flex w-12 items-center justify-end">
+<button class="flex max-w-[480px] cursor-pointer items-center justify-center overflow-hidden rounded-full h-10 w-10 text-black dark:text-white gap-2 text-base font-bold leading-normal tracking-[0.015em] min-w-0 p-0">
+<span class="material-symbols-outlined">history</span>
+</button>
+</div>
+</div>
+<!-- Points Card -->
+<div class="p-4 pt-2">
+<div class="flex items-center justify-between gap-4 rounded-xl bg-primary/20 dark:bg-primary/30 p-4">
+<div class="flex flex-col gap-1">
+<p class="text-black dark:text-white text-base font-bold leading-tight">Your Points</p>
+<p class="text-black dark:text-white text-2xl font-bold leading-normal">1,250 PTS</p>
+</div>
+<div class="flex size-16 items-center justify-center rounded-full bg-primary text-white">
+<span class="material-symbols-outlined text-4xl">workspace_premium</span>
+</div>
+</div>
+</div>
+<!-- Search Bar -->
+<div class="px-4 pb-2">
+<label class="flex flex-col min-w-40 h-12 w-full">
+<div class="flex w-full flex-1 items-stretch rounded-xl h-full">
+<div class="text-gray-500 dark:text-gray-400 flex border-none bg-gray-200 dark:bg-gray-800 items-center justify-center pl-4 rounded-l-xl border-r-0">
+<span class="material-symbols-outlined">search</span>
+</div>
+<input class="form-input flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-xl text-black dark:text-white focus:outline-0 focus:ring-0 border-none bg-gray-200 dark:bg-gray-800 focus:border-none h-full placeholder:text-gray-500 dark:placeholder:text-gray-400 px-4 rounded-l-none border-l-0 pl-2 text-base font-normal leading-normal" placeholder="Search for rewards" value=""/>
+</div>
+</label>
+</div>
+<!-- Chips -->
+<div class="flex gap-3 px-4 py-3 overflow-x-auto">
+<div class="flex h-10 shrink-0 items-center justify-center gap-x-2 rounded-full bg-primary px-4 cursor-pointer"><p class="text-white text-sm font-medium leading-normal">All</p></div>
+<div class="flex h-10 shrink-0 items-center justify-center gap-x-2 rounded-full bg-gray-200 dark:bg-gray-800 px-4 cursor-pointer"><p class="text-black dark:text-white text-sm font-medium leading-normal">Digital</p></div>
+<div class="flex h-10 shrink-0 items-center justify-center gap-x-2 rounded-full bg-gray-200 dark:bg-gray-800 px-4 cursor-pointer"><p class="text-black dark:text-white text-sm font-medium leading-normal">Physical</p></div>
+<div class="flex h-10 shrink-0 items-center justify-center gap-x-2 rounded-full bg-gray-200 dark:bg-gray-800 px-4 cursor-pointer"><p class="text-black dark:text-white text-sm font-medium leading-normal">Experiences</p></div>
+<div class="flex h-10 shrink-0 items-center justify-center gap-x-2 rounded-full bg-gray-200 dark:bg-gray-800 px-4 cursor-pointer"><p class="text-black dark:text-white text-sm font-medium leading-normal">Donations</p></div>
+</div>
+</div>
+<!-- Image Grid -->
+<main class="flex-1">
+<div class="grid grid-cols-[repeat(auto-fit,minmax(150px,1fr))] gap-4 p-4">
+<div class="flex flex-col gap-2">
+<div class="w-full bg-center bg-no-repeat aspect-square bg-cover rounded-xl" data-alt="Abstract gradient of blue and purple for a streaming service" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuAKa4TzRKo6waxNjMh_IKTuwH0zVZ6HpSFavjgMfjrxVU4pWJiSOH4nJMV_FK9cpa52OW-HJZVY5m8RpjF7Dmn8MrgksQ5pG768K97XEDZF_Im0Cs6yPcqkTqIWbUZiPAj9yO5niOzC9yyaU29iOzarbx3vF5RvwGouDU8qNEJMt3yMUuP4yRlzdQ81Pzcb8yMpagr26rNXcd9DYl5XLXZDB9u60ndpFTUhLlETdXdnMicfdrEHtZ2w1_vFgf3J3s8ZFS8kwvOBi-4");'></div>
+<div>
+<p class="text-black dark:text-white text-base font-medium leading-normal">1-Month Streaming</p>
+<p class="text-gray-600 dark:text-gray-400 text-sm font-normal leading-normal">500 PTS</p>
+</div>
+</div>
+<div class="flex flex-col gap-2">
+<div class="w-full bg-center bg-no-repeat aspect-square bg-cover rounded-xl" data-alt="Illustration of a premium app icon with a crown" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuB4fmkxKwFfRMdAjBbS1IbiJczWCG_exP3Vlqak1duEG91qgST090fNugzkOLUgcFt4CHGvlXzyrSv3nwruiJBbuiPNlhqclbvVd8yeT3zRubHaNuGwBf-j9njt7F4EK9MpWeCR6QgosmjRFVOT1hsRgfxhRO6gbtIB7vDO98R-zlMldgIql3_RCk7Vq2UVI-2-P1YQxF73vLxVHBNuawIDT5BNph9C1COEHUuO1Aa2JiDFG7AOdH-NzYUoEaDHjwnFNmwQyWMPRJ4");'></div>
+<div>
+<p class="text-black dark:text-white text-base font-medium leading-normal">Premium App Access</p>
+<p class="text-gray-600 dark:text-gray-400 text-sm font-normal leading-normal">800 PTS</p>
+</div>
+</div>
+<div class="flex flex-col gap-2">
+<div class="w-full bg-center bg-no-repeat aspect-square bg-cover rounded-xl" data-alt="Colorful gift cards fanned out" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuDCTXxE1geG88zf0DHrqaDkukRnYqJTEHIy7ldf-rkf7Q1XiGebLcjnSQwYNgk-upwFnz3DgyMaZ7jj0n-MmVNPy2hjRtsFhGyo9A3qtDwO3jGUPAcwjyypQKrGsfZfoUzrUMeL5lDGBpsp5AvG2wInKoRP1uRYQ3P-Q_1E1Z_Mlh1W-UbsbAXa24TP2eYPP_xpeleoplowE7Wugdt2NG87PzNXWIxQS4KsnQexKURokmBzZXqYqhSnT5djkdIDdJytNwFHPz9LuLE");'></div>
+<div>
+<p class="text-black dark:text-white text-base font-medium leading-normal">Digital Gift Card</p>
+<p class="text-gray-600 dark:text-gray-400 text-sm font-normal leading-normal">1000 PTS</p>
+</div>
+</div>
+<div class="flex flex-col gap-2">
+<div class="w-full bg-center bg-no-repeat aspect-square bg-cover rounded-xl" data-alt="A folded blue t-shirt with a logo" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuBtHdcqXcam6CkTNVQbCIdBcbxHeFdl3JBL0nSlOcdnBv7sjj5j1PEuv6Hu0QRrVLR7GhTIgHvWwLqLRykyfikznlVkGyE50wCEsFsLoXbgKvxHQC-8i_a_UjqNJAGayA3Dq_CrIX0_1-RZLUtF9Cxg6zcIWcVvNAmgEalAZARh8MTLEzfp_G5Ujwk5Owvb87uUhYLuknZayqiWX7BAb55Ic06DfHAJIjLJwniv4yuFCFHahOThmpx8pwVUSOxsMWW2MVXIW4aQvYs");'></div>
+<div>
+<p class="text-black dark:text-white text-base font-medium leading-normal">Branded T-Shirt</p>
+<p class="text-gray-600 dark:text-gray-400 text-sm font-normal leading-normal">1500 PTS</p>
+</div>
+</div>
+<div class="flex flex-col gap-2">
+<div class="w-full bg-center bg-no-repeat aspect-square bg-cover rounded-xl opacity-50" data-alt="A person meditating in a serene outdoor setting, grayed out" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuClRmtH0k9D7iZjWNTZ0SaNPrTRI-u7hOUh45W54w6bNRwHb1UWQOqvdIReQ9qbusaFFZnUUuM_Fn6I3qdh2G7QarJDHcOl5B3A3sw-zhoEJNkU2JhQt8h78mAVA0kGO7FiyZpqIUXYp_8GMVH1Daclb46ibuuhxmI9qpFQ3CdvN7-2ZeiKL0xtU7Ug0viPfan0MSZtpp4csjKLu0Tr-6YsUd-D6gGs4MAQwKZlClL8_754OO0reP6WFJyfVaN3KaaPTnBBUpksW4Q");'></div>
+<div>
+<p class="text-black dark:text-white text-base font-medium leading-normal">Guided Meditation</p>
+<p class="text-gray-600 dark:text-gray-400 text-sm font-normal leading-normal">4000 PTS</p>
+</div>
+</div>
+<div class="flex flex-col gap-2">
+<div class="w-full bg-center bg-no-repeat aspect-square bg-cover rounded-xl" data-alt="A small green sapling being held in a person's hands" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuB-oTiKTrGdVAKIurddyMv-O7D2i1vNHu7-KeFrNUsHJUgifeBiArF4lb-V0Txpg2cS8W-t77hLRYkg8Dh38jaQRyU5n61vwvtg50qi2vO7PbDvtsEfAmTJeX6B8MI22K0O8UtSP5fnZtiz8HVQKhLFlXbTn6OkvrfPMr-USKkFLSN2HkThOwurGpiMrAS5H7KnITEqNFj_sX4fTwXVB39hZbfo2nSjvG1F9S16EUrHzrWdmEbprEsF3jUPcT91OWxLv66WYgZgURY");'></div>
+<div>
+<p class="text-black dark:text-white text-base font-medium leading-normal">Tree Donation</p>
+<p class="text-gray-600 dark:text-gray-400 text-sm font-normal leading-normal">250 PTS</p>
+</div>
+</div>
+<div class="flex flex-col gap-2">
+<div class="w-full bg-center bg-no-repeat aspect-square bg-cover rounded-xl" data-alt="A high-quality water bottle with a sleek design" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuAy0M_Lg9AQjwzKCm0chwa_yuc0O6o0brRB4TDi4b__hgGlo1RWt3d5c2Ew11NC3IPjKWAV-Ckb8Vh2qVfgxcCZmgzhvjKl0VKtQPywXXmfo8irwOVZ_cJ02K0MDexbyj5g_TFH3ZoOHZnujTuFf1HK-f0QiRySc1SaL1yYSqEBXSdbWnWG_CRffKVCBcWN4QhsVHPNIIxxmC1q8Fg1OX-cP4kLR9rnSzOFInqnTzcuuqJMUau2dac89HKqV8HjKpJDggIfv8cMnVc");'></div>
+<div>
+<p class="text-black dark:text-white text-base font-medium leading-normal">Insulated Water Bottle</p>
+<p class="text-gray-600 dark:text-gray-400 text-sm font-normal leading-normal">1200 PTS</p>
+</div>
+</div>
+<div class="flex flex-col gap-2">
+<div class="w-full bg-center bg-no-repeat aspect-square bg-cover rounded-xl opacity-50" data-alt="A pair of concert tickets, grayed out" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuA6EF4Oexp44DrgsUyNIWcTd7HKImrPQp4crj69_P30UsurGVpWxEzr1lzMkHxEoPQW0YoB4b5-5PN7mL9r_AU4GIYxNV4vEY7sX9yCCJ_btQaVE-8EEp9IqKnsx3rDQpEsNgvZ4gJLGgtAULPltVNYorVXnm-QaEaa9aTns10xlFrhfEh-tNxGRg71lcEa39WhDYn7PDo4YYVsa5Sa5PgePTslY_ywx06dLbPwMZSMY2AeW1pkZ6ao3JcThPxADaT1vaBQ1PB-cgk");'></div>
+<div>
+<p class="text-black dark:text-white text-base font-medium leading-normal">Concert Tickets</p>
+<p class="text-gray-600 dark:text-gray-400 text-sm font-normal leading-normal">5000 PTS</p>
+</div>
+</div>
+</div>
+</main>
+<!-- Bottom Navigation Bar -->
+<div class="sticky bottom-0 z-10 mt-auto flex h-20 items-center justify-around border-t border-gray-200 bg-background-light dark:border-gray-800 dark:bg-background-dark">
+<div class="flex flex-col items-center gap-1 text-gray-500 dark:text-gray-400 cursor-pointer">
+<span class="material-symbols-outlined">home</span>
+<p class="text-xs">Home</p>
+</div>
+<div class="flex flex-col items-center gap-1 text-gray-500 dark:text-gray-400 cursor-pointer">
+<span class="material-symbols-outlined">task_alt</span>
+<p class="text-xs">Tasks</p>
+</div>
+<div class="flex flex-col items-center gap-1 text-primary dark:text-primary cursor-pointer">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">store</span>
+<p class="text-xs font-bold">Rewards</p>
+</div>
+<div class="flex flex-col items-center gap-1 text-gray-500 dark:text-gray-400 cursor-pointer">
+<span class="material-symbols-outlined">person</span>
+<p class="text-xs">Profile</p>
+</div>
+</div>
+</div>
+</body></html>
