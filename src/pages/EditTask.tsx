@@ -12,13 +12,13 @@ const endOptions = ["Manual", "On Date", "After Times"];
 const endValues: EndCondition[] = ["manual", "date", "times"];
 
 const weekDays = [
+  { label: "Sun", value: 0 },
   { label: "Mon", value: 1 },
   { label: "Tue", value: 2 },
   { label: "Wed", value: 3 },
   { label: "Thu", value: 4 },
   { label: "Fri", value: 5 },
   { label: "Sat", value: 6 },
-  { label: "Sun", value: 7 },
 ];
 
 const monthDays = Array.from({ length: 31 }, (_, i) => ({
