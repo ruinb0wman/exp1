@@ -9,6 +9,6 @@ const v1 = {
   taskInstances: '++id, userId, templateId, scheduledDate, status, [templateId+startAt]',
   rewardTemplates: '++id, userId, replenishmentMode, enabled',
   rewardInstances: '++id, templateId, userId, status, expiresAt',
-  users: 'id, name',
+  users: '++id, name',
   pointsHistory: '++id, userId, type, createdAt, [userId+createdAt]'
 }

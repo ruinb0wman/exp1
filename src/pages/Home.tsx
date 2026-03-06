@@ -1,6 +1,7 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { ListTodo, ChevronRight, Plus, Star } from "lucide-react";
 import { useNavigate } from "react-router";
+import { useUserStore } from "@/store";
 
 interface Task {
   id: number;
@@ -50,7 +51,14 @@ const initialTasks: Task[] = [
 
 export function Home() {
   const navigate = useNavigate();
+  const { user, initUser, isLoading } = useUserStore();
   const [tasks, setTasks] = useState<Task[]>(initialTasks);
+
+  useEffect(() => {
+    if (!user && !isLoading) {
+      initUser();
+    }
+  }, [user, isLoading, initUser]);
 
   const toggleTask = (id: number) => {
     setTasks((prev) =>
@@ -78,13 +86,13 @@ export function Home() {
                 Good Morning!
               </p>
               <h1 className="text-text-primary text-xl font-bold tracking-tight">
-                Alex
+                {user?.name ?? "User"}
               </h1>
             </div>
           </div>
           <div className="flex items-center gap-2 rounded-full bg-surface px-3 py-1.5 border border-border">
             <Star className="w-4 h-4 text-primary fill-primary" />
-            <p className="text-text-primary text-sm font-bold">1,250 exp</p>
+            <p className="text-text-primary text-sm font-bold">{user?.currentPoints ?? 0} exp</p>
           </div>
         </div>
 

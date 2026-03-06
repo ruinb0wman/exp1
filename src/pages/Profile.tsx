@@ -1,4 +1,6 @@
+import { useEffect } from "react";
 import { Settings, Backpack, History, Edit3, BookOpen, Coffee, Dumbbell } from "lucide-react";
+import { useUserStore } from "@/store";
 
 const quickActions = [
   { icon: Backpack, label: "My Backpack" },
@@ -41,6 +43,14 @@ const recentActivity = [
 ];
 
 export function Profile() {
+  const { user, initUser, isLoading } = useUserStore();
+
+  useEffect(() => {
+    if (!user && !isLoading) {
+      initUser();
+    }
+  }, [user, isLoading, initUser]);
+
   return (
     <div className="min-h-screen pb-24 bg-background">
       {/* Header */}
@@ -58,14 +68,14 @@ export function Profile() {
       <div className="p-4">
         <div className="flex gap-4 items-center">
           <div className="w-20 h-20 rounded-xl bg-surface flex items-center justify-center text-text-primary text-2xl font-bold border border-border">
-            A
+            {user?.name?.charAt(0).toUpperCase() ?? "U"}
           </div>
           <div className="flex flex-col justify-center">
             <p className="text-text-primary text-[22px] font-bold">
-              Alex Doe
+              {user?.name ?? "User"}
             </p>
             <p className="text-text-secondary text-base">
-              @alex_doe
+              @{user?.name?.toLowerCase().replace(/\s+/g, "_") ?? "user"}
             </p>
           </div>
         </div>
@@ -75,7 +85,7 @@ export function Profile() {
       <div className="p-4">
         <div className="rounded-xl bg-primary p-6">
           <p className="text-white/80 text-sm font-normal">CURRENT BALANCE</p>
-          <p className="text-white text-4xl font-bold mt-1">1,250</p>
+          <p className="text-white text-4xl font-bold mt-1">{user?.currentPoints ?? 0}</p>
           <p className="text-white/80 text-base mt-1">
             Well done! Keep up the great work.
           </p>
