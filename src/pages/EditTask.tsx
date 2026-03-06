@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Header } from "../components/Header";
 import { RadioGroup } from "../components/RadioGroup";
 import { MultiSelectGrid } from "../components/MultiSelectGrid";
+import { DatePicker } from "../components/DatePicker";
 import { Stars, Trash2, Shuffle } from "lucide-react";
 import type { TaskTemplate, RepeatMode, EndCondition } from "../db/types/task";
 
@@ -274,11 +275,25 @@ export function EditTask({ userId = 1, initialTask, onSubmit }: EditTaskProps) {
             {/* End Value Input */}
             {endCondition === "date" && (
               <div className="pt-2 border-t border-surface-light">
-                <input
-                  type="date"
-                  value={endValue}
-                  onChange={(e) => setEndValue(e.target.value)}
-                  className="w-full h-12 px-4 rounded-lg bg-surface-light text-text-primary focus:outline-none focus:ring-2 focus:ring-primary border-transparent"
+                <DatePicker
+                  value={endValue ? (() => {
+                    // 将 YYYY-MM-DD 字符串解析为本地日期（避免时区问题）
+                    const [year, month, day] = endValue.split('-').map(Number);
+                    return new Date(year, month - 1, day);
+                  })() : null}
+                  onChange={(date) => {
+                    // 将本地日期转为 YYYY-MM-DD 字符串
+                    if (!date) {
+                      setEndValue('');
+                      return;
+                    }
+                    const year = date.getFullYear();
+                    const month = String(date.getMonth() + 1).padStart(2, '0');
+                    const day = String(date.getDate()).padStart(2, '0');
+                    setEndValue(`${year}-${month}-${day}`);
+                  }}
+                  placeholder="Select end date"
+                  minDate={new Date()}
                 />
               </div>
             )}

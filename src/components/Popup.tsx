@@ -150,7 +150,7 @@ export function Popup({
     >
       {/* 内容区域 */}
       <div
-        className={`bg-white dark:bg-[#1C2937] shadow-2xl flex flex-col ${
+        className={`bg-white dark:bg-[#1b1b1f] shadow-2xl flex flex-col ${
           isBottom ? 'w-full rounded-t-2xl' : `rounded-2xl ${width ? '' : 'max-w-lg w-[90%]'}`
         }`}
         style={{ ...getContentAnimationStyle(), ...customStyles }}
