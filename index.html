@@ -9,6 +9,21 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+      /* 隐藏所有 WebView 滚动条 */
+      ::-webkit-scrollbar {
+        width: 0 !important;
+        height: 0 !important;
+        display: none !important;
+      }
+      * {
+        scrollbar-width: none !important;
+        -ms-overflow-style: none !important;
+      }
+      html, body {
+        overflow: -moz-scrollbars-none;
+      }
+    </style>
   </head>
 
   <body>

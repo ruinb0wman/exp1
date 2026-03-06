@@ -113,23 +113,11 @@ body {
   }
 }
 
-/* Scrollbar styles */
+/* Scrollbar styles - 隐藏所有滚动条 */
 ::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
-}
-
-::-webkit-scrollbar-track {
-  background: #1b1b1f;
-}
-
-::-webkit-scrollbar-thumb {
-  background: #3a3a40;
-  border-radius: 3px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: #4a4a50;
+  width: 0;
+  height: 0;
+  display: none;
 }
 
 /* Hide scrollbar for category scroll */
