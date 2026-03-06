@@ -1,4 +1,4 @@
-import { useDB } from '../index';
+import { getDB } from '../index';
 import type { RewardTemplate, RewardInstance, RewardStatus, ReplenishmentMode } from '../types';
 
 // ==================== RewardTemplate CRUD ====================
@@ -9,7 +9,6 @@ import type { RewardTemplate, RewardInstance, RewardStatus, ReplenishmentMode } 
 export async function createRewardTemplate(
   template: Omit<RewardTemplate, 'id' | 'createdAt' | 'updatedAt'>
 ): Promise<number> {
-  const { getDB } = useDB();
   const db = getDB();
 
   const now = new Date().toISOString();
@@ -26,7 +25,6 @@ export async function createRewardTemplate(
  * 获取所有奖励模板
  */
 export async function getAllRewardTemplates(userId?: number): Promise<RewardTemplate[]> {
-  const { getDB } = useDB();
   const db = getDB();
 
   if (userId !== undefined) {
@@ -39,7 +37,6 @@ export async function getAllRewardTemplates(userId?: number): Promise<RewardTemp
  * 获取启用的奖励模板
  */
 export async function getEnabledRewardTemplates(userId?: number): Promise<RewardTemplate[]> {
-  const { getDB } = useDB();
   const db = getDB();
 
   if (userId !== undefined) {
@@ -53,7 +50,6 @@ export async function getEnabledRewardTemplates(userId?: number): Promise<Reward
  * 根据ID获取奖励模板
  */
 export async function getRewardTemplateById(id: number): Promise<RewardTemplate | undefined> {
-  const { getDB } = useDB();
   const db = getDB();
   return db.rewardTemplates.get(id);
 }
@@ -65,7 +61,6 @@ export async function getRewardTemplatesByReplenishmentMode(
   mode: ReplenishmentMode,
   userId?: number
 ): Promise<RewardTemplate[]> {
-  const { getDB } = useDB();
   const db = getDB();
 
   if (userId !== undefined) {
@@ -82,7 +77,6 @@ export async function updateRewardTemplate(
   id: number,
   updates: Partial<Omit<RewardTemplate, 'id' | 'createdAt'>>
 ): Promise<number> {
-  const { getDB } = useDB();
   const db = getDB();
 
   const updateData = {
@@ -97,7 +91,6 @@ export async function updateRewardTemplate(
  * 删除奖励模板（同时删除关联的奖励实例）
  */
 export async function deleteRewardTemplate(id: number): Promise<void> {
-  const { getDB } = useDB();
   const db = getDB();
 
   await db.transaction('rw', db.rewardTemplates, db.rewardInstances, async () => {
@@ -113,7 +106,6 @@ export async function toggleRewardTemplateEnabled(
   id: number,
   enabled?: boolean
 ): Promise<number> {
-  const { getDB } = useDB();
   const db = getDB();
 
   const template = await db.rewardTemplates.get(id);
@@ -137,7 +129,6 @@ export async function toggleRewardTemplateEnabled(
 export async function createRewardInstance(
   instance: Omit<RewardInstance, 'id' | 'createdAt'>
 ): Promise<number> {
-  const { getDB } = useDB();
   const db = getDB();
 
   const newInstance: RewardInstance = {
@@ -154,7 +145,6 @@ export async function createRewardInstance(
 export async function createRewardInstances(
   instances: Omit<RewardInstance, 'id' | 'createdAt'>[]
 ): Promise<number[]> {
-  const { getDB } = useDB();
   const db = getDB();
 
   const now = new Date().toISOString();
@@ -170,7 +160,6 @@ export async function createRewardInstances(
  * 获取所有奖励实例
  */
 export async function getAllRewardInstances(userId?: number): Promise<RewardInstance[]> {
-  const { getDB } = useDB();
   const db = getDB();
 
   if (userId !== undefined) {
@@ -183,7 +172,6 @@ export async function getAllRewardInstances(userId?: number): Promise<RewardInst
  * 根据ID获取奖励实例
  */
 export async function getRewardInstanceById(id: number): Promise<RewardInstance | undefined> {
-  const { getDB } = useDB();
   const db = getDB();
   return db.rewardInstances.get(id);
 }
@@ -192,7 +180,6 @@ export async function getRewardInstanceById(id: number): Promise<RewardInstance 
  * 根据模板ID获取奖励实例
  */
 export async function getRewardInstancesByTemplateId(templateId: number): Promise<RewardInstance[]> {
-  const { getDB } = useDB();
   const db = getDB();
   return db.rewardInstances.where('templateId').equals(templateId).toArray();
 }
@@ -204,7 +191,6 @@ export async function getRewardInstancesByStatus(
   status: RewardStatus,
   userId?: number
 ): Promise<RewardInstance[]> {
-  const { getDB } = useDB();
   const db = getDB();
 
   if (userId !== undefined) {
@@ -221,7 +207,6 @@ export async function updateRewardInstance(
   id: number,
   updates: Partial<Omit<RewardInstance, 'id'>>
 ): Promise<number> {
-  const { getDB } = useDB();
   const db = getDB();
   return db.rewardInstances.update(id, updates);
 }
@@ -230,7 +215,6 @@ export async function updateRewardInstance(
  * 使用奖励实例
  */
 export async function useRewardInstance(id: number): Promise<number> {
-  const { getDB } = useDB();
   const db = getDB();
 
   const instance = await db.rewardInstances.get(id);
@@ -262,7 +246,6 @@ export async function useRewardInstance(id: number): Promise<number> {
  * 检查并更新过期状态
  */
 export async function checkAndUpdateExpiredRewards(userId?: number): Promise<number> {
-  const { getDB } = useDB();
   const db = getDB();
 
   const now = new Date().toISOString();
@@ -298,7 +281,6 @@ export async function checkAndUpdateExpiredRewards(userId?: number): Promise<num
  * 删除奖励实例
  */
 export async function deleteRewardInstance(id: number): Promise<void> {
-  const { getDB } = useDB();
   const db = getDB();
   return db.rewardInstances.delete(id);
 }
@@ -307,7 +289,6 @@ export async function deleteRewardInstance(id: number): Promise<void> {
  * 批量删除奖励实例
  */
 export async function deleteRewardInstances(ids: number[]): Promise<void> {
-  const { getDB } = useDB();
   const db = getDB();
   return db.rewardInstances.bulkDelete(ids);
 }
@@ -316,7 +297,6 @@ export async function deleteRewardInstances(ids: number[]): Promise<void> {
  * 删除指定模板的所有奖励实例
  */
 export async function deleteRewardInstancesByTemplateId(templateId: number): Promise<number> {
-  const { getDB } = useDB();
   const db = getDB();
   return db.rewardInstances.where('templateId').equals(templateId).delete();
 }
@@ -329,7 +309,6 @@ export async function deleteRewardInstancesByTemplateId(templateId: number): Pro
 export async function getRewardInstanceWithTemplate(
   instanceId: number
 ): Promise<{ instance: RewardInstance; template?: RewardTemplate } | undefined> {
-  const { getDB } = useDB();
   const db = getDB();
 
   const instance = await db.rewardInstances.get(instanceId);
@@ -347,7 +326,6 @@ export async function getRewardInstanceWithTemplate(
 export async function getAvailableRewardInstances(
   userId: number
 ): Promise<Array<{ instance: RewardInstance; template: RewardTemplate }>> {
-  const { getDB } = useDB();
   const db = getDB();
 
   // 先检查并更新过期状态
@@ -377,7 +355,6 @@ export async function getAvailableRewardInstances(
 export async function getUserBackpack(
   userId: number
 ): Promise<Array<{ instance: RewardInstance; template: RewardTemplate }>> {
-  const { getDB } = useDB();
   const db = getDB();
 
   // 先检查并更新过期状态
@@ -406,7 +383,6 @@ export async function getUserBackpack(
 export async function getStoreRewardTemplates(
   userId: number
 ): Promise<Array<{ template: RewardTemplate; availableCount: number }>> {
-  const { getDB } = useDB();
   const db = getDB();
 
   // 先检查并更新过期状态
@@ -444,7 +420,6 @@ export async function getRewardStatistics(
   used: number;
   expired: number;
 }> {
-  const { getDB } = useDB();
   const db = getDB();
 
   // 先检查并更新过期状态
@@ -469,7 +444,6 @@ export async function getRewardStatistics(
 export async function getTemplatesNeedingReplenishment(
   userId: number
 ): Promise<RewardTemplate[]> {
-  const { getDB } = useDB();
   const db = getDB();
 
   const now = new Date();
@@ -516,7 +490,6 @@ export async function getTemplatesNeedingReplenishment(
  * 为模板补货
  */
 export async function replenishRewardTemplate(templateId: number): Promise<number> {
-  const { getDB } = useDB();
   const db = getDB();
 
   const template = await db.rewardTemplates.get(templateId);

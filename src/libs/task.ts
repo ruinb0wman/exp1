@@ -49,11 +49,12 @@ export function monthsBetween(date1: Date, date2: Date): number {
 }
 
 /**
- * 判断任务模板是否已满足结束条件
+ * 判断任务模板在指定日期是否已满足结束条件
  */
-export function isTemplateEnded(
+export function isTemplateEndedOnDate(
   template: TaskTemplate,
-  existingInstances: TaskInstance[]
+  existingInstances: TaskInstance[],
+  targetDate: Date = new Date()
 ): boolean {
   const { endCondition, endValue } = template;
 
@@ -63,9 +64,8 @@ export function isTemplateEnded(
 
   if (endCondition === 'date' && endValue) {
     const endDate = new Date(endValue);
-    const today = new Date();
     endDate.setHours(23, 59, 59, 999);
-    return today > endDate;
+    return targetDate > endDate;
   }
 
   if (endCondition === 'times' && endValue) {
@@ -77,15 +77,27 @@ export function isTemplateEnded(
 }
 
 /**
- * 判断今天是否需要为该模板生成任务实例
- * @param existingInstances 该模板已存在的所有实例
+ * 判断任务模板是否已满足结束条件（兼容旧代码）
+ * @deprecated 使用 isTemplateEndedOnDate 代替
  */
-export function shouldGenerateInstanceToday(
+export function isTemplateEnded(
   template: TaskTemplate,
   existingInstances: TaskInstance[]
 ): boolean {
+  return isTemplateEndedOnDate(template, existingInstances, new Date());
+}
+
+/**
+ * 判断指定日期是否需要为该模板生成任务实例
+ * @param existingInstances 该模板已存在的所有实例
+ * @param targetDate 目标日期，默认为今天
+ */
+export function shouldGenerateInstanceOnDate(
+  template: TaskTemplate,
+  existingInstances: TaskInstance[],
+  targetDate: Date = new Date()
+): boolean {
   const { repeatMode, repeatInterval, repeatDaysOfWeek, repeatDaysOfMonth, createdAt } = template;
-  const today = new Date();
   const created = new Date(createdAt);
 
   switch (repeatMode) {
@@ -97,37 +109,37 @@ export function shouldGenerateInstanceToday(
     case 'daily': {
       // 每日：检查间隔天数
       const interval = repeatInterval || 1;
-      const daysDiff = daysBetween(created, today);
+      const daysDiff = daysBetween(created, targetDate);
       return daysDiff % interval === 0;
     }
 
     case 'weekly': {
       // 每周：检查是否在指定星期几，且满足间隔周数
       const interval = repeatInterval || 1;
-      const currentDayOfWeek = today.getDay(); // 0-6
+      const currentDayOfWeek = targetDate.getDay(); // 0-6
 
-      // 检查今天是否在指定的星期几列表中
+      // 检查目标日期是否在指定的星期几列表中
       if (!repeatDaysOfWeek || !repeatDaysOfWeek.includes(currentDayOfWeek)) {
         return false;
       }
 
       // 检查是否满足间隔周数
-      const weeksDiff = weeksBetween(created, today);
+      const weeksDiff = weeksBetween(created, targetDate);
       return weeksDiff % interval === 0;
     }
 
     case 'monthly': {
       // 每月：检查是否在指定日期，且满足间隔月数
       const interval = repeatInterval || 1;
-      const currentDayOfMonth = today.getDate();
+      const currentDayOfMonth = targetDate.getDate();
 
-      // 检查今天是否在指定的日期列表中
+      // 检查目标日期是否在指定的日期列表中
       if (!repeatDaysOfMonth || !repeatDaysOfMonth.includes(currentDayOfMonth)) {
         return false;
       }
 
       // 检查是否满足间隔月数
-      const monthsDiff = monthsBetween(created, today);
+      const monthsDiff = monthsBetween(created, targetDate);
       return monthsDiff % interval === 0;
     }
 
@@ -137,11 +149,23 @@ export function shouldGenerateInstanceToday(
 }
 
 /**
- * 过滤出今天需要生成实例的任务模板
+ * 判断今天是否需要为该模板生成任务实例（兼容旧代码）
+ * @deprecated 使用 shouldGenerateInstanceOnDate 代替
  */
-export function filterTemplatesNeedingInstances(
-  templates: TaskTemplate[],
+export function shouldGenerateInstanceToday(
+  template: TaskTemplate,
   existingInstances: TaskInstance[]
+): boolean {
+  return shouldGenerateInstanceOnDate(template, existingInstances, new Date());
+}
+
+/**
+ * 过滤出指定日期需要生成实例的任务模板
+ */
+export function filterTemplatesNeedingInstancesOnDate(
+  templates: TaskTemplate[],
+  existingInstances: TaskInstance[],
+  targetDate: Date = new Date()
 ): TaskTemplate[] {
   return templates.filter((template) => {
     // 只处理启用的模板
@@ -154,29 +178,40 @@ export function filterTemplatesNeedingInstances(
       (inst) => inst.templateId === template.id
     );
 
-    // 检查是否已满足结束条件
-    if (isTemplateEnded(template, templateInstances)) {
+    // 检查在目标日期是否已满足结束条件
+    if (isTemplateEndedOnDate(template, templateInstances, targetDate)) {
       return false;
     }
 
     // 对于 repeatMode 为 'none' 的，只检查是否已经有实例
     if (template.repeatMode === 'none') {
-      return shouldGenerateInstanceToday(template, templateInstances);
+      return shouldGenerateInstanceOnDate(template, templateInstances, targetDate);
     }
 
-    // 对于其他 repeatMode，检查今天是否已经生成过实例
-    const todayStr = getTodayString();
-    const hasInstanceToday = templateInstances.some((inst) => {
+    // 对于其他 repeatMode，检查目标日期是否已经生成过实例
+    const targetDateStr = targetDate.toISOString().split('T')[0];
+    const hasInstanceOnDate = templateInstances.some((inst) => {
       const instanceDate = inst.createAt.split('T')[0];
-      return instanceDate === todayStr;
+      return instanceDate === targetDateStr;
     });
-    if (hasInstanceToday) {
+    if (hasInstanceOnDate) {
       return false;
     }
 
-    // 检查今天是否应该生成实例
-    return shouldGenerateInstanceToday(template, templateInstances);
+    // 检查目标日期是否应该生成实例
+    return shouldGenerateInstanceOnDate(template, templateInstances, targetDate);
   });
+}
+
+/**
+ * 过滤出今天需要生成实例的任务模板（兼容旧代码）
+ * @deprecated 使用 filterTemplatesNeedingInstancesOnDate 代替
+ */
+export function filterTemplatesNeedingInstances(
+  templates: TaskTemplate[],
+  existingInstances: TaskInstance[]
+): TaskTemplate[] {
+  return filterTemplatesNeedingInstancesOnDate(templates, existingInstances, new Date());
 }
 
 /**

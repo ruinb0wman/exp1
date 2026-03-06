@@ -1,4 +1,4 @@
-import { useDB } from '../index';
+import { getDB } from '../index';
 import type { TaskTemplate, TaskInstance, TaskStatus, RepeatMode } from '../types';
 
 // ==================== TaskTemplate CRUD ====================
@@ -9,7 +9,6 @@ import type { TaskTemplate, TaskInstance, TaskStatus, RepeatMode } from '../type
 export async function createTaskTemplate(
   template: Omit<TaskTemplate, 'id' | 'createdAt' | 'updatedAt'>
 ): Promise<number> {
-  const { getDB } = useDB();
   const db = getDB();
 
   const now = new Date().toISOString();
@@ -26,7 +25,6 @@ export async function createTaskTemplate(
  * 获取所有任务模板
  */
 export async function getAllTaskTemplates(userId?: number): Promise<TaskTemplate[]> {
-  const { getDB } = useDB();
   const db = getDB();
 
   if (userId !== undefined) {
@@ -39,7 +37,6 @@ export async function getAllTaskTemplates(userId?: number): Promise<TaskTemplate
  * 获取启用的任务模板
  */
 export async function getEnabledTaskTemplates(userId?: number): Promise<TaskTemplate[]> {
-  const { getDB } = useDB();
   const db = getDB();
 
   if (userId !== undefined) {
@@ -55,7 +52,6 @@ export async function getEnabledTaskTemplates(userId?: number): Promise<TaskTemp
  * 根据ID获取任务模板
  */
 export async function getTaskTemplateById(id: number): Promise<TaskTemplate | undefined> {
-  const { getDB } = useDB();
   const db = getDB();
   return db.taskTemplates.get(id);
 }
@@ -67,7 +63,6 @@ export async function getTaskTemplatesByRepeatMode(
   repeatMode: RepeatMode,
   userId?: number
 ): Promise<TaskTemplate[]> {
-  const { getDB } = useDB();
   const db = getDB();
 
   if (userId !== undefined) {
@@ -84,7 +79,6 @@ export async function updateTaskTemplate(
   id: number,
   updates: Partial<Omit<TaskTemplate, 'id' | 'createdAt'>>
 ): Promise<number> {
-  const { getDB } = useDB();
   const db = getDB();
 
   const updateData = {
@@ -99,7 +93,6 @@ export async function updateTaskTemplate(
  * 删除任务模板（同时删除关联的任务实例）
  */
 export async function deleteTaskTemplate(id: number): Promise<void> {
-  const { getDB } = useDB();
   const db = getDB();
 
   await db.transaction('rw', db.taskTemplates, db.taskInstances, async () => {
@@ -115,7 +108,6 @@ export async function toggleTaskTemplateEnabled(
   id: number,
   enabled?: boolean
 ): Promise<number> {
-  const { getDB } = useDB();
   const db = getDB();
 
   const template = await db.taskTemplates.get(id);
@@ -139,7 +131,6 @@ export async function toggleTaskTemplateEnabled(
 export async function createTaskInstance(
   instance: Omit<TaskInstance, 'id' | 'createAt'>
 ): Promise<number> {
-  const { getDB } = useDB();
   const db = getDB();
 
   const newInstance: TaskInstance = {
@@ -156,7 +147,6 @@ export async function createTaskInstance(
 export async function createTaskInstances(
   instances: Omit<TaskInstance, 'id' | 'createAt'>[]
 ): Promise<number[]> {
-  const { getDB } = useDB();
   const db = getDB();
 
   const now = new Date().toISOString();
@@ -172,7 +162,6 @@ export async function createTaskInstances(
  * 获取所有任务实例
  */
 export async function getAllTaskInstances(userId?: number): Promise<TaskInstance[]> {
-  const { getDB } = useDB();
   const db = getDB();
 
   if (userId !== undefined) {
@@ -185,7 +174,6 @@ export async function getAllTaskInstances(userId?: number): Promise<TaskInstance
  * 根据ID获取任务实例
  */
 export async function getTaskInstanceById(id: number): Promise<TaskInstance | undefined> {
-  const { getDB } = useDB();
   const db = getDB();
   return db.taskInstances.get(id);
 }
@@ -194,7 +182,6 @@ export async function getTaskInstanceById(id: number): Promise<TaskInstance | un
  * 根据模板ID获取任务实例
  */
 export async function getTaskInstancesByTemplateId(templateId: number): Promise<TaskInstance[]> {
-  const { getDB } = useDB();
   const db = getDB();
   return db.taskInstances.where('templateId').equals(templateId).toArray();
 }
@@ -206,7 +193,6 @@ export async function getTaskInstancesByStatus(
   status: TaskStatus,
   userId?: number
 ): Promise<TaskInstance[]> {
-  const { getDB } = useDB();
   const db = getDB();
 
   if (userId !== undefined) {
@@ -224,7 +210,6 @@ export async function getTaskInstancesByDateRange(
   endDate: string,
   userId?: number
 ): Promise<TaskInstance[]> {
-  const { getDB } = useDB();
   const db = getDB();
 
   let collection = db.taskInstances
@@ -258,7 +243,6 @@ export async function updateTaskInstance(
   id: number,
   updates: Partial<Omit<TaskInstance, 'id'>>
 ): Promise<number> {
-  const { getDB } = useDB();
   const db = getDB();
   return db.taskInstances.update(id, updates);
 }
@@ -267,7 +251,6 @@ export async function updateTaskInstance(
  * 完成任务实例
  */
 export async function completeTaskInstance(id: number): Promise<number> {
-  const { getDB } = useDB();
   const db = getDB();
 
   const instance = await db.taskInstances.get(id);
@@ -289,7 +272,6 @@ export async function completeTaskInstance(id: number): Promise<number> {
  * 跳过任务实例
  */
 export async function skipTaskInstance(id: number): Promise<number> {
-  const { getDB } = useDB();
   const db = getDB();
 
   const instance = await db.taskInstances.get(id);
@@ -310,7 +292,6 @@ export async function skipTaskInstance(id: number): Promise<number> {
  * 重置任务实例状态为待处理
  */
 export async function resetTaskInstance(id: number): Promise<number> {
-  const { getDB } = useDB();
   const db = getDB();
 
   return db.taskInstances.update(id, {
@@ -323,7 +304,6 @@ export async function resetTaskInstance(id: number): Promise<number> {
  * 删除任务实例
  */
 export async function deleteTaskInstance(id: number): Promise<void> {
-  const { getDB } = useDB();
   const db = getDB();
   return db.taskInstances.delete(id);
 }
@@ -332,7 +312,6 @@ export async function deleteTaskInstance(id: number): Promise<void> {
  * 批量删除任务实例
  */
 export async function deleteTaskInstances(ids: number[]): Promise<void> {
-  const { getDB } = useDB();
   const db = getDB();
   return db.taskInstances.bulkDelete(ids);
 }
@@ -341,7 +320,6 @@ export async function deleteTaskInstances(ids: number[]): Promise<void> {
  * 删除指定模板的所有任务实例
  */
 export async function deleteTaskInstancesByTemplateId(templateId: number): Promise<number> {
-  const { getDB } = useDB();
   const db = getDB();
   return db.taskInstances.where('templateId').equals(templateId).delete();
 }
@@ -354,7 +332,6 @@ export async function deleteTaskInstancesByTemplateId(templateId: number): Promi
 export async function getTaskInstanceWithTemplate(
   instanceId: number
 ): Promise<{ instance: TaskInstance; template?: TaskTemplate } | undefined> {
-  const { getDB } = useDB();
   const db = getDB();
 
   const instance = await db.taskInstances.get(instanceId);
@@ -372,7 +349,6 @@ export async function getTaskInstanceWithTemplate(
 export async function getTodayTaskInstances(
   userId: number
 ): Promise<Array<{ instance: TaskInstance; template: TaskTemplate }>> {
-  const { getDB } = useDB();
   const db = getDB();
 
   const today = new Date().toISOString().split('T')[0];
@@ -404,7 +380,6 @@ export async function getTodayTaskInstances(
 export async function getNoDateTaskInstances(
   userId: number
 ): Promise<Array<{ instance: TaskInstance; template: TaskTemplate }>> {
-  const { getDB } = useDB();
   const db = getDB();
 
   // 获取所有 repeatMode 为 'none' 的任务模板
@@ -455,7 +430,6 @@ export async function getTaskStatistics(
   pending: number;
   skipped: number;
 }> {
-  const { getDB } = useDB();
   const db = getDB();
 
   let instances: TaskInstance[];

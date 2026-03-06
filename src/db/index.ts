@@ -6,18 +6,16 @@ const state: { db: null | ReturnType<typeof createDB> } = {
   db: null
 };
 
-export function useDB() {
-  const getDB = () => {
-    if (state.db) {
-      return state.db;
-    } else {
-      state.db = createDB()
-      return state.db;
-    }
+function getDB() {
+  if (state.db) {
+    return state.db;
+  } else {
+    state.db = createDB();
+    return state.db;
   }
-
-  return { getDB }
 }
+
+export { getDB };
 
 const createDB = () => {
   const db = new Dexie('exp-v3') as DB;

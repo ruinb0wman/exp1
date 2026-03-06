@@ -1,4 +1,4 @@
-import { useDB } from '../index';
+import { getDB } from '../index';
 import type { User, PointsHistory, PointsHistoryType } from '../types';
 
 const DEFAULT_USER: Omit<User, 'id'> = {
@@ -8,7 +8,6 @@ const DEFAULT_USER: Omit<User, 'id'> = {
 };
 
 export async function getOrCreateUser(): Promise<User> {
-  const { getDB } = useDB();
   const db = getDB();
 
   let user = await db.users.toCollection().first();
@@ -26,7 +25,6 @@ export async function getOrCreateUser(): Promise<User> {
 }
 
 export async function getUserById(id: number): Promise<User | undefined> {
-  const { getDB } = useDB();
   const db = getDB();
   return db.users.get(id);
 }
@@ -35,7 +33,6 @@ export async function updateUser(
   id: number,
   updates: Partial<Omit<User, 'id' | 'createdAt'>>
 ): Promise<number> {
-  const { getDB } = useDB();
   const db = getDB();
   return db.users.update(id, updates);
 }
@@ -46,7 +43,6 @@ export async function updateUserPoints(
   type: PointsHistoryType,
   relatedEntityId?: number
 ): Promise<void> {
-  const { getDB } = useDB();
   const db = getDB();
 
   await db.transaction('rw', db.users, db.pointsHistory, async () => {
@@ -74,7 +70,6 @@ export async function updateUserPoints(
 }
 
 export async function getPointsHistory(userId: number): Promise<PointsHistory[]> {
-  const { getDB } = useDB();
   const db = getDB();
   return db.pointsHistory.where('userId').equals(userId).reverse().sortBy('createdAt');
 }

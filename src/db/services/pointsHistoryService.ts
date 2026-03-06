@@ -1,4 +1,4 @@
-import { useDB } from '../index';
+import { getDB } from '../index';
 import type { PointsHistory, PointsHistoryType } from '../types';
 
 export type PointsHistoryFilterType = 'all' | PointsHistoryType;
@@ -34,7 +34,6 @@ export async function getPointsHistoryPaged(
   hasMore: boolean;
   total: number;
 }> {
-  const { getDB } = useDB();
   const db = getDB();
 
   const { page = 1, pageSize = DEFAULT_PAGE_SIZE, type = 'all', startDate, endDate } = options;
@@ -75,7 +74,6 @@ export async function getPointsHistoryByDateRange(
   endDate: string,
   type?: PointsHistoryFilterType
 ): Promise<PointsHistory[]> {
-  const { getDB } = useDB();
   const db = getDB();
 
   let collection = db.pointsHistory.where('userId').equals(userId);
@@ -99,7 +97,6 @@ export async function getPointsStats(
   startDate: string,
   endDate: string
 ): Promise<PointsStats> {
-  const { getDB } = useDB();
   const db = getDB();
 
   const records = await db.pointsHistory
@@ -159,7 +156,6 @@ export async function recordTaskUndo(
   taskInstanceId: number,
   pointsToDeduct: number
 ): Promise<number> {
-  const { getDB } = useDB();
   const db = getDB();
 
   const history: PointsHistory = {
@@ -180,7 +176,6 @@ export async function getTaskPointsRecords(
   userId: number,
   taskInstanceId: number
 ): Promise<PointsHistory[]> {
-  const { getDB } = useDB();
   const db = getDB();
 
   return db.pointsHistory
