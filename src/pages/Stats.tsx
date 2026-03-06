@@ -1,18 +1,10 @@
 import { useEffect, useState, useCallback } from "react";
 import { ChevronLeft } from "lucide-react";
 import { Calendar } from "../components/Calendar";
-import { getDB } from "@/db";
 import { useUserStore } from "@/store";
 import type { TaskInstance } from "@/db/types";
-import {
-  getEnabledTaskTemplates,
-  getAllTaskInstances,
-  getTaskInstancesByDate,
-} from "@/db/services";
-import {
-  filterTemplatesNeedingInstancesOnDate,
-  generateTaskInstance,
-} from "@/libs/task";
+import { useTaskInstanceGenerator } from "@/hooks/useTaskInstanceGenerator";
+import { formatLocalDate } from "@/libs/task";
 
 interface TaskDisplayItem {
   id: number | string;
@@ -22,16 +14,8 @@ interface TaskDisplayItem {
   isPreview: boolean;
 }
 
-function formatDateKey(date: Date): string {
-  return date.toISOString().split("T")[0];
-}
-
 function isSameDay(date1: Date, date2: Date): boolean {
-  return (
-    date1.getFullYear() === date2.getFullYear() &&
-    date1.getMonth() === date2.getMonth() &&
-    date1.getDate() === date2.getDate()
-  );
+  return formatLocalDate(date1) === formatLocalDate(date2);
 }
 
 export function Stats() {
@@ -39,8 +23,11 @@ export function Stats() {
   const [tasks, setTasks] = useState<TaskDisplayItem[]>([]);
   const [isLoading, setIsLoading] = useState(false);
 
-
   const { user: currentUser } = useUserStore();
+  
+  const { getDisplayTasksForDate } = useTaskInstanceGenerator({
+    userId: currentUser?.id,
+  });
 
   // 加载指定日期的任务
   const loadTasksForDate = useCallback(
@@ -49,52 +36,18 @@ export function Stats() {
 
       setIsLoading(true);
       try {
-        const isToday = isSameDay(date, new Date());
+        // 使用 hook 获取该日期应该显示的任务（包含已有实例和预览）
+        const displayTasks = await getDisplayTasksForDate(date);
 
-        if (isToday) {
-          // 今天：显示实际的任务实例
-          const dateStr = formatDateKey(date);
-          const instances = await getTaskInstancesByDate(dateStr, currentUser.id);
+        const displayItems: TaskDisplayItem[] = displayTasks.map((item, index) => ({
+          id: item.instance?.id ?? `preview-${item.template.id}-${index}`,
+          name: item.template.title,
+          exp: item.instance?.rewardPoints ?? item.template.rewardPoints,
+          status: item.instance?.status ?? "pending",
+          isPreview: !item.instance, // 没有实际 instance 的就是预览
+        }));
 
-          const displayItems: TaskDisplayItem[] = await Promise.all(
-            instances.map(async (instance) => {
-              const template = await getDB().taskTemplates.get(instance.templateId);
-              return {
-                id: instance.id!,
-                name: template?.title || "Unknown Task",
-                exp: instance.rewardPoints,
-                status: instance.status,
-                isPreview: false,
-              };
-            })
-          );
-
-          setTasks(displayItems);
-        } else {
-          // 其他日期：显示预览（根据模板规则判断）
-          const templates = await getEnabledTaskTemplates(currentUser.id);
-          const allInstances = await getAllTaskInstances(currentUser.id);
-
-          // 获取在该日期应该生成实例的模板
-          const templatesForDate = filterTemplatesNeedingInstancesOnDate(
-            templates,
-            allInstances,
-            date
-          );
-
-          const displayItems: TaskDisplayItem[] = templatesForDate.map((template, index) => {
-            const previewInstance = generateTaskInstance(template, date);
-            return {
-              id: `preview-${template.id}-${index}`,
-              name: template.title,
-              exp: previewInstance.rewardPoints,
-              status: "pending" as TaskInstance["status"],
-              isPreview: true,
-            };
-          });
-
-          setTasks(displayItems);
-        }
+        setTasks(displayItems);
       } catch (error) {
         console.error("Failed to load tasks:", error);
         setTasks([]);
@@ -102,7 +55,7 @@ export function Stats() {
         setIsLoading(false);
       }
     },
-    [currentUser]
+    [currentUser, getDisplayTasksForDate]
   );
 
   // 当选择的日期变化时加载任务

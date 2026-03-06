@@ -1,17 +1,9 @@
-import { useEffect, useState, useRef, useCallback } from "react";
+import { useEffect, useCallback } from "react";
 import { Plus } from "lucide-react";
 import { useNavigate } from "react-router";
 import { useUserStore } from "@/store";
 import { useTodayTasks, useNoDateTasks, useTaskInstanceActions } from "@/hooks/useTasks";
-import {
-  getEnabledTaskTemplates,
-  getAllTaskInstances,
-  createTaskInstances,
-} from "@/db/services";
-import {
-  filterTemplatesNeedingInstances,
-  generateTaskInstances,
-} from "@/libs/task";
+import { useTaskInstanceGenerator } from "@/hooks/useTaskInstanceGenerator";
 import { HomeHeader } from "@/components/HomeHeader";
 import { Progress } from "@/components/Progress";
 import { TaskList } from "@/components/TaskList";
@@ -22,8 +14,18 @@ export function Home() {
   const { tasks, isLoading: isTasksLoading, refresh: refreshTasks } = useTodayTasks(user?.id ?? 0);
   const { tasks: noDateTasks, isLoading: isNoDateTasksLoading, refresh: refreshNoDateTasks } = useNoDateTasks(user?.id ?? 0);
   const { complete, reset } = useTaskInstanceActions();
-  const [isGenerating, setIsGenerating] = useState(false);
-  const hasGeneratedRef = useRef(false);
+  
+  const { isGenerating, generateToday } = useTaskInstanceGenerator({
+    userId: user?.id,
+    onGenerated: async () => {
+      // 刷新任务列表
+      await refreshTasks();
+      await refreshNoDateTasks();
+    },
+    onError: (error) => {
+      console.error("Failed to generate task instances:", error);
+    },
+  });
 
   // 初始化用户
   useEffect(() => {
@@ -34,45 +36,12 @@ export function Home() {
 
   // 自动生成今日任务实例 - 只在用户加载完成且未生成过时执行
   useEffect(() => {
-    if (!user?.id || isGenerating || hasGeneratedRef.current) return;
+    if (!user?.id) return;
 
-    const generateTodayInstances = async () => {
-      setIsGenerating(true);
-      try {
-        // 获取启用的任务模板
-        const templates = await getEnabledTaskTemplates(user.id);
-
-        // 获取该用户的所有任务实例（包括没有 startAt 的）
-        const existingInstances = await getAllTaskInstances(user.id);
-
-        // 过滤出需要生成实例的模板
-        const today = new Date();
-        const templatesNeedingInstances = filterTemplatesNeedingInstances(
-          templates,
-          existingInstances
-        );
-
-        // 生成并保存新的任务实例
-        if (templatesNeedingInstances.length > 0) {
-          const newInstances = generateTaskInstances(templatesNeedingInstances, today);
-          await createTaskInstances(newInstances);
-        }
-
-        // 标记已生成
-        hasGeneratedRef.current = true;
-
-        // 刷新任务列表
-        await refreshTasks();
-        await refreshNoDateTasks();
-      } catch (error) {
-        console.error("Failed to generate task instances:", error);
-      } finally {
-        setIsGenerating(false);
-      }
-    };
-
-    generateTodayInstances();
-  }, [user?.id]); // 只依赖 user.id
+    generateToday();
+    // 注意：generateToday 内部有防止重复执行的机制
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.id]);
 
   // 处理完成任务
   const handleComplete = useCallback(async (instanceId: number, rewardPoints: number) => {
