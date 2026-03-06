@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef, useCallback } from "react";
-import { ListTodo, ChevronRight, Plus, Star } from "lucide-react";
+import { Plus } from "lucide-react";
 import { useNavigate } from "react-router";
 import { useUserStore } from "@/store";
 import { useTodayTasks, useNoDateTasks, useTaskInstanceActions } from "@/hooks/useTasks";
@@ -12,6 +12,9 @@ import {
   filterTemplatesNeedingInstances,
   generateTaskInstances,
 } from "@/libs/task";
+import { HomeHeader } from "@/components/HomeHeader";
+import { Progress } from "@/components/Progress";
+import { TaskList } from "@/components/TaskList";
 
 export function Home() {
   const navigate = useNavigate();
@@ -103,7 +106,6 @@ export function Home() {
   // 计算进度
   const completedCount = tasks.filter(({ instance }) => instance.status === "completed").length;
   const totalCount = tasks.length;
-  const progress = totalCount > 0 ? (completedCount / totalCount) * 100 : 0;
 
   const isLoading = isUserLoading || isTasksLoading || isNoDateTasksLoading || isGenerating;
 
@@ -111,203 +113,34 @@ export function Home() {
     <div className="min-h-screen pb-24 bg-background">
       {/* Header */}
       <header className="px-4 pt-6 pb-4">
-        <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-surface flex items-center justify-center text-text-primary font-bold border border-border">
-              {user?.name?.[0]?.toUpperCase() ?? "U"}
-            </div>
-            <div className="flex flex-col">
-              <p className="text-text-secondary text-sm font-normal">
-                Good Morning!
-              </p>
-              <h1 className="text-text-primary text-xl font-bold tracking-tight">
-                {user?.name ?? "User"}
-              </h1>
-            </div>
-          </div>
-          <div className="flex items-center gap-2 rounded-full bg-surface px-3 py-1.5 border border-border">
-            <Star className="w-4 h-4 text-primary fill-primary" />
-            <p className="text-text-primary text-sm font-bold">{user?.currentPoints ?? 0} exp</p>
-          </div>
-        </div>
-
-        {/* Progress */}
-        <div className="mb-2">
-          <p className="text-text-primary text-base font-normal mb-2">
-            You've completed {completedCount} of {totalCount} tasks today.
-          </p>
-          <div className="w-full rounded-full bg-surface h-2">
-            <div
-              className="h-2 rounded-full bg-primary transition-all duration-300"
-              style={{ width: `${progress}%` }}
-            />
-          </div>
-        </div>
+        <HomeHeader user={user} />
+        <Progress completedCount={completedCount} totalCount={totalCount} />
       </header>
 
       {/* Tasks List */}
       <main className="px-4">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-text-primary text-lg font-bold tracking-tight">
-            Today's Tasks
-          </h2>
-          <button
-            onClick={() => navigate("/tasks")}
-            className="flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-medium text-primary hover:bg-surface transition-colors"
-          >
-            <ListTodo className="w-4 h-4" />
-            <span>All Tasks</span>
-          </button>
-        </div>
-
-        {tasks.length === 0 && !isLoading ? (
-          <div className="flex flex-col items-center justify-center py-16 text-text-muted">
-            <div className="w-16 h-16 rounded-full bg-surface flex items-center justify-center mb-4">
-              <ListTodo className="w-8 h-8" />
-            </div>
-            <p className="text-base font-medium">No tasks for today</p>
-            <p className="text-sm mt-1">Create a task to get started</p>
-          </div>
-        ) : (
-          <div className="flex flex-col gap-3">
-            {isLoading
-              ? // 骨架屏
-              Array.from({ length: 3 }).map((_, index) => (
-                <div
-                  key={index}
-                  className="flex items-center gap-4 bg-surface rounded-xl p-4 min-h-[72px] justify-between border border-border"
-                >
-                  <div className="flex items-center gap-4 flex-1">
-                    <div className="w-5 h-5 rounded bg-surface-light animate-pulse" />
-                    <div className="flex flex-col justify-center flex-1 gap-2">
-                      <div className="h-4 w-32 bg-surface-light rounded animate-pulse" />
-                      <div className="h-3 w-20 bg-surface-light rounded animate-pulse" />
-                    </div>
-                  </div>
-                  <div className="shrink-0 flex flex-col items-end gap-1">
-                    <div className="h-3 w-8 bg-surface-light rounded animate-pulse" />
-                    <div className="h-5 w-5 bg-surface-light rounded animate-pulse" />
-                  </div>
-                </div>
-              ))
-              : tasks.map(({ instance, template }) => (
-                <div
-                  key={instance.id}
-                  className="flex items-center gap-4 bg-surface rounded-xl p-4 min-h-[72px] justify-between border border-border"
-                >
-                  <div className="flex items-center gap-4 flex-1">
-                    <div className="flex items-center justify-center">
-                      <input
-                        type="checkbox"
-                        checked={instance.status === "completed"}
-                        onChange={() => {
-                          if (instance.status === "pending") {
-                            handleComplete(instance.id!, template.rewardPoints);
-                          } else if (instance.status === "completed") {
-                            handleReset(instance.id!, template.rewardPoints);
-                          }
-                        }}
-                        className="custom-checkbox"
-                      />
-                    </div>
-                    <div className="flex flex-col justify-center flex-1">
-                      <p
-                        className={`text-base font-medium leading-normal line-clamp-1 transition-all ${instance.status === "completed"
-                            ? "text-text-secondary line-through"
-                            : "text-text-primary"
-                          }`}
-                      >
-                        {template.title}
-                      </p>
-                      <p
-                        className={`text-sm font-normal leading-normal line-clamp-2 transition-all ${instance.status === "completed"
-                            ? "text-text-muted line-through"
-                            : "text-text-secondary"
-                          }`}
-                      >
-                        {template.description || `+${template.rewardPoints} exp`}
-                      </p>
-                      {instance.subtasks.length > 0 && (
-                        <p className="text-xs text-text-muted mt-1">
-                          {instance.subtasks.join(", ")}
-                        </p>
-                      )}
-                    </div>
-                  </div>
-                  <div className="shrink-0 flex flex-col items-end gap-1">
-                    <span className="text-xs text-primary font-medium">
-                      +{template.rewardPoints}
-                    </span>
-                    <ChevronRight className="w-5 h-5 text-text-muted" />
-                  </div>
-                </div>
-              ))}
-          </div>
-        )}
+        <TaskList
+          tasks={tasks}
+          isLoading={isLoading}
+          onComplete={handleComplete}
+          onReset={handleReset}
+          title="Today's Tasks"
+          showViewAll={true}
+          emptyMessage="No tasks for today"
+        />
 
         {/* No Date Tasks Section */}
         {noDateTasks.length > 0 && (
-          <>
-            <div className="flex items-center justify-between mb-4 mt-6">
-              <h2 className="text-text-primary text-lg font-bold tracking-tight">
-                No Date
-              </h2>
-            </div>
-            <div className="flex flex-col gap-3">
-              {noDateTasks.map(({ instance, template }) => (
-                <div
-                  key={instance.id}
-                  className="flex items-center gap-4 bg-surface rounded-xl p-4 min-h-[72px] justify-between border border-border"
-                >
-                  <div className="flex items-center gap-4 flex-1">
-                    <div className="flex items-center justify-center">
-                      <input
-                        type="checkbox"
-                        checked={instance.status === "completed"}
-                        onChange={() => {
-                          if (instance.status === "pending") {
-                            handleComplete(instance.id!, template.rewardPoints);
-                          } else if (instance.status === "completed") {
-                            handleReset(instance.id!, template.rewardPoints);
-                          }
-                        }}
-                        className="custom-checkbox"
-                      />
-                    </div>
-                    <div className="flex flex-col justify-center flex-1">
-                      <p
-                        className={`text-base font-medium leading-normal line-clamp-1 transition-all ${instance.status === "completed"
-                            ? "text-text-secondary line-through"
-                            : "text-text-primary"
-                          }`}
-                      >
-                        {template.title}
-                      </p>
-                      <p
-                        className={`text-sm font-normal leading-normal line-clamp-2 transition-all ${instance.status === "completed"
-                            ? "text-text-muted line-through"
-                            : "text-text-secondary"
-                          }`}
-                      >
-                        {template.description || `+${template.rewardPoints} exp`}
-                      </p>
-                      {instance.subtasks.length > 0 && (
-                        <p className="text-xs text-text-muted mt-1">
-                          {instance.subtasks.join(", ")}
-                        </p>
-                      )}
-                    </div>
-                  </div>
-                  <div className="shrink-0 flex flex-col items-end gap-1">
-                    <span className="text-xs text-primary font-medium">
-                      +{template.rewardPoints}
-                    </span>
-                    <ChevronRight className="w-5 h-5 text-text-muted" />
-                  </div>
-                </div>
-              ))}
-            </div>
-          </>
+          <div className="mt-6">
+            <TaskList
+              tasks={noDateTasks}
+              isLoading={isLoading}
+              onComplete={handleComplete}
+              onReset={handleReset}
+              title="No Date"
+              showViewAll={false}
+            />
+          </div>
         )}
       </main>
 
