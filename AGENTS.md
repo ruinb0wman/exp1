@@ -2,7 +2,7 @@
 
 ## Project Overview
 
-This is a **gamified task management application** (任务+积分工具) designed to motivate users to build habits through a reward system. Users can create recurring tasks, track completions via a calendar view, earn experience points (exp), and redeem rewards.
+This is a **gamified task management application** (任务+积分工具) designed to motivate users to build habits through a reward system. Users can create recurring tasks, track completions, earn experience points (exp), and redeem rewards.
 
 The project uses a hybrid architecture with a **Tauri v2** backend and a **React + TypeScript** frontend. It supports both desktop and mobile platforms (Android).
 
@@ -11,16 +11,9 @@ The project uses a hybrid architecture with a **Tauri v2** backend and a **React
 - **Task Management** - Create recurring tasks with daily/weekly/monthly cycles
 - **Calendar View** - Visualize task completion status
 - **Reward System** - Exchange experience points for custom rewards
-- **Inventory System** - Manage redeemed reward items
+- **Inventory System** - Manage redeemed reward items (backpack)
 - **Statistics** - Track task progress and points history
 - **Data Backup** - Import/export data in JSON format
-
-### Planned Technology Stack
-
-Per README.md, the following are planned but **not yet implemented**:
-- Routing: react-router
-- Database: dexie.js (IndexedDB wrapper)
-- State Management: Zustand
 
 ---
 
@@ -31,6 +24,11 @@ Per README.md, the following are planned but **not yet implemented**:
 | Frontend Framework | React | ^19.1.0 |
 | Frontend Language | TypeScript | ~5.8.3 |
 | Build Tool | Vite | ^7.0.4 |
+| Styling | Tailwind CSS | ^4.2.1 |
+| Routing | react-router | ^7.13.1 |
+| Database | Dexie.js (IndexedDB) | ^4.3.0 |
+| State Management | Zustand | ^5.0.11 |
+| Icons | lucide-react | ^0.577.0 |
 | Backend Framework | Tauri | v2 |
 | Backend Language | Rust | Edition 2021 |
 | Package Manager | Bun | (lockfile: bun.lock) |
@@ -42,11 +40,45 @@ Per README.md, the following are planned but **not yet implemented**:
 ```
 hello-tauri/
 ├── src/                          # Frontend source (React + TypeScript)
-│   ├── App.tsx                   # Main React component (currently default template)
-│   ├── App.css                   # Component styles
+│   ├── App.tsx                   # Main React component with routing
 │   ├── main.tsx                  # React app entry point
+│   ├── index.css                 # Global styles with Tailwind v4
 │   ├── vite-env.d.ts             # Vite type declarations
-│   └── assets/                   # Static assets (images, etc.)
+│   │
+│   ├── components/               # Reusable UI components
+│   │   ├── BottomNav.tsx         # Bottom tab navigation
+│   │   ├── Calendar.tsx          # Calendar view component
+│   │   ├── DatePicker.tsx        # Date picker component
+│   │   ├── Header.tsx            # Page header component
+│   │   ├── MultiSelectGrid.tsx   # Multi-select grid (days/weeks)
+│   │   ├── Popup.tsx             # Modal/popup component
+│   │   └── RadioGroup.tsx        # Radio button group
+│   │
+│   ├── pages/                    # Page components
+│   │   ├── Home.tsx              # Home/task list page
+│   │   ├── AllTasks.tsx          # All tasks view
+│   │   ├── EditTask.tsx          # Create/edit task form
+│   │   ├── Store.tsx             # Reward shop page
+│   │   ├── EditReward.tsx        # Create/edit reward form
+│   │   ├── Stats.tsx             # Statistics page
+│   │   └── Profile.tsx           # User profile page
+│   │
+│   ├── db/                       # Database layer (Dexie.js)
+│   │   ├── index.ts              # Database initialization
+│   │   ├── types/                # TypeScript type definitions
+│   │   │   ├── index.ts          # DB interface & exports
+│   │   │   ├── task.ts           # Task types (TaskTemplate, TaskInstance)
+│   │   │   ├── reward.ts         # Reward types (RewardTemplate, RewardInstance)
+│   │   │   └── user.ts           # User and PointsHistory types
+│   │   ├── migrations/           # Database migrations
+│   │   │   └── index.ts          # Schema v1 definition
+│   │   └── services/             # Database service layer
+│   │       ├── index.ts          # Service exports
+│   │       └── userService.ts    # User-related DB operations
+│   │
+│   └── store/                    # Zustand state management
+│       ├── index.ts              # Store exports
+│       └── userStore.ts          # User state & points management
 │
 ├── src-tauri/                    # Tauri backend (Rust)
 │   ├── src/
@@ -113,7 +145,7 @@ bun run tauri -- <command>
 
 ### Important Notes for Android Development
 
-The default dev server IP is incorrect for Android. You **must** specify the host machine's IP address:
+The default dev server IP may not work for Android. You **must** specify the host machine's IP address:
 
 ```bash
 # If the pre-configured IP doesn't work, manually specify:
@@ -130,10 +162,21 @@ bun run tauri android dev -- --host <YOUR_MACHINE_IP>
 - **HMR Port**: 1421 (for mobile development)
 - **Watch**: Ignores `src-tauri/**` to prevent rebuild loops
 - **Clear Screen**: Disabled to preserve Rust error visibility
+- **Path Alias**: `@/` maps to `src/`
+
+### TypeScript Configuration (`tsconfig.json`)
+
+- **Target**: ES2020
+- **Module**: ESNext with Bundler resolution
+- **JSX**: react-jsx transform
+- **Strict mode**: Enabled
+- **Unused locals/parameters**: Errors (not warnings)
+- **Path Alias**: `@/*` maps to `src/*`
 
 ### Tauri Configuration (`src-tauri/tauri.conf.json`)
 
 - **App ID**: `com.ruinb0w.hello-tauri`
+- **Product Name**: `hello-tauri`
 - **Dev URL**: `http://localhost:1420`
 - **Frontend Dist**: `../dist` (Vite output directory)
 - **Window Defaults**: 800x600, title "hello-tauri"
@@ -158,47 +201,102 @@ Based on `tsconfig.json`:
 - JSX: react-jsx transform
 - Strict mode enabled
 - Unused locals and parameters are errors (not warnings)
+- Use path alias `@/` for imports from `src/`
 
 ### Rust
 
 - Edition 2021
 - Standard Tauri patterns with command handlers
 
-### CSS/Design Conventions
+### CSS/Styling Conventions
 
-From the design mockups, the app follows a **minimalist dark theme**:
+The app follows a **minimalist dark theme** using Tailwind CSS v4:
 
-- **Primary Color**: `#2b8cee` (blue)
-- **Background Dark**: `#101922`
-- **Background Light**: `#f6f7f8`
-- **Card Background (dark)**: `#202127`
-- **Text (dark)**: `#1a1a1a`
-- **Accent**: `#f56565` (red/coral)
-- **Icons**: Material Symbols Outlined or Lucide (1.5px stroke)
-- **Border Radius**: 6px (small), 12px (large)
+**Color Palette (defined in `src/index.css`):**
+- **Primary Color**: `#f56565` (coral/red)
+- **Primary Light**: `#fc8181`
+- **Primary Dark**: `#e53e3e`
+- **Background**: `#1b1b1f`
+- **Surface**: `#202127` (card backgrounds)
+- **Surface Light**: `#2a2a30`
+- **Text Primary**: `#ffffff`
+- **Text Secondary**: `#a0a0a0`
+- **Text Muted**: `#6b6b6b`
+- **Border**: `#2a2a30`
+
+**Design Patterns:**
+- Icons: Lucide with 1.5px stroke width
+- Border Radius: 6px (small elements), 12px (large elements/cards)
+- Safe area insets: Use `pt-safe`, `pb-safe` classes for mobile notches
+- Scrollbar: Hidden by default
 
 ---
 
-## Current Development State
+## Database Architecture
 
-⚠️ **Important**: This is a template/starter project that has not yet been customized.
+### IndexedDB with Dexie.js
 
-- The `src/App.tsx` still contains the default Tauri + React template (greeting form)
-- The design mockups in `design/` folder represent the target UI but are not yet implemented
-- Planned dependencies (react-router, dexie.js, zustand) are not in package.json
+The application uses **Dexie.js** as a wrapper around the browser's IndexedDB for local data persistence.
 
-### Next Steps for Development
+### Database Schema (v1)
 
-1. Install planned dependencies:
-   ```bash
-   bun add react-router dexie zustand
-   ```
+Defined in `src/db/migrations/index.ts`:
 
-2. Replace `src/App.tsx` with actual application code based on design mockups
+| Table | Primary Key | Indexes |
+|-------|-------------|---------|
+| `taskTemplates` | `++id` (auto-increment) | `userId`, `repeatMode`, `enabled`, `*subtasks` |
+| `taskInstances` | `++id` | `userId`, `templateId`, `scheduledDate`, `status`, `[templateId+startAt]` |
+| `rewardTemplates` | `++id` | `userId`, `replenishmentMode`, `enabled` |
+| `rewardInstances` | `++id` | `templateId`, `userId`, `status`, `expiresAt` |
+| `users` | `++id` | `name` |
+| `pointsHistory` | `++id` | `userId`, `type`, `createdAt`, `[userId+createdAt]` |
 
-3. Implement the tab navigation (Home, Shop, Stats, Settings)
+### Key Types
 
-4. Set up dexie.js for local IndexedDB storage
+**Task Types (`src/db/types/task.ts`):**
+- `RepeatMode`: 'none' | 'daily' | 'weekly' | 'monthly'
+- `EndCondition`: 'times' | 'date' | 'manual'
+- `TaskStatus`: 'pending' | 'completed' | 'skipped'
+- `TaskTemplate`: Task definition with recurrence rules
+- `TaskInstance`: Generated task occurrence
+
+**Reward Types (`src/db/types/reward.ts`):**
+- `RewardStatus`: 'available' | 'used' | 'expired'
+- `ReplenishmentMode`: 'none' | 'daily' | 'weekly' | 'monthly'
+- `RewardTemplate`: Reward definition with restocking rules
+- `RewardInstance`: Redeemed reward item
+
+**User Types (`src/db/types/user.ts`):**
+- `PointsHistoryType`: 'task_reward' | 'reward_exchange' | 'admin_adjustment'
+- `User`: User profile with current points
+- `PointsHistory`: Points transaction log
+
+### State Management (Zustand)
+
+The `userStore` (`src/store/userStore.ts`) provides:
+- User initialization and refresh
+- Points management (add/spend)
+- Points history tracking
+- Loading and error states
+
+---
+
+## Routing Structure
+
+Defined in `src/App.tsx` using react-router v7:
+
+**Layout with Bottom Navigation:**
+- `/` - Home (today's tasks)
+- `/store` - Reward shop
+- `/stats` - Statistics
+- `/profile` - User profile
+
+**Simple Layout (no navigation):**
+- `/tasks` - All tasks view
+- `/tasks/new` - Create new task
+- `/tasks/:id` - Edit existing task
+- `/rewards/new` - Create new reward
+- `/rewards/:id` - Edit existing reward
 
 ---
 
@@ -245,9 +343,46 @@ Requires Android SDK and NDK configured.
 
 ---
 
+## Development Notes
+
+### Mobile-First Design
+
+The app is designed with mobile-first principles:
+- Uses safe area insets (`pt-safe`, `pb-safe`) for notched devices
+- Bottom navigation fixed at bottom with safe area padding
+- Touch-friendly tap targets
+- Responsive layouts using Tailwind CSS
+
+### Database Access Pattern
+
+```typescript
+// Use the database hook
+import { useDB } from '@/db';
+
+const { getDB } = useDB();
+const db = getDB();
+
+// Access tables
+const templates = await db.taskTemplates.toArray();
+```
+
+### State Store Pattern
+
+```typescript
+// Use Zustand store
+import { useUserStore } from '@/store';
+
+const { user, initUser, addPoints } = useUserStore();
+```
+
+---
+
 ## Resources
 
 - [Tauri Documentation](https://tauri.app/develop/)
 - [React Documentation](https://react.dev)
 - [Vite Documentation](https://vitejs.dev)
+- [Dexie.js Documentation](https://dexie.org/)
+- [Zustand Documentation](https://docs.pmnd.rs/zustand)
+- [Tailwind CSS Documentation](https://tailwindcss.com/)
 - Design mockups are in the `design/` folder for reference

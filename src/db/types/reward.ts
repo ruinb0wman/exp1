@@ -1,6 +1,54 @@
 export type RewardStatus = 'available' | 'used' | 'expired';
 export type ReplenishmentMode = 'none' | 'daily' | 'weekly' | 'monthly';
 
+// 预设图标名称列表
+export const REWARD_ICONS = [
+  'Gift',
+  'Coffee',
+  'Gamepad2',
+  'ShoppingBag',
+  'BookOpen',
+  'Dumbbell',
+  'Pizza',
+  'IceCream',
+  'Cookie',
+  'CakeSlice',
+  'Film',
+  'Music',
+  'Ticket',
+  'Tv',
+  'ShoppingCart',
+  'Package',
+  'Bike',
+  'Plane',
+  'Mountain',
+  'GraduationCap',
+  'Lightbulb',
+  'Heart',
+  'Star',
+  'Zap',
+  'Trophy',
+  'Crown',
+] as const;
+
+export type RewardIconName = (typeof REWARD_ICONS)[number];
+
+// 预设颜色列表
+export const REWARD_ICON_COLORS = [
+  '#f56565', // 红色 (primary)
+  '#fc8181', // 浅红
+  '#ed8936', // 橙色
+  '#ecc94b', // 黄色
+  '#48bb78', // 绿色
+  '#38b2ac', // 青色
+  '#4299e1', // 蓝色
+  '#667eea', // 紫色
+  '#ed64a6', // 粉色
+  '#a0aec0', // 灰色
+] as const;
+
+export type RewardIconColor = (typeof REWARD_ICON_COLORS)[number];
+
 export interface RewardTemplate {
   id?: number;
   userId: number;
@@ -15,6 +63,8 @@ export interface RewardTemplate {
   repeatDaysOfMonth?: number[]; // 月, 1-31, 例如[6,10]表示6号和10号补货
   replenishmentNum?: number; // 每次补货的数量
   replenishmentLimit?: number; // 最大库存限制, 补货不能超过最大库存
+  icon: RewardIconName; // 图标名称
+  iconColor?: RewardIconColor; // 图标颜色
   createdAt?: string; // 模板创建时间
   updatedAt?: string; // 模板更新时间
 }

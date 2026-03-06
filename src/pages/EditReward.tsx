@@ -1,7 +1,10 @@
 import { useState } from "react";
-import { Header } from "../components/Header";
-import { RadioGroup } from "../components/RadioGroup";
-import { Package } from "lucide-react";
+import { Header } from "@/components/Header";
+import { RadioGroup } from "@/components/RadioGroup";
+import { IconPicker } from "@/components/IconPicker";
+import { DynamicIcon } from "@/components/DynamicIcon";
+import type { RewardIconName, RewardIconColor } from "@/db/types";
+import { REWARD_ICON_COLORS } from "@/db/types";
 
 const restockOptions = ["None", "Daily", "Weekly", "Monthly"];
 const restockValues = ["none", "daily", "weekly", "monthly"] as const;
@@ -13,12 +16,15 @@ export function EditReward() {
   const [restockCycleIndex, setRestockCycleIndex] = useState(0);
   const [limitedStock, setLimitedStock] = useState(true);
   const [inventoryQuantity, setInventoryQuantity] = useState("10");
-  const [imageUrl, setImageUrl] = useState<string | null>(null);
+  
+  // 图标选择状态
+  const [selectedIcon, setSelectedIcon] = useState<RewardIconName>("Gift");
+  const [selectedColor, setSelectedColor] = useState<RewardIconColor>(REWARD_ICON_COLORS[0]);
+  const [isIconPickerOpen, setIsIconPickerOpen] = useState(false);
 
-  const handleImageUpload = () => {
-    // TODO: Implement actual image upload
-    // For now, just set a placeholder
-    setImageUrl("placeholder");
+  const handleIconSelect = (icon: RewardIconName, color: RewardIconColor) => {
+    setSelectedIcon(icon);
+    setSelectedColor(color);
   };
 
   const handleSubmit = () => {
@@ -30,7 +36,8 @@ export function EditReward() {
       restockCycle: restockValues[restockCycleIndex],
       limitedStock,
       inventoryQuantity: limitedStock ? parseInt(inventoryQuantity) || 0 : null,
-      imageUrl,
+      icon: selectedIcon,
+      iconColor: selectedColor,
     });
   };
 
@@ -50,30 +57,29 @@ export function EditReward() {
       />
 
       <main className="flex flex-1 flex-col p-4 gap-6">
-        {/* Image Uploader */}
-        <div
-          onClick={handleImageUpload}
-          className="flex flex-col items-center gap-4 rounded-xl border-2 border-dashed border-border px-6 py-10 cursor-pointer hover:border-primary/50 transition-colors"
-        >
-          {imageUrl ? (
-            <div className="w-24 h-24 rounded-xl bg-primary/20 flex items-center justify-center">
-              <Package className="w-12 h-12 text-primary" />
+        {/* Icon Selector */}
+        <div className="flex flex-col items-center gap-4">
+          <p className="text-text-primary text-base font-medium self-start">
+            选择图标
+          </p>
+          <button
+            onClick={() => setIsIconPickerOpen(true)}
+            className="flex flex-col items-center gap-3 p-6 rounded-xl border-2 border-dashed border-border hover:border-primary/50 transition-colors bg-surface/50 w-full"
+          >
+            <div
+              className="w-20 h-20 rounded-2xl flex items-center justify-center transition-colors"
+              style={{ backgroundColor: `${selectedColor}20` }}
+            >
+              <DynamicIcon
+                name={selectedIcon}
+                color={selectedColor}
+                className="w-10 h-10"
+              />
             </div>
-          ) : (
-            <>
-              <div className="flex max-w-[480px] flex-col items-center gap-2 text-center">
-                <p className="text-text-primary text-lg font-bold leading-tight tracking-[-0.015em]">
-                  Upload Product Image
-                </p>
-                <p className="text-text-secondary text-sm font-normal leading-normal">
-                  Tap to add an image for your new product.
-                </p>
-              </div>
-              <button className="flex min-w-[84px] cursor-pointer items-center justify-center overflow-hidden rounded-lg h-10 px-4 bg-primary/20 text-primary text-sm font-bold leading-normal tracking-[0.015em]">
-                <span className="truncate">Upload Image</span>
-              </button>
-            </>
-          )}
+            <div className="flex items-center gap-2 text-text-secondary text-sm">
+              <span>点击更换图标</span>
+            </div>
+          </button>
         </div>
 
         {/* Core Information Section */}
@@ -175,6 +181,15 @@ export function EditReward() {
           </button>
         </div>
       </main>
+
+      {/* Icon Picker Modal */}
+      <IconPicker
+        isOpen={isIconPickerOpen}
+        onClose={() => setIsIconPickerOpen(false)}
+        selectedIcon={selectedIcon}
+        selectedColor={selectedColor}
+        onSelect={handleIconSelect}
+      />
     </div>
   );
 }
