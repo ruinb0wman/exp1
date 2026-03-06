@@ -1,9 +1,12 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useNavigate, useParams } from "react-router";
 import { Header } from "../components/Header";
 import { RadioGroup } from "../components/RadioGroup";
 import { MultiSelectGrid } from "../components/MultiSelectGrid";
 import { DatePicker } from "../components/DatePicker";
-import { Stars, Trash2, Shuffle } from "lucide-react";
+import { Stars, Trash2, Shuffle, Loader2 } from "lucide-react";
+import { useUserStore } from "@/store";
+import { useTaskTemplate, useTaskTemplateActions } from "@/hooks/useTasks";
 import type { TaskTemplate, RepeatMode, EndCondition } from "../db/types/task";
 
 const repeatOptions = ["None", "Daily", "Weekly", "Monthly"];
@@ -27,32 +30,54 @@ const monthDays = Array.from({ length: 31 }, (_, i) => ({
   value: i + 1,
 }));
 
-interface EditTaskProps {
-  userId?: number;
-  initialTask?: Partial<TaskTemplate>;
-  onSubmit?: (task: Omit<TaskTemplate, "id" | "createdAt" | "updatedAt">) => void;
-}
+export function EditTask() {
+  const navigate = useNavigate();
+  const { id } = useParams<{ id: string }>();
+  const { user } = useUserStore();
+  const isEditMode = id && id !== "new";
+  const templateId = isEditMode ? parseInt(id, 10) : null;
 
-export function EditTask({ userId = 1, initialTask, onSubmit }: EditTaskProps) {
-  const [title, setTitle] = useState(initialTask?.title ?? "");
-  const [description, setDescription] = useState(initialTask?.description ?? "");
-  const [rewardPoints, setRewardPoints] = useState(initialTask?.rewardPoints ?? 10);
-  const [repeatIndex, setRepeatIndex] = useState(() => {
-    const mode = initialTask?.repeatMode ?? "none";
-    return repeatValues.indexOf(mode);
-  });
-  const [repeatInterval, setRepeatInterval] = useState(initialTask?.repeatInterval ?? 1);
-  const [repeatDaysOfWeek, setRepeatDaysOfWeek] = useState<number[]>(initialTask?.repeatDaysOfWeek ?? []);
-  const [repeatDaysOfMonth, setRepeatDaysOfMonth] = useState<number[]>(initialTask?.repeatDaysOfMonth ?? []);
-  const [endIndex, setEndIndex] = useState(() => {
-    const condition = initialTask?.endCondition ?? "manual";
-    return endValues.indexOf(condition);
-  });
-  const [endValue, setEndValue] = useState(initialTask?.endValue ?? "");
-  const [enabled, setEnabled] = useState(initialTask?.enabled ?? true);
-  const [subtasks, setSubtasks] = useState<string[]>(initialTask?.subtasks ?? []);
-  const [isRandomSubtask, setIsRandomSubtask] = useState(initialTask?.isRandomSubtask ?? false);
+  // 获取现有任务数据（编辑模式）
+  const {
+    template: existingTemplate,
+    isLoading: isLoadingTemplate,
+    error: loadError,
+  } = useTaskTemplate(templateId);
+
+  const { create, update, isLoading: isSubmitting } = useTaskTemplateActions();
+
+  // 表单状态
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
+  const [rewardPoints, setRewardPoints] = useState(10);
+  const [repeatIndex, setRepeatIndex] = useState(0);
+  const [repeatInterval, setRepeatInterval] = useState(1);
+  const [repeatDaysOfWeek, setRepeatDaysOfWeek] = useState<number[]>([]);
+  const [repeatDaysOfMonth, setRepeatDaysOfMonth] = useState<number[]>([]);
+  const [endIndex, setEndIndex] = useState(0);
+  const [endValue, setEndValue] = useState("");
+  const [enabled, setEnabled] = useState(true);
+  const [subtasks, setSubtasks] = useState<string[]>([]);
+  const [isRandomSubtask, setIsRandomSubtask] = useState(false);
   const [newSubtask, setNewSubtask] = useState("");
+
+  // 加载现有数据（编辑模式）
+  useEffect(() => {
+    if (existingTemplate) {
+      setTitle(existingTemplate.title);
+      setDescription(existingTemplate.description ?? "");
+      setRewardPoints(existingTemplate.rewardPoints);
+      setRepeatIndex(repeatValues.indexOf(existingTemplate.repeatMode));
+      setRepeatInterval(existingTemplate.repeatInterval ?? 1);
+      setRepeatDaysOfWeek(existingTemplate.repeatDaysOfWeek ?? []);
+      setRepeatDaysOfMonth(existingTemplate.repeatDaysOfMonth ?? []);
+      setEndIndex(endValues.indexOf(existingTemplate.endCondition));
+      setEndValue(existingTemplate.endValue ?? "");
+      setEnabled(existingTemplate.enabled);
+      setSubtasks(existingTemplate.subtasks ?? []);
+      setIsRandomSubtask(existingTemplate.isRandomSubtask);
+    }
+  }, [existingTemplate]);
 
   const handleAddSubtask = () => {
     if (newSubtask.trim()) {
@@ -77,9 +102,14 @@ export function EditTask({ userId = 1, initialTask, onSubmit }: EditTaskProps) {
     );
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
+    if (!user?.id) {
+      alert("User not initialized");
+      return;
+    }
+
     const taskData: Omit<TaskTemplate, "id" | "createdAt" | "updatedAt"> = {
-      userId,
+      userId: user.id,
       title,
       description: description || undefined,
       rewardPoints,
@@ -94,16 +124,54 @@ export function EditTask({ userId = 1, initialTask, onSubmit }: EditTaskProps) {
       isRandomSubtask,
     };
 
-    console.log(taskData);
-    onSubmit?.(taskData);
+    try {
+      if (isEditMode && templateId) {
+        await update(templateId, taskData);
+      } else {
+        await create(taskData);
+      }
+      navigate("/tasks");
+    } catch (error) {
+      console.error("Failed to save task:", error);
+      alert(error instanceof Error ? error.message : "Failed to save task");
+    }
   };
 
   const repeatMode = repeatValues[repeatIndex];
   const endCondition = endValues[endIndex];
 
+  // 加载中状态
+  if (isEditMode && isLoadingTemplate) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="flex flex-col items-center gap-4 text-text-muted">
+          <Loader2 className="w-8 h-8 animate-spin" />
+          <p>Loading task...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // 加载错误
+  if (isEditMode && loadError) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="flex flex-col items-center gap-4 text-text-muted">
+          <p>Failed to load task</p>
+          <button
+            onClick={() => navigate("/tasks")}
+            className="text-primary hover:text-primary-light"
+          >
+            Go Back
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-background pb-32">
-      <Header title={initialTask ? "Edit Task" : "Create Task"} back />
+      <Header title={isEditMode ? "Edit Task" : "Create Task"} back />
 
       <main className="flex-1 px-4 py-6 space-y-6">
         {/* Main Task Details Card */}
@@ -409,10 +477,16 @@ export function EditTask({ userId = 1, initialTask, onSubmit }: EditTaskProps) {
       <div className="fixed bottom-0 left-0 right-0 p-4 pb-8 bg-gradient-to-t from-background to-transparent">
         <button
           onClick={handleSubmit}
-          disabled={!title.trim()}
+          disabled={!title.trim() || isSubmitting}
           className="w-full h-14 bg-primary text-white font-bold text-lg rounded-xl flex items-center justify-center shadow-lg shadow-primary/30 hover:bg-primary-light transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          {initialTask ? "Update Task" : "Create Task"}
+          {isSubmitting ? (
+            <Loader2 className="w-6 h-6 animate-spin" />
+          ) : isEditMode ? (
+            "Update Task"
+          ) : (
+            "Create Task"
+          )}
         </button>
       </div>
     </div>

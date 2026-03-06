@@ -20,7 +20,7 @@ export function useDB() {
 }
 
 const createDB = () => {
-  const db = new Dexie('exp') as DB;
+  const db = new Dexie('exp-v3') as DB;
   migration(db);
 
   return db;

@@ -1,109 +1,74 @@
 import { useState } from "react";
 import { Header } from "../components/Header";
-import { Plus, ChevronRight, Calendar, ListFilter } from "lucide-react";
+import { Plus, ChevronRight, Calendar, Trash2, Power } from "lucide-react";
 import { useNavigate } from "react-router";
+import { useTaskTemplates, useTaskTemplateActions } from "@/hooks/useTasks";
+import { useUserStore } from "@/store";
+import type { TaskTemplate, RepeatMode } from "@/db/types";
 
-interface Task {
-  id: number;
-  title: string;
-  description: string;
-  completed: boolean;
-  exp: number;
-  repeat: "daily" | "weekly" | "monthly";
-  category: string;
-}
+const categories = ["All", "Daily", "Weekly", "Monthly"] as const;
+type Category = (typeof categories)[number];
 
-const initialTasks: Task[] = [
-  {
-    id: 1,
-    title: "Morning Jogging",
-    description: "30-minute run around the park",
-    completed: true,
-    exp: 20,
-    repeat: "daily",
-    category: "Health",
-  },
-  {
-    id: 2,
-    title: "Read a Chapter",
-    description: "Read at least one chapter of 'Atomic Habits'",
-    completed: true,
-    exp: 15,
-    repeat: "daily",
-    category: "Learning",
-  },
-  {
-    id: 3,
-    title: "Plan Tomorrow",
-    description: "Organize tasks and schedule for the next day",
-    completed: false,
-    exp: 10,
-    repeat: "daily",
-    category: "Productivity",
-  },
-  {
-    id: 4,
-    title: "Drink 8 glasses of water",
-    description: "Stay hydrated throughout the day",
-    completed: false,
-    exp: 5,
-    repeat: "daily",
-    category: "Health",
-  },
-  {
-    id: 5,
-    title: "Practice coding for 1 hour",
-    description: "Work on a personal project or do a coding challenge",
-    completed: false,
-    exp: 30,
-    repeat: "weekly",
-    category: "Learning",
-  },
-  {
-    id: 6,
-    title: "Weekly Review",
-    description: "Review weekly progress and achievements",
-    completed: false,
-    exp: 25,
-    repeat: "weekly",
-    category: "Productivity",
-  },
-  {
-    id: 7,
-    title: "Monthly Budget Check",
-    description: "Review expenses and update budget",
-    completed: false,
-    exp: 50,
-    repeat: "monthly",
-    category: "Finance",
-  },
-];
+const repeatModeMap: Record<RepeatMode, string> = {
+  none: "One-time",
+  daily: "Daily",
+  weekly: "Weekly",
+  monthly: "Monthly",
+};
 
-const categories = ["All", "Daily", "Weekly", "Monthly"];
-const taskCategories = ["All", "Health", "Learning", "Productivity", "Finance"];
+const repeatModeColorMap: Record<RepeatMode, string> = {
+  none: "bg-text-muted/20 text-text-muted",
+  daily: "bg-blue-500/20 text-blue-400",
+  weekly: "bg-purple-500/20 text-purple-400",
+  monthly: "bg-orange-500/20 text-orange-400",
+};
 
 export function AllTasks() {
   const navigate = useNavigate();
-  const [tasks, setTasks] = useState<Task[]>(initialTasks);
-  const [filter, setFilter] = useState<"All" | "Daily" | "Weekly" | "Monthly">("All");
-  const [categoryFilter, setCategoryFilter] = useState<string>("All");
+  const { user } = useUserStore();
+  const { templates, isLoading, error, refresh } = useTaskTemplates(user?.id);
+  const { remove, toggleEnabled, isLoading: isActionLoading } = useTaskTemplateActions();
+  const [filter, setFilter] = useState<Category>("All");
+  const [deletingId, setDeletingId] = useState<number | null>(null);
 
-  const toggleTask = (id: number) => {
-    setTasks((prev) =>
-      prev.map((task) =>
-        task.id === id ? { ...task, completed: !task.completed } : task
-      )
-    );
-  };
-
-  const filteredTasks = tasks.filter((task) => {
-    const matchRepeat = filter === "All" || task.repeat === filter.toLowerCase();
-    const matchCategory = categoryFilter === "All" || task.category === categoryFilter;
-    return matchRepeat && matchCategory;
+  // 筛选任务
+  const filteredTemplates = templates.filter((template) => {
+    if (filter === "All") return true;
+    if (filter === "Daily") return template.repeatMode === "daily";
+    if (filter === "Weekly") return template.repeatMode === "weekly";
+    if (filter === "Monthly") return template.repeatMode === "monthly";
+    return true;
   });
 
-  const completedCount = filteredTasks.filter((t) => t.completed).length;
-  const totalCount = filteredTasks.length;
+  // 启用/禁用任务
+  const handleToggleEnabled = async (id: number, currentEnabled: boolean) => {
+    try {
+      await toggleEnabled(id, !currentEnabled);
+      refresh();
+    } catch (error) {
+      console.error("Failed to toggle task:", error);
+    }
+  };
+
+  // 删除任务
+  const handleDelete = async (id: number) => {
+    if (!confirm("Are you sure you want to delete this task? This will also delete all related task instances.")) {
+      return;
+    }
+
+    setDeletingId(id);
+    try {
+      await remove(id);
+      refresh();
+    } catch (error) {
+      console.error("Failed to delete task:", error);
+    } finally {
+      setDeletingId(null);
+    }
+  };
+
+  const enabledCount = templates.filter((t) => t.enabled).length;
+  const totalCount = templates.length;
 
   return (
     <div className="min-h-screen pb-24 bg-background">
@@ -126,7 +91,7 @@ export function AllTasks() {
           {categories.map((cat) => (
             <button
               key={cat}
-              onClick={() => setFilter(cat as typeof filter)}
+              onClick={() => setFilter(cat)}
               className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${
                 filter === cat
                   ? "bg-primary text-white"
@@ -139,33 +104,11 @@ export function AllTasks() {
         </div>
       </div>
 
-      {/* Category Filter */}
-      <div className="px-4 pb-4">
-        <div className="flex items-center gap-2">
-          <ListFilter className="w-4 h-4 text-text-muted" />
-          <div className="flex items-center gap-2 overflow-x-auto scrollbar-hide">
-            {taskCategories.map((cat) => (
-              <button
-                key={cat}
-                onClick={() => setCategoryFilter(cat)}
-                className={`px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition-colors ${
-                  categoryFilter === cat
-                    ? "bg-surface-light text-text-primary"
-                    : "bg-transparent text-text-muted hover:text-text-secondary"
-                }`}
-              >
-                {cat}
-              </button>
-            ))}
-          </div>
-        </div>
-      </div>
-
       {/* Stats Summary */}
       <div className="px-4 pb-4">
         <div className="flex items-center justify-between text-text-secondary text-sm">
           <span>
-            {completedCount} of {totalCount} completed
+            {enabledCount} of {totalCount} enabled
           </span>
           <button className="flex items-center gap-1 text-primary hover:text-primary-light transition-colors">
             <Calendar className="w-4 h-4" />
@@ -176,79 +119,116 @@ export function AllTasks() {
 
       {/* Tasks List */}
       <main className="px-4">
-        <div className="flex flex-col gap-3">
-          {filteredTasks.map((task) => (
-            <div
-              key={task.id}
-              className="flex items-center gap-4 bg-surface rounded-xl p-4 min-h-[72px] justify-between border border-border hover:border-surface-light transition-colors cursor-pointer"
-              onClick={() => navigate(`/tasks/${task.id}`)}
+        {isLoading ? (
+          <div className="flex flex-col items-center justify-center py-16 text-text-muted">
+            <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+            <p className="text-sm mt-4">Loading tasks...</p>
+          </div>
+        ) : error ? (
+          <div className="flex flex-col items-center justify-center py-16 text-text-muted">
+            <p className="text-base font-medium">Failed to load tasks</p>
+            <button
+              onClick={refresh}
+              className="mt-2 text-primary hover:text-primary-light"
             >
-              <div className="flex items-center gap-4 flex-1">
-                <div
-                  className="flex items-center justify-center"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    toggleTask(task.id);
-                  }}
-                >
-                  <input
-                    type="checkbox"
-                    checked={task.completed}
-                    onChange={() => {}}
-                    className="custom-checkbox"
-                  />
-                </div>
-                <div className="flex flex-col justify-center flex-1">
-                  <div className="flex items-center gap-2">
-                    <p
-                      className={`text-base font-medium leading-normal line-clamp-1 transition-all ${
-                        task.completed
-                          ? "text-text-muted line-through"
-                          : "text-text-primary"
-                      }`}
-                    >
-                      {task.title}
-                    </p>
-                    <span
-                      className={`text-xs px-2 py-0.5 rounded-full ${
-                        task.repeat === "daily"
-                          ? "bg-blue-500/20 text-blue-400"
-                          : task.repeat === "weekly"
-                          ? "bg-purple-500/20 text-purple-400"
-                          : "bg-orange-500/20 text-orange-400"
-                      }`}
-                    >
-                      {task.repeat}
-                    </span>
-                  </div>
-                  <p
-                    className={`text-sm font-normal leading-normal line-clamp-1 transition-all ${
-                      task.completed ? "text-text-muted" : "text-text-secondary"
-                    }`}
-                  >
-                    {task.description}
-                  </p>
-                  <div className="flex items-center gap-2 mt-1">
-                    <span className="text-xs text-primary">+{task.exp} exp</span>
-                    <span className="text-xs text-text-muted">•</span>
-                    <span className="text-xs text-text-muted">{task.category}</span>
-                  </div>
-                </div>
-              </div>
-              <div className="shrink-0">
-                <ChevronRight className="w-5 h-5 text-text-muted" />
-              </div>
-            </div>
-          ))}
-        </div>
-
-        {filteredTasks.length === 0 && (
+              Retry
+            </button>
+          </div>
+        ) : filteredTemplates.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-16 text-text-muted">
             <div className="w-16 h-16 rounded-full bg-surface flex items-center justify-center mb-4">
-              <ListFilter className="w-8 h-8" />
+              <Plus className="w-8 h-8" />
             </div>
             <p className="text-base font-medium">No tasks found</p>
-            <p className="text-sm mt-1">Try adjusting your filters</p>
+            <p className="text-sm mt-1">
+              {filter === "All" ? "Create your first task" : "Try a different filter"}
+            </p>
+          </div>
+        ) : (
+          <div className="flex flex-col gap-3">
+            {filteredTemplates.map((template) => (
+              <div
+                key={template.id}
+                className={`flex items-center gap-4 bg-surface rounded-xl p-4 min-h-[72px] justify-between border transition-colors ${
+                  template.enabled ? "border-border hover:border-surface-light" : "border-border/50 opacity-60"
+                }`}
+              >
+                <div
+                  className="flex items-center gap-4 flex-1 cursor-pointer"
+                  onClick={() => navigate(`/tasks/${template.id}`)}
+                >
+                  <div className="flex flex-col justify-center flex-1">
+                    <div className="flex items-center gap-2">
+                      <p
+                        className={`text-base font-medium leading-normal line-clamp-1 transition-all ${
+                          template.enabled ? "text-text-primary" : "text-text-secondary"
+                        }`}
+                      >
+                        {template.title}
+                      </p>
+                      <span
+                        className={`text-xs px-2 py-0.5 rounded-full ${repeatModeColorMap[template.repeatMode]}`}
+                      >
+                        {repeatModeMap[template.repeatMode]}
+                      </span>
+                    </div>
+                    <p
+                      className={`text-sm font-normal leading-normal line-clamp-1 transition-all ${
+                        template.enabled ? "text-text-secondary" : "text-text-muted"
+                      }`}
+                    >
+                      {template.description || `+${template.rewardPoints} exp`}
+                    </p>
+                    {template.subtasks.length > 0 && (
+                      <p className="text-xs text-text-muted mt-1">
+                        {template.subtasks.length} checklist item
+                        {template.subtasks.length > 1 ? "s" : ""}
+                        {template.isRandomSubtask && " (random)"}
+                      </p>
+                    )}
+                  </div>
+                </div>
+
+                {/* Actions */}
+                <div className="shrink-0 flex items-center gap-2">
+                  {/* Enable/Disable Toggle */}
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleToggleEnabled(template.id!, template.enabled);
+                    }}
+                    disabled={isActionLoading}
+                    className={`p-2 rounded-lg transition-colors ${
+                      template.enabled
+                        ? "text-primary hover:bg-primary/10"
+                        : "text-text-muted hover:bg-surface-light"
+                    }`}
+                    title={template.enabled ? "Disable" : "Enable"}
+                  >
+                    <Power className="w-4 h-4" />
+                  </button>
+
+                  {/* Delete Button */}
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleDelete(template.id!);
+                    }}
+                    disabled={deletingId === template.id || isActionLoading}
+                    className="p-2 rounded-lg text-text-muted hover:text-red-400 hover:bg-red-400/10 transition-colors"
+                    title="Delete"
+                  >
+                    {deletingId === template.id ? (
+                      <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                    ) : (
+                      <Trash2 className="w-4 h-4" />
+                    )}
+                  </button>
+
+                  <ChevronRight className="w-5 h-5 text-text-muted" />
+                </div>
+              </div>
+            ))}
           </div>
         )}
       </main>

@@ -43,9 +43,12 @@ export async function getEnabledTaskTemplates(userId?: number): Promise<TaskTemp
   const db = getDB();
 
   if (userId !== undefined) {
-    return db.taskTemplates.where({ userId, enabled: 1 }).toArray();
+    // 先按 userId 查询，再在内存中过滤 enabled
+    const templates = await db.taskTemplates.where('userId').equals(userId).toArray();
+    return templates.filter(t => t.enabled);
   }
-  return db.taskTemplates.where('enabled').equals(1).toArray();
+  // 使用filter方法查询所有启用的模板
+  return db.taskTemplates.filter(t => t.enabled).toArray();
 }
 
 /**
@@ -68,7 +71,8 @@ export async function getTaskTemplatesByRepeatMode(
   const db = getDB();
 
   if (userId !== undefined) {
-    return db.taskTemplates.where({ userId, repeatMode }).toArray();
+    const templates = await db.taskTemplates.where('userId').equals(userId).toArray();
+    return templates.filter(t => t.repeatMode === repeatMode);
   }
   return db.taskTemplates.where('repeatMode').equals(repeatMode).toArray();
 }
@@ -206,7 +210,8 @@ export async function getTaskInstancesByStatus(
   const db = getDB();
 
   if (userId !== undefined) {
-    return db.taskInstances.where({ userId, status }).toArray();
+    const instances = await db.taskInstances.where('userId').equals(userId).toArray();
+    return instances.filter(i => i.status === status);
   }
   return db.taskInstances.where('status').equals(status).toArray();
 }
@@ -387,6 +392,51 @@ export async function getTodayTaskInstances(
 
   for (const instance of instances) {
     const template = await db.taskTemplates.get(instance.templateId);
+    if (template) {
+      result.push({ instance, template });
+    }
+  }
+
+  return result;
+}
+
+/**
+ * 获取用户没有日期的任务（包含模板信息）
+ * No Date 任务定义为：repeatMode 为 'none' 的 template 对应的 instance
+ */
+export async function getNoDateTaskInstances(
+  userId: number
+): Promise<Array<{ instance: TaskInstance; template: TaskTemplate }>> {
+  const { getDB } = useDB();
+  const db = getDB();
+
+  // 获取所有 repeatMode 为 'none' 的任务模板
+  const templates = await db.taskTemplates
+    .where('userId')
+    .equals(userId)
+    .toArray();
+  
+  const noRepeatTemplates = templates.filter(t => t.repeatMode === 'none');
+  const noRepeatTemplateIds = new Set(noRepeatTemplates.map(t => t.id));
+
+  if (noRepeatTemplateIds.size === 0) {
+    return [];
+  }
+
+  // 获取这些模板对应的任务实例
+  const instances = await db.taskInstances
+    .where('userId')
+    .equals(userId)
+    .toArray();
+
+  const noDateInstances = instances.filter((instance) => 
+    noRepeatTemplateIds.has(instance.templateId)
+  );
+
+  const result: Array<{ instance: TaskInstance; template: TaskTemplate }> = [];
+
+  for (const instance of noDateInstances) {
+    const template = noRepeatTemplates.find(t => t.id === instance.templateId);
     if (template) {
       result.push({ instance, template });
     }
