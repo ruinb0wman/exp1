@@ -125,33 +125,31 @@ export function EditTask() {
           </div>
         </div>
 
-        {/* Scheduling Section Card */}
+        {/* Repeat Section Card */}
         <div>
           <h3 className="text-text-primary text-lg font-bold leading-tight tracking-[-0.015em] px-2 pb-2 pt-4">
-            Scheduling
+            Repeat
           </h3>
-          <div className="space-y-px rounded-xl bg-surface overflow-hidden">
-            <div className="flex flex-col gap-3 bg-surface px-4 py-4">
-              <p className="text-text-primary text-base font-medium leading-normal">
-                Repeat
-              </p>
-              <RadioGroup
-                list={repeatOptions}
-                value={repeatIndex}
-                onChange={setRepeatIndex}
-              />
-            </div>
+          <div className="rounded-xl bg-surface p-4">
+            <RadioGroup
+              list={repeatOptions}
+              value={repeatIndex}
+              onChange={setRepeatIndex}
+            />
+          </div>
+        </div>
 
-            <div className="flex flex-col gap-3 bg-surface px-4 py-4">
-              <p className="text-text-primary text-base font-medium leading-normal">
-                Ends
-              </p>
-              <RadioGroup
-                list={endOptions}
-                value={endIndex}
-                onChange={setEndIndex}
-              />
-            </div>
+        {/* Ends Section Card */}
+        <div>
+          <h3 className="text-text-primary text-lg font-bold leading-tight tracking-[-0.015em] px-2 pb-2 pt-4">
+            Ends
+          </h3>
+          <div className="rounded-xl bg-surface p-4">
+            <RadioGroup
+              list={endOptions}
+              value={endIndex}
+              onChange={setEndIndex}
+            />
           </div>
         </div>
 
