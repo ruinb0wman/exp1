@@ -1,19 +1,16 @@
 import { useState } from "react";
 import { Header } from "../components/Header";
+import { RadioGroup } from "../components/RadioGroup";
 import { Package } from "lucide-react";
 
-const restockOptions = [
-  { value: "none", label: "None" },
-  { value: "daily", label: "Daily" },
-  { value: "weekly", label: "Weekly" },
-  { value: "monthly", label: "Monthly" },
-];
+const restockOptions = ["None", "Daily", "Weekly", "Monthly"];
+const restockValues = ["none", "daily", "weekly", "monthly"] as const;
 
 export function EditReward() {
   const [productName, setProductName] = useState("");
   const [description, setDescription] = useState("");
   const [pointCost, setPointCost] = useState("");
-  const [restockCycle, setRestockCycle] = useState<"none" | "daily" | "weekly" | "monthly">("none");
+  const [restockCycleIndex, setRestockCycleIndex] = useState(0);
   const [limitedStock, setLimitedStock] = useState(true);
   const [inventoryQuantity, setInventoryQuantity] = useState("10");
   const [imageUrl, setImageUrl] = useState<string | null>(null);
@@ -30,7 +27,7 @@ export function EditReward() {
       productName,
       description,
       pointCost: parseInt(pointCost) || 0,
-      restockCycle,
+      restockCycle: restockValues[restockCycleIndex],
       limitedStock,
       inventoryQuantity: limitedStock ? parseInt(inventoryQuantity) || 0 : null,
       imageUrl,
@@ -125,21 +122,11 @@ export function EditReward() {
           <p className="text-text-primary text-base font-medium leading-normal">
             Restock Cycle
           </p>
-          <div className="grid grid-cols-4 gap-2">
-            {restockOptions.map((option) => (
-              <button
-                key={option.value}
-                onClick={() => setRestockCycle(option.value as typeof restockCycle)}
-                className={`flex items-center justify-center rounded-lg p-2.5 text-sm font-medium transition-colors ${
-                  restockCycle === option.value
-                    ? "bg-primary text-white"
-                    : "bg-surface text-text-primary border border-border hover:bg-surface-light"
-                }`}
-              >
-                {option.label}
-              </button>
-            ))}
-          </div>
+          <RadioGroup
+            list={restockOptions}
+            value={restockCycleIndex}
+            onChange={setRestockCycleIndex}
+          />
         </div>
 
         {/* Limited Stock Section */}

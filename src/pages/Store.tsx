@@ -1,4 +1,6 @@
-import { Search, History, Star } from "lucide-react";
+import { Search, History, Star, Plus } from "lucide-react";
+import { useNavigate } from "react-router";
+import { Header } from "../components/Header";
 
 const categories = ["All", "Digital", "Physical", "Experiences", "Donations"];
 
@@ -62,19 +64,28 @@ const rewards = [
 ];
 
 export function Store() {
+  const navigate = useNavigate();
+
   return (
     <div className="min-h-screen pb-24 bg-background">
       {/* Header */}
       <div className="sticky top-0 z-10 bg-background">
-        <div className="flex items-center p-4 pb-2 justify-between">
-          <div className="w-12" />
-          <h1 className="text-lg font-bold text-text-primary flex-1 text-center">
-            Rewards Store
-          </h1>
-          <button className="w-12 flex justify-end text-text-secondary hover:text-primary transition-colors">
-            <History className="w-5 h-5" />
-          </button>
-        </div>
+        <Header
+          title="Rewards Store"
+          leftSlot={
+            <button className="flex size-12 items-center justify-start text-text-secondary hover:text-primary transition-colors">
+              <History className="w-5 h-5" />
+            </button>
+          }
+          rightSlot={
+            <button
+              onClick={() => navigate("/rewards/new")}
+              className="flex size-12 items-center justify-end text-text-secondary hover:text-primary transition-colors"
+            >
+              <Plus className="w-5 h-5" />
+            </button>
+          }
+        />
 
         {/* Points Card */}
         <div className="p-4 pt-2">

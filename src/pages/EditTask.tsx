@@ -1,6 +1,13 @@
 import { useState } from "react";
 import { Header } from "../components/Header";
-import { Repeat, CalendarX, Stars, Trash2, Circle, CheckCircle2 } from "lucide-react";
+import { RadioGroup } from "../components/RadioGroup";
+import { CalendarX, Stars, Trash2, Circle, CheckCircle2 } from "lucide-react";
+
+const repeatOptions = ["None", "Daily", "Weekly", "Monthly"];
+const repeatValues = ["none", "daily", "weekly", "monthly"] as const;
+
+const endOptions = ["Never", "On Date", "After Count"];
+const endValues = ["never", "date", "count"] as const;
 
 interface Subtask {
   id: number;
@@ -12,8 +19,8 @@ export function EditTask() {
   const [taskName, setTaskName] = useState("");
   const [description, setDescription] = useState("");
   const [rewardPoints, setRewardPoints] = useState(10);
-  const [repeat, setRepeat] = useState<"daily" | "weekly" | "monthly">("daily");
-  const [endType, setEndType] = useState<"never" | "date" | "count">("never");
+  const [repeatIndex, setRepeatIndex] = useState(0);
+  const [endIndex, setEndIndex] = useState(0);
   const [subtasks, setSubtasks] = useState<Subtask[]>([]);
   const [newSubtask, setNewSubtask] = useState("");
 
@@ -45,8 +52,8 @@ export function EditTask() {
       taskName,
       description,
       rewardPoints,
-      repeat,
-      endType,
+      repeat: repeatValues[repeatIndex],
+      endType: endValues[endIndex],
       subtasks,
     });
   };
@@ -124,53 +131,27 @@ export function EditTask() {
             Scheduling
           </h3>
           <div className="space-y-px rounded-xl bg-surface overflow-hidden">
-            <button className="w-full flex items-center gap-4 bg-surface px-4 min-h-14 justify-between hover:bg-surface-light transition-colors">
-              <div className="flex items-center gap-4">
-                <div className="text-primary flex items-center justify-center rounded-lg bg-primary/20 shrink-0 size-10">
-                  <Repeat className="w-5 h-5" />
-                </div>
-                <p className="text-text-primary text-base font-normal leading-normal flex-1 truncate">
-                  Repeat
-                </p>
-              </div>
-              <div className="flex items-center gap-2 text-text-secondary">
-                <span className="text-base font-normal capitalize">{repeat}</span>
-                <select
-                  value={repeat}
-                  onChange={(e) => setRepeat(e.target.value as typeof repeat)}
-                  className="absolute inset-0 opacity-0 cursor-pointer"
-                >
-                  <option value="daily">Daily</option>
-                  <option value="weekly">Weekly</option>
-                  <option value="monthly">Monthly</option>
-                </select>
-              </div>
-            </button>
+            <div className="flex flex-col gap-3 bg-surface px-4 py-4">
+              <p className="text-text-primary text-base font-medium leading-normal">
+                Repeat
+              </p>
+              <RadioGroup
+                list={repeatOptions}
+                value={repeatIndex}
+                onChange={setRepeatIndex}
+              />
+            </div>
 
-            <button className="w-full flex items-center gap-4 bg-surface px-4 min-h-14 justify-between hover:bg-surface-light transition-colors">
-              <div className="flex items-center gap-4">
-                <div className="text-primary flex items-center justify-center rounded-lg bg-primary/20 shrink-0 size-10">
-                  <CalendarX className="w-5 h-5" />
-                </div>
-                <p className="text-text-primary text-base font-normal leading-normal flex-1 truncate">
-                  Ends
-                </p>
-              </div>
-              <div className="flex items-center gap-2 text-text-secondary">
-                <span className="text-base font-normal capitalize">
-                  {endType === "never" ? "Never" : endType}
-                </span>
-                <select
-                  value={endType}
-                  onChange={(e) => setEndType(e.target.value as typeof endType)}
-                  className="absolute inset-0 opacity-0 cursor-pointer"
-                >
-                  <option value="never">Never</option>
-                  <option value="date">On Date</option>
-                  <option value="count">After Count</option>
-                </select>
-              </div>
-            </button>
+            <div className="flex flex-col gap-3 bg-surface px-4 py-4">
+              <p className="text-text-primary text-base font-medium leading-normal">
+                Ends
+              </p>
+              <RadioGroup
+                list={endOptions}
+                value={endIndex}
+                onChange={setEndIndex}
+              />
+            </div>
           </div>
         </div>
 
