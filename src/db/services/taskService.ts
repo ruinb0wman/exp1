@@ -225,13 +225,18 @@ export async function getTaskInstancesByDateRange(
 
 /**
  * 获取指定日期的任务实例
+ * @param date 本地日期字符串 YYYY-MM-DD
  */
 export async function getTaskInstancesByDate(
   date: string,
   userId?: number
 ): Promise<TaskInstance[]> {
-  const startOfDay = `${date}T00:00:00.000Z`;
-  const endOfDay = `${date}T23:59:59.999Z`;
+  // 将 YYYY-MM-DD 解析为本地时间的日期
+  const [year, month, day] = date.split('-').map(Number);
+  const localDate = new Date(year, month - 1, day);
+  
+  const startOfDay = getLocalStartOfDay(localDate);
+  const endOfDay = getLocalEndOfDay(localDate);
 
   return getTaskInstancesByDateRange(startOfDay, endOfDay, userId);
 }
@@ -344,6 +349,24 @@ export async function getTaskInstanceWithTemplate(
 }
 
 /**
+ * 获取本地日期的开始时间（UTC ISO 字符串）
+ */
+function getLocalStartOfDay(date: Date): string {
+  const d = new Date(date);
+  d.setHours(0, 0, 0, 0);
+  return d.toISOString();
+}
+
+/**
+ * 获取本地日期的结束时间（UTC ISO 字符串）
+ */
+function getLocalEndOfDay(date: Date): string {
+  const d = new Date(date);
+  d.setHours(23, 59, 59, 999);
+  return d.toISOString();
+}
+
+/**
  * 获取用户的今日任务（包含模板信息）
  */
 export async function getTodayTaskInstances(
@@ -351,9 +374,9 @@ export async function getTodayTaskInstances(
 ): Promise<Array<{ instance: TaskInstance; template: TaskTemplate }>> {
   const db = getDB();
 
-  const today = new Date().toISOString().split('T')[0];
-  const startOfDay = `${today}T00:00:00.000Z`;
-  const endOfDay = `${today}T23:59:59.999Z`;
+  // 使用本地时间获取今天的开始和结束（与生成实例时保持一致）
+  const startOfDay = getLocalStartOfDay(new Date());
+  const endOfDay = getLocalEndOfDay(new Date());
 
   const instances = await db.taskInstances
     .where('startAt')

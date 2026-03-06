@@ -1,14 +1,25 @@
 import type { TaskTemplate, TaskInstance } from '@/db/types';
 
 /**
- * 获取今天的日期字符串 (YYYY-MM-DD)
+ * 获取今天的日期字符串 (YYYY-MM-DD) - 使用本地时区
  */
 export function getTodayString(): string {
-  return new Date().toISOString().split('T')[0];
+  const now = new Date();
+  return formatLocalDate(now);
 }
 
 /**
- * 获取指定日期的开始时间 (ISO 格式)
+ * 获取本地日期字符串 (YYYY-MM-DD)
+ */
+export function formatLocalDate(date: Date): string {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
+/**
+ * 获取指定日期的开始时间 (ISO 格式，本地时区的 00:00:00)
  */
 export function getStartOfDay(date: Date): string {
   const d = new Date(date);
@@ -189,10 +200,14 @@ export function filterTemplatesNeedingInstancesOnDate(
     }
 
     // 对于其他 repeatMode，检查目标日期是否已经生成过实例
-    const targetDateStr = targetDate.toISOString().split('T')[0];
+    // 统一使用本地日期字符串来比较，避免时区问题
+    const targetDateStr = formatLocalDate(targetDate); // YYYY-MM-DD (本地时区)
     const hasInstanceOnDate = templateInstances.some((inst) => {
-      const instanceDate = inst.createAt.split('T')[0];
-      return instanceDate === targetDateStr;
+      // 从 ISO 格式的 startAt 中提取本地日期
+      if (!inst.startAt) return false;
+      const instDate = new Date(inst.startAt);
+      const instanceDateStr = formatLocalDate(instDate);
+      return instanceDateStr === targetDateStr;
     });
     if (hasInstanceOnDate) {
       return false;
