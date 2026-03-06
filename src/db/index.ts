@@ -32,7 +32,7 @@ const createDB = () => {
 
   db.version(1).stores({
     taskTemplates: '++id, userId, repeatMode, enabled, *subtasks',
-    taskInstances: '++id, userId, templateId, scheduledDate, status, [templateId+scheduledDate]',
+    taskInstances: '++id, userId, templateId, scheduledDate, status, [templateId+startAt]',
     rewardTemplates: '++id, userId, replenishmentMode, enabled',
     rewardInstances: '++id, templateId, userId, status, expiresAt',
     users: 'id, name',
