@@ -474,3 +474,66 @@ export async function getTaskStatistics(
     skipped: instances.filter((i) => i.status === 'skipped').length,
   };
 }
+
+// ==================== 任务历史查询 ====================
+
+export type TaskHistoryFilterStatus = 'all' | 'pending' | 'completed' | 'skipped';
+export type { TaskInstance, TaskTemplate, TaskStatus } from '../types';
+
+export interface TaskHistoryItem {
+  instance: TaskInstance;
+  template: TaskTemplate;
+}
+
+/**
+ * 获取任务历史列表（支持状态筛选和分页）
+ */
+export async function getTaskInstancesWithFilter(
+  userId: number,
+  filterStatus: TaskHistoryFilterStatus,
+  startDate: string,
+  endDate: string,
+  offset: number,
+  limit: number
+): Promise<{ items: TaskHistoryItem[]; hasMore: boolean; total: number }> {
+  const db = getDB();
+
+  // 获取日期范围内的所有实例
+  let instances = await db.taskInstances
+    .where('startAt')
+    .between(startDate, endDate, true, true)
+    .and((instance) => instance.userId === userId)
+    .toArray();
+
+  // 应用状态筛选
+  if (filterStatus !== 'all') {
+    instances = instances.filter((i) => i.status === filterStatus);
+  }
+
+  // 按开始时间倒序排列
+  instances.sort((a, b) => {
+    const aTime = a.startAt ? new Date(a.startAt).getTime() : 0;
+    const bTime = b.startAt ? new Date(b.startAt).getTime() : 0;
+    return bTime - aTime;
+  });
+
+  const total = instances.length;
+
+  // 分页
+  const paginatedInstances = instances.slice(offset, offset + limit);
+
+  // 获取模板信息
+  const items: TaskHistoryItem[] = [];
+  for (const instance of paginatedInstances) {
+    const template = await db.taskTemplates.get(instance.templateId);
+    if (template) {
+      items.push({ instance, template });
+    }
+  }
+
+  return {
+    items,
+    hasMore: offset + limit < total,
+    total,
+  };
+}

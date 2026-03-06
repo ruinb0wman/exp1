@@ -229,6 +229,7 @@ Based on `tsconfig.json`:
 The app follows a **minimalist dark theme** using Tailwind CSS v4:
 
 **Color Palette (defined in `src/index.css` with `@theme`):**
+
 | Token | Value | Usage |
 |-------|-------|-------|
 | `--color-primary` | `#f56565` | Coral/red - primary actions |
@@ -243,6 +244,7 @@ The app follows a **minimalist dark theme** using Tailwind CSS v4:
 | `--color-border` | `#2a2a30` | Borders/dividers |
 
 **Design Patterns:**
+
 - Icons: Lucide with 1.5px stroke width
 - Border Radius: 6px (small elements), 12px (large elements/cards)
 - Safe area insets: Use `pt-safe`, `pb-safe` classes for mobile notches
@@ -272,6 +274,7 @@ Defined in `src/db/migrations/index.ts`:
 ### Key Types
 
 **Task Types (`src/db/types/task.ts`):**
+
 ```typescript
 type RepeatMode = 'none' | 'daily' | 'weekly' | 'monthly';
 type EndCondition = 'times' | 'date' | 'manual';
@@ -310,6 +313,7 @@ interface TaskInstance {
 ```
 
 **Reward Types (`src/db/types/reward.ts`):**
+
 ```typescript
 type RewardStatus = 'available' | 'used' | 'expired';
 type ReplenishmentMode = 'none' | 'daily' | 'weekly' | 'monthly';
@@ -334,6 +338,7 @@ interface RewardTemplate {
 ```
 
 **User Types (`src/db/types/user.ts`):**
+
 ```typescript
 type PointsHistoryType = 'task_reward' | 'task_undo' | 'reward_exchange' | 'admin_adjustment';
 
@@ -357,6 +362,7 @@ interface PointsHistory {
 ### State Management (Zustand)
 
 The `userStore` (`src/store/userStore.ts`) provides:
+
 - User initialization and refresh
 - Points management (add/spend)
 - Points history tracking
@@ -385,12 +391,14 @@ import { getTodayTaskInstances, createTaskTemplate } from '@/db/services';
 Defined in `src/App.tsx` using react-router v7:
 
 **Layout with Bottom Navigation:**
+
 - `/` - Home (today's tasks)
 - `/store` - Reward shop
 - `/stats` - Statistics  
 - `/profile` - User profile
 
 **Simple Layout (no navigation):**
+
 - `/tasks` - All tasks view
 - `/tasks/new` - Create new task
 - `/tasks/:id` - Edit existing task
@@ -412,6 +420,7 @@ Task instances are automatically generated based on `TaskTemplate` recurrence ru
 4. **Monthly**: On specified days of month (1-31), every N months
 
 Generation logic is in `src/libs/task.ts`:
+
 - `shouldGenerateInstanceToday()` - Determines if instance should be created today
 - `filterTemplatesNeedingInstances()` - Filters templates needing instances
 - `generateTaskInstance()` - Creates instance data from template
@@ -421,6 +430,7 @@ Instances are generated in `Home.tsx` useEffect when user loads.
 ### Points System
 
 Points flow:
+
 1. **Earn**: Complete task → `addPoints(amount, 'task_reward', instanceId)`
 2. **Undo**: Reset completed task → `spendPoints(amount, 'task_reward', instanceId)`
 3. **Spend**: Redeem reward → `spendPoints(cost, 'reward_exchange', rewardId)`
@@ -435,6 +445,7 @@ All point changes are recorded in `pointsHistory` table via `updateUserPoints()`
 ### Tauri Capabilities (`src-tauri/capabilities/default.json`)
 
 Currently allows:
+
 - `core:default` - Basic Tauri APIs
 - `opener:default` - URL opening functionality
 
@@ -503,6 +514,7 @@ export async function createTaskTemplate(
 ### Component Patterns
 
 **Popup/Modal Usage:**
+
 ```typescript
 import { Popup } from '@/components/Popup';
 
@@ -518,6 +530,7 @@ import { Popup } from '@/components/Popup';
 ```
 
 **Safe Area Handling:**
+
 ```typescript
 // Use safe area utility classes from index.css
 <div className="min-h-screen-safe pt-safe pb-safe">
@@ -559,6 +572,7 @@ Requires Android SDK and NDK configured.
 ## Mobile-First Design
 
 The app is designed with mobile-first principles:
+
 - Uses safe area insets (`pt-safe`, `pb-safe`) for notched devices
 - Bottom navigation fixed at bottom with safe area padding
 - Touch-friendly tap targets
@@ -576,3 +590,7 @@ The app is designed with mobile-first principles:
 - [Zustand Documentation](https://docs.pmnd.rs/zustand)
 - [Tailwind CSS Documentation](https://tailwindcss.com/)
 - Design mockups are in the `design/` folder for reference
+
+## 要求
+
+- 每次用户提出需求后要对需求进行总结, 提出建议, 给出方案, 然后等用户确认后再执行操作
