@@ -179,7 +179,7 @@ export function Calendar({
   // 内部状态：非受控模式的选中值
   const [internalValue, setInternalValue] = useState<CalendarValue>(() => {
     if (defaultValue !== undefined) return defaultValue;
-    return mode === "range" ? [null, null] : null;
+    return null;
   });
 
   // 范围选择时的临时状态（记录第一次点击）

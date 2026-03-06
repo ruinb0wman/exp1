@@ -1,4 +1,4 @@
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft } from "lucide-react";
 import { Calendar } from "../components/Calendar";
 import { useState } from "react";
 
@@ -108,7 +108,7 @@ export function Stats() {
           <Calendar
             mode="single"
             value={selectedDate}
-            onChange={setSelectedDate}
+            onChange={(value) => setSelectedDate(value as Date | null)}
             showYearSwitcher={false}
             weekStartsOn={0}
             weekDayLabels={["S", "M", "T", "W", "T", "F", "S"]}
