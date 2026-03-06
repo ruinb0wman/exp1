@@ -1,14 +1,6 @@
-import Dexie, { Table } from 'dexie';
-import { TaskTemplate, TaskInstance, RewardInstance, RewardTemplate, PointsHistory, User } from './type';
-
-interface DB extends Dexie {
-  taskTemplates: Table<TaskTemplate, number>;
-  taskInstances: Table<TaskInstance, number>;
-  rewardTemplates: Table<RewardTemplate, number>;
-  rewardInstances: Table<RewardInstance, number>;
-  users: Table<User, number>;
-  pointsHistory: Table<PointsHistory, number>;
-}
+import Dexie from 'dexie';
+import type { DB } from './types';
+import { migration } from './migrations';
 
 const state: { db: null | ReturnType<typeof createDB> } = {
   db: null
@@ -29,15 +21,7 @@ export function useDB() {
 
 const createDB = () => {
   const db = new Dexie('TaskRewardDB') as DB;
-
-  db.version(1).stores({
-    taskTemplates: '++id, userId, repeatMode, enabled, *subtasks',
-    taskInstances: '++id, userId, templateId, scheduledDate, status, [templateId+startAt]',
-    rewardTemplates: '++id, userId, replenishmentMode, enabled',
-    rewardInstances: '++id, templateId, userId, status, expiresAt',
-    users: 'id, name',
-    pointsHistory: '++id, userId, type, createdAt, [userId+createdAt]'
-  });
+  migration(db);
 
   return db;
 };
