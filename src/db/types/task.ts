@@ -10,7 +10,7 @@ export interface TaskTemplate {
   rewardPoints: number; // 奖励的积分
   repeatMode: RepeatMode; // 重复模式
   repeatInterval?: number;  // 重复周期, repeatMode为daily时. 表示每n天, repeatMode为weekly时表示每n周. repeatMode为monthly是为每n月
-  repeatDaysOfWeek?: number[]; // 周, 1-7, 例如[1,5]表示周1和周5创建任务实例
+  repeatDaysOfWeek?: number[]; // 周, 0-6, 例如[1,5]表示周1和周5创建任务实例
   repeatDaysOfMonth?: number[]; // 月, 1-31, 例如[6,10]表示6号和10号创建任务实例
   endCondition: EndCondition; // 结束方式
   endValue?: string; // 结束日期或次数

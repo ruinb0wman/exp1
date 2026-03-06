@@ -11,7 +11,7 @@ export interface RewardTemplate {
   enabled: boolean; // 模板是否启用
   replenishmentMode: ReplenishmentMode; // 补货模式
   repeatInterval?: number; // 补货周期,repeatMode为daily时. 表示每n天, repeatMode为weekly时表示每n周. repeatMode为monthly是为每n月
-  repeatDaysOfWeek?: number[]; // 周, 1-7, 例如[1,5]表示周1和周5补货
+  repeatDaysOfWeek?: number[]; // 周, 0-6, 例如[1,5]表示周1和周5补货
   repeatDaysOfMonth?: number[]; // 月, 1-31, 例如[6,10]表示6号和10号补货
   replenishmentNum?: number; // 每次补货的数量
   replenishmentLimit?: number; // 最大库存限制, 补货不能超过最大库存
