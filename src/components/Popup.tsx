@@ -142,7 +142,7 @@ export function Popup({
 
   return (
     <div
-      className={`fixed inset-0 z-50 flex justify-center ${
+      className={`fixed inset-0 z-[60] flex justify-center ${
         hideMask ? '' : 'bg-black/60'
       } ${isBottom ? 'items-end' : 'items-center'} ${className}`}
       style={maskAnimationStyle}
