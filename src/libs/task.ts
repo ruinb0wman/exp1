@@ -1,4 +1,4 @@
-import type { TaskTemplate, TaskInstance, RepeatMode, EndCondition } from '@/db/types';
+import type { TaskTemplate, TaskInstance } from '@/db/types';
 
 /**
  * 获取今天的日期字符串 (YYYY-MM-DD)
@@ -55,7 +55,7 @@ export function isTemplateEnded(
   template: TaskTemplate,
   existingInstances: TaskInstance[]
 ): boolean {
-  const { endCondition, endValue, createdAt } = template;
+  const { endCondition, endValue } = template;
 
   if (endCondition === 'manual') {
     return false;
@@ -141,11 +141,8 @@ export function shouldGenerateInstanceToday(
  */
 export function filterTemplatesNeedingInstances(
   templates: TaskTemplate[],
-  existingInstances: TaskInstance[],
-  date?: Date
+  existingInstances: TaskInstance[]
 ): TaskTemplate[] {
-  const targetDate = date || new Date();
-
   return templates.filter((template) => {
     // 只处理启用的模板
     if (!template.enabled) {

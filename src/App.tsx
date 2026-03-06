@@ -8,6 +8,7 @@ import { EditReward } from "./pages/EditReward";
 import { Stats } from "./pages/Stats";
 import { Profile } from "./pages/Profile";
 import { PointsHistory } from "./pages/PointsHistory";
+import { Backpack } from "./pages/Backpack";
 
 function Layout() {
   return (
@@ -46,6 +47,7 @@ function App() {
           <Route path="/rewards/new" element={<EditReward />} />
           <Route path="/rewards/:id" element={<EditReward />} />
           <Route path="/points-history" element={<PointsHistory />} />
+          <Route path="/backpack" element={<Backpack />} />
         </Route>
       </Routes>
     </BrowserRouter>

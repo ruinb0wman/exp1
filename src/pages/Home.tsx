@@ -49,8 +49,7 @@ export function Home() {
         const today = new Date();
         const templatesNeedingInstances = filterTemplatesNeedingInstances(
           templates,
-          existingInstances,
-          today
+          existingInstances
         );
 
         // 生成并保存新的任务实例

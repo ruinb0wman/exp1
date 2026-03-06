@@ -4,7 +4,7 @@ import { Plus, ChevronRight, Calendar, Trash2, Power } from "lucide-react";
 import { useNavigate } from "react-router";
 import { useTaskTemplates, useTaskTemplateActions } from "@/hooks/useTasks";
 import { useUserStore } from "@/store";
-import type { TaskTemplate, RepeatMode } from "@/db/types";
+import type { RepeatMode } from "@/db/types";
 
 const categories = ["All", "Daily", "Weekly", "Monthly"] as const;
 type Category = (typeof categories)[number];

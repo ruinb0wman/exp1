@@ -8,7 +8,8 @@ import { MultiSelectGrid } from "@/components/MultiSelectGrid";
 import { Package, Clock, Sparkles } from "lucide-react";
 import type { RewardTemplate, RewardIconName, RewardIconColor, ReplenishmentMode } from "@/db/types";
 import { REWARD_ICON_COLORS } from "@/db/types";
-import { useDB } from "@/db";
+import { useRewardTemplate, useRewardTemplateActions } from "@/hooks/useRewards";
+import { useUserStore } from "@/store";
 
 const restockOptions = ["None", "Daily", "Weekly", "Monthly"];
 const restockValues: ReplenishmentMode[] = ["none", "daily", "weekly", "monthly"];
@@ -28,73 +29,73 @@ const monthDays = Array.from({ length: 31 }, (_, i) => ({
   value: i + 1,
 }));
 
-interface EditRewardProps {
-  userId?: number;
-  initialReward?: Partial<RewardTemplate>;
-  onSubmit?: (reward: Omit<RewardTemplate, "id" | "createdAt" | "updatedAt">) => void;
-}
-
-export function EditReward({ userId = 1, initialReward, onSubmit }: EditRewardProps) {
+export function EditReward() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { getDB } = useDB();
-  const isEditing = Boolean(id);
+  const { user, initUser } = useUserStore();
+  const rewardId = id ? parseInt(id) : null;
+  
+  // 使用 hook 获取奖励模板数据
+  const { template, isLoading: isLoadingTemplate } = useRewardTemplate(rewardId);
+  const { create, update, isLoading: isSubmitting } = useRewardTemplateActions();
+  
+  const isEditing = Boolean(rewardId);
 
   // Basic Info
-  const [title, setTitle] = useState(initialReward?.title ?? "");
-  const [description, setDescription] = useState(initialReward?.description ?? "");
-  const [pointsCost, setPointsCost] = useState(initialReward?.pointsCost ?? 100);
-  const [enabled, setEnabled] = useState(initialReward?.enabled ?? true);
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
+  const [pointsCost, setPointsCost] = useState(100);
+  const [enabled, setEnabled] = useState(true);
 
   // Icon
-  const [selectedIcon, setSelectedIcon] = useState<RewardIconName>(initialReward?.icon ?? "Gift");
-  const [selectedColor, setSelectedColor] = useState<RewardIconColor>(initialReward?.iconColor ?? REWARD_ICON_COLORS[0]);
+  const [selectedIcon, setSelectedIcon] = useState<RewardIconName>("Gift");
+  const [selectedColor, setSelectedColor] = useState<RewardIconColor>(REWARD_ICON_COLORS[0]);
   const [isIconPickerOpen, setIsIconPickerOpen] = useState(false);
 
-  // Valid Duration (days)
-  const [validDuration, setValidDuration] = useState(initialReward?.validDuration ?? 30);
-  const [hasValidDuration, setHasValidDuration] = useState(initialReward?.validDuration !== undefined && initialReward?.validDuration > 0);
+  // Valid Duration (days) - stored as seconds in DB
+  const [validDurationDays, setValidDurationDays] = useState(30);
+  const [hasValidDuration, setHasValidDuration] = useState(true);
 
   // Replenishment
-  const [restockIndex, setRestockIndex] = useState(() => {
-    const mode = initialReward?.replenishmentMode ?? "none";
-    return restockValues.indexOf(mode);
-  });
-  const [repeatInterval, setRepeatInterval] = useState(initialReward?.repeatInterval ?? 1);
-  const [repeatDaysOfWeek, setRepeatDaysOfWeek] = useState<number[]>(initialReward?.repeatDaysOfWeek ?? []);
-  const [repeatDaysOfMonth, setRepeatDaysOfMonth] = useState<number[]>(initialReward?.repeatDaysOfMonth ?? []);
-  const [replenishmentNum, setReplenishmentNum] = useState(initialReward?.replenishmentNum ?? 1);
-  const [hasStockLimit, setHasStockLimit] = useState(initialReward?.replenishmentLimit !== undefined);
-  const [replenishmentLimit, setReplenishmentLimit] = useState(initialReward?.replenishmentLimit ?? 10);
+  const [restockIndex, setRestockIndex] = useState(0);
+  const [repeatInterval, setRepeatInterval] = useState(1);
+  const [repeatDaysOfWeek, setRepeatDaysOfWeek] = useState<number[]>([]);
+  const [repeatDaysOfMonth, setRepeatDaysOfMonth] = useState<number[]>([]);
+  const [replenishmentNum, setReplenishmentNum] = useState(1);
+  const [hasStockLimit, setHasStockLimit] = useState(false);
+  const [replenishmentLimit, setReplenishmentLimit] = useState(10);
 
-  // Load existing reward data when editing
+  // 初始化用户
   useEffect(() => {
-    if (id) {
-      const loadReward = async () => {
-        const db = getDB();
-        const rewardId = parseInt(id);
-        const reward = await db.rewardTemplates.get(rewardId);
-        if (reward) {
-          setTitle(reward.title);
-          setDescription(reward.description ?? "");
-          setPointsCost(reward.pointsCost);
-          setEnabled(reward.enabled);
-          setSelectedIcon(reward.icon);
-          setSelectedColor(reward.iconColor ?? REWARD_ICON_COLORS[0]);
-          setValidDuration(reward.validDuration);
-          setHasValidDuration(reward.validDuration > 0);
-          setRestockIndex(restockValues.indexOf(reward.replenishmentMode));
-          setRepeatInterval(reward.repeatInterval ?? 1);
-          setRepeatDaysOfWeek(reward.repeatDaysOfWeek ?? []);
-          setRepeatDaysOfMonth(reward.repeatDaysOfMonth ?? []);
-          setReplenishmentNum(reward.replenishmentNum ?? 1);
-          setHasStockLimit(reward.replenishmentLimit !== undefined);
-          setReplenishmentLimit(reward.replenishmentLimit ?? 10);
-        }
-      };
-      loadReward();
+    if (!user) {
+      initUser();
     }
-  }, [id, getDB]);
+  }, [user, initUser]);
+
+  // 加载现有奖励数据
+  useEffect(() => {
+    if (template) {
+      setTitle(template.title);
+      setDescription(template.description ?? "");
+      setPointsCost(template.pointsCost);
+      setEnabled(template.enabled);
+      setSelectedIcon(template.icon);
+      setSelectedColor(template.iconColor ?? REWARD_ICON_COLORS[0]);
+      
+      // Convert seconds to days for display
+      const days = template.validDuration > 0 ? Math.floor(template.validDuration / 86400) : 30;
+      setValidDurationDays(days);
+      setHasValidDuration(template.validDuration > 0);
+      
+      setRestockIndex(restockValues.indexOf(template.replenishmentMode));
+      setRepeatInterval(template.repeatInterval ?? 1);
+      setRepeatDaysOfWeek(template.repeatDaysOfWeek ?? []);
+      setRepeatDaysOfMonth(template.repeatDaysOfMonth ?? []);
+      setReplenishmentNum(template.replenishmentNum ?? 1);
+      setHasStockLimit(template.replenishmentLimit !== undefined);
+      setReplenishmentLimit(template.replenishmentLimit ?? 10);
+    }
+  }, [template]);
 
   const handleIconSelect = (icon: RewardIconName, color: RewardIconColor) => {
     setSelectedIcon(icon);
@@ -114,12 +115,17 @@ export function EditReward({ userId = 1, initialReward, onSubmit }: EditRewardPr
   };
 
   const handleSubmit = async () => {
+    if (!user?.id) return;
+
+    // Convert days to seconds for storage
+    const validDurationSeconds = hasValidDuration ? validDurationDays * 86400 : 0;
+
     const rewardData: Omit<RewardTemplate, "id" | "createdAt" | "updatedAt"> = {
-      userId,
+      userId: user.id,
       title,
       description: description || undefined,
       pointsCost,
-      validDuration: hasValidDuration ? validDuration : 0,
+      validDuration: validDurationSeconds,
       enabled,
       replenishmentMode: restockValues[restockIndex],
       repeatInterval: restockValues[restockIndex] !== "none" ? repeatInterval : undefined,
@@ -131,24 +137,29 @@ export function EditReward({ userId = 1, initialReward, onSubmit }: EditRewardPr
       iconColor: selectedColor,
     };
 
-    // 打印表单内容
-    console.log("Reward Form Data:", rewardData);
-
-    if (onSubmit) {
-      onSubmit(rewardData);
-    } else {
-      // Save to database
-      const db = getDB();
-      if (id) {
-        await db.rewardTemplates.update(parseInt(id), rewardData);
+    try {
+      if (isEditing && rewardId) {
+        await update(rewardId, rewardData);
       } else {
-        await db.rewardTemplates.add(rewardData as RewardTemplate);
+        await create(rewardData);
       }
       navigate(-1);
+    } catch (err) {
+      console.error("Failed to save reward:", err);
+      alert(err instanceof Error ? err.message : "保存失败");
     }
   };
 
   const restockMode = restockValues[restockIndex];
+
+  // 加载中状态
+  if (isEditing && isLoadingTemplate) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background pb-32">
@@ -295,7 +306,7 @@ export function EditReward({ userId = 1, initialReward, onSubmit }: EditRewardPr
                 <p className="text-text-secondary text-sm">Valid for</p>
                 <div className="flex items-center gap-2">
                   <button
-                    onClick={() => setValidDuration(Math.max(1, validDuration - 1))}
+                    onClick={() => setValidDurationDays(Math.max(1, validDurationDays - 1))}
                     className="text-base font-medium flex h-7 w-7 items-center justify-center rounded-full bg-surface-light hover:bg-surface-light/80 transition-colors"
                   >
                     -
@@ -303,12 +314,12 @@ export function EditReward({ userId = 1, initialReward, onSubmit }: EditRewardPr
                   <input
                     type="number"
                     min={1}
-                    value={validDuration}
-                    onChange={(e) => setValidDuration(Math.max(1, parseInt(e.target.value) || 1))}
+                    value={validDurationDays}
+                    onChange={(e) => setValidDurationDays(Math.max(1, parseInt(e.target.value) || 1))}
                     className="text-base font-medium w-12 p-0 text-center bg-transparent focus:outline-none focus:ring-0 border-none [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
                   />
                   <button
-                    onClick={() => setValidDuration(validDuration + 1)}
+                    onClick={() => setValidDurationDays(validDurationDays + 1)}
                     className="text-base font-medium flex h-7 w-7 items-center justify-center rounded-full bg-surface-light hover:bg-surface-light/80 transition-colors"
                   >
                     +
@@ -489,10 +500,14 @@ export function EditReward({ userId = 1, initialReward, onSubmit }: EditRewardPr
       <div className="fixed bottom-0 left-0 right-0 p-4 pb-8 bg-gradient-to-t from-background to-transparent">
         <button
           onClick={handleSubmit}
-          disabled={!title.trim()}
+          disabled={!title.trim() || isSubmitting}
           className="w-full h-14 bg-primary text-white font-bold text-lg rounded-xl flex items-center justify-center shadow-lg shadow-primary/30 hover:bg-primary-light transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          {isEditing ? "Update Reward" : "Create Reward"}
+          {isSubmitting ? (
+            <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin" />
+          ) : (
+            isEditing ? "Update Reward" : "Create Reward"
+          )}
         </button>
       </div>
 

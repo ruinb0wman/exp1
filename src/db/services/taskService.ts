@@ -245,9 +245,6 @@ export async function getTaskInstancesByDate(
   date: string,
   userId?: number
 ): Promise<TaskInstance[]> {
-  const { getDB } = useDB();
-  const db = getDB();
-
   const startOfDay = `${date}T00:00:00.000Z`;
   const endOfDay = `${date}T23:59:59.999Z`;
 
