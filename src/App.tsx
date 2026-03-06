@@ -7,6 +7,7 @@ import { Store } from "./pages/Store";
 import { EditReward } from "./pages/EditReward";
 import { Stats } from "./pages/Stats";
 import { Profile } from "./pages/Profile";
+import { PointsHistory } from "./pages/PointsHistory";
 
 function Layout() {
   return (
@@ -44,6 +45,7 @@ function App() {
           <Route path="/tasks/:id" element={<EditTask />} />
           <Route path="/rewards/new" element={<EditReward />} />
           <Route path="/rewards/:id" element={<EditReward />} />
+          <Route path="/points-history" element={<PointsHistory />} />
         </Route>
       </Routes>
     </BrowserRouter>

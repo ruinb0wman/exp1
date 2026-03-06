@@ -3,7 +3,6 @@ import { ListTodo, ChevronRight, Plus, Star } from "lucide-react";
 import { useNavigate } from "react-router";
 import { useUserStore } from "@/store";
 import { useTodayTasks, useNoDateTasks, useTaskInstanceActions } from "@/hooks/useTasks";
-import { useDB } from "@/db";
 import {
   getEnabledTaskTemplates,
   getAllTaskInstances,
@@ -13,12 +12,6 @@ import {
   filterTemplatesNeedingInstances,
   generateTaskInstances,
 } from "@/libs/task";
-import type { TaskInstance, TaskTemplate } from "@/db/types";
-
-interface TaskWithTemplate {
-  instance: TaskInstance;
-  template: TaskTemplate;
-}
 
 export function Home() {
   const navigate = useNavigate();
@@ -65,7 +58,7 @@ export function Home() {
 
         // 标记已生成
         hasGeneratedRef.current = true;
-        
+
         // 刷新任务列表
         await refreshTasks();
         await refreshNoDateTasks();
@@ -167,12 +160,7 @@ export function Home() {
           </button>
         </div>
 
-        {isLoading ? (
-          <div className="flex flex-col items-center justify-center py-16 text-text-muted">
-            <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
-            <p className="text-sm mt-4">Loading tasks...</p>
-          </div>
-        ) : tasks.length === 0 ? (
+        {tasks.length === 0 && !isLoading ? (
           <div className="flex flex-col items-center justify-center py-16 text-text-muted">
             <div className="w-16 h-16 rounded-full bg-surface flex items-center justify-center mb-4">
               <ListTodo className="w-8 h-8" />
@@ -182,60 +170,78 @@ export function Home() {
           </div>
         ) : (
           <div className="flex flex-col gap-3">
-            {tasks.map(({ instance, template }) => (
-              <div
-                key={instance.id}
-                className="flex items-center gap-4 bg-surface rounded-xl p-4 min-h-[72px] justify-between border border-border"
-              >
-                <div className="flex items-center gap-4 flex-1">
-                  <div className="flex items-center justify-center">
-                    <input
-                      type="checkbox"
-                      checked={instance.status === "completed"}
-                      onChange={() => {
-                        if (instance.status === "pending") {
-                          handleComplete(instance.id!, template.rewardPoints);
-                        } else if (instance.status === "completed") {
-                          handleReset(instance.id!, template.rewardPoints);
-                        }
-                      }}
-                      className="custom-checkbox"
-                    />
+            {isLoading
+              ? // 骨架屏
+              Array.from({ length: 3 }).map((_, index) => (
+                <div
+                  key={index}
+                  className="flex items-center gap-4 bg-surface rounded-xl p-4 min-h-[72px] justify-between border border-border"
+                >
+                  <div className="flex items-center gap-4 flex-1">
+                    <div className="w-5 h-5 rounded bg-surface-light animate-pulse" />
+                    <div className="flex flex-col justify-center flex-1 gap-2">
+                      <div className="h-4 w-32 bg-surface-light rounded animate-pulse" />
+                      <div className="h-3 w-20 bg-surface-light rounded animate-pulse" />
+                    </div>
                   </div>
-                  <div className="flex flex-col justify-center flex-1">
-                    <p
-                      className={`text-base font-medium leading-normal line-clamp-1 transition-all ${
-                        instance.status === "completed"
-                          ? "text-text-secondary line-through"
-                          : "text-text-primary"
-                      }`}
-                    >
-                      {template.title}
-                    </p>
-                    <p
-                      className={`text-sm font-normal leading-normal line-clamp-2 transition-all ${
-                        instance.status === "completed"
-                          ? "text-text-muted line-through"
-                          : "text-text-secondary"
-                      }`}
-                    >
-                      {template.description || `+${template.rewardPoints} exp`}
-                    </p>
-                    {instance.subtasks.length > 0 && (
-                      <p className="text-xs text-text-muted mt-1">
-                        {instance.subtasks.join(", ")}
+                  <div className="shrink-0 flex flex-col items-end gap-1">
+                    <div className="h-3 w-8 bg-surface-light rounded animate-pulse" />
+                    <div className="h-5 w-5 bg-surface-light rounded animate-pulse" />
+                  </div>
+                </div>
+              ))
+              : tasks.map(({ instance, template }) => (
+                <div
+                  key={instance.id}
+                  className="flex items-center gap-4 bg-surface rounded-xl p-4 min-h-[72px] justify-between border border-border"
+                >
+                  <div className="flex items-center gap-4 flex-1">
+                    <div className="flex items-center justify-center">
+                      <input
+                        type="checkbox"
+                        checked={instance.status === "completed"}
+                        onChange={() => {
+                          if (instance.status === "pending") {
+                            handleComplete(instance.id!, template.rewardPoints);
+                          } else if (instance.status === "completed") {
+                            handleReset(instance.id!, template.rewardPoints);
+                          }
+                        }}
+                        className="custom-checkbox"
+                      />
+                    </div>
+                    <div className="flex flex-col justify-center flex-1">
+                      <p
+                        className={`text-base font-medium leading-normal line-clamp-1 transition-all ${instance.status === "completed"
+                            ? "text-text-secondary line-through"
+                            : "text-text-primary"
+                          }`}
+                      >
+                        {template.title}
                       </p>
-                    )}
+                      <p
+                        className={`text-sm font-normal leading-normal line-clamp-2 transition-all ${instance.status === "completed"
+                            ? "text-text-muted line-through"
+                            : "text-text-secondary"
+                          }`}
+                      >
+                        {template.description || `+${template.rewardPoints} exp`}
+                      </p>
+                      {instance.subtasks.length > 0 && (
+                        <p className="text-xs text-text-muted mt-1">
+                          {instance.subtasks.join(", ")}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                  <div className="shrink-0 flex flex-col items-end gap-1">
+                    <span className="text-xs text-primary font-medium">
+                      +{template.rewardPoints}
+                    </span>
+                    <ChevronRight className="w-5 h-5 text-text-muted" />
                   </div>
                 </div>
-                <div className="shrink-0 flex flex-col items-end gap-1">
-                  <span className="text-xs text-primary font-medium">
-                    +{template.rewardPoints}
-                  </span>
-                  <ChevronRight className="w-5 h-5 text-text-muted" />
-                </div>
-              </div>
-            ))}
+              ))}
           </div>
         )}
 
@@ -270,20 +276,18 @@ export function Home() {
                     </div>
                     <div className="flex flex-col justify-center flex-1">
                       <p
-                        className={`text-base font-medium leading-normal line-clamp-1 transition-all ${
-                          instance.status === "completed"
+                        className={`text-base font-medium leading-normal line-clamp-1 transition-all ${instance.status === "completed"
                             ? "text-text-secondary line-through"
                             : "text-text-primary"
-                        }`}
+                          }`}
                       >
                         {template.title}
                       </p>
                       <p
-                        className={`text-sm font-normal leading-normal line-clamp-2 transition-all ${
-                          instance.status === "completed"
+                        className={`text-sm font-normal leading-normal line-clamp-2 transition-all ${instance.status === "completed"
                             ? "text-text-muted line-through"
                             : "text-text-secondary"
-                        }`}
+                          }`}
                       >
                         {template.description || `+${template.rewardPoints} exp`}
                       </p>

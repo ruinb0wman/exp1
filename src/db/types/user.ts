@@ -1,4 +1,4 @@
-export type PointsHistoryType = 'task_reward' | 'reward_exchange' | 'admin_adjustment';
+export type PointsHistoryType = 'task_reward' | 'task_undo' | 'reward_exchange' | 'admin_adjustment';
 
 export interface User {
   id: number;

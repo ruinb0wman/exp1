@@ -1,15 +1,13 @@
 import { create } from 'zustand';
-import type { User, PointsHistory, PointsHistoryType } from '@/db/types';
+import type { User, PointsHistoryType } from '@/db/types';
 import {
   getOrCreateUser,
   updateUser as updateUserService,
   updateUserPoints as updateUserPointsService,
-  getPointsHistory as getPointsHistoryService,
 } from '../db/services';
 
 interface UserState {
   user: User | null;
-  pointsHistory: PointsHistory[];
   isLoading: boolean;
   error: string | null;
 
@@ -19,12 +17,10 @@ interface UserState {
   updateUser: (updates: Partial<Omit<User, 'id' | 'createdAt'>>) => Promise<void>;
   addPoints: (amount: number, type: PointsHistoryType, relatedEntityId?: number) => Promise<void>;
   spendPoints: (amount: number, type: PointsHistoryType, relatedEntityId?: number) => Promise<void>;
-  refreshPointsHistory: () => Promise<void>;
 }
 
 export const useUserStore = create<UserState>((set, get) => ({
   user: null,
-  pointsHistory: [],
   isLoading: false,
   error: null,
 
@@ -33,8 +29,6 @@ export const useUserStore = create<UserState>((set, get) => ({
     try {
       const user = await getOrCreateUser();
       set({ user, isLoading: false });
-      // Load points history after user is initialized
-      get().refreshPointsHistory();
     } catch (error) {
       set({
         error: error instanceof Error ? error.message : 'Failed to initialize user',
@@ -92,8 +86,7 @@ export const useUserStore = create<UserState>((set, get) => ({
     try {
       await updateUserPointsService(user.id, Math.abs(amount), type, relatedEntityId);
       const updatedUser = await getOrCreateUser();
-      const pointsHistory = await getPointsHistoryService(user.id);
-      set({ user: updatedUser, pointsHistory, isLoading: false });
+      set({ user: updatedUser, isLoading: false });
     } catch (error) {
       set({
         error: error instanceof Error ? error.message : 'Failed to add points',
@@ -113,28 +106,13 @@ export const useUserStore = create<UserState>((set, get) => ({
     try {
       await updateUserPointsService(user.id, -Math.abs(amount), type, relatedEntityId);
       const updatedUser = await getOrCreateUser();
-      const pointsHistory = await getPointsHistoryService(user.id);
-      set({ user: updatedUser, pointsHistory, isLoading: false });
+      set({ user: updatedUser, isLoading: false });
     } catch (error) {
       set({
         error: error instanceof Error ? error.message : 'Failed to spend points',
         isLoading: false,
       });
       throw error;
-    }
-  },
-
-  refreshPointsHistory: async () => {
-    const { user } = get();
-    if (!user) return;
-
-    try {
-      const pointsHistory = await getPointsHistoryService(user.id);
-      set({ pointsHistory });
-    } catch (error) {
-      set({
-        error: error instanceof Error ? error.message : 'Failed to load points history',
-      });
     }
   },
 }));

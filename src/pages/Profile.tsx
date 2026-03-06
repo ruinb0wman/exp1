@@ -1,11 +1,12 @@
 import { useEffect } from "react";
-import { Settings, Backpack, History, Edit3, BookOpen, Coffee, Dumbbell } from "lucide-react";
+import { Settings, Backpack, History, Coins, BookOpen, Coffee, Dumbbell } from "lucide-react";
+import { useNavigate } from "react-router";
 import { useUserStore } from "@/store";
 
 const quickActions = [
-  { icon: Backpack, label: "My Backpack" },
-  { icon: History, label: "Task History" },
-  { icon: Edit3, label: "Edit Profile" },
+  { icon: Backpack, label: "My Backpack", path: "/backpack" },
+  { icon: History, label: "Task History", path: "/task-history" },
+  { icon: Coins, label: "Points History", path: "/points-history" },
 ];
 
 const stats = [
@@ -43,6 +44,7 @@ const recentActivity = [
 ];
 
 export function Profile() {
+  const navigate = useNavigate();
   const { user, initUser, isLoading } = useUserStore();
 
   useEffect(() => {
@@ -97,6 +99,7 @@ export function Profile() {
         {quickActions.map((action) => (
           <button
             key={action.label}
+            onClick={() => navigate(action.path)}
             className="flex flex-col items-center gap-3 rounded-xl bg-surface p-4 text-center border border-border hover:bg-surface-light transition-colors"
           >
             <action.icon className="w-6 h-6 text-primary" />
