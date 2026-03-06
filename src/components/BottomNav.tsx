@@ -34,7 +34,7 @@ function NavItem({ to, icon, activeIcon, label }: NavItemProps) {
 
 export function BottomNav() {
   return (
-    <nav className="fixed bottom-0 left-0 right-0 h-20 bg-background/80 backdrop-blur-lg border-t border-border flex items-center justify-around px-4 z-50">
+    <nav className="fixed bottom-0 left-0 right-0 h-20 pb-safe bg-background/80 backdrop-blur-lg border-t border-border flex items-start justify-around px-4 pt-2 z-50">
       <NavItem
         to="/"
         icon={<Home strokeWidth={1.5} />}

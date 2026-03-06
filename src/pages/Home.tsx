@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { ListTodo, ChevronRight, Plus, Star } from "lucide-react";
+import { useNavigate } from "react-router";
 
 interface Task {
   id: number;
@@ -48,6 +49,7 @@ const initialTasks: Task[] = [
 ];
 
 export function Home() {
+  const navigate = useNavigate();
   const [tasks, setTasks] = useState<Task[]>(initialTasks);
 
   const toggleTask = (id: number) => {
@@ -106,7 +108,10 @@ export function Home() {
           <h2 className="text-text-primary text-lg font-bold tracking-tight">
             Today's Tasks
           </h2>
-          <button className="flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-medium text-primary hover:bg-surface transition-colors">
+          <button
+            onClick={() => navigate("/tasks")}
+            className="flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-medium text-primary hover:bg-surface transition-colors"
+          >
             <ListTodo className="w-4 h-4" />
             <span>All Tasks</span>
           </button>
@@ -157,7 +162,10 @@ export function Home() {
       </main>
 
       {/* Floating Add Button */}
-      <button className="fixed bottom-24 right-4 flex items-center justify-center w-14 h-14 bg-primary text-white rounded-full shadow-lg hover:bg-primary-light transition-colors z-40">
+      <button
+        onClick={() => navigate("/tasks/new")}
+        className="fixed bottom-24 right-4 flex items-center justify-center w-14 h-14 bg-primary text-white rounded-full shadow-lg hover:bg-primary-light transition-colors z-40"
+      >
         <Plus className="w-7 h-7" />
       </button>
     </div>
