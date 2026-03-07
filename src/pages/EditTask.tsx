@@ -89,7 +89,16 @@ export function EditTask() {
       setRepeatDaysOfWeek(existingTemplate.repeatDaysOfWeek ?? []);
       setRepeatDaysOfMonth(existingTemplate.repeatDaysOfMonth ?? []);
       setEndIndex(endValues.indexOf(existingTemplate.endCondition));
-      setEndValue(existingTemplate.endValue ?? "");
+      // 将 UTC ISO 时间字符串转换为 YYYY-MM-DD 格式用于显示
+      const formatToDateStr = (isoStr: string | undefined): string => {
+        if (!isoStr) return "";
+        const date = new Date(isoStr);
+        const year = date.getUTCFullYear();
+        const month = String(date.getUTCMonth() + 1).padStart(2, '0');
+        const day = String(date.getUTCDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+      };
+      setEndValue(formatToDateStr(existingTemplate.endValue));
       setEnabled(existingTemplate.enabled);
       setSubtasks(existingTemplate.subtasks ?? []);
       setIsRandomSubtask(existingTemplate.isRandomSubtask);
@@ -98,7 +107,7 @@ export function EditTask() {
       setCompleteTarget(existingTemplate.completeTarget ?? 1);
       setCompleteExpireDays(existingTemplate.completeExpireDays ?? 0);
       // 加载开始时间和 schedule 启用状态
-      setStartAt(existingTemplate.startAt ?? "");
+      setStartAt(formatToDateStr(existingTemplate.startAt));
       setIsScheduleEnabled(!!existingTemplate.startAt);
     }
   }, [existingTemplate]);
@@ -132,6 +141,13 @@ export function EditTask() {
       return;
     }
 
+    // 将 YYYY-MM-DD 日期字符串转换为 UTC ISO 时间字符串（当天的 00:00:00 UTC）
+    const formatToUTCISO = (dateStr: string): string | undefined => {
+      if (!dateStr) return undefined;
+      const [year, month, day] = dateStr.split('-').map(Number);
+      return new Date(Date.UTC(year, month - 1, day, 0, 0, 0, 0)).toISOString();
+    };
+
     const taskData: Omit<TaskTemplate, "id" | "createdAt" | "updatedAt"> = {
       userId: user.id,
       title,
@@ -142,14 +158,14 @@ export function EditTask() {
       repeatDaysOfWeek: repeatValues[repeatIndex] === "weekly" ? repeatDaysOfWeek : undefined,
       repeatDaysOfMonth: repeatValues[repeatIndex] === "monthly" ? repeatDaysOfMonth : undefined,
       endCondition: endValues[endIndex],
-      endValue: endValues[endIndex] !== "manual" ? endValue : undefined,
+      endValue: endValues[endIndex] !== "manual" ? formatToUTCISO(endValue) : undefined,
       enabled,
       subtasks,
       isRandomSubtask,
       completeRule,
       completeTarget: completeRule ? completeTarget : undefined,
       completeExpireDays: completeExpireDays > 0 ? completeExpireDays : undefined,
-      startAt: isScheduleEnabled ? startAt || undefined : undefined,
+      startAt: isScheduleEnabled ? formatToUTCISO(startAt) : undefined,
     };
 
     try {
