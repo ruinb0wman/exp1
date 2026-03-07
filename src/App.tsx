@@ -15,16 +15,29 @@ import { TaskHistory } from "./pages/TaskHistory";
 import { Settings } from "./pages/Settings";
 import { DataImportExport } from "./pages/DataImportExport";
 import { useUserStore } from "./store/userStore";
+import { useExpiredTaskChecker } from "./hooks/useExpiredTaskChecker";
 
 function Layout() {
   // 全局初始化用户
   const { user, initUser } = useUserStore();
+  
+  // 全局检查过期任务
+  const { checkExpiredTasks } = useExpiredTaskChecker({
+    userId: user?.id,
+  });
   
   useEffect(() => {
     if (!user) {
       initUser();
     }
   }, [user, initUser]);
+  
+  // 用户初始化完成后检查过期任务
+  useEffect(() => {
+    if (user?.id) {
+      checkExpiredTasks();
+    }
+  }, [user?.id, checkExpiredTasks]);
   
   return (
     <div className="min-h-screen-safe pt-safe">
@@ -38,11 +51,23 @@ function SimpleLayout() {
   // 全局初始化用户（简单布局也需要）
   const { user, initUser } = useUserStore();
   
+  // 全局检查过期任务
+  const { checkExpiredTasks } = useExpiredTaskChecker({
+    userId: user?.id,
+  });
+  
   useEffect(() => {
     if (!user) {
       initUser();
     }
   }, [user, initUser]);
+  
+  // 用户初始化完成后检查过期任务
+  useEffect(() => {
+    if (user?.id) {
+      checkExpiredTasks();
+    }
+  }, [user?.id, checkExpiredTasks]);
   
   return (
     <div className="min-h-screen-safe pt-safe">

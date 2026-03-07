@@ -91,35 +91,54 @@ export function generateTimeOptions(interval: number = 15): string[] {
 }
 
 /**
- * 计算过期时间
- * @param startAt 开始时间（ISO 格式）
+ * 计算过期时间（基于本地时间）
+ * @param startAt 开始时间（ISO 格式或 YYYY-MM-DD 格式）
  * @param expireDays 过期天数
- * @returns 过期时间（ISO 格式）
+ * @returns 过期时间（本地时间的 ISO 格式，无时区后缀）
  */
 export function calculateExpiredAt(startAt: string, expireDays: number): string {
-  const expireDate = new Date(startAt);
-  expireDate.setDate(expireDate.getDate() + expireDays);
-  return expireDate.toISOString();
+  // 解析为本地时间，避免时区问题
+  const startDate = new Date(startAt);
+  // 创建本地时间副本，使用本地日期计算
+  const expireDate = new Date(
+    startDate.getFullYear(),
+    startDate.getMonth(),
+    startDate.getDate() + expireDays,
+    0, 0, 0, 0
+  );
+  // 返回本地时间的 ISO 格式（无时区后缀，表示本地时间）
+  const year = expireDate.getFullYear();
+  const month = String(expireDate.getMonth() + 1).padStart(2, '0');
+  const day = String(expireDate.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}T00:00:00`;
 }
 
 /**
- * 检查实例是否过期
- * @param expiredAt 过期时间（ISO 格式）
+ * 检查实例是否过期（基于本地时间）
+ * @param expiredAt 过期时间（ISO 格式，本地时间无时区后缀或带Z的UTC时间）
  */
 export function isExpired(expiredAt?: string): boolean {
   if (!expiredAt) return false;
-  return new Date() > new Date(expiredAt);
+  const now = new Date();
+  // 将当前时间转为本地日期字符串 YYYY-MM-DDTHH:mm:ss 进行比较
+  const nowLocal = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}T${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}:${String(now.getSeconds()).padStart(2, '0')}`;
+  return nowLocal > expiredAt;
 }
 
 /**
- * 获取过期剩余时间文本
- * @param expiredAt 过期时间（ISO 格式）
+ * 获取过期剩余时间文本（基于本地时间）
+ * @param expiredAt 过期时间（ISO 格式，本地时间无时区后缀）
  */
 export function getExpireTimeText(expiredAt?: string): string {
   if (!expiredAt) return '';
   
   const now = new Date();
-  const expire = new Date(expiredAt);
+  // 解析 expiredAt 为本地时间
+  const [datePart, timePart] = expiredAt.split('T');
+  const [year, month, day] = datePart.split('-').map(Number);
+  const [hour, minute, second] = (timePart || '00:00:00').split(':').map(Number);
+  const expire = new Date(year, month - 1, day, hour, minute, second || 0);
+  
   const diff = expire.getTime() - now.getTime();
   
   if (diff <= 0) return '已过期';

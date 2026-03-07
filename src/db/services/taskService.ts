@@ -624,3 +624,40 @@ export function getTaskProgressPercent(
   const progress = instance.completeProgress ?? 0;
   return Math.min(100, Math.round((progress / template.completeTarget) * 100));
 }
+
+/**
+ * 批量检查并更新过期的 pending 任务实例
+ * 将已过期的任务状态更新为 'skipped'（跳过的过期任务）
+ * @param userId 用户ID
+ * @returns 更新的任务实例ID列表
+ */
+export async function checkAndUpdateExpiredTasks(userId: number): Promise<number[]> {
+  const db = getDB();
+  const now = new Date().toISOString();
+  
+  // 获取所有 pending 状态且有过期时间的任务实例
+  const pendingInstances = await db.taskInstances
+    .where('userId')
+    .equals(userId)
+    .and(instance => instance.status === 'pending' && !!instance.expiredAt)
+    .toArray();
+  
+  // 筛选出过期的任务
+  const expiredInstances = pendingInstances.filter(instance => isExpired(instance.expiredAt));
+  
+  if (expiredInstances.length === 0) {
+    return [];
+  }
+  
+  // 批量更新过期任务状态为 'skipped'
+  const updatePromises = expiredInstances.map(instance => 
+    db.taskInstances.update(instance.id!, {
+      status: 'skipped',
+      completedAt: now,
+    })
+  );
+  
+  await Promise.all(updatePromises);
+  
+  return expiredInstances.map(instance => instance.id!);
+}

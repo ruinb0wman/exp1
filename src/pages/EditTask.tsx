@@ -148,7 +148,7 @@ export function EditTask() {
       isRandomSubtask,
       completeRule,
       completeTarget: completeRule ? completeTarget : undefined,
-      completeExpireDays: completeRule ? completeExpireDays : undefined,
+      completeExpireDays: completeExpireDays > 0 ? completeExpireDays : undefined,
       startAt: isScheduleEnabled ? startAt || undefined : undefined,
     };
 
