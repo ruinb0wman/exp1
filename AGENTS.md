@@ -525,6 +525,125 @@ Implemented in `src/libs/time.ts`:
 - `getUserStartOfDay()` / `getUserEndOfDay()` - Calculate day boundaries
 - `getUserCurrentDate()` - Get the effective "today" based on dayEndTime
 
+### Time Handling Design Principles
+
+All time-related operations in the app follow a strict **UTC for storage/calculation, local time for display** principle:
+
+#### Core Rules
+
+| Operation | Format | Method | Example |
+|-----------|--------|--------|---------|
+| **Storage** | UTC ISO 8601 | `new Date().toISOString()` | `2026-03-07T15:30:00.000Z` |
+| **Calculation** | UTC | `Date.UTC()`, `getUTCFullYear()`, etc. | `Date.UTC(2026, 2, 7)` |
+| **Display** | Local time | `toLocaleDateString()`, `getFullYear()` | `2026/3/7` |
+
+#### Key Functions (`src/libs/time.ts`)
+
+**UTC Time Generation:**
+```typescript
+// Get current UTC timestamp
+getUTCTimestamp(): string  // Returns: "2026-03-07T15:30:00.000Z"
+
+// Create UTC start/end of day
+createUTCStartOfDay(year, month, day): Date
+createUTCEndOfDay(year, month, day): Date
+
+// Get today's UTC range
+getTodayUTCRange(): [string, string]  // [startOfDayUTC, endOfDayUTC]
+```
+
+**UTC Calculations:**
+```typescript
+// Date differences using UTC
+daysBetweenUTC(date1, date2): number
+weeksBetweenUTC(date1, date2): number
+monthsBetweenUTC(date1, date2): number
+
+// Check if same UTC day
+isSameUTCDay(date1, date2): boolean
+
+// Calculate expiration (UTC-based)
+calculateExpiredAt(startAtUTC: string, expireDays: number): string
+
+// Check expiration (compares UTC times)
+isExpired(expiredAtUTC?: string): boolean
+```
+
+**Local Time Formatting (for display only):**
+```typescript
+// Format UTC to local date string
+formatLocalDate(date: Date | string): string  // "2026-03-07"
+formatLocalDateTime(date: Date | string): string  // "2026-03-07 15:30"
+
+// Get relative time text
+getExpireTimeText(expiredAtUTC?: string): string  // "2小时后过期"
+```
+
+#### Usage Examples
+
+**Storing timestamps (Service Layer):**
+```typescript
+// Always use toISOString() for storage
+const now = new Date().toISOString();  // UTC time
+await db.taskInstances.update(id, {
+  completedAt: now,
+});
+```
+
+**Querying by date range:**
+```typescript
+// Use UTC boundaries for queries
+const [startUTC, endUTC] = getTodayUTCRange();
+const sessions = await db.pomoSessions
+  .where('startedAt')
+  .between(startUTC, endUTC)
+  .toArray();
+```
+
+**Displaying to users:**
+```typescript
+// Convert UTC to local time for display
+const completedAt = instance.completedAt;  // "2026-03-07T15:30:00.000Z"
+const displayDate = formatLocalDate(completedAt);  // "2026-03-07"
+const displayTime = new Date(completedAt).toLocaleTimeString('zh-CN');
+```
+
+#### Special Case: dayEndTime
+
+The `dayEndTime` setting (e.g., "02:00") is a **local time concept** that affects when a "day" starts/ends for the user:
+
+```typescript
+// When generating task instances, combine local dayEndTime with UTC storage
+const startOfDayUTC = getUserStartOfDay(localDate, dayEndTime);
+// Returns UTC ISO string representing the local day boundary
+```
+
+#### Common Pitfalls to Avoid
+
+❌ **Don't use local time methods for storage:**
+```typescript
+// WRONG - stores local time without timezone info
+const wrong = `${date.getFullYear()}-${date.getMonth()+1}-${date.getDate()}`;
+```
+
+✅ **Do use UTC methods for storage:**
+```typescript
+// CORRECT - stores UTC time
+const correct = new Date().toISOString();
+```
+
+❌ **Don't compare dates using local time:**
+```typescript
+// WRONG - local time comparison
+if (new Date(date1).getDate() === new Date(date2).getDate())
+```
+
+✅ **Do use UTC for comparisons:**
+```typescript
+// CORRECT - UTC comparison
+if (isSameUTCDay(date1, date2))
+```
+
 ### Points System
 
 Points flow:

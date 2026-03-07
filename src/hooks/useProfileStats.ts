@@ -44,6 +44,10 @@ function getActivityTitle(history: PointsHistory, taskTitle?: string, rewardTitl
   }
 }
 
+/**
+ * 获取活动时间的相对描述
+ * 使用UTC时间进行比较
+ */
 function getActivitySubtitle(history: PointsHistory): string {
   const date = new Date(history.createdAt);
   const now = new Date();
@@ -56,9 +60,21 @@ function getActivitySubtitle(history: PointsHistory): string {
   if (diffMins < 60) return `${diffMins} 分钟前`;
   if (diffHours < 24) return `${diffHours} 小时前`;
   if (diffDays < 7) return `${diffDays} 天前`;
+  // 使用本地时间显示日期
   return date.toLocaleDateString('zh-CN', { month: 'short', day: 'numeric' });
 }
 
+/**
+ * 从UTC时间提取本地日期字符串 YYYY-MM-DD
+ */
+function getLocalDateStringFromUTC(utcString: string): string {
+  const date = new Date(utcString);
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+}
+
+/**
+ * 计算连续完成天数（基于UTC时间的本地日期）
+ */
 async function calculateStreak(userId: number): Promise<number> {
   const db = getDB();
   
@@ -71,12 +87,11 @@ async function calculateStreak(userId: number): Promise<number> {
 
   if (instances.length === 0) return 0;
 
-  // 按日期分组统计（本地时间）
+  // 按本地日期分组统计（从UTC时间转换为本地日期）
   const completedDates = new Set<string>();
   instances.forEach(instance => {
     if (instance.completedAt) {
-      const date = new Date(instance.completedAt);
-      const dateStr = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+      const dateStr = getLocalDateStringFromUTC(instance.completedAt);
       completedDates.add(dateStr);
     }
   });
@@ -86,11 +101,11 @@ async function calculateStreak(userId: number): Promise<number> {
 
   // 计算连续天数
   const today = new Date();
-  const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+  const todayStr = getLocalDateStringFromUTC(today.toISOString());
   
   const yesterday = new Date(today);
   yesterday.setDate(yesterday.getDate() - 1);
-  const yesterdayStr = `${yesterday.getFullYear()}-${String(yesterday.getMonth() + 1).padStart(2, '0')}-${String(yesterday.getDate()).padStart(2, '0')}`;
+  const yesterdayStr = getLocalDateStringFromUTC(yesterday.toISOString());
 
   // 如果今天或昨天没有完成，说明连续中断了
   if (sortedDates[0] !== todayStr && sortedDates[0] !== yesterdayStr) {
@@ -146,7 +161,7 @@ export function useProfileStats(userId: number | null): UseProfileStatsReturn {
     try {
       const db = getDB();
 
-      // 获取积分统计（所有时间范围）
+      // 获取积分统计（所有时间范围，使用UTC时间）
       const startDate = '1970-01-01T00:00:00.000Z';
       const endDate = new Date().toISOString();
       const pointsStats = await getPointsStats(userId, startDate, endDate);

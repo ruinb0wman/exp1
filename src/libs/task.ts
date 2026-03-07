@@ -1,11 +1,21 @@
 import type { TaskTemplate, TaskInstance } from '@/db/types';
-import { getUserStartOfDay, calculateExpiredAt, formatLocalDate } from './time';
+import { 
+  getUserStartOfDay, 
+  calculateExpiredAt, 
+  formatLocalDate,
+  daysBetweenUTC,
+  weeksBetweenUTC,
+  monthsBetweenUTC,
+  getUTCTimestamp,
+  isSameUTCDay,
+} from './time';
 
 // 重新导出 formatLocalDate 以保持兼容性
 export { formatLocalDate };
 
 /**
- * 获取今天的日期字符串 (YYYY-MM-DD) - 使用本地时区
+ * 获取今天的本地日期字符串 (YYYY-MM-DD)
+ * 用于显示和逻辑判断，实际存储使用UTC
  */
 export function getTodayString(): string {
   const now = new Date();
@@ -13,48 +23,54 @@ export function getTodayString(): string {
 }
 
 /**
- * 获取指定日期的开始时间 (ISO 格式，本地时区的 00:00:00)
+ * 获取指定UTC时间的当天开始时间 (ISO格式，UTC 00:00:00)
+ * @deprecated 使用 time.ts 中的 getUserStartOfDay 或 createUTCStartOfDay
  */
 export function getStartOfDay(date: Date): string {
   const d = new Date(date);
-  d.setHours(0, 0, 0, 0);
-  return d.toISOString();
+  // 设置为当天的UTC开始时间
+  const utcStart = Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate(), 0, 0, 0, 0);
+  return new Date(utcStart).toISOString();
 }
 
 /**
- * 获取指定日期的结束时间 (ISO 格式)
+ * 获取指定UTC时间的当天结束时间 (ISO格式，UTC 23:59:59.999)
+ * @deprecated 使用 time.ts 中的 getUserEndOfDay 或 createUTCEndOfDay
  */
 export function getEndOfDay(date: Date): string {
   const d = new Date(date);
-  d.setHours(23, 59, 59, 999);
-  return d.toISOString();
+  // 设置为当天的UTC结束时间
+  const utcEnd = Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate(), 23, 59, 59, 999);
+  return new Date(utcEnd).toISOString();
 }
 
 /**
- * 计算两个日期之间的天数差
+ * 计算两个UTC日期之间的天数差
+ * @deprecated 使用 time.ts 中的 daysBetweenUTC
  */
 export function daysBetween(date1: Date, date2: Date): number {
-  const d1 = new Date(date1.getFullYear(), date1.getMonth(), date1.getDate());
-  const d2 = new Date(date2.getFullYear(), date2.getMonth(), date2.getDate());
-  return Math.floor((d2.getTime() - d1.getTime()) / (1000 * 60 * 60 * 24));
+  return daysBetweenUTC(date1, date2);
 }
 
 /**
- * 计算两个日期之间的周数差
+ * 计算两个UTC日期之间的周数差
+ * @deprecated 使用 time.ts 中的 weeksBetweenUTC
  */
 export function weeksBetween(date1: Date, date2: Date): number {
-  return Math.floor(daysBetween(date1, date2) / 7);
+  return weeksBetweenUTC(date1, date2);
 }
 
 /**
- * 计算两个日期之间的月数差
+ * 计算两个UTC日期之间的月数差
+ * @deprecated 使用 time.ts 中的 monthsBetweenUTC
  */
 export function monthsBetween(date1: Date, date2: Date): number {
-  return (date2.getFullYear() - date1.getFullYear()) * 12 + (date2.getMonth() - date1.getMonth());
+  return monthsBetweenUTC(date1, date2);
 }
 
 /**
  * 判断任务模板在指定日期是否已满足结束条件
+ * 使用UTC时间进行比较
  */
 export function isTemplateEndedOnDate(
   template: TaskTemplate,
@@ -68,9 +84,16 @@ export function isTemplateEndedOnDate(
   }
 
   if (endCondition === 'date' && endValue) {
+    // endValue 存储的是 UTC ISO 格式或 YYYY-MM-DD 格式
     const endDate = new Date(endValue);
-    endDate.setHours(23, 59, 59, 999);
-    return targetDate > endDate;
+    // 设置为UTC当天的最后一刻
+    const endDateUTC = new Date(Date.UTC(
+      endDate.getUTCFullYear(),
+      endDate.getUTCMonth(),
+      endDate.getUTCDate(),
+      23, 59, 59, 999
+    ));
+    return targetDate.getTime() > endDateUTC.getTime();
   }
 
   if (endCondition === 'times' && endValue) {
@@ -94,8 +117,9 @@ export function isTemplateEnded(
 
 /**
  * 判断指定日期是否需要为该模板生成任务实例
+ * 使用UTC时间进行计算
  * @param existingInstances 该模板已存在的所有实例
- * @param targetDate 目标日期，默认为今天
+ * @param targetDate 目标日期（本地时间），默认为今天
  */
 export function shouldGenerateInstanceOnDate(
   template: TaskTemplate,
@@ -113,9 +137,8 @@ export function shouldGenerateInstanceOnDate(
     case 'daily': {
       // 每日：检查间隔天数，使用 startAt 作为基准
       if (!startAt) return false; // 周期性任务必须有 startAt
-      const baseDate = new Date(startAt);
       const interval = repeatInterval || 1;
-      const daysDiff = daysBetween(baseDate, targetDate);
+      const daysDiff = daysBetweenUTC(startAt, targetDate);
       return daysDiff >= 0 && daysDiff % interval === 0;
     }
 
@@ -124,15 +147,15 @@ export function shouldGenerateInstanceOnDate(
       if (!startAt) return false;
       const baseDate = new Date(startAt);
       const interval = repeatInterval || 1;
-      const currentDayOfWeek = targetDate.getDay(); // 0-6
+      const currentDayOfWeek = targetDate.getDay(); // 0-6，使用本地时间的星期几
 
       // 检查目标日期是否在指定的星期几列表中
       if (!repeatDaysOfWeek || !repeatDaysOfWeek.includes(currentDayOfWeek)) {
         return false;
       }
 
-      // 检查是否满足间隔周数
-      const weeksDiff = weeksBetween(baseDate, targetDate);
+      // 检查是否满足间隔周数（基于UTC时间计算）
+      const weeksDiff = weeksBetweenUTC(baseDate, targetDate);
       return weeksDiff >= 0 && weeksDiff % interval === 0;
     }
 
@@ -141,15 +164,15 @@ export function shouldGenerateInstanceOnDate(
       if (!startAt) return false;
       const baseDate = new Date(startAt);
       const interval = repeatInterval || 1;
-      const currentDayOfMonth = targetDate.getDate();
+      const currentDayOfMonth = targetDate.getDate(); // 使用本地时间的日期
 
       // 检查目标日期是否在指定的日期列表中
       if (!repeatDaysOfMonth || !repeatDaysOfMonth.includes(currentDayOfMonth)) {
         return false;
       }
 
-      // 检查是否满足间隔月数
-      const monthsDiff = monthsBetween(baseDate, targetDate);
+      // 检查是否满足间隔月数（基于UTC时间计算）
+      const monthsDiff = monthsBetweenUTC(baseDate, targetDate);
       return monthsDiff >= 0 && monthsDiff % interval === 0;
     }
 
@@ -171,6 +194,7 @@ export function shouldGenerateInstanceToday(
 
 /**
  * 过滤出指定日期需要生成实例的任务模板
+ * 使用UTC时间进行日期比较
  */
 export function filterTemplatesNeedingInstancesOnDate(
   templates: TaskTemplate[],
@@ -205,14 +229,11 @@ export function filterTemplatesNeedingInstancesOnDate(
     }
 
     // 对于其他 repeatMode，检查目标日期是否已经生成过实例
-    // 统一使用本地日期字符串来比较，避免时区问题
-    const targetDateStr = formatLocalDate(targetDate); // YYYY-MM-DD (本地时区)
+    // 统一使用UTC日期比较
     const hasInstanceOnDate = templateInstances.some((inst) => {
-      // 从 ISO 格式的 startAt 中提取本地日期
       if (!inst.startAt) return false;
-      const instDate = new Date(inst.startAt);
-      const instanceDateStr = formatLocalDate(instDate);
-      return instanceDateStr === targetDateStr;
+      // 使用UTC时间比较是否是同一天
+      return isSameUTCDay(inst.startAt, targetDate);
     });
     if (hasInstanceOnDate) {
       return false;
@@ -235,7 +256,8 @@ export function filterTemplatesNeedingInstances(
 }
 
 /**
- * 为任务模板生成任务实例数据（更新：支持 dayEndTime 和过期时间）
+ * 为任务模板生成任务实例数据（使用UTC时间）
+ * @param dayEndTime 本地时间的"一天结束"，格式 "HH:mm"
  */
 export function generateTaskInstance(
   template: TaskTemplate,
@@ -258,11 +280,11 @@ export function generateTaskInstance(
     // 一次性任务：继承 template.startAt，无论是否存在
     startAt = template.startAt;
   } else {
-    // 周期性任务：基于目标日期生成 startAt
+    // 周期性任务：基于目标日期生成 startAt（UTC格式）
     startAt = getUserStartOfDay(targetDate, dayEndTime);
   }
 
-  // 计算过期时间
+  // 计算过期时间（UTC）
   let expiredAt: string | undefined;
   if (startAt && template.completeExpireDays && template.completeExpireDays > 0) {
     expiredAt = calculateExpiredAt(startAt, template.completeExpireDays);
@@ -281,7 +303,7 @@ export function generateTaskInstance(
 }
 
 /**
- * 批量生成任务实例（更新：支持 dayEndTime）
+ * 批量生成任务实例（使用UTC时间）
  */
 export function generateTaskInstances(
   templates: TaskTemplate[],

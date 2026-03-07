@@ -22,6 +22,28 @@ interface TaskStats {
   skipped: number;
 }
 
+/**
+ * 获取UTC日期范围（最近N天）
+ * @param daysAgo 多少天前开始（0表示今天）
+ * @returns [startUTC, endUTC] ISO格式字符串
+ */
+function getUTCDateRange(daysAgo: number = 30): [string, string] {
+  const now = new Date();
+  
+  // 结束时间：现在（UTC）
+  const endUTC = now.toISOString();
+  
+  // 开始时间：N天前的UTC开始
+  const startUTC = new Date(Date.UTC(
+    now.getUTCFullYear(),
+    now.getUTCMonth(),
+    now.getUTCDate() - daysAgo,
+    0, 0, 0, 0
+  )).toISOString();
+  
+  return [startUTC, endUTC];
+}
+
 export function useTaskHistory({ userId, pageSize = DEFAULT_PAGE_SIZE }: UseTaskHistoryOptions) {
   const [list, setList] = useState<TaskHistoryItem[]>([]);
   const [stats, setStats] = useState<TaskStats | null>(null);
@@ -35,15 +57,11 @@ export function useTaskHistory({ userId, pageSize = DEFAULT_PAGE_SIZE }: UseTask
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // 初始化日期范围（最近30天）
+  // 初始化日期范围（最近30天，UTC时间）
   useEffect(() => {
-    const end = new Date();
-    const start = new Date();
-    start.setDate(start.getDate() - 30);
-    start.setHours(0, 0, 0, 0);
-    end.setHours(23, 59, 59, 999);
-    setStartDate(start.toISOString());
-    setEndDate(end.toISOString());
+    const [start, end] = getUTCDateRange(30);
+    setStartDate(start);
+    setEndDate(end);
   }, []);
 
   // 加载统计数据
@@ -111,6 +129,11 @@ export function useTaskHistory({ userId, pageSize = DEFAULT_PAGE_SIZE }: UseTask
     }
   }, [isLoadingMore, hasMore, loadList]);
 
+  /**
+   * 设置日期范围（使用UTC时间）
+   * @param start 开始日期 ISO格式（UTC）
+   * @param end 结束日期 ISO格式（UTC）
+   */
   const setDateRange = useCallback((start: string, end: string) => {
     setStartDate(start);
     setEndDate(end);

@@ -128,12 +128,16 @@ function DateRangePicker({
   };
 
   const handleQuickSelect = (days: number) => {
-    const end = new Date();
-    const start = new Date();
-    start.setDate(start.getDate() - days);
-    start.setHours(0, 0, 0, 0);
-    end.setHours(23, 59, 59, 999);
-    onChange(start.toISOString(), end.toISOString());
+    const now = new Date();
+    // 使用UTC时间计算日期范围
+    const endUTC = now.toISOString();
+    const startUTC = new Date(Date.UTC(
+      now.getUTCFullYear(),
+      now.getUTCMonth(),
+      now.getUTCDate() - days,
+      0, 0, 0, 0
+    )).toISOString();
+    onChange(startUTC, endUTC);
     setIsOpen(false);
   };
 

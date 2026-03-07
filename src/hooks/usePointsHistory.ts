@@ -9,17 +9,22 @@ import {
 
 const DEFAULT_PAGE_SIZE = 20;
 
-// 获取默认时间范围（最近30天）
+// 获取默认时间范围（最近30天，UTC时间）
 function getDefaultDateRange(): { startDate: string; endDate: string } {
-  const end = new Date();
-  const start = new Date();
-  start.setDate(start.getDate() - 30);
-  start.setHours(0, 0, 0, 0);
-  end.setHours(23, 59, 59, 999);
+  const now = new Date();
+  // 结束时间：现在（UTC）
+  const endUTC = now.toISOString();
+  // 开始时间：30天前的UTC开始
+  const startUTC = new Date(Date.UTC(
+    now.getUTCFullYear(),
+    now.getUTCMonth(),
+    now.getUTCDate() - 30,
+    0, 0, 0, 0
+  )).toISOString();
 
   return {
-    startDate: start.toISOString(),
-    endDate: end.toISOString(),
+    startDate: startUTC,
+    endDate: endUTC,
   };
 }
 

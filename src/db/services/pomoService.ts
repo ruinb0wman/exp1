@@ -7,7 +7,7 @@ export async function createPomoSession(
   session: Omit<PomoSession, 'id' | 'startedAt'>
 ): Promise<number> {
   const db = getDB();
-  const now = new Date().toISOString();
+  const now = new Date().toISOString(); // UTC时间
   
   const newSession: PomoSession = {
     ...session,
@@ -32,7 +32,7 @@ export async function completePomoSession(
   actualDuration: number
 ): Promise<void> {
   const db = getDB();
-  const now = new Date().toISOString();
+  const now = new Date().toISOString(); // UTC时间
   
   await db.pomoSessions.update(id, {
     status: 'completed' as PomoStatus,
@@ -47,7 +47,7 @@ export async function abortPomoSession(
   actualDuration: number
 ): Promise<void> {
   const db = getDB();
-  const now = new Date().toISOString();
+  const now = new Date().toISOString(); // UTC时间
   
   await db.pomoSessions.update(id, {
     status: 'aborted' as PomoStatus,
@@ -67,27 +67,33 @@ export async function incrementInterruptions(id: number): Promise<void> {
   }
 }
 
-// 获取今日的番茄钟会话
+// 获取今日的番茄钟会话（基于UTC时间）
 export async function getTodayPomoSessions(userId: number): Promise<PomoSession[]> {
   const db = getDB();
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  const todayStr = today.toISOString();
+  const now = new Date();
+  
+  // 计算今天的UTC开始时间
+  const todayStartUTC = new Date(Date.UTC(
+    now.getUTCFullYear(),
+    now.getUTCMonth(),
+    now.getUTCDate(),
+    0, 0, 0, 0
+  )).toISOString();
   
   return db.pomoSessions
     .where('userId')
     .equals(userId)
-    .filter(session => session.startedAt >= todayStr)
+    .filter(session => session.startedAt >= todayStartUTC)
     .toArray();
 }
 
-// 获取今日完成的番茄数
+// 获取今日完成的番茄数（基于UTC时间）
 export async function getTodayCompletedPomoCount(userId: number): Promise<number> {
   const sessions = await getTodayPomoSessions(userId);
   return sessions.filter(s => s.status === 'completed' && s.mode === 'focus').length;
 }
 
-// 获取本周的番茄钟统计
+// 获取本周的番茄钟统计（基于UTC时间）
 export async function getWeeklyPomoStats(userId: number): Promise<{
   totalFocus: number; // 总专注时长(分钟)
   completedCount: number;
@@ -95,13 +101,21 @@ export async function getWeeklyPomoStats(userId: number): Promise<{
 }> {
   const db = getDB();
   const now = new Date();
-  const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-  const weekAgoStr = weekAgo.toISOString();
+  
+  // 计算7天前的UTC时间
+  const weekAgoUTC = new Date(Date.UTC(
+    now.getUTCFullYear(),
+    now.getUTCMonth(),
+    now.getUTCDate() - 7,
+    now.getUTCHours(),
+    now.getUTCMinutes(),
+    now.getUTCSeconds()
+  )).toISOString();
   
   const sessions = await db.pomoSessions
     .where('userId')
     .equals(userId)
-    .filter(session => session.startedAt >= weekAgoStr && session.mode === 'focus')
+    .filter(session => session.startedAt >= weekAgoUTC && session.mode === 'focus')
     .toArray();
   
   return {

@@ -1,22 +1,61 @@
 /**
  * 时间工具函数
- * 处理用户自定义的一天结束时间（dayEndTime）相关逻辑
+ * 所有存储和计算使用UTC时间，只有渲染时转换为本地时间
  */
 
 /**
- * 获取指定日期的本地字符串 YYYY-MM-DD
+ * 获取当前UTC时间的ISO字符串
  */
-export function formatLocalDate(date: Date): string {
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const day = String(date.getDate()).padStart(2, '0');
+export function getUTCTimestamp(): string {
+  return new Date().toISOString();
+}
+
+/**
+ * 将本地日期转换为UTC日期的ISO字符串（仅用于显示转换）
+ * 存储时应直接使用 new Date().toISOString()
+ */
+export function toUTCISOString(date: Date): string {
+  return date.toISOString();
+}
+
+/**
+ * 获取指定UTC时间的年份、月份、日期（UTC）
+ */
+export function getUTCDateParts(date: Date): { year: number; month: number; day: number } {
+  return {
+    year: date.getUTCFullYear(),
+    month: date.getUTCMonth(),
+    month1Based: date.getUTCMonth() + 1,
+    day: date.getUTCDate(),
+  };
+}
+
+/**
+ * 格式化UTC日期为本地日期字符串 YYYY-MM-DD（用于显示）
+ */
+export function formatLocalDate(date: Date | string): string {
+  const d = typeof date === 'string' ? new Date(date) : date;
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
   return `${year}-${month}-${day}`;
 }
 
 /**
+ * 格式化UTC日期为本地时间字符串 YYYY-MM-DD HH:mm（用于显示）
+ */
+export function formatLocalDateTime(date: Date | string): string {
+  const d = typeof date === 'string' ? new Date(date) : date;
+  const dateStr = formatLocalDate(d);
+  const hour = String(d.getHours()).padStart(2, '0');
+  const minute = String(d.getMinutes()).padStart(2, '0');
+  return `${dateStr} ${hour}:${minute}`;
+}
+
+/**
  * 获取用户定义的"当前日期"（考虑 dayEndTime 偏移）
+ * 返回本地日期字符串 YYYY-MM-DD（用于显示和计算逻辑）
  * @param dayEndTime "HH:mm" 格式，如 "02:00"
- * @returns 本地日期字符串 YYYY-MM-DD
  */
 export function getUserCurrentDate(dayEndTime: string = "00:00"): string {
   const now = new Date();
@@ -33,31 +72,81 @@ export function getUserCurrentDate(dayEndTime: string = "00:00"): string {
 }
 
 /**
- * 获取用户"指定日期"的开始时间（考虑 dayEndTime）
- * @param date 日期
- * @param dayEndTime "HH:mm" 格式
- * @returns ISO 格式时间字符串
+ * 创建UTC日期的开始时间（UTC 00:00:00.000）
+ * @param year 年份
+ * @param month 月份 (0-11)
+ * @param day 日期
  */
-export function getUserStartOfDay(date: Date, dayEndTime: string = "00:00"): string {
-  const [endHour, endMinute] = dayEndTime.split(':').map(Number);
-  const d = new Date(date);
-  d.setHours(endHour, endMinute, 0, 0);
-  return d.toISOString();
+export function createUTCStartOfDay(year: number, month: number, day: number): Date {
+  return new Date(Date.UTC(year, month, day, 0, 0, 0, 0));
 }
 
 /**
- * 获取用户"指定日期"的结束时间（考虑 dayEndTime）
- * @param date 日期
- * @param dayEndTime "HH:mm" 格式
- * @returns ISO 格式时间字符串
+ * 创建UTC日期的结束时间（UTC 23:59:59.999）
+ * @param year 年份
+ * @param month 月份 (0-11)
+ * @param day 日期
  */
-export function getUserEndOfDay(date: Date, dayEndTime: string = "00:00"): string {
+export function createUTCEndOfDay(year: number, month: number, day: number): Date {
+  return new Date(Date.UTC(year, month, day, 23, 59, 59, 999));
+}
+
+/**
+ * 获取指定本地日期的UTC开始时间（考虑 dayEndTime）
+ * @param localDate 本地日期
+ * @param dayEndTime "HH:mm" 格式，默认 "00:00"
+ * @returns UTC ISO 格式时间字符串
+ */
+export function getUserStartOfDay(localDate: Date, dayEndTime: string = "00:00"): string {
   const [endHour, endMinute] = dayEndTime.split(':').map(Number);
-  const d = new Date(date);
-  d.setDate(d.getDate() + 1);
-  d.setHours(endHour, endMinute, 0, 0);
-  d.setMilliseconds(d.getMilliseconds() - 1);
-  return d.toISOString();
+  
+  // 创建UTC时间：localDate的年月日 + dayEndTime的时分
+  // 由于dayEndTime是本地时间概念，我们需要将其转换为当天的UTC时间
+  const utcDate = Date.UTC(
+    localDate.getFullYear(),
+    localDate.getMonth(),
+    localDate.getDate(),
+    endHour,
+    endMinute,
+    0,
+    0
+  );
+  
+  return new Date(utcDate).toISOString();
+}
+
+/**
+ * 获取指定本地日期的UTC结束时间（考虑 dayEndTime）
+ * @param localDate 本地日期
+ * @param dayEndTime "HH:mm" 格式，默认 "00:00"
+ * @returns UTC ISO 格式时间字符串
+ */
+export function getUserEndOfDay(localDate: Date, dayEndTime: string = "00:00"): string {
+  const [endHour, endMinute] = dayEndTime.split(':').map(Number);
+  
+  // 创建UTC时间：localDate的下一天 + dayEndTime的时分 - 1ms
+  const utcDate = Date.UTC(
+    localDate.getFullYear(),
+    localDate.getMonth(),
+    localDate.getDate() + 1,
+    endHour,
+    endMinute,
+    0,
+    -1
+  );
+  
+  return new Date(utcDate).toISOString();
+}
+
+/**
+ * 获取当前UTC时间的日期边界（用于查询今天的数据）
+ * @returns [startOfDayUTC, endOfDayUTC] ISO格式字符串
+ */
+export function getTodayUTCRange(): [string, string] {
+  const now = new Date();
+  const startOfDay = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), 0, 0, 0, 0);
+  const endOfDay = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), 23, 59, 59, 999);
+  return [new Date(startOfDay).toISOString(), new Date(endOfDay).toISOString()];
 }
 
 /**
@@ -91,54 +180,43 @@ export function generateTimeOptions(interval: number = 15): string[] {
 }
 
 /**
- * 计算过期时间（基于本地时间）
- * @param startAt 开始时间（ISO 格式或 YYYY-MM-DD 格式）
+ * 计算过期时间（基于UTC时间）
+ * @param startAtUTC 开始时间（UTC ISO格式）
  * @param expireDays 过期天数
- * @returns 过期时间（本地时间的 ISO 格式，无时区后缀）
+ * @returns 过期时间（UTC ISO格式）
  */
-export function calculateExpiredAt(startAt: string, expireDays: number): string {
-  // 解析为本地时间，避免时区问题
-  const startDate = new Date(startAt);
-  // 创建本地时间副本，使用本地日期计算
-  const expireDate = new Date(
-    startDate.getFullYear(),
-    startDate.getMonth(),
-    startDate.getDate() + expireDays,
+export function calculateExpiredAt(startAtUTC: string, expireDays: number): string {
+  const startDate = new Date(startAtUTC);
+  // 使用UTC时间计算过期时间
+  const expireDate = new Date(Date.UTC(
+    startDate.getUTCFullYear(),
+    startDate.getUTCMonth(),
+    startDate.getUTCDate() + expireDays,
     0, 0, 0, 0
-  );
-  // 返回本地时间的 ISO 格式（无时区后缀，表示本地时间）
-  const year = expireDate.getFullYear();
-  const month = String(expireDate.getMonth() + 1).padStart(2, '0');
-  const day = String(expireDate.getDate()).padStart(2, '0');
-  return `${year}-${month}-${day}T00:00:00`;
+  ));
+  return expireDate.toISOString();
 }
 
 /**
- * 检查实例是否过期（基于本地时间）
- * @param expiredAt 过期时间（ISO 格式，本地时间无时区后缀或带Z的UTC时间）
+ * 检查实例是否过期（基于UTC时间比较）
+ * @param expiredAtUTC 过期时间（UTC ISO格式）
  */
-export function isExpired(expiredAt?: string): boolean {
-  if (!expiredAt) return false;
+export function isExpired(expiredAtUTC?: string): boolean {
+  if (!expiredAtUTC) return false;
   const now = new Date();
-  // 将当前时间转为本地日期字符串 YYYY-MM-DDTHH:mm:ss 进行比较
-  const nowLocal = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}T${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}:${String(now.getSeconds()).padStart(2, '0')}`;
-  return nowLocal > expiredAt;
+  const expireTime = new Date(expiredAtUTC);
+  return now.getTime() > expireTime.getTime();
 }
 
 /**
- * 获取过期剩余时间文本（基于本地时间）
- * @param expiredAt 过期时间（ISO 格式，本地时间无时区后缀）
+ * 获取过期剩余时间文本（基于UTC时间）
+ * @param expiredAtUTC 过期时间（UTC ISO格式）
  */
-export function getExpireTimeText(expiredAt?: string): string {
-  if (!expiredAt) return '';
+export function getExpireTimeText(expiredAtUTC?: string): string {
+  if (!expiredAtUTC) return '';
   
   const now = new Date();
-  // 解析 expiredAt 为本地时间
-  const [datePart, timePart] = expiredAt.split('T');
-  const [year, month, day] = datePart.split('-').map(Number);
-  const [hour, minute, second] = (timePart || '00:00:00').split(':').map(Number);
-  const expire = new Date(year, month - 1, day, hour, minute, second || 0);
-  
+  const expire = new Date(expiredAtUTC);
   const diff = expire.getTime() - now.getTime();
   
   if (diff <= 0) return '已过期';
@@ -154,4 +232,57 @@ export function getExpireTimeText(expiredAt?: string): string {
     return `${hours}小时${minutes > 0 ? `${minutes}分钟` : ''}后过期`;
   }
   return `${minutes}分钟后过期`;
+}
+
+/**
+ * 计算两个UTC时间之间的天数差
+ * 返回 date2 - date1 的天数（可以为负数）
+ */
+export function daysBetweenUTC(date1: Date | string, date2: Date | string): number {
+  const d1 = typeof date1 === 'string' ? new Date(date1) : date1;
+  const d2 = typeof date2 === 'string' ? new Date(date2) : date2;
+  
+  // 使用UTC时间计算
+  const utc1 = Date.UTC(d1.getUTCFullYear(), d1.getUTCMonth(), d1.getUTCDate());
+  const utc2 = Date.UTC(d2.getUTCFullYear(), d2.getUTCMonth(), d2.getUTCDate());
+  return Math.floor((utc2 - utc1) / (1000 * 60 * 60 * 24));
+}
+
+/**
+ * 计算两个UTC时间之间的周数差
+ */
+export function weeksBetweenUTC(date1: Date | string, date2: Date | string): number {
+  return Math.floor(daysBetweenUTC(date1, date2) / 7);
+}
+
+/**
+ * 计算两个UTC时间之间的月数差
+ */
+export function monthsBetweenUTC(date1: Date | string, date2: Date | string): number {
+  const d1 = typeof date1 === 'string' ? new Date(date1) : date1;
+  const d2 = typeof date2 === 'string' ? new Date(date2) : date2;
+  return (d2.getUTCFullYear() - d1.getUTCFullYear()) * 12 + (d2.getUTCMonth() - d1.getUTCMonth());
+}
+
+/**
+ * 检查两个UTC时间是否是同一天（UTC日期）
+ */
+export function isSameUTCDay(date1: Date | string, date2: Date | string): boolean {
+  const d1 = typeof date1 === 'string' ? new Date(date1) : date1;
+  const d2 = typeof date2 === 'string' ? new Date(date2) : date2;
+  return d1.getUTCFullYear() === d2.getUTCFullYear() &&
+         d1.getUTCMonth() === d2.getUTCMonth() &&
+         d1.getUTCDate() === d2.getUTCDate();
+}
+
+/**
+ * 从本地日期字符串 YYYY-MM-DD 创建UTC时间的开始/结束范围
+ * @param localDateStr 本地日期字符串 YYYY-MM-DD
+ * @returns [startUTC, endUTC] ISO格式字符串
+ */
+export function getUTCRangeFromLocalDate(localDateStr: string): [string, string] {
+  const [year, month, day] = localDateStr.split('-').map(Number);
+  const startUTC = new Date(Date.UTC(year, month - 1, day, 0, 0, 0, 0)).toISOString();
+  const endUTC = new Date(Date.UTC(year, month - 1, day, 23, 59, 59, 999)).toISOString();
+  return [startUTC, endUTC];
 }
