@@ -1,7 +1,7 @@
 import { useState } from "react";
-import { ChevronDown, Loader2, CheckCircle2, Circle, XCircle, Calendar, RotateCcw, Trophy, ListTodo, Clock, Tag } from "lucide-react";
+import { ChevronDown, Loader2, CheckCircle2, Circle, XCircle, Calendar } from "lucide-react";
 import { Header } from "@/components/Header";
-import { Popup } from "@/components/Popup";
+import { TaskDetailPopup } from "@/components/TaskDetailPopup";
 import { useUserStore } from "@/store";
 import { useTaskHistory, type TaskHistoryFilterStatus } from "@/hooks/useTaskHistory";
 import { useTaskInstanceActions } from "@/hooks/useTasks";
@@ -70,12 +70,7 @@ function formatDate(dateStr: string | undefined): string {
   }
 }
 
-// 格式化日期（详细格式）
-function formatDateDetail(dateStr: string | undefined): string {
-  if (!dateStr) return "无日期";
-  const date = new Date(dateStr);
-  return `${date.getFullYear()}/${(date.getMonth() + 1).toString().padStart(2, "0")}/${date.getDate().toString().padStart(2, "0")} ${date.getHours().toString().padStart(2, "0")}:${date.getMinutes().toString().padStart(2, "0")}`;
-}
+
 
 // 格式化日期（仅日期部分，用于分组）
 function formatDateGroup(dateStr: string | undefined): string {
@@ -245,11 +240,9 @@ export function TaskHistory() {
     }
   };
 
-  // 获取选中的任务信息
-  const instance = selectedTask?.instance;
-  const template = selectedTask?.template;
-  const StatusIcon = instance ? getStatusIcon(instance.status) : Circle;
-  const statusStyle = instance ? getStatusStyle(instance.status) : { color: "text-primary", bg: "bg-primary/20" };
+  // 将 TaskHistoryItem 转换为 TaskInstance 和 TaskTemplate
+  const selectedInstance = selectedTask?.instance ?? null;
+  const selectedTemplate = selectedTask?.template ?? null;
 
   return (
     <div className="min-h-screen-safe pt-safe bg-background">
@@ -415,128 +408,24 @@ export function TaskHistory() {
         )}
       </div>
 
-      {/* Task Detail Popup - 按照 Store.tsx 模式 */}
-      <Popup
+      {/* 任务详情 Popup */}
+      <TaskDetailPopup
         isOpen={isPopupOpen}
         onClose={handleClosePopup}
-        position="bottom"
-        title="任务详情"
-        maskClosable={true}
-      >
-        {selectedTask && instance && template && (
-          <div className="flex flex-col gap-4">
-            {/* 状态图标和标题 */}
-            <div className="flex items-start gap-4">
-              <div
-                className={`w-12 h-12 shrink-0 rounded-xl flex items-center justify-center ${statusStyle.bg} ${statusStyle.color}`}
-              >
-                <StatusIcon className="w-6 h-6" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <h3 className="text-lg font-bold text-text-primary leading-tight">
-                  {template.title}
-                </h3>
-                <span className={`inline-block mt-1 text-sm font-medium ${statusStyle.color}`}>
-                  {getStatusLabel(instance.status)}
-                </span>
-              </div>
-            </div>
-
-            {/* 任务信息 */}
-            <div className="space-y-3 py-2">
-              {template.description && (
-                <div className="flex items-start gap-3">
-                  <Tag className="w-4 h-4 text-text-muted mt-0.5 shrink-0" />
-                  <div>
-                    <p className="text-text-secondary text-sm">描述</p>
-                    <p className="text-text-primary">{template.description}</p>
-                  </div>
-                </div>
-              )}
-
-              <div className="flex items-center gap-3">
-                <Trophy className="w-4 h-4 text-text-muted shrink-0" />
-                <div className="flex-1">
-                  <p className="text-text-secondary text-sm">奖励积分</p>
-                  <p className="text-green-500 font-medium">+{instance.rewardPoints} 积分</p>
-                </div>
-              </div>
-
-              <div className="flex items-center gap-3">
-                <Clock className="w-4 h-4 text-text-muted shrink-0" />
-                <div className="flex-1">
-                  <p className="text-text-secondary text-sm">创建时间</p>
-                  <p className="text-text-primary">{formatDateDetail(instance.createAt)}</p>
-                </div>
-              </div>
-
-              {instance.completedAt && (
-                <div className="flex items-center gap-3">
-                  <CheckCircle2 className="w-4 h-4 text-green-500 shrink-0" />
-                  <div className="flex-1">
-                    <p className="text-text-secondary text-sm">完成时间</p>
-                    <p className="text-text-primary">{formatDateDetail(instance.completedAt)}</p>
-                  </div>
-                </div>
-              )}
-
-              {instance.subtasks.length > 0 && (
-                <div className="flex items-start gap-3">
-                  <ListTodo className="w-4 h-4 text-text-muted mt-0.5 shrink-0" />
-                  <div className="flex-1">
-                    <p className="text-text-secondary text-sm mb-1">子任务</p>
-                    <div className="flex flex-wrap gap-1">
-                      {instance.subtasks.map((subtask, index) => (
-                        <span
-                          key={index}
-                          className="inline-flex items-center px-2 py-0.5 rounded bg-surface-light text-text-secondary text-sm"
-                        >
-                          {subtask}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* 操作按钮 */}
-            <div className="pt-2 pb-safe">
-              {instance.status === "completed" ? (
-                <button
-                  onClick={() => handleTaskAction("reset", instance.id!, instance.rewardPoints)}
-                  disabled={isActionLoading}
-                  className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl bg-surface-light text-text-primary font-medium hover:bg-surface transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {isActionLoading ? (
-                    <Loader2 className="w-5 h-5 animate-spin" />
-                  ) : (
-                    <>
-                      <RotateCcw className="w-5 h-5" />
-                      <span>取消完成</span>
-                    </>
-                  )}
-                </button>
-              ) : instance.status === "pending" ? (
-                <button
-                  onClick={() => handleTaskAction("complete", instance.id!, instance.rewardPoints)}
-                  disabled={isActionLoading}
-                  className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl bg-primary text-white font-medium hover:bg-primary-light transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {isActionLoading ? (
-                    <Loader2 className="w-5 h-5 animate-spin" />
-                  ) : (
-                    <>
-                      <CheckCircle2 className="w-5 h-5" />
-                      <span>完成任务</span>
-                    </>
-                  )}
-                </button>
-              ) : null}
-            </div>
-          </div>
-        )}
-      </Popup>
+        instance={selectedInstance}
+        template={selectedTemplate}
+        onComplete={() => {
+          if (selectedInstance) {
+            handleTaskAction("complete", selectedInstance.id!, selectedInstance.rewardPoints);
+          }
+        }}
+        onReset={() => {
+          if (selectedInstance) {
+            handleTaskAction("reset", selectedInstance.id!, selectedInstance.rewardPoints);
+          }
+        }}
+        isLoading={isActionLoading}
+      />
     </div>
   );
 }
