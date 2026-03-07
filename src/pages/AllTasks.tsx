@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Header } from "../components/Header";
-import { Plus, ChevronRight, Calendar, Trash2, Power } from "lucide-react";
+import { Plus, ChevronRight, Calendar, Trash2, Power, History } from "lucide-react";
 import { useNavigate } from "react-router";
 import { useTaskTemplates, useTaskTemplateActions } from "@/hooks/useTasks";
 import { useUserStore } from "@/store";
@@ -77,10 +77,11 @@ export function AllTasks() {
         back
         rightSlot={
           <button
-            onClick={() => navigate("/tasks/new")}
+            onClick={() => navigate("/task-history")}
             className="flex items-center justify-center w-10 h-10 rounded-full bg-primary/20 text-primary hover:bg-primary/30 transition-colors"
+            title="任务历史"
           >
-            <Plus className="w-5 h-5" />
+            <History className="w-5 h-5" />
           </button>
         }
       />

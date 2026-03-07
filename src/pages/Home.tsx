@@ -71,7 +71,10 @@ export function Home() {
     }
   }, [reset, refreshTasks, refreshNoDateTasks]);
 
-  // 计算进度
+  // 过滤掉已完成的任务，首页只显示待完成/已跳过的任务
+  const pendingTasks = tasks.filter(({ instance }) => instance.status !== "completed");
+  
+  // 计算进度（基于原始任务列表）
   const completedCount = tasks.filter(({ instance }) => instance.status === "completed").length;
   const totalCount = tasks.length;
 
@@ -88,12 +91,13 @@ export function Home() {
       {/* Tasks List */}
       <main className="px-4">
         <TaskList
-          tasks={tasks}
+          tasks={pendingTasks}
           isLoading={isLoading}
           onComplete={handleComplete}
           onReset={handleReset}
           title="Today's Tasks"
           showViewAll={true}
+          showHistory={true}
           emptyMessage="No tasks for today"
         />
 
@@ -101,7 +105,7 @@ export function Home() {
         {noDateTasks.length > 0 && (
           <div className="mt-6">
             <TaskList
-              tasks={noDateTasks}
+              tasks={noDateTasks.filter(({ instance }) => instance.status !== "completed")}
               isLoading={isLoading}
               onComplete={handleComplete}
               onReset={handleReset}

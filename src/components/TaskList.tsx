@@ -1,4 +1,4 @@
-import { ListTodo, ChevronRight } from "lucide-react";
+import { ListTodo, ChevronRight, History } from "lucide-react";
 import { useNavigate } from "react-router";
 import type { TaskInstance, TaskTemplate } from "@/db/types";
 
@@ -14,6 +14,7 @@ interface TaskListProps {
   onReset: (instanceId: number, rewardPoints: number) => void;
   title?: string;
   showViewAll?: boolean;
+  showHistory?: boolean;
   emptyMessage?: string;
 }
 
@@ -126,6 +127,7 @@ export function TaskList({
   onReset,
   title = "Today's Tasks",
   showViewAll = true,
+  showHistory = false,
   emptyMessage = "No tasks for today",
 }: TaskListProps) {
   const navigate = useNavigate();
@@ -137,15 +139,26 @@ export function TaskList({
           <h2 className="text-text-primary text-lg font-bold tracking-tight">
             {title}
           </h2>
-          {showViewAll && (
-            <button
-              onClick={() => navigate("/tasks")}
-              className="flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-medium text-primary hover:bg-surface transition-colors"
-            >
-              <ListTodo className="w-4 h-4" />
-              <span>All Tasks</span>
-            </button>
-          )}
+          <div className="flex items-center gap-2">
+            {showViewAll && (
+              <button
+                onClick={() => navigate("/tasks")}
+                className="flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-medium text-primary hover:bg-surface transition-colors"
+              >
+                <ListTodo className="w-4 h-4" />
+                <span>All Tasks</span>
+              </button>
+            )}
+            {showHistory && (
+              <button
+                onClick={() => navigate("/task-history")}
+                className="flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-medium text-text-secondary hover:bg-surface transition-colors"
+              >
+                <History className="w-4 h-4" />
+                <span>History</span>
+              </button>
+            )}
+          </div>
         </div>
         <EmptyState message={emptyMessage} />
       </div>
@@ -158,15 +171,26 @@ export function TaskList({
         <h2 className="text-text-primary text-lg font-bold tracking-tight">
           {title}
         </h2>
-        {showViewAll && (
-          <button
-            onClick={() => navigate("/tasks")}
-            className="flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-medium text-primary hover:bg-surface transition-colors"
-          >
-            <ListTodo className="w-4 h-4" />
-            <span>All Tasks</span>
-          </button>
-        )}
+        <div className="flex items-center gap-2">
+          {showViewAll && (
+            <button
+              onClick={() => navigate("/tasks")}
+              className="flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-medium text-primary hover:bg-surface transition-colors"
+            >
+              <ListTodo className="w-4 h-4" />
+              <span>All Tasks</span>
+            </button>
+          )}
+          {showHistory && (
+            <button
+              onClick={() => navigate("/task-history")}
+              className="flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-medium text-text-secondary hover:bg-surface transition-colors"
+            >
+              <History className="w-4 h-4" />
+              <span>History</span>
+            </button>
+          )}
+        </div>
       </div>
 
       <div className="flex flex-col gap-3">
