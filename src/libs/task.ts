@@ -277,10 +277,10 @@ export function generateTaskInstance(
   let startAt: string | undefined;
 
   if (template.repeatMode === 'none') {
-    // 一次性任务：如果 template.startAt 存在，转换为当天的 UTC 开始时间
+    // 一次性任务：直接使用 template.startAt（已是UTC时间）
+    // 注意：不需要 getUserStartOfDay 转换，因为 template.startAt 已经是UTC格式
     if (template.startAt) {
-      const date = new Date(template.startAt);
-      startAt = getUserStartOfDay(date, dayEndTime);
+      startAt = template.startAt;
     }
   } else {
     // 周期性任务：基于目标日期生成 startAt（UTC格式）

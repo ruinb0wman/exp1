@@ -100,9 +100,9 @@ export function createUTCEndOfDay(year: number, month: number, day: number): Dat
 export function getUserStartOfDay(localDate: Date, dayEndTime: string = "00:00"): string {
   const [endHour, endMinute] = dayEndTime.split(':').map(Number);
   
-  // 创建UTC时间：localDate的年月日 + dayEndTime的时分
-  // 由于dayEndTime是本地时间概念，我们需要将其转换为当天的UTC时间
-  const utcDate = Date.UTC(
+  // 创建本地时间的 Date 对象（localDate的年月日 + dayEndTime的时分）
+  // 然后 toISOString() 会自动转换为 UTC
+  const startOfDay = new Date(
     localDate.getFullYear(),
     localDate.getMonth(),
     localDate.getDate(),
@@ -112,7 +112,7 @@ export function getUserStartOfDay(localDate: Date, dayEndTime: string = "00:00")
     0
   );
   
-  return new Date(utcDate).toISOString();
+  return startOfDay.toISOString();
 }
 
 /**
@@ -124,8 +124,9 @@ export function getUserStartOfDay(localDate: Date, dayEndTime: string = "00:00")
 export function getUserEndOfDay(localDate: Date, dayEndTime: string = "00:00"): string {
   const [endHour, endMinute] = dayEndTime.split(':').map(Number);
   
-  // 创建UTC时间：localDate的下一天 + dayEndTime的时分 - 1ms
-  const utcDate = Date.UTC(
+  // 创建本地时间的 Date 对象（localDate的下一天 + dayEndTime的时分 - 1ms）
+  // 然后 toISOString() 会自动转换为 UTC
+  const endOfDay = new Date(
     localDate.getFullYear(),
     localDate.getMonth(),
     localDate.getDate() + 1,
@@ -135,7 +136,7 @@ export function getUserEndOfDay(localDate: Date, dayEndTime: string = "00:00"): 
     -1
   );
   
-  return new Date(utcDate).toISOString();
+  return endOfDay.toISOString();
 }
 
 /**
@@ -187,12 +188,15 @@ export function generateTimeOptions(interval: number = 15): string[] {
  */
 export function calculateExpiredAt(startAtUTC: string, expireDays: number): string {
   const startDate = new Date(startAtUTC);
-  // 使用UTC时间计算过期时间
+  // 使用UTC时间计算过期时间，保留原始时间的时分秒
   const expireDate = new Date(Date.UTC(
     startDate.getUTCFullYear(),
     startDate.getUTCMonth(),
     startDate.getUTCDate() + expireDays,
-    0, 0, 0, 0
+    startDate.getUTCHours(),
+    startDate.getUTCMinutes(),
+    startDate.getUTCSeconds(),
+    startDate.getUTCMilliseconds()
   ));
   return expireDate.toISOString();
 }

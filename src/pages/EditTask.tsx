@@ -89,13 +89,14 @@ export function EditTask() {
       setRepeatDaysOfWeek(existingTemplate.repeatDaysOfWeek ?? []);
       setRepeatDaysOfMonth(existingTemplate.repeatDaysOfMonth ?? []);
       setEndIndex(endValues.indexOf(existingTemplate.endCondition));
-      // 将 UTC ISO 时间字符串转换为 YYYY-MM-DD 格式用于显示
+      // 将 UTC ISO 时间字符串转换为本地 YYYY-MM-DD 格式用于显示
       const formatToDateStr = (isoStr: string | undefined): string => {
         if (!isoStr) return "";
         const date = new Date(isoStr);
-        const year = date.getUTCFullYear();
-        const month = String(date.getUTCMonth() + 1).padStart(2, '0');
-        const day = String(date.getUTCDate()).padStart(2, '0');
+        // 使用本地时间方法获取年月日（因为用户看到的是本地日期）
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
         return `${year}-${month}-${day}`;
       };
       setEndValue(formatToDateStr(existingTemplate.endValue));
@@ -141,11 +142,14 @@ export function EditTask() {
       return;
     }
 
-    // 将 YYYY-MM-DD 日期字符串转换为 UTC ISO 时间字符串（当天的 00:00:00 UTC）
+    // 将本地日期字符串 YYYY-MM-DD 转换为 UTC ISO 时间字符串
+    // 本地日期 00:00:00 对应的 UTC 时间
     const formatToUTCISO = (dateStr: string): string | undefined => {
       if (!dateStr) return undefined;
       const [year, month, day] = dateStr.split('-').map(Number);
-      return new Date(Date.UTC(year, month - 1, day, 0, 0, 0, 0)).toISOString();
+      // 使用本地时间的构造函数创建 Date 对象（本地时区）
+      // 然后 toISOString() 会自动转换为 UTC
+      return new Date(year, month - 1, day, 0, 0, 0, 0).toISOString();
     };
 
     const taskData: Omit<TaskTemplate, "id" | "createdAt" | "updatedAt"> = {
