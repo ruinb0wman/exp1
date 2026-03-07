@@ -2,17 +2,18 @@
 
 ## Project Overview
 
-This is a **gamified task management application** (任务+积分工具) designed to motivate users to build habits through a reward system. Users create recurring tasks, track completions, earn experience points (exp), and redeem rewards.
+This is a **gamified task management application** (任务+积分工具) designed to motivate users to build habits through a reward system. Users create recurring tasks, track completions, earn experience points (积分), and redeem rewards from a virtual shop.
 
-The project uses a **Tauri v2** backend with a **React + TypeScript** frontend. It supports both desktop and mobile platforms (Android).
+The project uses a **Tauri v2** backend with a **React + TypeScript** frontend. It supports both desktop (Windows/macOS/Linux) and mobile platforms (Android).
 
 ### Core Features
 
-- **Task Management** - Create recurring tasks with daily/weekly/monthly cycles
-- **Calendar View** - Visualize task completion status
-- **Reward System** - Exchange experience points for custom rewards
+- **Task Management** - Create recurring tasks with daily/weekly/monthly cycles, subtasks, and end conditions
+- **Calendar View** - Visualize task completion status on a calendar
+- **Reward System** - Exchange experience points for custom rewards with customizable icons
 - **Inventory System** - Manage redeemed reward items (backpack)
 - **Statistics** - Track task progress and points history
+- **Data Import/Export** - Backup and restore data via JSON files
 - **Data Persistence** - Local IndexedDB storage via Dexie.js
 
 ---
@@ -67,10 +68,14 @@ hello-tauri/
 │   │   ├── EditReward.tsx        # Create/edit reward form
 │   │   ├── Stats.tsx             # Statistics page
 │   │   ├── Profile.tsx           # User profile page
-│   │   └── PointsHistory.tsx     # Points transaction history
+│   │   ├── PointsHistory.tsx     # Points transaction history
+│   │   ├── Backpack.tsx          # Inventory of redeemed rewards
+│   │   ├── TaskHistory.tsx       # Historical task instances
+│   │   ├── Settings.tsx          # App settings page
+│   │   └── DataImportExport.tsx  # Data backup/restore page
 │   │
 │   ├── db/                       # Database layer (Dexie.js)
-│   │   ├── index.ts              # Database initialization with useDB hook
+│   │   ├── index.ts              # Database initialization (singleton pattern)
 │   │   ├── types/                # TypeScript type definitions
 │   │   │   ├── index.ts          # DB interface & exports
 │   │   │   ├── task.ts           # Task types (TaskTemplate, TaskInstance)
@@ -82,14 +87,20 @@ hello-tauri/
 │   │       ├── index.ts          # Service exports
 │   │       ├── userService.ts    # User & points operations
 │   │       ├── taskService.ts    # Task CRUD & queries
-│   │       └── pointsHistoryService.ts # Points history queries
+│   │       ├── rewardService.ts  # Reward CRUD & operations
+│   │       ├── pointsHistoryService.ts # Points history queries
+│   │       └── exportImportService.ts  # Data export/import functionality
 │   │
 │   ├── hooks/                    # React custom hooks
 │   │   ├── useTasks.ts           # Task data fetching hooks
-│   │   └── usePointsHistory.ts   # Points history with pagination
+│   │   ├── useTaskInstanceGenerator.ts # Task instance generation hook
+│   │   ├── useRewards.ts         # Reward data hooks
+│   │   ├── usePointsHistory.ts   # Points history with pagination
+│   │   ├── useTaskHistory.ts     # Task history hooks
+│   │   └── useProfileStats.ts    # Profile statistics hooks
 │   │
 │   ├── libs/                     # Utility libraries
-│   │   └── task.ts               # Task generation logic & date utils
+│   │   └── task.ts               # Task generation logic & date utilities
 │   │
 │   └── store/                    # Zustand state management
 │       ├── index.ts              # Store exports
@@ -98,11 +109,11 @@ hello-tauri/
 ├── src-tauri/                    # Tauri backend (Rust)
 │   ├── src/
 │   │   ├── main.rs               # Rust binary entry point
-│   │   └── lib.rs                # Library with Tauri commands
+│   │   └── lib.rs                # Library with Tauri commands and plugin init
 │   ├── Cargo.toml                # Rust dependencies
 │   ├── tauri.conf.json           # Tauri application configuration
 │   ├── capabilities/
-│   │   └── default.json          # Tauri permissions (core:default, opener:default)
+│   │   └── default.json          # Tauri permissions
 │   ├── icons/                    # App icons for various platforms
 │   └── gen/android/              # Auto-generated Android project files
 │       └── app/
@@ -125,7 +136,8 @@ hello-tauri/
 ├── vite.config.ts                # Vite configuration (Tauri-optimized)
 ├── tsconfig.json                 # TypeScript configuration
 ├── tsconfig.node.json            # TypeScript config for Node tooling
-└── package.json                  # Node.js dependencies
+├── package.json                  # Node.js dependencies
+└── bun.lock                      # Bun lockfile
 ```
 
 ---
@@ -175,6 +187,7 @@ bun run tauri android dev -- --host <YOUR_MACHINE_IP>
 
 - **Port**: Fixed at 1420 (Tauri expects this)
 - **HMR Port**: 1421 (for mobile development)
+- **Host**: '0.0.0.0' (allows external connections for mobile dev)
 - **Watch**: Ignores `src-tauri/**` to prevent rebuild loops
 - **Clear Screen**: Disabled to preserve Rust error visibility
 - **Path Alias**: `@/` maps to `src/`
@@ -195,6 +208,7 @@ bun run tauri android dev -- --host <YOUR_MACHINE_IP>
 - **Dev URL**: `http://localhost:1420`
 - **Frontend Dist**: `../dist` (Vite output directory)
 - **Window Defaults**: 800x600, title "hello-tauri"
+- **CSP**: Currently set to `null` (development mode)
 
 ### Android Configuration (`src-tauri/gen/android/app/build.gradle.kts`)
 
@@ -202,6 +216,7 @@ bun run tauri android dev -- --host <YOUR_MACHINE_IP>
 - **Min SDK**: 24
 - **Target SDK**: 36
 - **Namespace**: `com.ruinb0w.hello_tauri`
+- **Kotlin JVM Target**: 1.8
 
 ---
 
@@ -217,12 +232,14 @@ Based on `tsconfig.json`:
 - Strict mode enabled
 - Unused locals and parameters are **errors** (not warnings)
 - Use path alias `@/` for imports from `src/`
+- **Comments are in Chinese** - maintain this convention for consistency
 
 ### Rust Conventions
 
 - Edition 2021
 - Standard Tauri patterns with command handlers
 - Currently minimal Rust code (frontend-heavy app)
+- Plugins initialized in `lib.rs`
 
 ### CSS/Styling Conventions
 
@@ -335,6 +352,16 @@ interface RewardTemplate {
   icon: RewardIconName;
   iconColor?: RewardIconColor;
 }
+
+interface RewardInstance {
+  id?: number;
+  templateId: number;
+  userId: number;
+  status: RewardStatus;
+  createdAt: string;
+  expiresAt?: string;
+  usedAt?: string;
+}
 ```
 
 **User Types (`src/db/types/user.ts`):**
@@ -371,10 +398,9 @@ The `userStore` (`src/store/userStore.ts`) provides:
 ### Database Access Pattern
 
 ```typescript
-// Use the database hook (singleton pattern)
-import { useDB } from '@/db';
+// Database uses singleton pattern via getDB()
+import { getDB } from '@/db';
 
-const { getDB } = useDB();
 const db = getDB();
 
 // Access tables
@@ -405,6 +431,10 @@ Defined in `src/App.tsx` using react-router v7:
 - `/rewards/new` - Create new reward
 - `/rewards/:id` - Edit existing reward
 - `/points-history` - Points transaction history
+- `/backpack` - Redeemed rewards inventory
+- `/task-history` - Historical task instances
+- `/settings` - App settings
+- `/data-import-export` - Data backup/restore
 
 ---
 
@@ -421,22 +451,31 @@ Task instances are automatically generated based on `TaskTemplate` recurrence ru
 
 Generation logic is in `src/libs/task.ts`:
 
-- `shouldGenerateInstanceToday()` - Determines if instance should be created today
-- `filterTemplatesNeedingInstances()` - Filters templates needing instances
+- `shouldGenerateInstanceOnDate()` - Determines if instance should be created on a specific date
+- `filterTemplatesNeedingInstancesOnDate()` - Filters templates needing instances
 - `generateTaskInstance()` - Creates instance data from template
 
-Instances are generated in `Home.tsx` useEffect when user loads.
+Instances are generated via `useTaskInstanceGenerator` hook in `Home.tsx`.
 
 ### Points System
 
 Points flow:
 
 1. **Earn**: Complete task → `addPoints(amount, 'task_reward', instanceId)`
-2. **Undo**: Reset completed task → `spendPoints(amount, 'task_reward', instanceId)`
+2. **Undo**: Reset completed task → `spendPoints(amount, 'task_undo', instanceId)`
 3. **Spend**: Redeem reward → `spendPoints(cost, 'reward_exchange', rewardId)`
 4. **Adjust**: Admin adjustments → `addPoints/spendPoints(amount, 'admin_adjustment')`
 
 All point changes are recorded in `pointsHistory` table via `updateUserPoints()` service.
+
+### Data Import/Export
+
+The app supports JSON-based data backup/restore via `exportImportService.ts`:
+
+- **Export**: Exports all database tables to a JSON file
+- **Import Strategies**:
+  - `overwrite`: Clears all existing data and imports
+  - `merge`: Intelligently merges data, avoiding duplicates
 
 ---
 
@@ -448,6 +487,9 @@ Currently allows:
 
 - `core:default` - Basic Tauri APIs
 - `opener:default` - URL opening functionality
+- `dialog:default` - Native dialog APIs
+- `fs:allow-write-text-file` - Write files for data export
+- `fs:allow-read-text-file` - Read files for data import
 
 ### Content Security Policy
 
@@ -493,11 +535,10 @@ export function useTodayTasks(userId: number) {
 Database operations are encapsulated in services (`src/db/services/`):
 
 ```typescript
-// Service functions are async and use the DB hook
+// Service functions are async and use the DB singleton
 export async function createTaskTemplate(
   template: Omit<TaskTemplate, 'id' | 'createdAt' | 'updatedAt'>
 ): Promise<number> {
-  const { getDB } = useDB();
   const db = getDB();
   
   const now = new Date().toISOString();
@@ -591,6 +632,12 @@ The app is designed with mobile-first principles:
 - [Tailwind CSS Documentation](https://tailwindcss.com/)
 - Design mockups are in the `design/` folder for reference
 
-## 要求
+---
 
-- 每次用户提出需求后要对需求进行总结, 提出建议, 给出方案, 然后等用户确认后再执行操作
+## Notes for AI Agents
+
+- **Comments**: Code comments are in Chinese - maintain this convention
+- **Date Handling**: The app uses local timezone for date comparisons (not UTC)
+- **Task Instance Generation**: Only one instance per template per day is generated
+- **User Model**: Currently single-user; user ID is always 1
+- **Points**: Stored as integers, can be positive or negative in history
