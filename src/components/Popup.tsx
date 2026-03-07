@@ -14,6 +14,8 @@ export interface PopupProps {
   title?: string;
   /** 是否显示关闭按钮，默认 true */
   showCloseButton?: boolean;
+  /** 头部右侧插槽（优先级高于默认关闭按钮） */
+  headerRight?: React.ReactNode;
   /** 自定义类名 */
   className?: string;
   /** 是否隐藏遮罩 */
@@ -37,6 +39,7 @@ export function Popup({
   maskClosable = true,
   title,
   showCloseButton = true,
+  headerRight,
   className = '',
   hideMask = false,
   children,
@@ -171,14 +174,18 @@ export function Popup({
                 {title}
               </h2>
             )}
-            {showCloseButton && (
-              <button
-                onClick={onClose}
-                className="p-2 rounded-full hover:bg-zinc-700 transition-colors"
-                aria-label="关闭"
-              >
-                <X className="w-5 h-5 text-zinc-400" />
-              </button>
+            {(showCloseButton || headerRight) && (
+              headerRight ? (
+                <div>{headerRight}</div>
+              ) : (
+                <button
+                  onClick={onClose}
+                  className="p-2 rounded-full hover:bg-zinc-700 transition-colors"
+                  aria-label="关闭"
+                >
+                  <X className="w-5 h-5 text-zinc-400" />
+                </button>
+              )
             )}
           </div>
         ) : null}

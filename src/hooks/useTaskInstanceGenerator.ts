@@ -13,7 +13,7 @@ import {
 
 interface GenerateResult {
   generatedCount: number;
-  generatedInstances: Omit<TaskInstance, 'id' | 'createAt'>[];
+  generatedInstances: Omit<TaskInstance, 'id' | 'createdAt'>[];
 }
 
 interface UseTaskInstanceGeneratorOptions {
@@ -100,7 +100,7 @@ export function useTaskInstanceGenerator(options: UseTaskInstanceGeneratorOption
       const templatesNeedingInstances = await getTemplatesForDate(date);
 
       // 生成并保存新的任务实例
-      let generatedInstances: Omit<TaskInstance, 'id' | 'createAt'>[] = [];
+      let generatedInstances: Omit<TaskInstance, 'id' | 'createdAt'>[] = [];
       if (templatesNeedingInstances.length > 0) {
         generatedInstances = generateTaskInstances(templatesNeedingInstances, dayEndTime, date);
         await createTaskInstances(generatedInstances);

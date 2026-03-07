@@ -161,7 +161,7 @@ function groupTasksByDate(tasks: TaskHistoryItem[]): Map<string, TaskHistoryItem
   const groups = new Map<string, TaskHistoryItem[]>();
 
   tasks.forEach((task) => {
-    const dateKey = formatDateGroup(task.instance.startAt);
+    const dateKey = formatDateGroup(task.instance.createdAt);
     if (!groups.has(dateKey)) {
       groups.set(dateKey, []);
     }
@@ -363,7 +363,7 @@ export function TaskHistory() {
                             {item.template.title}
                           </p>
                           <div className="flex items-center gap-2 text-text-secondary text-sm">
-                            <span>{formatDate(item.instance.startAt)}</span>
+                            <span>{formatDate(item.instance.createdAt)}</span>
                             {item.instance.rewardPoints > 0 && (
                               <span className="text-green-500">+{item.instance.rewardPoints}积分</span>
                             )}

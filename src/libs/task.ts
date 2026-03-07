@@ -230,7 +230,7 @@ export function generateTaskInstance(
   template: TaskTemplate,
   dayEndTime: string = "00:00",
   date?: Date
-): Omit<TaskInstance, 'id' | 'createAt'> {
+): Omit<TaskInstance, 'id' | 'createdAt'> {
   const targetDate = date || new Date();
 
   // 如果启用随机子任务且存在子任务，随机选择一个
@@ -270,6 +270,6 @@ export function generateTaskInstances(
   templates: TaskTemplate[],
   dayEndTime?: string,
   date?: Date
-): Omit<TaskInstance, 'id' | 'createAt'>[] {
+): Omit<TaskInstance, 'id' | 'createdAt'>[] {
   return templates.map((template) => generateTaskInstance(template, dayEndTime, date));
 }

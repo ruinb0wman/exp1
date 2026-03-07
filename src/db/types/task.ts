@@ -35,7 +35,7 @@ export interface TaskInstance {
   rewardPoints: number;
   subtasks: string[];
   startAt?: string; // 任务开始时间戳
-  createAt: string; // 任务实例创建时间戳
+  createdAt: string; // 任务实例创建时间戳
   completedAt?: string; // 任务实例完成时间戳
 
   // 进度相关字段

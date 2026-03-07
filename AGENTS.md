@@ -329,7 +329,7 @@ interface TaskInstance {
   rewardPoints: number;
   subtasks: string[];
   startAt?: string;
-  createAt: string;
+  createdAt: string;
   completedAt?: string;
   // Progress fields (v5)
   completeProgress?: number; // Current progress

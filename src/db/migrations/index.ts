@@ -52,4 +52,26 @@ export function migration(db: DB) {
     pointsHistory: '++id, userId, type, createdAt, [userId+createdAt]',
     pomoSessions: '++id, userId, taskId, mode, status, startedAt'
   });
+
+  // Version 6: 将 taskInstances 的 createAt 字段重命名为 createdAt，并添加索引
+  db.version(6).stores({
+    taskTemplates: '++id, userId, repeatMode, enabled, *subtasks, [userId+enabled]',
+    taskInstances: '++id, userId, templateId, startAt, status, createdAt, [templateId+startAt]',
+    rewardTemplates: '++id, userId, replenishmentMode, enabled',
+    rewardInstances: '++id, templateId, userId, status, expiresAt',
+    users: '++id, name',
+    pointsHistory: '++id, userId, type, createdAt, [userId+createdAt]',
+    pomoSessions: '++id, userId, taskId, mode, status, startedAt'
+  }).upgrade(async (tx) => {
+    // 迁移数据：将 createAt 重命名为 createdAt
+    const instances = await tx.table('taskInstances').toArray();
+    for (const inst of instances) {
+      if (inst.createAt && !inst.createdAt) {
+        await tx.table('taskInstances').update(inst.id, {
+          createdAt: inst.createAt,
+          createAt: undefined
+        });
+      }
+    }
+  });
 }
