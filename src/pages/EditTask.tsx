@@ -289,7 +289,7 @@ export function EditTask() {
 
             {/* Time/Count Target Input */}
             {completeRule && (
-              <div className="pt-2 border-t border-surface-light space-y-4">
+              <div className="pt-2 border-t border-surface-light">
                 {/* Target */}
                 <div className="flex items-center gap-4">
                   <p className="text-text-secondary text-sm min-w-[60px]">Target</p>
@@ -318,35 +318,43 @@ export function EditTask() {
                     {completeRuleLabels[completeRule]}
                   </p>
                 </div>
-
-                {/* Expire Days */}
-                <div className="flex items-center gap-4">
-                  <p className="text-text-secondary text-sm min-w-[60px]">Expire</p>
-                  <div className="flex items-center gap-2">
-                    <button
-                      onClick={() => setCompleteExpireDays(Math.max(0, completeExpireDays - 1))}
-                      className="text-base font-medium flex h-7 w-7 items-center justify-center rounded-full bg-surface-light hover:bg-surface-light/80 transition-colors"
-                    >
-                      -
-                    </button>
-                    <input
-                      type="number"
-                      min={0}
-                      value={completeExpireDays}
-                      onChange={(e) => setCompleteExpireDays(Math.max(0, parseInt(e.target.value) || 0))}
-                      className="text-base font-medium w-14 p-0 text-center bg-transparent focus:outline-none focus:ring-0 border-none [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
-                    />
-                    <button
-                      onClick={() => setCompleteExpireDays(completeExpireDays + 1)}
-                      className="text-base font-medium flex h-7 w-7 items-center justify-center rounded-full bg-surface-light hover:bg-surface-light/80 transition-colors"
-                    >
-                      +
-                    </button>
-                  </div>
-                  <p className="text-text-secondary text-sm">days (0=never)</p>
-                </div>
               </div>
             )}
+
+          </div>
+        </div>
+
+        {/* Expire Days Section - 独立于 Complete Rule */}
+        <div>
+          <h3 className="text-text-primary text-lg font-bold leading-tight tracking-[-0.015em] px-2 pb-2 pt-4">
+            Expire
+          </h3>
+          <div className="rounded-xl bg-surface p-4">
+            <div className="flex items-center gap-4">
+              <p className="text-text-secondary text-sm min-w-[80px]">Expire after</p>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setCompleteExpireDays(Math.max(0, completeExpireDays - 1))}
+                  className="text-base font-medium flex h-7 w-7 items-center justify-center rounded-full bg-surface-light hover:bg-surface-light/80 transition-colors"
+                >
+                  -
+                </button>
+                <input
+                  type="number"
+                  min={0}
+                  value={completeExpireDays}
+                  onChange={(e) => setCompleteExpireDays(Math.max(0, parseInt(e.target.value) || 0))}
+                  className="text-base font-medium w-14 p-0 text-center bg-transparent focus:outline-none focus:ring-0 border-none [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+                />
+                <button
+                  onClick={() => setCompleteExpireDays(completeExpireDays + 1)}
+                  className="text-base font-medium flex h-7 w-7 items-center justify-center rounded-full bg-surface-light hover:bg-surface-light/80 transition-colors"
+                >
+                  +
+                </button>
+              </div>
+              <p className="text-text-secondary text-sm">days (0 = never)</p>
+            </div>
           </div>
         </div>
 
