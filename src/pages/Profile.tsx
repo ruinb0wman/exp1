@@ -69,7 +69,10 @@ export function Profile() {
         <h1 className="text-lg font-bold text-text-primary flex-1 text-center">
           My Profile
         </h1>
-        <button className="w-12 flex justify-end text-text-secondary hover:text-primary transition-colors">
+        <button 
+          onClick={() => navigate("/settings")}
+          className="w-12 flex justify-end text-text-secondary hover:text-primary transition-colors"
+        >
           <Settings className="w-5 h-5" />
         </button>
       </header>
