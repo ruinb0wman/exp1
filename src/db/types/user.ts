@@ -4,6 +4,7 @@ export interface User {
   id: number;
   createdAt: string;
   name: string;
+  dayEndTime?: string; // 一天结束时间，"HH:mm" 格式，默认 "00:00"
 }
 
 export interface PointsHistory {

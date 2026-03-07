@@ -1,5 +1,9 @@
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router";
-import { ChevronLeft, Download, Info } from "lucide-react";
+import { ChevronLeft, Download, Info, Clock } from "lucide-react";
+import { TimePicker } from "@/components/TimePicker";
+import { useUserStore } from "@/store";
+import { updateUserDayEndTime } from "@/db/services";
 
 const settingsMenu = [
   {
@@ -12,6 +16,45 @@ const settingsMenu = [
 
 export function Settings() {
   const navigate = useNavigate();
+  const { user, refreshUser } = useUserStore();
+  
+  const [dayEndTime, setDayEndTime] = useState(user?.dayEndTime || "00:00");
+  const [showTimePicker, setShowTimePicker] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+
+  // 同步用户数据
+  useEffect(() => {
+    if (user?.dayEndTime) {
+      setDayEndTime(user.dayEndTime);
+    }
+  }, [user?.dayEndTime]);
+
+  // 处理时间变更
+  const handleTimeChange = async (newTime: string) => {
+    if (!user?.id) return;
+    
+    setIsSaving(true);
+    try {
+      await updateUserDayEndTime(user.id, newTime);
+      await refreshUser();
+      setDayEndTime(newTime);
+    } catch (error) {
+      console.error("Failed to update day end time:", error);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  // 获取时间描述文本
+  const getTimeDescription = (time: string) => {
+    if (time === "00:00") return "自然日（午夜12点）";
+    const [hour] = time.split(':').map(Number);
+    if (hour < 6) return `凌晨 ${time}`;
+    if (hour < 12) return `上午 ${time}`;
+    if (hour === 12) return `中午 ${time}`;
+    if (hour < 18) return `下午 ${time}`;
+    return `晚上 ${time}`;
+  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -30,7 +73,34 @@ export function Settings() {
 
       {/* Settings Menu */}
       <div className="p-4 pt-6">
-        <div className="flex flex-col gap-3">
+        {/* 时间设置 */}
+        <div className="mb-6">
+          <h2 className="text-text-secondary text-sm font-medium px-2 mb-3">
+            时间设置
+          </h2>
+          <button
+            onClick={() => setShowTimePicker(true)}
+            disabled={isSaving}
+            className="w-full flex items-center gap-4 rounded-xl bg-surface p-4 border border-border hover:bg-surface-light transition-colors text-left disabled:opacity-50"
+          >
+            <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+              <Clock className="w-5 h-5 text-primary" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-text-primary font-medium">一天结束时间</p>
+              <p className="text-text-secondary text-sm truncate">
+                {getTimeDescription(dayEndTime)} · 此时间前任务不会过期
+              </p>
+            </div>
+            <span className="text-primary font-medium">{dayEndTime}</span>
+          </button>
+        </div>
+
+        {/* 功能设置 */}
+        <div className="flex flex-col gap-3 mb-6">
+          <h2 className="text-text-secondary text-sm font-medium px-2">
+            数据管理
+          </h2>
           {settingsMenu.map((item) => (
             <button
               key={item.label}
@@ -52,7 +122,7 @@ export function Settings() {
         </div>
 
         {/* About Section */}
-        <div className="mt-8">
+        <div>
           <h2 className="text-text-secondary text-sm font-medium px-2 mb-3">
             关于
           </h2>
@@ -67,6 +137,16 @@ export function Settings() {
           </div>
         </div>
       </div>
+
+      {/* 时间选择器弹窗 */}
+      <TimePicker
+        isOpen={showTimePicker}
+        value={dayEndTime}
+        onChange={handleTimeChange}
+        onClose={() => setShowTimePicker(false)}
+        title="选择一天结束时间"
+        minuteInterval={15}
+      />
     </div>
   );
 }

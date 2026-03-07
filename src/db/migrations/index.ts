@@ -41,4 +41,15 @@ export function migration(db: DB) {
     pointsHistory: '++id, userId, type, createdAt, [userId+createdAt]',
     pomoSessions: '++id, userId, taskId, mode, status, startedAt'
   });
+
+  // Version 5: 添加任务完成规则字段和 dayEndTime
+  db.version(5).stores({
+    taskTemplates: '++id, userId, repeatMode, enabled, *subtasks, [userId+enabled]',
+    taskInstances: '++id, userId, templateId, startAt, status, [templateId+startAt]',
+    rewardTemplates: '++id, userId, replenishmentMode, enabled',
+    rewardInstances: '++id, templateId, userId, status, expiresAt',
+    users: '++id, name',
+    pointsHistory: '++id, userId, type, createdAt, [userId+createdAt]',
+    pomoSessions: '++id, userId, taskId, mode, status, startedAt'
+  });
 }

@@ -1,5 +1,6 @@
 import { getDB } from '../index';
 import type { TaskTemplate, TaskInstance, TaskStatus, RepeatMode } from '../types';
+import { getUserStartOfDay, getUserEndOfDay, isExpired } from '@/libs/time';
 
 // ==================== TaskTemplate CRUD ====================
 
@@ -229,14 +230,15 @@ export async function getTaskInstancesByDateRange(
  */
 export async function getTaskInstancesByDate(
   date: string,
-  userId?: number
+  userId?: number,
+  dayEndTime: string = "00:00"
 ): Promise<TaskInstance[]> {
   // 将 YYYY-MM-DD 解析为本地时间的日期
   const [year, month, day] = date.split('-').map(Number);
   const localDate = new Date(year, month - 1, day);
   
-  const startOfDay = getLocalStartOfDay(localDate);
-  const endOfDay = getLocalEndOfDay(localDate);
+  const startOfDay = getUserStartOfDay(localDate, dayEndTime);
+  const endOfDay = getUserEndOfDay(localDate, dayEndTime);
 
   return getTaskInstancesByDateRange(startOfDay, endOfDay, userId);
 }
@@ -348,35 +350,21 @@ export async function getTaskInstanceWithTemplate(
   return { instance, template };
 }
 
-/**
- * 获取本地日期的开始时间（UTC ISO 字符串）
- */
-function getLocalStartOfDay(date: Date): string {
-  const d = new Date(date);
-  d.setHours(0, 0, 0, 0);
-  return d.toISOString();
-}
+
 
 /**
- * 获取本地日期的结束时间（UTC ISO 字符串）
- */
-function getLocalEndOfDay(date: Date): string {
-  const d = new Date(date);
-  d.setHours(23, 59, 59, 999);
-  return d.toISOString();
-}
-
-/**
- * 获取用户的今日任务（包含模板信息）
+ * 获取用户的今日任务（包含模板信息）（更新：支持 dayEndTime）
  */
 export async function getTodayTaskInstances(
-  userId: number
+  userId: number,
+  dayEndTime: string = "00:00"
 ): Promise<Array<{ instance: TaskInstance; template: TaskTemplate }>> {
   const db = getDB();
 
-  // 使用本地时间获取今天的开始和结束（与生成实例时保持一致）
-  const startOfDay = getLocalStartOfDay(new Date());
-  const endOfDay = getLocalEndOfDay(new Date());
+  // 使用 dayEndTime 获取今天的开始和结束
+  const now = new Date();
+  const startOfDay = getUserStartOfDay(now, dayEndTime);
+  const endOfDay = getUserEndOfDay(now, dayEndTime);
 
   const instances = await db.taskInstances
     .where('startAt')
@@ -536,4 +524,102 @@ export async function getTaskInstancesWithFilter(
     hasMore: offset + limit < total,
     total,
   };
+}
+
+// ==================== 进度相关方法 ====================
+
+/**
+ * 更新任务进度（用于 time/count 类型任务）
+ * @param instanceId 任务实例ID
+ * @param progressDelta 进度变化量（正数增加，负数减少）
+ * @returns 更新后的实例ID
+ */
+export async function updateTaskProgress(
+  instanceId: number,
+  progressDelta: number
+): Promise<number> {
+  const db = getDB();
+
+  return db.transaction('rw', db.taskInstances, db.taskTemplates, async () => {
+    const instance = await db.taskInstances.get(instanceId);
+    if (!instance) {
+      throw new Error('Task instance not found');
+    }
+
+    // 检查是否过期
+    if (isExpired(instance.expiredAt)) {
+      throw new Error('Task instance has expired');
+    }
+
+    const template = await db.taskTemplates.get(instance.templateId);
+    if (!template?.completeRule) {
+      throw new Error('Task does not support progress tracking');
+    }
+
+    const currentProgress = instance.completeProgress ?? 0;
+    const newProgress = Math.max(0, currentProgress + progressDelta);
+    const target = template.completeTarget ?? 0;
+
+    // 判断是否完成或重置
+    const shouldComplete = newProgress >= target && instance.status !== 'completed';
+    const shouldReset = newProgress < target && instance.status === 'completed';
+
+    const updates: Partial<TaskInstance> = {
+      completeProgress: newProgress,
+    };
+
+    if (shouldComplete) {
+      updates.status = 'completed';
+      updates.completedAt = new Date().toISOString();
+    } else if (shouldReset) {
+      updates.status = 'pending';
+      updates.completedAt = undefined;
+    }
+
+    await db.taskInstances.update(instanceId, updates);
+    return instanceId;
+  });
+}
+
+/**
+ * 通过番茄钟完成自动更新进度（向下取整到分钟）
+ * @param instanceId 任务实例ID
+ * @param durationSeconds 专注时长（秒）
+ * @returns 更新后的实例ID
+ */
+export async function addPomoToTaskProgress(
+  instanceId: number,
+  durationSeconds: number
+): Promise<number> {
+  // 向下取整到分钟，不足1分钟视为0
+  const durationMinutes = Math.floor(durationSeconds / 60);
+  if (durationMinutes <= 0) {
+    return instanceId; // 不足1分钟，不更新
+  }
+  return updateTaskProgress(instanceId, durationMinutes);
+}
+
+/**
+ * 检查任务实例是否过期
+ * @param instance 任务实例
+ */
+export function isTaskInstanceExpired(instance: TaskInstance): boolean {
+  return isExpired(instance.expiredAt);
+}
+
+/**
+ * 获取任务的完成进度百分比
+ * @param instance 任务实例
+ * @param template 任务模板
+ * @returns 0-100 的百分比
+ */
+export function getTaskProgressPercent(
+  instance: TaskInstance,
+  template: TaskTemplate
+): number {
+  if (!template.completeRule || !template.completeTarget) {
+    return instance.status === 'completed' ? 100 : 0;
+  }
+  const progress = instance.completeProgress ?? 0;
+  return Math.min(100, Math.round((progress / template.completeTarget) * 100));
 }

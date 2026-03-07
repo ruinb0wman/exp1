@@ -1,6 +1,8 @@
-import { ListTodo, ChevronRight, History } from "lucide-react";
+import { ListTodo, ChevronRight, History, AlertCircle } from "lucide-react";
 import { useNavigate } from "react-router";
 import type { TaskInstance, TaskTemplate } from "@/db/types";
+import { isExpired, getExpireTimeText } from "@/libs/time";
+import { getTaskProgressPercent } from "@/db/services";
 
 interface TaskWithTemplate {
   instance: TaskInstance;
@@ -45,60 +47,131 @@ interface TaskItemProps {
   onReset: (instanceId: number, rewardPoints: number) => void;
 }
 
+// 获取进度条颜色
+function getProgressColor(percent: number): string {
+  if (percent >= 100) return "bg-green-500";
+  if (percent >= 60) return "bg-primary";
+  return "bg-yellow-500";
+}
+
 function TaskItem({ instance, template, onComplete, onReset }: TaskItemProps) {
   const isCompleted = instance.status === "completed";
+  const expired = isExpired(instance.expiredAt);
+  const hasCompleteRule = !!template.completeRule;
+  const progressPercent = getTaskProgressPercent(instance, template);
+  const progressColor = getProgressColor(progressPercent);
 
   const handleChange = () => {
+    // 过期任务不允许操作
+    if (expired && !isCompleted) return;
+
     if (instance.status === "pending") {
+      // 有完成规则的任务直接标记完成（用户可以在详情页调整进度）
       onComplete(instance.id!, template.rewardPoints);
     } else if (instance.status === "completed") {
       onReset(instance.id!, template.rewardPoints);
     }
   };
 
+  // 进度文本
+  const getProgressText = () => {
+    if (!hasCompleteRule) return null;
+    const progress = instance.completeProgress ?? 0;
+    const target = template.completeTarget ?? 0;
+    const unit = template.completeRule === "time" ? "min" : "times";
+    return `${progress}/${target} ${unit}`;
+  };
+
   return (
-    <div className="flex items-center gap-4 bg-surface rounded-xl p-4 min-h-[72px] justify-between border border-border">
-      <div className="flex items-center gap-4 flex-1">
-        <div className="flex items-center justify-center">
-          <input
-            type="checkbox"
-            checked={isCompleted}
-            onChange={handleChange}
-            className="custom-checkbox"
-          />
+    <div 
+      className={`flex flex-col gap-2 bg-surface rounded-xl p-4 min-h-[72px] justify-between border ${
+        expired ? "border-red-500/30 opacity-70" : "border-border"
+      }`}
+    >
+      <div className="flex items-center gap-4 justify-between">
+        <div className="flex items-center gap-4 flex-1">
+          <div className="flex items-center justify-center">
+            <input
+              type="checkbox"
+              checked={isCompleted}
+              onChange={handleChange}
+              disabled={expired && !isCompleted}
+              className="custom-checkbox disabled:opacity-50"
+            />
+          </div>
+          <div className="flex flex-col justify-center flex-1">
+            <div className="flex items-center gap-2">
+              <p
+                className={`text-base font-medium leading-normal line-clamp-1 transition-all ${
+                  isCompleted
+                    ? "text-text-secondary line-through"
+                    : expired
+                    ? "text-text-muted"
+                    : "text-text-primary"
+                }`}
+              >
+                {template.title}
+              </p>
+              {expired && (
+                <AlertCircle className="w-4 h-4 text-red-500 shrink-0" />
+              )}
+            </div>
+            <p
+              className={`text-sm font-normal leading-normal line-clamp-2 transition-all ${
+                isCompleted
+                  ? "text-text-muted line-through"
+                  : "text-text-secondary"
+              }`}
+            >
+              {template.description || `+${template.rewardPoints} exp`}
+            </p>
+            {instance.subtasks.length > 0 && (
+              <p className="text-xs text-text-muted mt-1">
+                {instance.subtasks.join(", ")}
+              </p>
+            )}
+          </div>
         </div>
-        <div className="flex flex-col justify-center flex-1">
-          <p
-            className={`text-base font-medium leading-normal line-clamp-1 transition-all ${
-              isCompleted
-                ? "text-text-secondary line-through"
-                : "text-text-primary"
-            }`}
-          >
-            {template.title}
-          </p>
-          <p
-            className={`text-sm font-normal leading-normal line-clamp-2 transition-all ${
-              isCompleted
-                ? "text-text-muted line-through"
-                : "text-text-secondary"
-            }`}
-          >
-            {template.description || `+${template.rewardPoints} exp`}
-          </p>
-          {instance.subtasks.length > 0 && (
-            <p className="text-xs text-text-muted mt-1">
-              {instance.subtasks.join(", ")}
+        <div className="shrink-0 flex flex-col items-end gap-1">
+          <span className="text-xs text-primary font-medium">
+            +{template.rewardPoints}
+          </span>
+          <ChevronRight className="w-5 h-5 text-text-muted" />
+        </div>
+      </div>
+
+      {/* 进度条和过期信息 */}
+      {(hasCompleteRule || expired) && (
+        <div className="flex flex-col gap-1.5 mt-1">
+          {/* 进度条 */}
+          {hasCompleteRule && (
+            <div className="flex items-center gap-3">
+              <div className="flex-1 h-2 bg-surface-light rounded-full overflow-hidden">
+                <div
+                  className={`h-full ${progressColor} transition-all duration-300`}
+                  style={{ width: `${progressPercent}%` }}
+                />
+              </div>
+              <span className="text-xs text-text-secondary min-w-[80px] text-right">
+                {getProgressText()}
+              </span>
+            </div>
+          )}
+
+          {/* 过期提示 */}
+          {expired && (
+            <p className="text-xs text-red-500 flex items-center gap-1">
+              <AlertCircle className="w-3 h-3" />
+              已过期
+            </p>
+          )}
+          {!expired && instance.expiredAt && (
+            <p className="text-xs text-text-muted">
+              {getExpireTimeText(instance.expiredAt)}
             </p>
           )}
         </div>
-      </div>
-      <div className="shrink-0 flex flex-col items-end gap-1">
-        <span className="text-xs text-primary font-medium">
-          +{template.rewardPoints}
-        </span>
-        <ChevronRight className="w-5 h-5 text-text-muted" />
-      </div>
+      )}
     </div>
   );
 }

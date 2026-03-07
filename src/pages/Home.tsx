@@ -11,12 +11,13 @@ import { TaskList } from "@/components/TaskList";
 export function Home() {
   const navigate = useNavigate();
   const { user, currentPoints, initUser, isLoading: isUserLoading } = useUserStore();
-  const { tasks, isLoading: isTasksLoading, refresh: refreshTasks } = useTodayTasks(user?.id ?? 0);
+  const { tasks, isLoading: isTasksLoading, refresh: refreshTasks } = useTodayTasks(user?.id ?? 0, user?.dayEndTime);
   const { tasks: noDateTasks, isLoading: isNoDateTasksLoading, refresh: refreshNoDateTasks } = useNoDateTasks(user?.id ?? 0);
   const { complete, reset } = useTaskInstanceActions();
   
   const { isGenerating, generateToday } = useTaskInstanceGenerator({
     userId: user?.id,
+    dayEndTime: user?.dayEndTime,
     onGenerated: async () => {
       // 刷新任务列表
       await refreshTasks();

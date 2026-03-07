@@ -146,9 +146,9 @@ interface TaskWithTemplate {
 }
 
 /**
- * 获取今日任务列表
+ * 获取今日任务列表（支持 dayEndTime）
  */
-export function useTodayTasks(userId: number) {
+export function useTodayTasks(userId: number, dayEndTime?: string) {
   const [tasks, setTasks] = useState<TaskWithTemplate[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -157,14 +157,14 @@ export function useTodayTasks(userId: number) {
     setIsLoading(true);
     setError(null);
     try {
-      const data = await getTodayTaskInstances(userId);
+      const data = await getTodayTaskInstances(userId, dayEndTime);
       setTasks(data);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load today tasks');
     } finally {
       setIsLoading(false);
     }
-  }, [userId]);
+  }, [userId, dayEndTime]);
 
   useEffect(() => {
     if (userId) {
@@ -206,9 +206,9 @@ export function useNoDateTasks(userId: number) {
 }
 
 /**
- * 获取指定日期的任务
+ * 获取指定日期的任务（支持 dayEndTime）
  */
-export function useTasksByDate(date: string, userId?: number) {
+export function useTasksByDate(date: string, userId?: number, dayEndTime?: string) {
   const [instances, setInstances] = useState<TaskInstance[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -217,14 +217,14 @@ export function useTasksByDate(date: string, userId?: number) {
     setIsLoading(true);
     setError(null);
     try {
-      const data = await getTaskInstancesByDate(date, userId);
+      const data = await getTaskInstancesByDate(date, userId, dayEndTime);
       setInstances(data);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load tasks');
     } finally {
       setIsLoading(false);
     }
-  }, [date, userId]);
+  }, [date, userId, dayEndTime]);
 
   useEffect(() => {
     refresh();

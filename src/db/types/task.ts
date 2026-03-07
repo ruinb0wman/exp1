@@ -1,6 +1,7 @@
 export type RepeatMode = 'none' | 'daily' | 'weekly' | 'monthly';
 export type EndCondition = 'times' | 'date' | 'manual';
 export type TaskStatus = 'pending' | 'completed' | 'skipped';
+export type CompleteRule = 'time' | 'count';
 
 export interface TaskTemplate {
   id?: number;
@@ -19,6 +20,11 @@ export interface TaskTemplate {
   isRandomSubtask: boolean; // 是否随机选中一个子任务
   createdAt: string; // 创建时间戳
   updatedAt: string; // 更新时间戳
+
+  // 完成规则相关字段
+  completeRule?: CompleteRule; // 完成规则：'time' 时间(分钟) / 'count' 次数
+  completeTarget?: number; // 目标值（分钟或次数）
+  completeExpireDays?: number; // 过期天数（0 或 undefined 表示不过期）
 }
 
 export interface TaskInstance {
@@ -31,4 +37,8 @@ export interface TaskInstance {
   startAt?: string; // 任务开始时间戳
   createAt: string; // 任务实例创建时间戳
   completedAt?: string; // 任务实例完成时间戳
+
+  // 进度相关字段
+  completeProgress?: number; // 当前进度（分钟或次数），默认 0
+  expiredAt?: string; // 过期时间戳
 }

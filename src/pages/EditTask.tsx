@@ -7,13 +7,20 @@ import { DatePicker } from "../components/DatePicker";
 import { Stars, Trash2, Shuffle, Loader2 } from "lucide-react";
 import { useUserStore } from "@/store";
 import { useTaskTemplate, useTaskTemplateActions } from "@/hooks/useTasks";
-import type { TaskTemplate, RepeatMode, EndCondition } from "../db/types/task";
+import type { TaskTemplate, RepeatMode, EndCondition, CompleteRule } from "../db/types/task";
 
 const repeatOptions = ["None", "Daily", "Weekly", "Monthly"];
 const repeatValues: RepeatMode[] = ["none", "daily", "weekly", "monthly"];
 
 const endOptions = ["Manual", "On Date", "After Times"];
 const endValues: EndCondition[] = ["manual", "date", "times"];
+
+const completeRuleOptions = ["Simple", "Time", "Count"];
+const completeRuleValues: (CompleteRule | undefined)[] = [undefined, "time", "count"];
+const completeRuleLabels = {
+  time: "分钟",
+  count: "次",
+};
 
 const weekDays = [
   { label: "Sun", value: 0 },
@@ -61,6 +68,11 @@ export function EditTask() {
   const [isRandomSubtask, setIsRandomSubtask] = useState(false);
   const [newSubtask, setNewSubtask] = useState("");
 
+  // 完成规则相关状态
+  const [completeRule, setCompleteRule] = useState<CompleteRule | undefined>(undefined);
+  const [completeTarget, setCompleteTarget] = useState<number>(1);
+  const [completeExpireDays, setCompleteExpireDays] = useState<number>(0);
+
   // 加载现有数据（编辑模式）
   useEffect(() => {
     if (existingTemplate) {
@@ -76,6 +88,10 @@ export function EditTask() {
       setEnabled(existingTemplate.enabled);
       setSubtasks(existingTemplate.subtasks ?? []);
       setIsRandomSubtask(existingTemplate.isRandomSubtask);
+      // 加载完成规则
+      setCompleteRule(existingTemplate.completeRule);
+      setCompleteTarget(existingTemplate.completeTarget ?? 1);
+      setCompleteExpireDays(existingTemplate.completeExpireDays ?? 0);
     }
   }, [existingTemplate]);
 
@@ -122,6 +138,9 @@ export function EditTask() {
       enabled,
       subtasks,
       isRandomSubtask,
+      completeRule,
+      completeTarget: completeRule ? completeTarget : undefined,
+      completeExpireDays: completeRule ? completeExpireDays : undefined,
     };
 
     try {
@@ -139,6 +158,7 @@ export function EditTask() {
 
   const repeatMode = repeatValues[repeatIndex];
   const endCondition = endValues[endIndex];
+  const completeRuleIndex = completeRuleValues.indexOf(completeRule);
 
   // 加载中状态
   if (isEditMode && isLoadingTemplate) {
@@ -252,6 +272,81 @@ export function EditTask() {
                 }`}
               />
             </button>
+          </div>
+        </div>
+
+        {/* Complete Rule Section Card */}
+        <div>
+          <h3 className="text-text-primary text-lg font-bold leading-tight tracking-[-0.015em] px-2 pb-2 pt-4">
+            Complete Rule
+          </h3>
+          <div className="rounded-xl bg-surface p-4 space-y-4">
+            <RadioGroup
+              list={completeRuleOptions}
+              value={completeRuleIndex}
+              onChange={(index) => setCompleteRule(completeRuleValues[index])}
+            />
+
+            {/* Time/Count Target Input */}
+            {completeRule && (
+              <div className="pt-2 border-t border-surface-light space-y-4">
+                {/* Target */}
+                <div className="flex items-center gap-4">
+                  <p className="text-text-secondary text-sm min-w-[60px]">Target</p>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => setCompleteTarget(Math.max(1, completeTarget - 1))}
+                      className="text-base font-medium flex h-7 w-7 items-center justify-center rounded-full bg-surface-light hover:bg-surface-light/80 transition-colors"
+                    >
+                      -
+                    </button>
+                    <input
+                      type="number"
+                      min={1}
+                      value={completeTarget}
+                      onChange={(e) => setCompleteTarget(Math.max(1, parseInt(e.target.value) || 1))}
+                      className="text-base font-medium w-14 p-0 text-center bg-transparent focus:outline-none focus:ring-0 border-none [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+                    />
+                    <button
+                      onClick={() => setCompleteTarget(completeTarget + 1)}
+                      className="text-base font-medium flex h-7 w-7 items-center justify-center rounded-full bg-surface-light hover:bg-surface-light/80 transition-colors"
+                    >
+                      +
+                    </button>
+                  </div>
+                  <p className="text-text-secondary text-sm">
+                    {completeRuleLabels[completeRule]}
+                  </p>
+                </div>
+
+                {/* Expire Days */}
+                <div className="flex items-center gap-4">
+                  <p className="text-text-secondary text-sm min-w-[60px]">Expire</p>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => setCompleteExpireDays(Math.max(0, completeExpireDays - 1))}
+                      className="text-base font-medium flex h-7 w-7 items-center justify-center rounded-full bg-surface-light hover:bg-surface-light/80 transition-colors"
+                    >
+                      -
+                    </button>
+                    <input
+                      type="number"
+                      min={0}
+                      value={completeExpireDays}
+                      onChange={(e) => setCompleteExpireDays(Math.max(0, parseInt(e.target.value) || 0))}
+                      className="text-base font-medium w-14 p-0 text-center bg-transparent focus:outline-none focus:ring-0 border-none [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+                    />
+                    <button
+                      onClick={() => setCompleteExpireDays(completeExpireDays + 1)}
+                      className="text-base font-medium flex h-7 w-7 items-center justify-center rounded-full bg-surface-light hover:bg-surface-light/80 transition-colors"
+                    >
+                      +
+                    </button>
+                  </div>
+                  <p className="text-text-secondary text-sm">days (0=never)</p>
+                </div>
+              </div>
+            )}
           </div>
         </div>
 

@@ -1,4 +1,8 @@
 import type { TaskTemplate, TaskInstance } from '@/db/types';
+import { getUserStartOfDay, calculateExpiredAt, formatLocalDate } from './time';
+
+// 重新导出 formatLocalDate 以保持兼容性
+export { formatLocalDate };
 
 /**
  * 获取今天的日期字符串 (YYYY-MM-DD) - 使用本地时区
@@ -6,16 +10,6 @@ import type { TaskTemplate, TaskInstance } from '@/db/types';
 export function getTodayString(): string {
   const now = new Date();
   return formatLocalDate(now);
-}
-
-/**
- * 获取本地日期字符串 (YYYY-MM-DD)
- */
-export function formatLocalDate(date: Date): string {
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const day = String(date.getDate()).padStart(2, '0');
-  return `${year}-${month}-${day}`;
 }
 
 /**
@@ -230,10 +224,11 @@ export function filterTemplatesNeedingInstances(
 }
 
 /**
- * 为任务模板生成任务实例数据
+ * 为任务模板生成任务实例数据（更新：支持 dayEndTime 和过期时间）
  */
 export function generateTaskInstance(
   template: TaskTemplate,
+  dayEndTime: string = "00:00",
   date?: Date
 ): Omit<TaskInstance, 'id' | 'createAt'> {
   const targetDate = date || new Date();
@@ -248,7 +243,13 @@ export function generateTaskInstance(
   // repeatMode 为 'none' 时不设置 startAt
   const startAt = template.repeatMode === 'none' 
     ? undefined 
-    : getStartOfDay(targetDate);
+    : getUserStartOfDay(targetDate, dayEndTime);
+
+  // 计算过期时间
+  let expiredAt: string | undefined;
+  if (startAt && template.completeExpireDays && template.completeExpireDays > 0) {
+    expiredAt = calculateExpiredAt(startAt, template.completeExpireDays);
+  }
 
   return {
     userId: template.userId,
@@ -257,15 +258,18 @@ export function generateTaskInstance(
     rewardPoints: template.rewardPoints,
     subtasks: [...subtasks],
     startAt,
+    completeProgress: template.completeRule ? 0 : undefined,
+    expiredAt,
   };
 }
 
 /**
- * 批量生成任务实例
+ * 批量生成任务实例（更新：支持 dayEndTime）
  */
 export function generateTaskInstances(
   templates: TaskTemplate[],
+  dayEndTime?: string,
   date?: Date
 ): Omit<TaskInstance, 'id' | 'createAt'>[] {
-  return templates.map((template) => generateTaskInstance(template, date));
+  return templates.map((template) => generateTaskInstance(template, dayEndTime, date));
 }

@@ -86,3 +86,14 @@ export async function getPointsHistory(userId: number): Promise<PointsHistory[]>
   const db = getDB();
   return db.pointsHistory.where('userId').equals(userId).reverse().sortBy('createdAt');
 }
+
+/**
+ * 更新用户的一天结束时间
+ */
+export async function updateUserDayEndTime(
+  userId: number,
+  dayEndTime: string
+): Promise<number> {
+  const db = getDB();
+  return db.users.update(userId, { dayEndTime });
+}

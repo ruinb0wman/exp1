@@ -19,6 +19,8 @@ interface GenerateResult {
 interface UseTaskInstanceGeneratorOptions {
   /** 用户ID */
   userId: number | undefined;
+  /** 一天结束时间 */
+  dayEndTime?: string;
   /** 生成完成后回调 */
   onGenerated?: (result: GenerateResult) => void;
   /** 生成失败回调 */
@@ -32,7 +34,7 @@ interface UseTaskInstanceGeneratorOptions {
  * 用于 Home 页面和 Stats 页面等需要生成或预览实例的地方
  */
 export function useTaskInstanceGenerator(options: UseTaskInstanceGeneratorOptions) {
-  const { userId, onGenerated, onError } = options;
+  const { userId, dayEndTime, onGenerated, onError } = options;
   
   const [isGenerating, setIsGenerating] = useState(false);
   const hasGeneratedRef = useRef(false);
@@ -100,7 +102,7 @@ export function useTaskInstanceGenerator(options: UseTaskInstanceGeneratorOption
       // 生成并保存新的任务实例
       let generatedInstances: Omit<TaskInstance, 'id' | 'createAt'>[] = [];
       if (templatesNeedingInstances.length > 0) {
-        generatedInstances = generateTaskInstances(templatesNeedingInstances, date);
+        generatedInstances = generateTaskInstances(templatesNeedingInstances, dayEndTime, date);
         await createTaskInstances(generatedInstances);
       }
 
@@ -123,7 +125,7 @@ export function useTaskInstanceGenerator(options: UseTaskInstanceGeneratorOption
     } finally {
       setIsGenerating(false);
     }
-  }, [userId, getTemplatesForDate, onGenerated, onError]);
+  }, [userId, dayEndTime, getTemplatesForDate, onGenerated, onError]);
 
   /**
    * 生成今天的任务实例
