@@ -21,7 +21,7 @@ import { Popup } from '@/components/Popup';
 
 export function Pomo() {
   const userStore = useUserStore();
-  const userId = userStore.user?.id || 1;
+  const userId = userStore.user?.id ?? 1;
   
   const {
     mode,
@@ -47,7 +47,9 @@ export function Pomo() {
   
   // 加载今日完成数
   useEffect(() => {
-    loadTodayCount(userId);
+    if (userId) {
+      loadTodayCount(userId);
+    }
   }, [userId, loadTodayCount]);
   
   // 获取选中的任务

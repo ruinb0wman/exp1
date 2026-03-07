@@ -23,14 +23,8 @@ function getActivityIcon(_type: string, title: string) {
 
 export function Profile() {
   const navigate = useNavigate();
-  const { user, currentPoints, initUser, isLoading: userLoading } = useUserStore();
+  const { user, currentPoints, isLoading: userLoading } = useUserStore();
   const { stats, recentActivity, isLoading: statsLoading } = useProfileStats(user?.id ?? null);
-
-  useEffect(() => {
-    if (!user && !userLoading) {
-      initUser();
-    }
-  }, [user, userLoading, initUser]);
 
   const isLoading = userLoading || statsLoading;
 

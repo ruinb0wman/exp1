@@ -15,7 +15,7 @@ interface RewardWithTemplate {
 
 export function Backpack() {
   const navigate = useNavigate();
-  const { user, initUser } = useUserStore();
+  const { user } = useUserStore();
   const { items, isLoading, refresh } = useUserBackpack(user?.id ?? 0);
   const { useReward, checkExpired, isLoading: isActionLoading } = useRewardInstanceActions();
 
@@ -23,13 +23,6 @@ export function Backpack() {
   const [isPopupOpen, setIsPopupOpen] = useState(false);
   const [useError, setUseError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'available' | 'used' | 'expired'>('available');
-
-  // 初始化用户
-  useEffect(() => {
-    if (!user) {
-      initUser();
-    }
-  }, [user, initUser]);
 
   // 定期检查过期状态
   useEffect(() => {

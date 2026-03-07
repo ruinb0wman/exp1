@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { BrowserRouter, Routes, Route, Outlet } from "react-router";
 import { BottomNav } from "./components/BottomNav";
 import { Home } from "./pages/Home";
@@ -13,8 +14,18 @@ import { Backpack } from "./pages/Backpack";
 import { TaskHistory } from "./pages/TaskHistory";
 import { Settings } from "./pages/Settings";
 import { DataImportExport } from "./pages/DataImportExport";
+import { useUserStore } from "./store/userStore";
 
 function Layout() {
+  // 全局初始化用户
+  const { user, initUser } = useUserStore();
+  
+  useEffect(() => {
+    if (!user) {
+      initUser();
+    }
+  }, [user, initUser]);
+  
   return (
     <div className="min-h-screen-safe pt-safe">
       <Outlet />
@@ -24,6 +35,15 @@ function Layout() {
 }
 
 function SimpleLayout() {
+  // 全局初始化用户（简单布局也需要）
+  const { user, initUser } = useUserStore();
+  
+  useEffect(() => {
+    if (!user) {
+      initUser();
+    }
+  }, [user, initUser]);
+  
   return (
     <div className="min-h-screen-safe pt-safe">
       <Outlet />

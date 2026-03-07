@@ -2,19 +2,21 @@
 
 ## Project Overview
 
-This is a **gamified task management application** (任务+积分工具) designed to motivate users to build habits through a reward system. Users create recurring tasks, track completions, earn experience points (积分), and redeem rewards from a virtual shop.
+This is a **gamified task management application** (任务+积分工具) designed to motivate users to build habits through a reward system. Users create recurring tasks, track completions, earn experience points (积分), redeem rewards from a virtual shop, and use a Pomodoro timer for focus sessions.
 
-The project uses a **Tauri v2** backend with a **React + TypeScript** frontend. It supports both desktop (Windows/macOS/Linux) and mobile platforms (Android).
+The project uses a **Tauri v2** backend with a **React + TypeScript** frontend. It supports both desktop (Windows/macOS/Linux) and mobile platforms (Android/iOS).
 
 ### Core Features
 
-- **Task Management** - Create recurring tasks with daily/weekly/monthly cycles, subtasks, and end conditions
+- **Task Management** - Create recurring tasks with daily/weekly/monthly cycles, subtasks, end conditions, and completion rules (time-based or count-based)
 - **Calendar View** - Visualize task completion status on a calendar
 - **Reward System** - Exchange experience points for custom rewards with customizable icons
 - **Inventory System** - Manage redeemed reward items (backpack)
+- **Pomodoro Timer** - Focus timer with configurable durations for work sessions and breaks
 - **Statistics** - Track task progress and points history
 - **Data Import/Export** - Backup and restore data via JSON files
 - **Data Persistence** - Local IndexedDB storage via Dexie.js
+- **Custom Day End Time** - Configure when a "day" ends (e.g., 02:00 instead of 00:00)
 
 ---
 
@@ -47,7 +49,7 @@ hello-tauri/
 │   ├── vite-env.d.ts             # Vite type declarations
 │   │
 │   ├── components/               # Reusable UI components
-│   │   ├── BottomNav.tsx         # Bottom tab navigation (4 tabs)
+│   │   ├── BottomNav.tsx         # Bottom tab navigation (5 tabs: 首页, 专注, 商店, 统计, 我的)
 │   │   ├── Calendar.tsx          # Calendar view component
 │   │   ├── DatePicker.tsx        # Date picker component
 │   │   ├── DynamicIcon.tsx       # Dynamic Lucide icon renderer for rewards
@@ -55,10 +57,12 @@ hello-tauri/
 │   │   ├── HomeHeader.tsx        # Home page header with greeting
 │   │   ├── IconPicker.tsx        # Icon selection component
 │   │   ├── MultiSelectGrid.tsx   # Multi-select grid (days/weeks)
+│   │   ├── PomoTimer.tsx         # Pomodoro timer component
 │   │   ├── Popup.tsx             # Modal/popup with animations
 │   │   ├── Progress.tsx          # Progress indicator
 │   │   ├── RadioGroup.tsx        # Radio button group
-│   │   └── TaskList.tsx          # Task list display component
+│   │   ├── TaskList.tsx          # Task list display component
+│   │   └── TimePicker.tsx        # Time picker component
 │   │
 │   ├── pages/                    # Page components
 │   │   ├── Home.tsx              # Home page with today's tasks
@@ -68,6 +72,7 @@ hello-tauri/
 │   │   ├── EditReward.tsx        # Create/edit reward form
 │   │   ├── Stats.tsx             # Statistics page
 │   │   ├── Profile.tsx           # User profile page
+│   │   ├── Pomo.tsx              # Pomodoro timer page
 │   │   ├── PointsHistory.tsx     # Points transaction history
 │   │   ├── Backpack.tsx          # Inventory of redeemed rewards
 │   │   ├── TaskHistory.tsx       # Historical task instances
@@ -80,14 +85,16 @@ hello-tauri/
 │   │   │   ├── index.ts          # DB interface & exports
 │   │   │   ├── task.ts           # Task types (TaskTemplate, TaskInstance)
 │   │   │   ├── reward.ts         # Reward types with icon/color presets
-│   │   │   └── user.ts           # User and PointsHistory types
+│   │   │   ├── user.ts           # User and PointsHistory types
+│   │   │   └── pomo.ts           # Pomodoro session and settings types
 │   │   ├── migrations/           # Database migrations
-│   │   │   └── index.ts          # Schema v1-v3 definitions
+│   │   │   └── index.ts          # Schema v1-v5 definitions
 │   │   └── services/             # Database service layer
 │   │       ├── index.ts          # Service exports
 │   │       ├── userService.ts    # User & points operations
 │   │       ├── taskService.ts    # Task CRUD & queries
 │   │       ├── rewardService.ts  # Reward CRUD & operations
+│   │       ├── pomoService.ts    # Pomodoro session operations
 │   │       ├── pointsHistoryService.ts # Points history queries
 │   │       └── exportImportService.ts  # Data export/import functionality
 │   │
@@ -97,14 +104,17 @@ hello-tauri/
 │   │   ├── useRewards.ts         # Reward data hooks
 │   │   ├── usePointsHistory.ts   # Points history with pagination
 │   │   ├── useTaskHistory.ts     # Task history hooks
-│   │   └── useProfileStats.ts    # Profile statistics hooks
+│   │   ├── useProfileStats.ts    # Profile statistics hooks
+│   │   └── usePomo.ts            # Pomodoro timer hooks
 │   │
 │   ├── libs/                     # Utility libraries
-│   │   └── task.ts               # Task generation logic & date utilities
+│   │   ├── task.ts               # Task generation logic & date utilities
+│   │   └── time.ts               # Time handling with dayEndTime support
 │   │
 │   └── store/                    # Zustand state management
 │       ├── index.ts              # Store exports
-│       └── userStore.ts          # User state & points management
+│       ├── userStore.ts          # User state & points management
+│       └── pomoStore.ts          # Pomodoro timer state
 │
 ├── src-tauri/                    # Tauri backend (Rust)
 │   ├── src/
@@ -120,17 +130,6 @@ hello-tauri/
 │           └── build.gradle.kts  # Android build configuration
 │
 ├── design/                       # UI/UX design prototypes (HTML mockups)
-│   ├── (tabs)/                   # Tab page designs
-│   │   ├── index.html            # Home/Task list design
-│   │   ├── calendar.html         # Calendar view design
-│   │   ├── shop.html             # Reward shop design
-│   │   └── profile.html          # Profile/settings design
-│   ├── components/               # Component designs
-│   │   └── taskDetail.html       # Task detail modal design
-│   └── pages/                    # Page designs
-│       ├── editTask.html         # Task editing page
-│       └── editRewards.html      # Reward editing page
-│
 ├── public/                       # Public static assets
 ├── index.html                    # Vite HTML entry point
 ├── vite.config.ts                # Vite configuration (Tauri-optimized)
@@ -275,7 +274,7 @@ The app follows a **minimalist dark theme** using Tailwind CSS v4:
 
 The application uses **Dexie.js** as a wrapper around the browser's IndexedDB for local data persistence.
 
-### Database Schema (Current: v3)
+### Database Schema (Current: v5)
 
 Defined in `src/db/migrations/index.ts`:
 
@@ -287,6 +286,7 @@ Defined in `src/db/migrations/index.ts`:
 | `rewardInstances` | `++id` | `templateId`, `userId`, `status`, `expiresAt` |
 | `users` | `++id` | `name` |
 | `pointsHistory` | `++id` | `userId`, `type`, `createdAt`, `[userId+createdAt]` |
+| `pomoSessions` | `++id` | `userId`, `taskId`, `mode`, `status`, `startedAt` |
 
 ### Key Types
 
@@ -296,6 +296,7 @@ Defined in `src/db/migrations/index.ts`:
 type RepeatMode = 'none' | 'daily' | 'weekly' | 'monthly';
 type EndCondition = 'times' | 'date' | 'manual';
 type TaskStatus = 'pending' | 'completed' | 'skipped';
+type CompleteRule = 'time' | 'count';
 
 interface TaskTemplate {
   id?: number;
@@ -314,6 +315,10 @@ interface TaskTemplate {
   isRandomSubtask: boolean;
   createdAt: string;
   updatedAt: string;
+  // Completion rule fields (v5)
+  completeRule?: CompleteRule; // 'time' (minutes) or 'count'
+  completeTarget?: number; // Target value (minutes or count)
+  completeExpireDays?: number; // Expiration days (0 = no expiration)
 }
 
 interface TaskInstance {
@@ -323,9 +328,12 @@ interface TaskInstance {
   status: TaskStatus;
   rewardPoints: number;
   subtasks: string[];
-  startAt?: string; // undefined for 'none' repeatMode
+  startAt?: string;
   createAt: string;
   completedAt?: string;
+  // Progress fields (v5)
+  completeProgress?: number; // Current progress
+  expiredAt?: string; // Expiration timestamp
 }
 ```
 
@@ -371,9 +379,9 @@ type PointsHistoryType = 'task_reward' | 'task_undo' | 'reward_exchange' | 'admi
 
 interface User {
   id: number;
-  currentPoints: number;
   createdAt: string;
   name: string;
+  dayEndTime?: string; // "HH:mm" format, default "00:00"
 }
 
 interface PointsHistory {
@@ -381,19 +389,55 @@ interface PointsHistory {
   userId: number;
   amount: number; // positive for income, negative for expense
   type: PointsHistoryType;
-  relatedEntityId?: number; // task_instance or reward_instance id
+  relatedEntityId?: number;
   createdAt: string;
+}
+```
+
+**Pomodoro Types (`src/db/types/pomo.ts`):**
+
+```typescript
+type PomoMode = 'focus' | 'shortBreak' | 'longBreak';
+type PomoStatus = 'running' | 'paused' | 'completed' | 'aborted';
+
+interface PomoSession {
+  id?: number;
+  userId: number;
+  taskId?: number; // Associated task instance ID
+  mode: PomoMode;
+  duration: number; // Planned duration (seconds)
+  actualDuration: number; // Actual focus duration (seconds)
+  status: PomoStatus;
+  startedAt: string;
+  endedAt?: string;
+  interruptions: number;
+}
+
+interface PomoSettings {
+  focusDuration: number; // Default 25 minutes
+  shortBreakDuration: number; // Default 5 minutes
+  longBreakDuration: number; // Default 15 minutes
+  longBreakInterval: number; // Long break after N pomos (default 4)
+  autoStartBreaks: boolean;
+  autoStartPomos: boolean;
+  soundEnabled: boolean;
 }
 ```
 
 ### State Management (Zustand)
 
-The `userStore` (`src/store/userStore.ts`) provides:
+**User Store (`src/store/userStore.ts`):**
 
 - User initialization and refresh
-- Points management (add/spend)
+- Points management (add/spend) - calculated from pointsHistory
 - Points history tracking
 - Loading and error states
+
+**Pomodoro Store (`src/store/pomoStore.ts`):**
+
+- Timer state management
+- Settings management
+- Session tracking
 
 ### Database Access Pattern
 
@@ -416,11 +460,12 @@ import { getTodayTaskInstances, createTaskTemplate } from '@/db/services';
 
 Defined in `src/App.tsx` using react-router v7:
 
-**Layout with Bottom Navigation:**
+**Layout with Bottom Navigation (5 tabs):**
 
 - `/` - Home (today's tasks)
+- `/pomo` - Pomodoro timer
 - `/store` - Reward shop
-- `/stats` - Statistics  
+- `/stats` - Statistics
 - `/profile` - User profile
 
 **Simple Layout (no navigation):**
@@ -457,6 +502,29 @@ Generation logic is in `src/libs/task.ts`:
 
 Instances are generated via `useTaskInstanceGenerator` hook in `Home.tsx`.
 
+### Task Completion Rules (v5)
+
+Tasks can have completion rules for gradual progress:
+
+1. **Simple**: Mark as complete/incomplete
+2. **Time-based** (`completeRule: 'time'`): Track minutes spent (e.g., read for 30 minutes)
+3. **Count-based** (`completeRule: 'count'`): Track repetitions (e.g., drink water 8 times)
+
+Progress can be updated manually or automatically via Pomodoro sessions.
+
+### Custom Day End Time
+
+Users can configure when their "day" ends (default 00:00). This affects:
+
+- Which tasks appear as "today's tasks"
+- Task instance generation timing
+- Statistics calculation
+
+Implemented in `src/libs/time.ts`:
+
+- `getUserStartOfDay()` / `getUserEndOfDay()` - Calculate day boundaries
+- `getUserCurrentDate()` - Get the effective "today" based on dayEndTime
+
 ### Points System
 
 Points flow:
@@ -466,7 +534,16 @@ Points flow:
 3. **Spend**: Redeem reward → `spendPoints(cost, 'reward_exchange', rewardId)`
 4. **Adjust**: Admin adjustments → `addPoints/spendPoints(amount, 'admin_adjustment')`
 
-All point changes are recorded in `pointsHistory` table via `updateUserPoints()` service.
+All point changes are recorded in `pointsHistory` table. Current points are calculated on-demand from history.
+
+### Pomodoro Timer
+
+Focus timer implementation:
+
+- **Modes**: Focus (default 25min), Short Break (5min), Long Break (15min)
+- **Auto-start options**: Automatically start breaks/pomodoros
+- **Sound**: Configurable sound notifications
+- **Task Integration**: Can be linked to task instances for automatic progress update
 
 ### Data Import/Export
 
@@ -494,6 +571,47 @@ Currently allows:
 ### Content Security Policy
 
 Currently set to `null` in `tauri.conf.json` (development mode). For production, define appropriate CSP restrictions.
+
+---
+
+## Testing
+
+**No testing framework is currently configured.** Consider adding:
+
+- **Frontend**: Vitest (works well with Vite)
+- **Rust**: Built-in `cargo test`
+
+---
+
+## Deployment
+
+### Desktop Builds
+
+```bash
+bun run tauri build
+```
+
+Outputs to `src-tauri/target/release/bundle/`
+
+### Android Builds
+
+```bash
+bun run tauri android build
+```
+
+Requires Android SDK and NDK configured.
+
+---
+
+## Mobile-First Design
+
+The app is designed with mobile-first principles:
+
+- Uses safe area insets (`pt-safe`, `pb-safe`) for notched devices
+- Bottom navigation fixed at bottom with safe area padding
+- Touch-friendly tap targets
+- Responsive layouts using Tailwind CSS
+- Viewport meta: `viewport-fit=cover` for edge-to-edge display
 
 ---
 
@@ -581,47 +699,6 @@ import { Popup } from '@/components/Popup';
 
 ---
 
-## Testing
-
-No testing framework is currently configured. Consider adding:
-
-- **Frontend**: Vitest (works well with Vite)
-- **Rust**: Built-in `cargo test`
-
----
-
-## Deployment
-
-### Desktop Builds
-
-```bash
-bun run tauri build
-```
-
-Outputs to `src-tauri/target/release/bundle/`
-
-### Android Builds
-
-```bash
-bun run tauri android build
-```
-
-Requires Android SDK and NDK configured.
-
----
-
-## Mobile-First Design
-
-The app is designed with mobile-first principles:
-
-- Uses safe area insets (`pt-safe`, `pb-safe`) for notched devices
-- Bottom navigation fixed at bottom with safe area padding
-- Touch-friendly tap targets
-- Responsive layouts using Tailwind CSS
-- Viewport meta: `viewport-fit=cover` for edge-to-edge display
-
----
-
 ## Resources
 
 - [Tauri Documentation](https://tauri.app/develop/)
@@ -640,4 +717,6 @@ The app is designed with mobile-first principles:
 - **Date Handling**: The app uses local timezone for date comparisons (not UTC)
 - **Task Instance Generation**: Only one instance per template per day is generated
 - **User Model**: Currently single-user; user ID is always 1
-- **Points**: Stored as integers, can be positive or negative in history
+- **Points**: Stored as integers in history, calculated on-demand for current balance
+- **Pomodoro**: Timer state is managed in Zustand store, sessions are persisted to DB
+- **Progress**: Tasks with `completeRule` track progress; Pomodoro can auto-update progress

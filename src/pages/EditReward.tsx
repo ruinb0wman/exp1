@@ -32,7 +32,7 @@ const monthDays = Array.from({ length: 31 }, (_, i) => ({
 export function EditReward() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { user, initUser } = useUserStore();
+  const { user } = useUserStore();
   const rewardId = id ? parseInt(id) : null;
   
   // 使用 hook 获取奖励模板数据
@@ -64,13 +64,6 @@ export function EditReward() {
   const [replenishmentNum, setReplenishmentNum] = useState(1);
   const [hasStockLimit, setHasStockLimit] = useState(false);
   const [replenishmentLimit, setReplenishmentLimit] = useState(10);
-
-  // 初始化用户
-  useEffect(() => {
-    if (!user) {
-      initUser();
-    }
-  }, [user, initUser]);
 
   // 加载现有奖励数据
   useEffect(() => {

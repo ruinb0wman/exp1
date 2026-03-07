@@ -10,6 +10,7 @@ import {
   getPomoSettings,
   savePomoSettings,
 } from '@/db/services/pomoService';
+import { addPomoToTaskProgress } from '@/db/services/taskService';
 import { useUserStore } from './userStore';
 
 interface PomoState {
@@ -194,6 +195,17 @@ export const usePomoStore = create<PomoState>((set, get) => ({
         if (userId) {
           const count = await getTodayCompletedPomoCount(userId);
           set({ todayCount: count });
+        }
+        
+        // 更新关联任务的进度
+        const { selectedTaskId } = get();
+        if (selectedTaskId) {
+          try {
+            await addPomoToTaskProgress(selectedTaskId, actualDuration);
+          } catch (err) {
+            // 任务可能已过期或不支持进度追踪，静默忽略
+            console.log('更新任务进度失败:', err);
+          }
         }
       }
       

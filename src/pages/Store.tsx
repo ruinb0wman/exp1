@@ -15,7 +15,7 @@ interface StoreReward {
 
 export function Store() {
   const navigate = useNavigate();
-  const { user, currentPoints, initUser } = useUserStore();
+  const { user, currentPoints } = useUserStore();
   const { rewards, isLoading, refresh } = useStoreRewards(user?.id ?? 0);
   const { redeem, isLoading: isActionLoading } = useRewardInstanceActions();
   
@@ -23,13 +23,6 @@ export function Store() {
   const [selectedReward, setSelectedReward] = useState<StoreReward | null>(null);
   const [isPopupOpen, setIsPopupOpen] = useState(false);
   const [redeemError, setRedeemError] = useState<string | null>(null);
-
-  // 初始化用户
-  useEffect(() => {
-    if (!user) {
-      initUser();
-    }
-  }, [user, initUser]);
 
   // 搜索过滤
   const filteredRewards = rewards.filter(({ template }) =>

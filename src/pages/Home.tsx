@@ -10,7 +10,7 @@ import { TaskList } from "@/components/TaskList";
 
 export function Home() {
   const navigate = useNavigate();
-  const { user, currentPoints, initUser, isLoading: isUserLoading } = useUserStore();
+  const { user, currentPoints, isLoading: isUserLoading } = useUserStore();
   const { tasks, isLoading: isTasksLoading, refresh: refreshTasks } = useTodayTasks(user?.id ?? 0, user?.dayEndTime);
   const { tasks: noDateTasks, isLoading: isNoDateTasksLoading, refresh: refreshNoDateTasks } = useNoDateTasks(user?.id ?? 0);
   const { complete, reset } = useTaskInstanceActions();
@@ -27,13 +27,6 @@ export function Home() {
       console.error("Failed to generate task instances:", error);
     },
   });
-
-  // 初始化用户
-  useEffect(() => {
-    if (!user && !isUserLoading) {
-      initUser();
-    }
-  }, [user, isUserLoading, initUser]);
 
   // 自动生成今日任务实例 - 只在用户加载完成且未生成过时执行
   useEffect(() => {
