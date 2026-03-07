@@ -6,7 +6,6 @@ import {
   daysBetweenUTC,
   weeksBetweenUTC,
   monthsBetweenUTC,
-  getUTCTimestamp,
   isSameUTCDay,
 } from './time';
 
@@ -287,10 +286,10 @@ export function generateTaskInstance(
     startAt = getUserStartOfDay(targetDate, dayEndTime);
   }
 
-  // 计算过期时间（UTC）
+  // 计算过期时间（UTC，基于dayEndTime）
   let expiredAt: string | undefined;
   if (startAt && template.completeExpireDays && template.completeExpireDays > 0) {
-    expiredAt = calculateExpiredAt(startAt, template.completeExpireDays);
+    expiredAt = calculateExpiredAt(startAt, template.completeExpireDays, dayEndTime);
   }
 
   return {

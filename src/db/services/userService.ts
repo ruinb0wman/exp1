@@ -1,5 +1,6 @@
 import { getDB } from '../index';
 import type { User, PointsHistory, PointsHistoryType } from '../types';
+import { calculateExpiredAt } from '@/libs/time';
 
 const DEFAULT_USER: Omit<User, 'id'> = {
   name: 'User',
@@ -89,11 +90,64 @@ export async function getPointsHistory(userId: number): Promise<PointsHistory[]>
 
 /**
  * 更新用户的一天结束时间
+ * 同时重新计算所有 pending 状态且有 expiredAt 的任务实例的过期时间
  */
 export async function updateUserDayEndTime(
   userId: number,
   dayEndTime: string
 ): Promise<number> {
   const db = getDB();
-  return db.users.update(userId, { dayEndTime });
+
+  return db.transaction('rw', db.users, db.taskInstances, db.taskTemplates, async () => {
+    // 1. 更新用户的 dayEndTime
+    const updateResult = await db.users.update(userId, { dayEndTime });
+
+    // 2. 获取所有 pending 状态且有 expiredAt 的任务实例
+    const pendingInstances = await db.taskInstances
+      .where('userId')
+      .equals(userId)
+      .and(instance => instance.status === 'pending' && !!instance.expiredAt)
+      .toArray();
+
+    if (pendingInstances.length === 0) {
+      return updateResult;
+    }
+
+    // 3. 获取所有需要的模板信息
+    const templateIds = [...new Set(pendingInstances.map(i => i.templateId))];
+    const templates = await db.taskTemplates
+      .where('id')
+      .anyOf(templateIds)
+      .toArray();
+    const templateMap = new Map(templates.map(t => [t.id!, t]));
+
+    // 4. 重新计算每个实例的过期时间
+    const updates: { id: number; expiredAt: string | undefined }[] = [];
+    for (const instance of pendingInstances) {
+      const template = templateMap.get(instance.templateId);
+      if (!template || !template.completeExpireDays || template.completeExpireDays <= 0) {
+        continue;
+      }
+
+      // 使用新的 dayEndTime 重新计算过期时间
+      const newExpiredAt = instance.startAt
+        ? calculateExpiredAt(instance.startAt, template.completeExpireDays, dayEndTime)
+        : undefined;
+
+      if (newExpiredAt && newExpiredAt !== instance.expiredAt) {
+        updates.push({ id: instance.id!, expiredAt: newExpiredAt });
+      }
+    }
+
+    // 5. 批量更新实例
+    if (updates.length > 0) {
+      await Promise.all(
+        updates.map(({ id, expiredAt }) =>
+          db.taskInstances.update(id, { expiredAt })
+        )
+      );
+    }
+
+    return updateResult;
+  });
 }

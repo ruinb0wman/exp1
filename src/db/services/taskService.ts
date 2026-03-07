@@ -1,6 +1,6 @@
 import { getDB } from '../index';
 import type { TaskTemplate, TaskInstance, TaskStatus, RepeatMode } from '../types';
-import { getUserStartOfDay, getUserEndOfDay, isExpired } from '@/libs/time';
+import { getUserStartOfDay, getUserEndOfDay, getUserCurrentDate, isExpired } from '@/libs/time';
 
 // ==================== TaskTemplate CRUD ====================
 
@@ -361,10 +361,15 @@ export async function getTodayTaskInstances(
 ): Promise<Array<{ instance: TaskInstance; template: TaskTemplate }>> {
   const db = getDB();
 
+  // 使用 getUserCurrentDate 获取"用户眼中的今天"（考虑 dayEndTime 偏移）
+  // 例如：当前 00:00，dayEndTime 为 02:00，则返回昨天的日期
+  const todayStr = getUserCurrentDate(dayEndTime);
+  const [year, month, day] = todayStr.split('-').map(Number);
+  const today = new Date(year, month - 1, day);
+
   // 使用 dayEndTime 获取今天的开始和结束
-  const now = new Date();
-  const startOfDay = getUserStartOfDay(now, dayEndTime);
-  const endOfDay = getUserEndOfDay(now, dayEndTime);
+  const startOfDay = getUserStartOfDay(today, dayEndTime);
+  const endOfDay = getUserEndOfDay(today, dayEndTime);
 
   const instances = await db.taskInstances
     .where('startAt')
