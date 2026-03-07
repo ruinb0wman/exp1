@@ -153,7 +153,7 @@ export function Store() {
             <p className="text-sm mt-1">点击右上角 + 创建新奖励</p>
           </div>
         ) : (
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-3 gap-3">
             {filteredRewards.map(({ template, availableCount }) => (
               <button
                 key={template.id}
