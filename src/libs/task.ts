@@ -102,8 +102,7 @@ export function shouldGenerateInstanceOnDate(
   existingInstances: TaskInstance[],
   targetDate: Date = new Date()
 ): boolean {
-  const { repeatMode, repeatInterval, repeatDaysOfWeek, repeatDaysOfMonth, createdAt } = template;
-  const created = new Date(createdAt);
+  const { repeatMode, repeatInterval, repeatDaysOfWeek, repeatDaysOfMonth, startAt } = template;
 
   switch (repeatMode) {
     case 'none': {
@@ -112,14 +111,18 @@ export function shouldGenerateInstanceOnDate(
     }
 
     case 'daily': {
-      // 每日：检查间隔天数
+      // 每日：检查间隔天数，使用 startAt 作为基准
+      if (!startAt) return false; // 周期性任务必须有 startAt
+      const baseDate = new Date(startAt);
       const interval = repeatInterval || 1;
-      const daysDiff = daysBetween(created, targetDate);
-      return daysDiff % interval === 0;
+      const daysDiff = daysBetween(baseDate, targetDate);
+      return daysDiff >= 0 && daysDiff % interval === 0;
     }
 
     case 'weekly': {
-      // 每周：检查是否在指定星期几，且满足间隔周数
+      // 每周：检查是否在指定星期几，且满足间隔周数，使用 startAt 作为基准
+      if (!startAt) return false;
+      const baseDate = new Date(startAt);
       const interval = repeatInterval || 1;
       const currentDayOfWeek = targetDate.getDay(); // 0-6
 
@@ -129,12 +132,14 @@ export function shouldGenerateInstanceOnDate(
       }
 
       // 检查是否满足间隔周数
-      const weeksDiff = weeksBetween(created, targetDate);
-      return weeksDiff % interval === 0;
+      const weeksDiff = weeksBetween(baseDate, targetDate);
+      return weeksDiff >= 0 && weeksDiff % interval === 0;
     }
 
     case 'monthly': {
-      // 每月：检查是否在指定日期，且满足间隔月数
+      // 每月：检查是否在指定日期，且满足间隔月数，使用 startAt 作为基准
+      if (!startAt) return false;
+      const baseDate = new Date(startAt);
       const interval = repeatInterval || 1;
       const currentDayOfMonth = targetDate.getDate();
 
@@ -144,8 +149,8 @@ export function shouldGenerateInstanceOnDate(
       }
 
       // 检查是否满足间隔月数
-      const monthsDiff = monthsBetween(created, targetDate);
-      return monthsDiff % interval === 0;
+      const monthsDiff = monthsBetween(baseDate, targetDate);
+      return monthsDiff >= 0 && monthsDiff % interval === 0;
     }
 
     default:
@@ -185,6 +190,12 @@ export function filterTemplatesNeedingInstancesOnDate(
 
     // 检查在目标日期是否已满足结束条件
     if (isTemplateEndedOnDate(template, templateInstances, targetDate)) {
+      return false;
+    }
+
+    // 对于周期性任务（repeatMode !== 'none'），必须确保 startAt 存在
+    if (template.repeatMode !== 'none' && !template.startAt) {
+      console.warn(`Template ${template.id} (${template.title}) has no startAt, skipping`);
       return false;
     }
 
@@ -240,10 +251,16 @@ export function generateTaskInstance(
     subtasks = [subtasks[randomIndex]];
   }
 
-  // repeatMode 为 'none' 时不设置 startAt
-  const startAt = template.repeatMode === 'none' 
-    ? undefined 
-    : getUserStartOfDay(targetDate, dayEndTime);
+  // 根据 repeatMode 和 template.startAt 决定 instance.startAt
+  let startAt: string | undefined;
+
+  if (template.repeatMode === 'none') {
+    // 一次性任务：继承 template.startAt，无论是否存在
+    startAt = template.startAt;
+  } else {
+    // 周期性任务：基于目标日期生成 startAt
+    startAt = getUserStartOfDay(targetDate, dayEndTime);
+  }
 
   // 计算过期时间
   let expiredAt: string | undefined;
