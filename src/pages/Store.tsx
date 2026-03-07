@@ -15,7 +15,7 @@ interface StoreReward {
 
 export function Store() {
   const navigate = useNavigate();
-  const { user, initUser } = useUserStore();
+  const { user, currentPoints, initUser } = useUserStore();
   const { rewards, isLoading, refresh } = useStoreRewards(user?.id ?? 0);
   const { redeem, isLoading: isActionLoading } = useRewardInstanceActions();
   
@@ -50,7 +50,7 @@ export function Store() {
     const { template } = selectedReward;
 
     // 检查积分是否足够
-    if (user.currentPoints < template.pointsCost) {
+    if (currentPoints < template.pointsCost) {
       setRedeemError("积分不足");
       return;
     }
@@ -116,7 +116,7 @@ export function Store() {
                 Your Points
               </p>
               <p className="text-text-primary text-2xl font-bold">
-                {user?.currentPoints?.toLocaleString() ?? 0} PTS
+                {currentPoints.toLocaleString()} PTS
               </p>
             </div>
             <div className="w-16 h-16 rounded-full bg-primary text-white flex items-center justify-center">
@@ -274,12 +274,12 @@ export function Store() {
             {/* Action Button */}
             <button
               onClick={handleRedeem}
-              disabled={isActionLoading || (user?.currentPoints ?? 0) < selectedReward.template.pointsCost}
+              disabled={isActionLoading || currentPoints < selectedReward.template.pointsCost}
               className="w-full h-14 bg-primary text-white font-bold text-lg rounded-xl flex items-center justify-center shadow-lg shadow-primary/30 hover:bg-primary-light transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isActionLoading ? (
                 <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin" />
-              ) : (user?.currentPoints ?? 0) < selectedReward.template.pointsCost ? (
+              ) : currentPoints < selectedReward.template.pointsCost ? (
                 "积分不足"
               ) : (
                 `兑换 - ${selectedReward.template.pointsCost} PTS`

@@ -23,7 +23,7 @@ function getActivityIcon(_type: string, title: string) {
 
 export function Profile() {
   const navigate = useNavigate();
-  const { user, initUser, isLoading: userLoading } = useUserStore();
+  const { user, currentPoints, initUser, isLoading: userLoading } = useUserStore();
   const { stats, recentActivity, isLoading: statsLoading } = useProfileStats(user?.id ?? null);
 
   useEffect(() => {
@@ -98,7 +98,7 @@ export function Profile() {
       <div className="p-4">
         <div className="rounded-xl bg-primary p-6">
           <p className="text-white/80 text-sm font-normal">CURRENT BALANCE</p>
-          <p className="text-white text-4xl font-bold mt-1">{user?.currentPoints ?? 0}</p>
+          <p className="text-white text-4xl font-bold mt-1">{currentPoints}</p>
           <p className="text-white/80 text-base mt-1">
             Well done! Keep up the great work.
           </p>

@@ -4,10 +4,12 @@ import {
   getOrCreateUser,
   updateUser as updateUserService,
   updateUserPoints as updateUserPointsService,
+  calculateUserPoints,
 } from '../db/services';
 
 interface UserState {
   user: User | null;
+  currentPoints: number; // 从 pointsHistory 计算得到的当前积分
   isLoading: boolean;
   error: string | null;
 
@@ -17,10 +19,13 @@ interface UserState {
   updateUser: (updates: Partial<Omit<User, 'id' | 'createdAt'>>) => Promise<void>;
   addPoints: (amount: number, type: PointsHistoryType, relatedEntityId?: number) => Promise<void>;
   spendPoints: (amount: number, type: PointsHistoryType, relatedEntityId?: number) => Promise<void>;
+  // 计算当前积分
+  calculatePoints: () => Promise<number>;
 }
 
 export const useUserStore = create<UserState>((set, get) => ({
   user: null,
+  currentPoints: 0,
   isLoading: false,
   error: null,
 
@@ -28,7 +33,9 @@ export const useUserStore = create<UserState>((set, get) => ({
     set({ isLoading: true, error: null });
     try {
       const user = await getOrCreateUser();
-      set({ user, isLoading: false });
+      // 计算当前积分
+      const points = await calculateUserPoints(user.id);
+      set({ user, currentPoints: points, isLoading: false });
     } catch (error) {
       set({
         error: error instanceof Error ? error.message : 'Failed to initialize user',
@@ -47,7 +54,9 @@ export const useUserStore = create<UserState>((set, get) => ({
     set({ isLoading: true, error: null });
     try {
       const refreshedUser = await getOrCreateUser();
-      set({ user: refreshedUser, isLoading: false });
+      // 重新计算积分
+      const points = await calculateUserPoints(refreshedUser.id);
+      set({ user: refreshedUser, currentPoints: points, isLoading: false });
     } catch (error) {
       set({
         error: error instanceof Error ? error.message : 'Failed to refresh user',
@@ -66,7 +75,9 @@ export const useUserStore = create<UserState>((set, get) => ({
     try {
       await updateUserService(user.id, updates);
       const updatedUser = await getOrCreateUser();
-      set({ user: updatedUser, isLoading: false });
+      // 重新计算积分
+      const points = await calculateUserPoints(updatedUser.id);
+      set({ user: updatedUser, currentPoints: points, isLoading: false });
     } catch (error) {
       set({
         error: error instanceof Error ? error.message : 'Failed to update user',
@@ -85,8 +96,9 @@ export const useUserStore = create<UserState>((set, get) => ({
     set({ isLoading: true, error: null });
     try {
       await updateUserPointsService(user.id, Math.abs(amount), type, relatedEntityId);
-      const updatedUser = await getOrCreateUser();
-      set({ user: updatedUser, isLoading: false });
+      // 重新计算积分
+      const newPoints = await calculateUserPoints(user.id);
+      set({ currentPoints: newPoints, isLoading: false });
     } catch (error) {
       set({
         error: error instanceof Error ? error.message : 'Failed to add points',
@@ -105,8 +117,9 @@ export const useUserStore = create<UserState>((set, get) => ({
     set({ isLoading: true, error: null });
     try {
       await updateUserPointsService(user.id, -Math.abs(amount), type, relatedEntityId);
-      const updatedUser = await getOrCreateUser();
-      set({ user: updatedUser, isLoading: false });
+      // 重新计算积分
+      const newPoints = await calculateUserPoints(user.id);
+      set({ currentPoints: newPoints, isLoading: false });
     } catch (error) {
       set({
         error: error instanceof Error ? error.message : 'Failed to spend points',
@@ -114,5 +127,15 @@ export const useUserStore = create<UserState>((set, get) => ({
       });
       throw error;
     }
+  },
+
+  calculatePoints: async () => {
+    const { user } = get();
+    if (!user) {
+      return 0;
+    }
+    const points = await calculateUserPoints(user.id);
+    set({ currentPoints: points });
+    return points;
   },
 }));

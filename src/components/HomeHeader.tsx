@@ -3,9 +3,10 @@ import type { User } from "@/db/types";
 
 interface UserHeaderProps {
   user: User | null;
+  currentPoints: number;
 }
 
-export function HomeHeader({ user }: UserHeaderProps) {
+export function HomeHeader({ user, currentPoints }: UserHeaderProps) {
   return (
     <div className="flex items-center justify-between mb-6">
       <div className="flex items-center gap-3">
@@ -24,7 +25,7 @@ export function HomeHeader({ user }: UserHeaderProps) {
       <div className="flex items-center gap-2 rounded-full bg-surface px-3 py-1.5 border border-border">
         <Star className="w-4 h-4 text-primary fill-primary" />
         <p className="text-text-primary text-sm font-bold">
-          {user?.currentPoints ?? 0} exp
+          {currentPoints} exp
         </p>
       </div>
     </div>

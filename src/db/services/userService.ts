@@ -3,9 +3,17 @@ import type { User, PointsHistory, PointsHistoryType } from '../types';
 
 const DEFAULT_USER: Omit<User, 'id'> = {
   name: 'User',
-  currentPoints: 0,
   createdAt: new Date().toISOString(),
 };
+
+/**
+ * 计算用户的当前积分（根据积分历史记录实时计算）
+ */
+export async function calculateUserPoints(userId: number): Promise<number> {
+  const db = getDB();
+  const records = await db.pointsHistory.where('userId').equals(userId).toArray();
+  return records.reduce((sum, record) => sum + record.amount, 0);
+}
 
 export async function getOrCreateUser(): Promise<User> {
   const db = getDB();
@@ -37,6 +45,10 @@ export async function updateUser(
   return db.users.update(id, updates);
 }
 
+/**
+ * 更新用户积分 - 只添加积分历史记录，不直接存储 currentPoints
+ * 积分通过 calculateUserPoints 函数实时计算
+ */
 export async function updateUserPoints(
   userId: number,
   amount: number,
@@ -51,13 +63,14 @@ export async function updateUserPoints(
       throw new Error('User not found');
     }
 
-    const newPoints = user.currentPoints + amount;
+    // 计算当前积分，检查是否足够扣除
+    const currentPoints = await calculateUserPoints(userId);
+    const newPoints = currentPoints + amount;
     if (newPoints < 0) {
       throw new Error('Insufficient points');
     }
 
-    await db.users.update(userId, { currentPoints: newPoints });
-
+    // 只添加积分历史记录，不再更新 user.currentPoints
     const history: PointsHistory = {
       userId,
       amount,

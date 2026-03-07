@@ -10,7 +10,7 @@ import { TaskList } from "@/components/TaskList";
 
 export function Home() {
   const navigate = useNavigate();
-  const { user, initUser, isLoading: isUserLoading } = useUserStore();
+  const { user, currentPoints, initUser, isLoading: isUserLoading } = useUserStore();
   const { tasks, isLoading: isTasksLoading, refresh: refreshTasks } = useTodayTasks(user?.id ?? 0);
   const { tasks: noDateTasks, isLoading: isNoDateTasksLoading, refresh: refreshNoDateTasks } = useNoDateTasks(user?.id ?? 0);
   const { complete, reset } = useTaskInstanceActions();
@@ -84,7 +84,7 @@ export function Home() {
     <div className="min-h-screen pb-24 bg-background">
       {/* Header */}
       <header className="px-4 pt-6 pb-4">
-        <HomeHeader user={user} />
+        <HomeHeader user={user} currentPoints={currentPoints} />
         <Progress completedCount={completedCount} totalCount={totalCount} />
       </header>
 

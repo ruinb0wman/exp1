@@ -2,7 +2,6 @@ export type PointsHistoryType = 'task_reward' | 'task_undo' | 'reward_exchange' 
 
 export interface User {
   id: number;
-  currentPoints: number;
   createdAt: string;
   name: string;
 }
