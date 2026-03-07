@@ -443,16 +443,20 @@ export async function getTaskStatistics(
 }> {
   const db = getDB();
 
-  let instances: TaskInstance[];
+  // 获取该用户的所有任务实例
+  const allInstances = await db.taskInstances.where('userId').equals(userId).toArray();
 
+  // 筛选：如果没有日期范围，返回全部；否则筛选 startAt 在范围内或为 undefined 的
+  let instances: TaskInstance[];
   if (startDate && endDate) {
-    instances = await db.taskInstances
-      .where('startAt')
-      .between(startDate, endDate, true, true)
-      .and((instance) => instance.userId === userId)
-      .toArray();
+    instances = allInstances.filter((instance) => {
+      if (instance.startAt === undefined) {
+        return true; // 包含无日期的任务（repeatMode: 'none'）
+      }
+      return instance.startAt >= startDate && instance.startAt <= endDate;
+    });
   } else {
-    instances = await db.taskInstances.where('userId').equals(userId).toArray();
+    instances = allInstances;
   }
 
   return {
@@ -486,19 +490,26 @@ export async function getTaskInstancesWithFilter(
 ): Promise<{ items: TaskHistoryItem[]; hasMore: boolean; total: number }> {
   const db = getDB();
 
-  // 获取日期范围内的所有实例
-  let instances = await db.taskInstances
-    .where('startAt')
-    .between(startDate, endDate, true, true)
-    .and((instance) => instance.userId === userId)
+  // 获取该用户的所有任务实例（包括 startAt 为 undefined 的 repeatMode: 'none' 任务）
+  const allInstances = await db.taskInstances
+    .where('userId')
+    .equals(userId)
     .toArray();
+
+  // 筛选：startAt 在日期范围内，或者 startAt 为 undefined（repeatMode: 'none' 的任务）
+  let instances = allInstances.filter((instance) => {
+    if (instance.startAt === undefined) {
+      return true; // 包含无日期的任务（repeatMode: 'none'）
+    }
+    return instance.startAt >= startDate && instance.startAt <= endDate;
+  });
 
   // 应用状态筛选
   if (filterStatus !== 'all') {
     instances = instances.filter((i) => i.status === filterStatus);
   }
 
-  // 按开始时间倒序排列
+  // 按开始时间倒序排列（无 startAt 的排在最后）
   instances.sort((a, b) => {
     const aTime = a.startAt ? new Date(a.startAt).getTime() : 0;
     const bTime = b.startAt ? new Date(b.startAt).getTime() : 0;
