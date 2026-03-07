@@ -1,4 +1,3 @@
-import { useEffect } from "react";
 import { Settings, Backpack, History, Coins, TrendingUp, CheckCircle, Gift, Flame, RotateCcw } from "lucide-react";
 import { useNavigate } from "react-router";
 import { useUserStore } from "@/store";

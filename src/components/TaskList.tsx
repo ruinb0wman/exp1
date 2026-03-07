@@ -14,6 +14,7 @@ interface TaskListProps {
   isLoading: boolean;
   onComplete: (instanceId: number, rewardPoints: number) => void;
   onReset: (instanceId: number, rewardPoints: number) => void;
+  onTaskClick?: (instance: TaskInstance, template: TaskTemplate) => void;
   title?: string;
   showViewAll?: boolean;
   showHistory?: boolean;
@@ -45,6 +46,7 @@ interface TaskItemProps {
   template: TaskTemplate;
   onComplete: (instanceId: number, rewardPoints: number) => void;
   onReset: (instanceId: number, rewardPoints: number) => void;
+  onClick?: (instance: TaskInstance, template: TaskTemplate) => void;
 }
 
 // 获取进度条颜色
@@ -54,23 +56,15 @@ function getProgressColor(percent: number): string {
   return "bg-yellow-500";
 }
 
-function TaskItem({ instance, template, onComplete, onReset }: TaskItemProps) {
+function TaskItem({ instance, template, onClick }: TaskItemProps) {
   const isCompleted = instance.status === "completed";
   const expired = isExpired(instance.expiredAt);
   const hasCompleteRule = !!template.completeRule;
   const progressPercent = getTaskProgressPercent(instance, template);
   const progressColor = getProgressColor(progressPercent);
 
-  const handleChange = () => {
-    // 过期任务不允许操作
-    if (expired && !isCompleted) return;
-
-    if (instance.status === "pending") {
-      // 有完成规则的任务直接标记完成（用户可以在详情页调整进度）
-      onComplete(instance.id!, template.rewardPoints);
-    } else if (instance.status === "completed") {
-      onReset(instance.id!, template.rewardPoints);
-    }
+  const handleClick = () => {
+    onClick?.(instance, template);
   };
 
   // 进度文本
@@ -84,21 +78,13 @@ function TaskItem({ instance, template, onComplete, onReset }: TaskItemProps) {
 
   return (
     <div 
-      className={`flex flex-col gap-2 bg-surface rounded-xl p-4 min-h-[72px] justify-between border ${
+      onClick={handleClick}
+      className={`flex flex-col gap-2 bg-surface rounded-xl p-4 min-h-[72px] justify-between border cursor-pointer active:scale-[0.98] transition-transform ${
         expired ? "border-red-500/30 opacity-70" : "border-border"
       }`}
     >
       <div className="flex items-center gap-4 justify-between">
         <div className="flex items-center gap-4 flex-1">
-          <div className="flex items-center justify-center">
-            <input
-              type="checkbox"
-              checked={isCompleted}
-              onChange={handleChange}
-              disabled={expired && !isCompleted}
-              className="custom-checkbox disabled:opacity-50"
-            />
-          </div>
           <div className="flex flex-col justify-center flex-1">
             <div className="flex items-center gap-2">
               <p
@@ -198,6 +184,7 @@ export function TaskList({
   isLoading,
   onComplete,
   onReset,
+  onTaskClick,
   title = "Today's Tasks",
   showViewAll = true,
   showHistory = false,
@@ -278,6 +265,7 @@ export function TaskList({
                 template={template}
                 onComplete={onComplete}
                 onReset={onReset}
+                onClick={onTaskClick}
               />
             ))}
       </div>

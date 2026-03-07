@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useCallback } from "react";
 import { useNavigate } from "react-router";
 import { Search, Star, Plus, Sparkles, Package, Clock } from "lucide-react";
 import { Header } from "@/components/Header";
