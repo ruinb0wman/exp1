@@ -74,4 +74,15 @@ export function migration(db: DB) {
       }
     }
   });
+
+  // Version 7: 添加 taskTemplates 的 startAt 字段
+  db.version(7).stores({
+    taskTemplates: '++id, userId, repeatMode, enabled, *subtasks, [userId+enabled]',
+    taskInstances: '++id, userId, templateId, startAt, status, createdAt, [templateId+startAt]',
+    rewardTemplates: '++id, userId, replenishmentMode, enabled',
+    rewardInstances: '++id, templateId, userId, status, expiresAt',
+    users: '++id, name',
+    pointsHistory: '++id, userId, type, createdAt, [userId+createdAt]',
+    pomoSessions: '++id, userId, taskId, mode, status, startedAt'
+  });
 }

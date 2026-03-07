@@ -73,6 +73,9 @@ export function EditTask() {
   const [completeTarget, setCompleteTarget] = useState<number>(1);
   const [completeExpireDays, setCompleteExpireDays] = useState<number>(0);
 
+  // 开始时间
+  const [startAt, setStartAt] = useState<string>("");
+
   // 加载现有数据（编辑模式）
   useEffect(() => {
     if (existingTemplate) {
@@ -92,6 +95,8 @@ export function EditTask() {
       setCompleteRule(existingTemplate.completeRule);
       setCompleteTarget(existingTemplate.completeTarget ?? 1);
       setCompleteExpireDays(existingTemplate.completeExpireDays ?? 0);
+      // 加载开始时间
+      setStartAt(existingTemplate.startAt ?? "");
     }
   }, [existingTemplate]);
 
@@ -141,6 +146,7 @@ export function EditTask() {
       completeRule,
       completeTarget: completeRule ? completeTarget : undefined,
       completeExpireDays: completeRule ? completeExpireDays : undefined,
+      startAt: startAt || undefined,
     };
 
     try {
@@ -324,13 +330,41 @@ export function EditTask() {
           </div>
         </div>
 
-        {/* Expire Days Section - 独立于 Complete Rule */}
+        {/* Schedule Card - Start At & Expire */}
         <div>
           <h3 className="text-text-primary text-lg font-bold leading-tight tracking-[-0.015em] px-2 pb-2 pt-4">
-            Expire
+            Schedule
           </h3>
-          <div className="rounded-xl bg-surface p-4">
+          <div className="rounded-xl bg-surface p-4 space-y-4">
+            {/* Start At */}
             <div className="flex items-center gap-4">
+              <p className="text-text-secondary text-sm min-w-[80px]">Start from</p>
+              <div className="flex-1">
+                <DatePicker
+                  value={startAt ? (() => {
+                    const [year, month, day] = startAt.split('-').map(Number);
+                    return new Date(year, month - 1, day);
+                  })() : null}
+                  onChange={(date) => {
+                    if (!date) {
+                      setStartAt('');
+                      // 清空 startAt 时，同时清空 expire
+                      setCompleteExpireDays(0);
+                      return;
+                    }
+                    const year = date.getFullYear();
+                    const month = String(date.getMonth() + 1).padStart(2, '0');
+                    const day = String(date.getDate()).padStart(2, '0');
+                    setStartAt(`${year}-${month}-${day}`);
+                  }}
+                  placeholder="Today (default)"
+                  minDate={new Date()}
+                />
+              </div>
+            </div>
+
+            {/* Expire Days - 只有在设置了 startAt 时才可设置 */}
+            <div className={`flex items-center gap-4 pt-4 border-t border-surface-light ${!startAt ? 'opacity-50 pointer-events-none' : ''}`}>
               <p className="text-text-secondary text-sm min-w-[80px]">Expire after</p>
               <div className="flex items-center gap-2">
                 <button
@@ -355,10 +389,13 @@ export function EditTask() {
               </div>
               <p className="text-text-secondary text-sm">days (0 = never)</p>
             </div>
+            {!startAt && (
+              <p className="text-text-muted text-xs">Set start date to enable expire</p>
+            )}
           </div>
         </div>
 
-        {/* Repeat Section Card */}
+        {/* Repeat & Ends Card */}
         <div>
           <h3 className="text-text-primary text-lg font-bold leading-tight tracking-[-0.015em] px-2 pb-2 pt-4">
             Repeat
@@ -428,72 +465,70 @@ export function EditTask() {
                 />
               </div>
             )}
-          </div>
-        </div>
 
-        {/* Ends Section Card */}
-        <div>
-          <h3 className="text-text-primary text-lg font-bold leading-tight tracking-[-0.015em] px-2 pb-2 pt-4">
-            Ends
-          </h3>
-          <div className="rounded-xl bg-surface p-4 space-y-4">
-            <RadioGroup
-              list={endOptions}
-              value={endIndex}
-              onChange={setEndIndex}
-            />
-
-            {/* End Value Input */}
-            {endCondition === "date" && (
-              <div className="pt-2 border-t border-surface-light">
-                <DatePicker
-                  value={endValue ? (() => {
-                    // 将 YYYY-MM-DD 字符串解析为本地日期（避免时区问题）
-                    const [year, month, day] = endValue.split('-').map(Number);
-                    return new Date(year, month - 1, day);
-                  })() : null}
-                  onChange={(date) => {
-                    // 将本地日期转为 YYYY-MM-DD 字符串
-                    if (!date) {
-                      setEndValue('');
-                      return;
-                    }
-                    const year = date.getFullYear();
-                    const month = String(date.getMonth() + 1).padStart(2, '0');
-                    const day = String(date.getDate()).padStart(2, '0');
-                    setEndValue(`${year}-${month}-${day}`);
-                  }}
-                  placeholder="Select end date"
-                  minDate={new Date()}
+            {/* Ends Section - 只有在 repeat 不为 none 时才显示 */}
+            {repeatMode !== "none" && (
+              <div className="pt-4 border-t border-surface-light space-y-4">
+                <p className="text-text-primary text-sm font-medium">Ends</p>
+                <RadioGroup
+                  list={endOptions}
+                  value={endIndex}
+                  onChange={setEndIndex}
                 />
-              </div>
-            )}
 
-            {endCondition === "times" && (
-              <div className="flex items-center gap-4 pt-2 border-t border-surface-light">
-                <p className="text-text-secondary text-sm">After</p>
-                <div className="flex items-center gap-2">
-                  <button
-                    onClick={() => setEndValue(String(Math.max(1, (parseInt(endValue) || 1) - 1)))}
-                    className="text-base font-medium flex h-7 w-7 items-center justify-center rounded-full bg-surface-light hover:bg-surface-light/80 transition-colors"
-                  >
-                    -
-                  </button>
-                  <input
-                    type="number"
-                    min={1}
-                    value={endValue}
-                    onChange={(e) => setEndValue(e.target.value)}
-                    className="text-base font-medium w-12 p-0 text-center bg-transparent focus:outline-none focus:ring-0 border-none [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
-                  />
-                  <button
-                    onClick={() => setEndValue(String((parseInt(endValue) || 0) + 1))}
-                    className="text-base font-medium flex h-7 w-7 items-center justify-center rounded-full bg-surface-light hover:bg-surface-light/80 transition-colors"
-                  >
-                    +
-                  </button>
-                </div>
-                <p className="text-text-secondary text-sm">times</p>
+                {/* End Value Input */}
+                {endCondition === "date" && (
+                  <div className="pt-2 border-t border-surface-light">
+                    <DatePicker
+                      value={endValue ? (() => {
+                        // 将 YYYY-MM-DD 字符串解析为本地日期（避免时区问题）
+                        const [year, month, day] = endValue.split('-').map(Number);
+                        return new Date(year, month - 1, day);
+                      })() : null}
+                      onChange={(date) => {
+                        // 将本地日期转为 YYYY-MM-DD 字符串
+                        if (!date) {
+                          setEndValue('');
+                          return;
+                        }
+                        const year = date.getFullYear();
+                        const month = String(date.getMonth() + 1).padStart(2, '0');
+                        const day = String(date.getDate()).padStart(2, '0');
+                        setEndValue(`${year}-${month}-${day}`);
+                      }}
+                      placeholder="Select end date"
+                      minDate={new Date()}
+                    />
+                  </div>
+                )}
+
+                {endCondition === "times" && (
+                  <div className="flex items-center gap-4 pt-2 border-t border-surface-light">
+                    <p className="text-text-secondary text-sm">After</p>
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => setEndValue(String(Math.max(1, (parseInt(endValue) || 1) - 1)))}
+                        className="text-base font-medium flex h-7 w-7 items-center justify-center rounded-full bg-surface-light hover:bg-surface-light/80 transition-colors"
+                      >
+                        -
+                      </button>
+                      <input
+                        type="number"
+                        min={1}
+                        value={endValue}
+                        onChange={(e) => setEndValue(e.target.value)}
+                        className="text-base font-medium w-12 p-0 text-center bg-transparent focus:outline-none focus:ring-0 border-none [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+                      />
+                      <button
+                        onClick={() => setEndValue(String((parseInt(endValue) || 0) + 1))}
+                        className="text-base font-medium flex h-7 w-7 items-center justify-center rounded-full bg-surface-light hover:bg-surface-light/80 transition-colors"
+                      >
+                        +
+                      </button>
+                    </div>
+                    <p className="text-text-secondary text-sm">times</p>
+                  </div>
+                )}
               </div>
             )}
           </div>

@@ -25,6 +25,9 @@ export interface TaskTemplate {
   completeRule?: CompleteRule; // 完成规则：'time' 时间(分钟) / 'count' 次数
   completeTarget?: number; // 目标值（分钟或次数）
   completeExpireDays?: number; // 过期天数（0 或 undefined 表示不过期）
+
+  // 任务开始时间
+  startAt?: string; // 任务开始日期（YYYY-MM-DD），undefined 表示从今天开始
 }
 
 export interface TaskInstance {
