@@ -393,33 +393,31 @@ export async function getNoDateTaskInstances(
 ): Promise<Array<{ instance: TaskInstance; template: TaskTemplate }>> {
   const db = getDB();
 
-  // 获取所有 repeatMode 为 'none' 的任务模板
-  const templates = await db.taskTemplates
-    .where('userId')
-    .equals(userId)
-    .toArray();
-  
-  const noRepeatTemplates = templates.filter(t => t.repeatMode === 'none');
-  const noRepeatTemplateIds = new Set(noRepeatTemplates.map(t => t.id));
-
-  if (noRepeatTemplateIds.size === 0) {
-    return [];
-  }
-
-  // 获取这些模板对应的任务实例
+  // 获取所有没有 startAt 的任务实例
   const instances = await db.taskInstances
     .where('userId')
     .equals(userId)
     .toArray();
 
-  const noDateInstances = instances.filter((instance) => 
-    noRepeatTemplateIds.has(instance.templateId)
-  );
+  const noDateInstances = instances.filter((instance) => !instance.startAt);
+
+  if (noDateInstances.length === 0) {
+    return [];
+  }
+
+  // 获取对应的任务模板
+  const templateIds = [...new Set(noDateInstances.map(i => i.templateId))];
+  const templates = await db.taskTemplates
+    .where('id')
+    .anyOf(templateIds)
+    .toArray();
+
+  const templateMap = new Map(templates.map(t => [t.id, t]));
 
   const result: Array<{ instance: TaskInstance; template: TaskTemplate }> = [];
 
   for (const instance of noDateInstances) {
-    const template = noRepeatTemplates.find(t => t.id === instance.templateId);
+    const template = templateMap.get(instance.templateId);
     if (template) {
       result.push({ instance, template });
     }
