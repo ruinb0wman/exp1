@@ -75,6 +75,8 @@ export function EditTask() {
 
   // 开始时间
   const [startAt, setStartAt] = useState<string>("");
+  // Schedule 是否启用
+  const [isScheduleEnabled, setIsScheduleEnabled] = useState(false);
 
   // 加载现有数据（编辑模式）
   useEffect(() => {
@@ -95,8 +97,9 @@ export function EditTask() {
       setCompleteRule(existingTemplate.completeRule);
       setCompleteTarget(existingTemplate.completeTarget ?? 1);
       setCompleteExpireDays(existingTemplate.completeExpireDays ?? 0);
-      // 加载开始时间
+      // 加载开始时间和 schedule 启用状态
       setStartAt(existingTemplate.startAt ?? "");
+      setIsScheduleEnabled(!!existingTemplate.startAt);
     }
   }, [existingTemplate]);
 
@@ -146,7 +149,7 @@ export function EditTask() {
       completeRule,
       completeTarget: completeRule ? completeTarget : undefined,
       completeExpireDays: completeRule ? completeExpireDays : undefined,
-      startAt: startAt || undefined,
+      startAt: isScheduleEnabled ? startAt || undefined : undefined,
     };
 
     try {
@@ -332,12 +335,34 @@ export function EditTask() {
 
         {/* Schedule Card - Start At & Expire */}
         <div>
-          <h3 className="text-text-primary text-lg font-bold leading-tight tracking-[-0.015em] px-2 pb-2 pt-4">
-            Schedule
-          </h3>
+          <div className="flex items-center justify-between px-2 pb-2 pt-4">
+            <h3 className="text-text-primary text-lg font-bold leading-tight tracking-[-0.015em]">
+              Schedule
+            </h3>
+            {/* Schedule 启用开关 */}
+            <button
+              onClick={() => {
+                setIsScheduleEnabled(!isScheduleEnabled);
+                if (isScheduleEnabled) {
+                  // 禁用时清空 startAt 和 expire
+                  setStartAt('');
+                  setCompleteExpireDays(0);
+                }
+              }}
+              className={`relative inline-flex h-7 w-12 items-center rounded-full transition-colors ${
+                isScheduleEnabled ? "bg-primary" : "bg-surface-light"
+              }`}
+            >
+              <span
+                className={`inline-block h-5 w-5 transform rounded-full bg-white transition-transform ${
+                  isScheduleEnabled ? "translate-x-6" : "translate-x-1"
+                }`}
+              />
+            </button>
+          </div>
           <div className="rounded-xl bg-surface p-4 space-y-4">
-            {/* Start At */}
-            <div className="flex items-center gap-4">
+            {/* Start At - 只有启用 schedule 时才可编辑 */}
+            <div className={`flex items-center gap-4 ${!isScheduleEnabled ? 'opacity-50 pointer-events-none' : ''}`}>
               <p className="text-text-secondary text-sm min-w-[80px]">Start from</p>
               <div className="flex-1">
                 <DatePicker
@@ -363,8 +388,8 @@ export function EditTask() {
               </div>
             </div>
 
-            {/* Expire Days - 只有在设置了 startAt 时才可设置 */}
-            <div className={`flex items-center gap-4 pt-4 border-t border-surface-light ${!startAt ? 'opacity-50 pointer-events-none' : ''}`}>
+            {/* Expire Days - 只有在启用了 schedule 时才可设置 */}
+            <div className={`flex items-center gap-4 pt-4 border-t border-surface-light ${!isScheduleEnabled ? 'opacity-50 pointer-events-none' : ''}`}>
               <p className="text-text-secondary text-sm min-w-[80px]">Expire after</p>
               <div className="flex items-center gap-2">
                 <button
@@ -389,8 +414,8 @@ export function EditTask() {
               </div>
               <p className="text-text-secondary text-sm">days (0 = never)</p>
             </div>
-            {!startAt && (
-              <p className="text-text-muted text-xs">Set start date to enable expire</p>
+            {!isScheduleEnabled && (
+              <p className="text-text-muted text-xs">Enable schedule to set start date and expiration</p>
             )}
           </div>
         </div>
