@@ -150,7 +150,7 @@ export function Popup({
     >
       {/* 内容区域 */}
       <div
-        className={`bg-white dark:bg-[#1b1b1f] shadow-2xl flex flex-col ${
+        className={`bg-[#1b1b1f] shadow-2xl flex flex-col ${
           isBottom ? 'w-full rounded-t-2xl' : `rounded-2xl ${width ? '' : 'max-w-lg w-[90%]'}`
         }`}
         style={{ ...getContentAnimationStyle(), ...customStyles }}
@@ -158,7 +158,7 @@ export function Popup({
       >
         {/* 顶部拖动条（仅 bottom 模式） */}
         {isBottom && (
-          <div className="w-12 h-1.5 bg-zinc-300 dark:bg-zinc-600 rounded-full mx-auto mt-3 mb-2" />
+          <div className="w-12 h-1.5 bg-zinc-600 rounded-full mx-auto mt-3 mb-2" />
         )}
 
         {/* 头部区域 */}
@@ -167,17 +167,17 @@ export function Popup({
         ) : title || showCloseButton ? (
           <div className="flex items-center justify-between px-4 pt-4 pb-2">
             {title && (
-              <h2 className="text-xl font-bold text-zinc-900 dark:text-white">
+              <h2 className="text-xl font-bold text-white">
                 {title}
               </h2>
             )}
             {showCloseButton && (
               <button
                 onClick={onClose}
-                className="p-2 rounded-full hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-colors"
+                className="p-2 rounded-full hover:bg-zinc-700 transition-colors"
                 aria-label="关闭"
               >
-                <X className="w-5 h-5 text-zinc-500 dark:text-zinc-400" />
+                <X className="w-5 h-5 text-zinc-400" />
               </button>
             )}
           </div>
