@@ -342,11 +342,13 @@ export function EditTask() {
             {/* Schedule 启用开关 */}
             <button
               onClick={() => {
-                setIsScheduleEnabled(!isScheduleEnabled);
-                if (isScheduleEnabled) {
-                  // 禁用时清空 startAt 和 expire
+                const newEnabled = !isScheduleEnabled;
+                setIsScheduleEnabled(newEnabled);
+                if (!newEnabled) {
+                  // 禁用时清空 startAt 和 expire, repeat 设为 none
                   setStartAt('');
                   setCompleteExpireDays(0);
+                  setRepeatIndex(0); // repeat 设为 none
                 }
               }}
               className={`relative inline-flex h-7 w-12 items-center rounded-full transition-colors ${
@@ -425,12 +427,19 @@ export function EditTask() {
           <h3 className="text-text-primary text-lg font-bold leading-tight tracking-[-0.015em] px-2 pb-2 pt-4">
             Repeat
           </h3>
-          <div className="rounded-xl bg-surface p-4 space-y-4">
+          <div className={`rounded-xl bg-surface p-4 space-y-4 ${!isScheduleEnabled ? 'opacity-50' : ''}`}>
             <RadioGroup
               list={repeatOptions}
               value={repeatIndex}
-              onChange={setRepeatIndex}
+              onChange={(index) => {
+                if (isScheduleEnabled) {
+                  setRepeatIndex(index);
+                }
+              }}
             />
+            {!isScheduleEnabled && (
+              <p className="text-text-muted text-xs">Enable schedule to set repeat mode</p>
+            )}
 
             {/* Repeat Interval */}
             {repeatMode !== "none" && (
