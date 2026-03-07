@@ -3,3 +3,4 @@ export * from './taskService';
 export * from './rewardService';
 export * from './pointsHistoryService';
 export * from './exportImportService';
+export * from './pomoService';

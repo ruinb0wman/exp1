@@ -7,6 +7,7 @@ import { Store } from "./pages/Store";
 import { EditReward } from "./pages/EditReward";
 import { Stats } from "./pages/Stats";
 import { Profile } from "./pages/Profile";
+import { Pomo } from "./pages/Pomo";
 import { PointsHistory } from "./pages/PointsHistory";
 import { Backpack } from "./pages/Backpack";
 import { TaskHistory } from "./pages/TaskHistory";
@@ -37,6 +38,7 @@ function App() {
         {/* Main layout with bottom navigation */}
         <Route element={<Layout />}>
           <Route path="/" element={<Home />} />
+          <Route path="/pomo" element={<Pomo />} />
           <Route path="/store" element={<Store />} />
           <Route path="/stats" element={<Stats />} />
           <Route path="/profile" element={<Profile />} />

@@ -1,4 +1,4 @@
-import { Home, Store, BarChart3, User } from "lucide-react";
+import { Home, Store, BarChart3, User, Timer } from "lucide-react";
 import { NavLink } from "react-router";
 
 interface NavItemProps {
@@ -40,6 +40,12 @@ export function BottomNav() {
         icon={<Home strokeWidth={1.5} />}
         activeIcon={<Home strokeWidth={1.5} fill="currentColor" />}
         label="Home"
+      />
+      <NavItem
+        to="/pomo"
+        icon={<Timer strokeWidth={1.5} />}
+        activeIcon={<Timer strokeWidth={1.5} fill="currentColor" />}
+        label="Pomo"
       />
       <NavItem
         to="/store"
