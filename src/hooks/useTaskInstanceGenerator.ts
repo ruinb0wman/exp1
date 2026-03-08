@@ -8,7 +8,7 @@ import {
 import {
   filterTemplatesNeedingInstancesOnDate,
   generateTaskInstances,
-  formatLocalDate,
+  toUserDateString,
 } from '@/libs/task';
 
 interface GenerateResult {
@@ -52,8 +52,8 @@ export function useTaskInstanceGenerator(options: UseTaskInstanceGeneratorOption
     const templates = await getEnabledTaskTemplates(userId);
     const existingInstances = await getAllTaskInstances(userId);
     
-    return filterTemplatesNeedingInstancesOnDate(templates, existingInstances, date);
-  }, [userId]);
+    return filterTemplatesNeedingInstancesOnDate(templates, existingInstances, date, dayEndTime ?? "00:00");
+  }, [userId, dayEndTime]);
 
   /**
    * 检查指定日期是否需要生成实例
@@ -156,12 +156,14 @@ export function useTaskInstanceGenerator(options: UseTaskInstanceGeneratorOption
     const templates = await getEnabledTaskTemplates(userId);
     const allInstances = await getAllTaskInstances(userId);
 
-    // 获取该日期已有的实例
-    const dateStr = formatLocalDate(date);
+    // 获取该日期的"用户日期"
+    const userDateStr = toUserDateString(date, dayEndTime ?? "00:00");
+    
+    // 获取该"用户日期"已有的实例
     const existingInstancesOnDate = allInstances.filter(inst => {
       if (!inst.startAt) return false;
-      const instDateStr = formatLocalDate(new Date(inst.startAt));
-      return instDateStr === dateStr;
+      const instUserDate = toUserDateString(inst.startAt, dayEndTime ?? "00:00");
+      return instUserDate === userDateStr;
     });
 
     // 构建 template -> instance 的映射
@@ -174,7 +176,8 @@ export function useTaskInstanceGenerator(options: UseTaskInstanceGeneratorOption
     const templatesNeedingInstances = filterTemplatesNeedingInstancesOnDate(
       templates,
       allInstances,
-      date
+      date,
+      dayEndTime
     );
 
     const result: Array<{ template: TaskTemplate; instance?: TaskInstance; isPreview: boolean }> = [];
@@ -195,7 +198,7 @@ export function useTaskInstanceGenerator(options: UseTaskInstanceGeneratorOption
     }
 
     return result;
-  }, [userId]);
+  }, [userId, dayEndTime]);
 
   /**
    * 重置生成标记，允许再次生成

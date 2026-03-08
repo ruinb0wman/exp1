@@ -6,8 +6,58 @@ import {
   daysBetweenUTC,
   weeksBetweenUTC,
   monthsBetweenUTC,
-  isSameUTCDay,
 } from './time';
+
+/**
+ * 将 UTC 时间转换为"用户日期"（本地 YYYY-MM-DD，考虑 dayEndTime 偏移）
+ * @param date UTC 时间
+ * @param dayEndTime 一天结束时间，格式 "HH:mm"
+ * @returns 用户感知日期 YYYY-MM-DD
+ */
+export function toUserDateString(date: Date | string, dayEndTime: string): string {
+  const d = typeof date === 'string' ? new Date(date) : new Date(date.getTime());
+  const [endHour, endMinute] = dayEndTime.split(':').map(Number);
+  
+  // 如果当前本地时间 < dayEndTime，算前一天
+  if (d.getHours() < endHour || (d.getHours() === endHour && d.getMinutes() < endMinute)) {
+    d.setDate(d.getDate() - 1);
+  }
+  
+  return formatLocalDate(d);
+}
+
+/**
+ * 计算两个 UTC 时间之间的"用户天数差"（考虑 dayEndTime）
+ */
+function daysBetweenUserDates(
+  date1: Date | string, 
+  date2: Date | string, 
+  dayEndTime: string
+): number {
+  const userDate1 = toUserDateString(date1, dayEndTime);
+  const userDate2 = toUserDateString(date2, dayEndTime);
+  
+  const d1 = new Date(userDate1);
+  const d2 = new Date(userDate2);
+  return Math.floor((d2.getTime() - d1.getTime()) / (1000 * 60 * 60 * 24));
+}
+
+/**
+ * 计算两个 UTC 时间之间的"用户月数差"（考虑 dayEndTime）
+ */
+function monthsBetweenUserDates(
+  date1: Date | string, 
+  date2: Date | string, 
+  dayEndTime: string
+): number {
+  const userDate1 = toUserDateString(date1, dayEndTime);
+  const userDate2 = toUserDateString(date2, dayEndTime);
+  
+  const [y1, m1] = userDate1.split('-').map(Number);
+  const [y2, m2] = userDate2.split('-').map(Number);
+  
+  return (y2 - y1) * 12 + (m2 - m1);
+}
 
 // 重新导出 formatLocalDate 以保持兼容性
 export { formatLocalDate };
@@ -116,14 +166,16 @@ export function isTemplateEnded(
 
 /**
  * 判断指定日期是否需要为该模板生成任务实例
- * 使用UTC时间进行计算
+ * 使用"用户日期"进行计算（考虑 dayEndTime 偏移）
  * @param existingInstances 该模板已存在的所有实例
  * @param targetDate 目标日期（本地时间），默认为今天
+ * @param dayEndTime 一天结束时间，格式 "HH:mm"，默认 "00:00"
  */
 export function shouldGenerateInstanceOnDate(
   template: TaskTemplate,
   existingInstances: TaskInstance[],
-  targetDate: Date = new Date()
+  targetDate: Date = new Date(),
+  dayEndTime: string = "00:00"
 ): boolean {
   const { repeatMode, repeatInterval, repeatDaysOfWeek, repeatDaysOfMonth, startAt } = template;
 
@@ -134,44 +186,48 @@ export function shouldGenerateInstanceOnDate(
     }
 
     case 'daily': {
-      // 每日：检查间隔天数，使用 startAt 作为基准
+      // 每日：检查间隔天数（基于用户日期），使用 startAt 作为基准
       if (!startAt) return false; // 周期性任务必须有 startAt
       const interval = repeatInterval || 1;
-      const daysDiff = daysBetweenUTC(startAt, targetDate);
+      // 使用"用户日期"计算天数差
+      const daysDiff = daysBetweenUserDates(startAt, targetDate, dayEndTime);
       return daysDiff >= 0 && daysDiff % interval === 0;
     }
 
     case 'weekly': {
-      // 每周：检查是否在指定星期几，且满足间隔周数，使用 startAt 作为基准
+      // 每周：检查是否在指定星期几，且满足间隔周数（基于用户日期）
       if (!startAt) return false;
-      const baseDate = new Date(startAt);
       const interval = repeatInterval || 1;
-      const currentDayOfWeek = targetDate.getDay(); // 0-6，使用本地时间的星期几
+      // 使用"用户日期"获取星期几
+      const currentUserDateStr = toUserDateString(targetDate, dayEndTime);
+      const currentDayOfWeek = new Date(currentUserDateStr).getDay(); // 0-6
 
-      // 检查目标日期是否在指定的星期几列表中
+      // 检查目标日期的用户日期是否在指定的星期几列表中
       if (!repeatDaysOfWeek || !repeatDaysOfWeek.includes(currentDayOfWeek)) {
         return false;
       }
 
-      // 检查是否满足间隔周数（基于UTC时间计算）
-      const weeksDiff = weeksBetweenUTC(baseDate, targetDate);
+      // 检查是否满足间隔周数（基于用户日期计算）
+      const daysDiff = daysBetweenUserDates(startAt, targetDate, dayEndTime);
+      const weeksDiff = Math.floor(daysDiff / 7);
       return weeksDiff >= 0 && weeksDiff % interval === 0;
     }
 
     case 'monthly': {
-      // 每月：检查是否在指定日期，且满足间隔月数，使用 startAt 作为基准
+      // 每月：检查是否在指定日期，且满足间隔月数（基于用户日期）
       if (!startAt) return false;
-      const baseDate = new Date(startAt);
       const interval = repeatInterval || 1;
-      const currentDayOfMonth = targetDate.getDate(); // 使用本地时间的日期
+      // 使用"用户日期"获取日期
+      const currentUserDateStr = toUserDateString(targetDate, dayEndTime);
+      const currentDayOfMonth = new Date(currentUserDateStr).getDate();
 
-      // 检查目标日期是否在指定的日期列表中
+      // 检查目标日期的用户日期是否在指定的日期列表中
       if (!repeatDaysOfMonth || !repeatDaysOfMonth.includes(currentDayOfMonth)) {
         return false;
       }
 
-      // 检查是否满足间隔月数（基于UTC时间计算）
-      const monthsDiff = monthsBetweenUTC(baseDate, targetDate);
+      // 检查是否满足间隔月数（基于用户日期计算）
+      const monthsDiff = monthsBetweenUserDates(startAt, targetDate, dayEndTime);
       return monthsDiff >= 0 && monthsDiff % interval === 0;
     }
 
@@ -188,17 +244,19 @@ export function shouldGenerateInstanceToday(
   template: TaskTemplate,
   existingInstances: TaskInstance[]
 ): boolean {
-  return shouldGenerateInstanceOnDate(template, existingInstances, new Date());
+  return shouldGenerateInstanceOnDate(template, existingInstances, new Date(), "00:00");
 }
 
 /**
  * 过滤出指定日期需要生成实例的任务模板
- * 使用UTC时间进行日期比较
+ * 使用"用户日期"进行日期比较（考虑 dayEndTime）
+ * @param dayEndTime 一天结束时间，格式 "HH:mm"，默认 "00:00"
  */
 export function filterTemplatesNeedingInstancesOnDate(
   templates: TaskTemplate[],
   existingInstances: TaskInstance[],
-  targetDate: Date = new Date()
+  targetDate: Date = new Date(),
+  dayEndTime: string = "00:00"
 ): TaskTemplate[] {
   return templates.filter((template) => {
     // 只处理启用的模板
@@ -222,24 +280,25 @@ export function filterTemplatesNeedingInstancesOnDate(
       return false;
     }
 
-    // 对于 repeatMode 为 'none' 的，只检查是否已经有实例
+    // 对于 repeatMode 为 'none' 的，只检查是否已经有实例（不依赖 dayEndTime）
     if (template.repeatMode === 'none') {
-      return shouldGenerateInstanceOnDate(template, templateInstances, targetDate);
+      return shouldGenerateInstanceOnDate(template, templateInstances, targetDate, dayEndTime);
     }
 
-    // 对于其他 repeatMode，检查目标日期是否已经生成过实例
-    // 统一使用UTC日期比较
+    // 对于其他 repeatMode，检查目标日期的"用户日期"是否已经生成过实例
+    const targetUserDate = toUserDateString(targetDate, dayEndTime);
     const hasInstanceOnDate = templateInstances.some((inst) => {
       if (!inst.startAt) return false;
-      // 使用UTC时间比较是否是同一天
-      return isSameUTCDay(inst.startAt, targetDate);
+      // 使用"用户日期"比较是否是同一天
+      const instUserDate = toUserDateString(inst.startAt, dayEndTime);
+      return instUserDate === targetUserDate;
     });
     if (hasInstanceOnDate) {
       return false;
     }
 
     // 检查目标日期是否应该生成实例
-    return shouldGenerateInstanceOnDate(template, templateInstances, targetDate);
+    return shouldGenerateInstanceOnDate(template, templateInstances, targetDate, dayEndTime);
   });
 }
 
@@ -251,7 +310,7 @@ export function filterTemplatesNeedingInstances(
   templates: TaskTemplate[],
   existingInstances: TaskInstance[]
 ): TaskTemplate[] {
-  return filterTemplatesNeedingInstancesOnDate(templates, existingInstances, new Date());
+  return filterTemplatesNeedingInstancesOnDate(templates, existingInstances, new Date(), "00:00");
 }
 
 /**
