@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { BrowserRouter, Routes, Route, Outlet } from "react-router";
 import { BottomNav } from "./components/BottomNav";
+import { ConfirmProvider } from "./hooks/useConfirm";
 import { Home } from "./pages/Home";
 import { AllTasks } from "./pages/AllTasks";
 import { EditTask } from "./pages/EditTask";
@@ -78,8 +79,9 @@ function SimpleLayout() {
 
 function App() {
   return (
-    <BrowserRouter>
-      <Routes>
+    <ConfirmProvider>
+      <BrowserRouter>
+        <Routes>
         {/* Main layout with bottom navigation */}
         <Route element={<Layout />}>
           <Route path="/" element={<Home />} />
@@ -102,8 +104,9 @@ function App() {
           <Route path="/settings" element={<Settings />} />
           <Route path="/data-import-export" element={<DataImportExport />} />
         </Route>
-      </Routes>
-    </BrowserRouter>
+        </Routes>
+      </BrowserRouter>
+    </ConfirmProvider>
   );
 }
 

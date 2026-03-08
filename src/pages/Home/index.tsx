@@ -9,19 +9,27 @@ import { Progress } from "@/components/Progress";
 import { TaskList } from "@/components/TaskList";
 import { TaskDetailPopup } from "@/components/TaskDetailPopup";
 import type { TaskInstance, TaskTemplate } from "@/db/types";
-import { updateTaskProgress } from "@/db/services";
+import {
+  completeTask,
+  resetTask,
+  completeTaskInPopup,
+  resetTaskInPopup,
+  incrementTaskCount,
+  calculateTaskStats,
+  filterPendingTasks,
+} from "./lib";
 
 export function Home() {
   const navigate = useNavigate();
   const { user, currentPoints, isLoading: isUserLoading } = useUserStore();
-  
+
   // 任务详情 popup 状态
   const [selectedTask, setSelectedTask] = useState<{ instance: TaskInstance; template: TaskTemplate } | null>(null);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
   const { tasks, isLoading: isTasksLoading, refresh: refreshTasks } = useTodayTasks(user?.id ?? 0, user?.dayEndTime);
   const { tasks: noDateTasks, isLoading: isNoDateTasksLoading, refresh: refreshNoDateTasks } = useNoDateTasks(user?.id ?? 0);
   const { complete, reset } = useTaskInstanceActions();
-  
+
   const { isGenerating, generateToday } = useTaskInstanceGenerator({
     userId: user?.id,
     dayEndTime: user?.dayEndTime,
@@ -45,32 +53,28 @@ export function Home() {
   }, [user?.id]);
 
   // 处理完成任务
-  const handleComplete = useCallback(async (instanceId: number, rewardPoints: number) => {
-    try {
-      await complete(instanceId);
-      // 刷新任务列表以显示完成状态
-      await refreshTasks();
-      await refreshNoDateTasks();
-      // 添加积分
-      await useUserStore.getState().addPoints(rewardPoints, "task_reward", instanceId);
-    } catch (error) {
-      console.error("Failed to complete task:", error);
-    }
-  }, [complete, refreshTasks, refreshNoDateTasks]);
+  const handleComplete = useCallback(
+    async (instanceId: number, rewardPoints: number) => {
+      try {
+        await completeTask(instanceId, rewardPoints, complete, refreshTasks, refreshNoDateTasks);
+      } catch (error) {
+        console.error("Failed to complete task:", error);
+      }
+    },
+    [complete, refreshTasks, refreshNoDateTasks]
+  );
 
   // 处理撤回任务
-  const handleReset = useCallback(async (instanceId: number, rewardPoints: number) => {
-    try {
-      await reset(instanceId);
-      // 刷新任务列表以显示待处理状态
-      await refreshTasks();
-      await refreshNoDateTasks();
-      // 扣除积分
-      await useUserStore.getState().spendPoints(rewardPoints, "task_reward", instanceId);
-    } catch (error) {
-      console.error("Failed to reset task:", error);
-    }
-  }, [reset, refreshTasks, refreshNoDateTasks]);
+  const handleReset = useCallback(
+    async (instanceId: number, rewardPoints: number) => {
+      try {
+        await resetTask(instanceId, rewardPoints, reset, refreshTasks, refreshNoDateTasks);
+      } catch (error) {
+        console.error("Failed to reset task:", error);
+      }
+    },
+    [reset, refreshTasks, refreshNoDateTasks]
+  );
 
   // 处理点击任务卡片
   const handleTaskClick = useCallback((instance: TaskInstance, template: TaskTemplate) => {
@@ -89,11 +93,14 @@ export function Home() {
     if (!selectedTask) return;
     const { instance, template } = selectedTask;
     try {
-      await complete(instance.id!);
-      await refreshTasks();
-      await refreshNoDateTasks();
-      await useUserStore.getState().addPoints(template.rewardPoints, "task_reward", instance.id!);
-      handleCloseDetail();
+      await completeTaskInPopup(
+        instance,
+        template,
+        complete,
+        refreshTasks,
+        refreshNoDateTasks,
+        handleCloseDetail
+      );
     } catch (error) {
       console.error("Failed to complete task:", error);
     }
@@ -104,11 +111,7 @@ export function Home() {
     if (!selectedTask) return;
     const { instance, template } = selectedTask;
     try {
-      await reset(instance.id!);
-      await refreshTasks();
-      await refreshNoDateTasks();
-      await useUserStore.getState().spendPoints(template.rewardPoints, "task_reward", instance.id!);
-      handleCloseDetail();
+      await resetTaskInPopup(instance, template, reset, refreshTasks, refreshNoDateTasks, handleCloseDetail);
     } catch (error) {
       console.error("Failed to reset task:", error);
     }
@@ -119,25 +122,9 @@ export function Home() {
     if (!selectedTask) return;
     const { instance, template } = selectedTask;
     try {
-      const progressBefore = instance.completeProgress ?? 0;
-      const target = template.completeTarget ?? 0;
-      
-      // 更新进度（增加1）
-      await updateTaskProgress(instance.id!, 1);
-      
-      // 如果进度达到目标，发放积分
-      const progressAfter = progressBefore + 1;
-      if (progressAfter >= target && progressBefore < target) {
-        await useUserStore.getState().addPoints(template.rewardPoints, "task_reward", instance.id!);
-      }
-      
-      // 刷新任务列表
-      await refreshTasks();
-      await refreshNoDateTasks();
-      
+      const updated = await incrementTaskCount(instance, template, refreshTasks, refreshNoDateTasks);
+
       // 刷新选中的任务状态
-      const { getTaskInstanceWithTemplate } = await import("@/db/services");
-      const updated = await getTaskInstanceWithTemplate(instance.id!);
       if (updated) {
         setSelectedTask({ instance: updated.instance, template: updated.template! });
       }
@@ -147,11 +134,10 @@ export function Home() {
   }, [selectedTask, refreshTasks, refreshNoDateTasks]);
 
   // 首页只显示待完成的任务，过滤掉已完成和已跳过的
-  const pendingTasks = tasks.filter(({ instance }) => instance.status === "pending");
-  
+  const pendingTasks = filterPendingTasks(tasks);
+
   // 计算进度（基于原始任务列表）
-  const completedCount = tasks.filter(({ instance }) => instance.status === "completed").length;
-  const totalCount = tasks.length;
+  const { completedCount, totalCount } = calculateTaskStats(tasks);
 
   const isLoading = isUserLoading || isTasksLoading || isNoDateTasksLoading || isGenerating;
 
@@ -181,7 +167,7 @@ export function Home() {
         {noDateTasks.length > 0 && (
           <div className="mt-6">
             <TaskList
-              tasks={noDateTasks.filter(({ instance }) => instance.status === "pending")}
+              tasks={filterPendingTasks(noDateTasks)}
               isLoading={isLoading}
               onComplete={handleComplete}
               onReset={handleReset}
