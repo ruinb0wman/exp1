@@ -1,4 +1,4 @@
-import { TaskCard } from "@/components/TaskCard";
+import { TaskTemplateCard } from "@/components/TaskTemplateCard";
 import { LoadingState } from "@/components/LoadingState";
 import { ErrorState } from "@/components/ErrorState";
 import { EmptyState } from "@/components/EmptyState";
@@ -57,7 +57,7 @@ export function TaskList({
   return (
     <div className="flex flex-col gap-3">
       {templates.map((template) => (
-        <TaskCard
+        <TaskTemplateCard
           key={template.id}
           id={template.id!}
           title={template.title}
