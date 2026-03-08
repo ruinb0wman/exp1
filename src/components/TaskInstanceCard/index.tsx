@@ -8,7 +8,7 @@ import {
   getStatusLabel,
   formatDateTime,
   formatShortDate,
-} from "../lib";
+} from "./lib";
 
 interface TaskHistoryItemCardProps {
   item: TaskHistoryItem;
@@ -22,7 +22,7 @@ function getProgressColor(percent: number): string {
   return "bg-yellow-500";
 }
 
-export function TaskHistoryItemCard({ item, onClick }: TaskHistoryItemCardProps) {
+export function TaskInstanceCard({ item, onClick }: TaskHistoryItemCardProps) {
   const { template, instance } = item;
   const ItemStatusIcon = getStatusIcon(instance.status);
   const itemStatusStyle = getStatusStyle(instance.status);
@@ -92,7 +92,7 @@ export function TaskHistoryItemCard({ item, onClick }: TaskHistoryItemCardProps)
             <span className="text-green-500">+{instance.rewardPoints}积分</span>
           )}
         </div>
-        
+
         {/* 进度条 */}
         {hasCompleteRule && (
           <div className="flex items-center gap-2 mt-2">

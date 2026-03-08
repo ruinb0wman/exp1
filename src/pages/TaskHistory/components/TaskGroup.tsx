@@ -1,5 +1,5 @@
 import type { TaskHistoryItem } from "@/db/services";
-import { TaskHistoryItemCard } from "./TaskHistoryItemCard";
+import { TaskInstanceCard } from "@/components/TaskInstanceCard";
 
 interface TaskGroupProps {
   dateGroup: string;
@@ -20,7 +20,7 @@ export function TaskGroup({ dateGroup, tasks, onTaskClick }: TaskGroupProps) {
       {/* Tasks in this group */}
       <div className="flex flex-col gap-2">
         {tasks.map((item) => (
-          <TaskHistoryItemCard
+          <TaskInstanceCard
             key={item.instance.id}
             item={item}
             onClick={onTaskClick}
