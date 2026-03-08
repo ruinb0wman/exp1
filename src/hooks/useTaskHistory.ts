@@ -15,7 +15,7 @@ interface UseTaskHistoryOptions {
   pageSize?: number;
 }
 
-interface TaskStats {
+export interface TaskStats {
   total: number;
   completed: number;
   pending: number;
