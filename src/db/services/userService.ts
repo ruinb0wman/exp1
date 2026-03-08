@@ -1,6 +1,7 @@
 import { getDB } from '../index';
 import type { User, PointsHistory, PointsHistoryType } from '../types';
-import { calculateExpiredAt } from '@/libs/time';
+import { calculateExpiredAt, getUserStartOfDay } from '@/libs/time';
+import { toUserDateString } from '@/libs/task';
 
 const DEFAULT_USER: Omit<User, 'id'> = {
   name: 'User',
@@ -90,30 +91,38 @@ export async function getPointsHistory(userId: number): Promise<PointsHistory[]>
 
 /**
  * 更新用户的一天结束时间
- * 同时重新计算所有 pending 状态且有 expiredAt 的任务实例的过期时间
+ * 同时重新计算所有 pending 状态任务实例的 startAt 和 expiredAt
+ * 确保实例在新的 dayEndTime 下能正确显示在"今天"的任务列表中
  */
 export async function updateUserDayEndTime(
   userId: number,
-  dayEndTime: string
+  newDayEndTime: string
 ): Promise<number> {
   const db = getDB();
 
   return db.transaction('rw', db.users, db.taskInstances, db.taskTemplates, async () => {
-    // 1. 更新用户的 dayEndTime
-    const updateResult = await db.users.update(userId, { dayEndTime });
+    // 1. 获取用户当前的 dayEndTime（旧值）
+    const user = await db.users.get(userId);
+    if (!user) {
+      throw new Error('User not found');
+    }
+    const oldDayEndTime = user.dayEndTime ?? "00:00";
 
-    // 2. 获取所有 pending 状态且有 expiredAt 的任务实例
+    // 2. 更新用户的 dayEndTime
+    const updateResult = await db.users.update(userId, { dayEndTime: newDayEndTime });
+
+    // 3. 获取所有 pending 状态的任务实例（包括有 startAt 的）
     const pendingInstances = await db.taskInstances
       .where('userId')
       .equals(userId)
-      .and(instance => instance.status === 'pending' && !!instance.expiredAt)
+      .and(instance => instance.status === 'pending' && !!instance.startAt)
       .toArray();
 
     if (pendingInstances.length === 0) {
       return updateResult;
     }
 
-    // 3. 获取所有需要的模板信息
+    // 4. 获取所有需要的模板信息（用于重新计算 expiredAt）
     const templateIds = [...new Set(pendingInstances.map(i => i.templateId))];
     const templates = await db.taskTemplates
       .where('id')
@@ -121,29 +130,44 @@ export async function updateUserDayEndTime(
       .toArray();
     const templateMap = new Map(templates.map(t => [t.id!, t]));
 
-    // 4. 重新计算每个实例的过期时间
-    const updates: { id: number; expiredAt: string | undefined }[] = [];
+    // 5. 重新计算每个实例的 startAt 和 expiredAt
+    const updates: { id: number; startAt: string; expiredAt?: string }[] = [];
+    
     for (const instance of pendingInstances) {
       const template = templateMap.get(instance.templateId);
-      if (!template || !template.completeExpireDays || template.completeExpireDays <= 0) {
-        continue;
+      
+      // 用旧的 dayEndTime 计算实例原来的"用户日期"
+      const oldUserDateStr = toUserDateString(instance.startAt!, oldDayEndTime);
+      const [year, month, day] = oldUserDateStr.split('-').map(Number);
+      const oldUserDate = new Date(year, month - 1, day);
+
+      // 用新的 dayEndTime 重新计算 startAt
+      const newStartAt = getUserStartOfDay(oldUserDate, newDayEndTime);
+      
+      // 如果有过期设置，重新计算 expiredAt
+      let newExpiredAt: string | undefined;
+      if (template?.completeExpireDays && template.completeExpireDays > 0) {
+        newExpiredAt = calculateExpiredAt(newStartAt, template.completeExpireDays, newDayEndTime);
       }
 
-      // 使用新的 dayEndTime 重新计算过期时间
-      const newExpiredAt = instance.startAt
-        ? calculateExpiredAt(instance.startAt, template.completeExpireDays, dayEndTime)
-        : undefined;
+      // 检查是否有变化
+      const hasStartAtChanged = newStartAt !== instance.startAt;
+      const hasExpiredAtChanged = newExpiredAt !== instance.expiredAt;
 
-      if (newExpiredAt && newExpiredAt !== instance.expiredAt) {
-        updates.push({ id: instance.id!, expiredAt: newExpiredAt });
+      if (hasStartAtChanged || hasExpiredAtChanged) {
+        updates.push({ 
+          id: instance.id!, 
+          startAt: newStartAt, 
+          expiredAt: newExpiredAt 
+        });
       }
     }
 
-    // 5. 批量更新实例
+    // 6. 批量更新实例
     if (updates.length > 0) {
       await Promise.all(
-        updates.map(({ id, expiredAt }) =>
-          db.taskInstances.update(id, { expiredAt })
+        updates.map(({ id, startAt, expiredAt }) =>
+          db.taskInstances.update(id, { startAt, expiredAt })
         )
       );
     }
