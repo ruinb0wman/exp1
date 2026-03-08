@@ -75,17 +75,21 @@ function getDurationForMode(mode: PomoMode, settings: PomoSettings): number {
   }
 }
 
+// 获取初始设置（从 localStorage 或默认值）
+const initialSettings = getPomoSettings();
+const initialDuration = getDurationForMode('focus', initialSettings);
+
 export const usePomoStore = create<PomoState>((set, get) => ({
   // 初始状态
   mode: 'focus',
-  timeLeft: DEFAULT_POMO_SETTINGS.focusDuration * 60,
-  totalTime: DEFAULT_POMO_SETTINGS.focusDuration * 60,
+  timeLeft: initialDuration,
+  totalTime: initialDuration,
   isRunning: false,
   isPaused: false,
   selectedTaskId: null,
   todayCount: 0,
   currentSessionId: null,
-  settings: getPomoSettings(),
+  settings: initialSettings,
 
   // 切换模式
   setMode: (mode: PomoMode) => {
