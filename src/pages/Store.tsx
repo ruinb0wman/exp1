@@ -1,6 +1,6 @@
 import { useState, useCallback } from "react";
 import { useNavigate } from "react-router";
-import { Search, Star, Plus, Sparkles, Package, Clock } from "lucide-react";
+import { Search, Star, Plus, Sparkles, Package, Clock, Pencil } from "lucide-react";
 import { Header } from "@/components/Header";
 import { Popup } from "@/components/Popup";
 import { DynamicIcon } from "@/components/DynamicIcon";
@@ -18,7 +18,7 @@ export function Store() {
   const { user, currentPoints } = useUserStore();
   const { rewards, isLoading, refresh } = useStoreRewards(user?.id ?? 0);
   const { redeem, isLoading: isActionLoading } = useRewardInstanceActions();
-  
+
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedReward, setSelectedReward] = useState<StoreReward | null>(null);
   const [isPopupOpen, setIsPopupOpen] = useState(false);
@@ -51,13 +51,13 @@ export function Store() {
     try {
       // 创建奖励实例
       await redeem(template.id!, user.id, template.validDuration);
-      
+
       // 扣除积分
       await useUserStore.getState().spendPoints(template.pointsCost, "reward_exchange", template.id);
-      
+
       // 刷新商店列表
       await refresh();
-      
+
       // 关闭 popup
       setIsPopupOpen(false);
       setSelectedReward(null);
@@ -84,7 +84,7 @@ export function Store() {
         <Header
           title="Rewards Store"
           leftSlot={
-            <button 
+            <button
               onClick={() => navigate("/backpack")}
               className="flex size-12 items-center justify-start text-text-secondary hover:text-primary transition-colors"
             >
@@ -192,6 +192,19 @@ export function Store() {
         onClose={() => setIsPopupOpen(false)}
         position="bottom"
         title="Reward Details"
+        headerRight={
+          selectedReward ? (
+            <button
+              onClick={() => {
+                setIsPopupOpen(false);
+                navigate(`/rewards/${selectedReward.template.id}`);
+              }}
+              className="flex items-center justify-center text-text-secondary hover:text-primary transition-colors"
+            >
+              <Pencil className="w-5 h-5" />
+            </button>
+          ) : null
+        }
       >
         {selectedReward && (
           <div className="space-y-6 py-2">
