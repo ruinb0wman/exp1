@@ -146,8 +146,8 @@ export function Home() {
     }
   }, [selectedTask, refreshTasks, refreshNoDateTasks]);
 
-  // 过滤掉已完成的任务，首页只显示待完成/已跳过的任务
-  const pendingTasks = tasks.filter(({ instance }) => instance.status !== "completed");
+  // 首页只显示待完成的任务，过滤掉已完成和已跳过的
+  const pendingTasks = tasks.filter(({ instance }) => instance.status === "pending");
   
   // 计算进度（基于原始任务列表）
   const completedCount = tasks.filter(({ instance }) => instance.status === "completed").length;
@@ -181,7 +181,7 @@ export function Home() {
         {noDateTasks.length > 0 && (
           <div className="mt-6">
             <TaskList
-              tasks={noDateTasks.filter(({ instance }) => instance.status !== "completed")}
+              tasks={noDateTasks.filter(({ instance }) => instance.status === "pending")}
               isLoading={isLoading}
               onComplete={handleComplete}
               onReset={handleReset}
