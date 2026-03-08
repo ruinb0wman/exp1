@@ -1,5 +1,5 @@
 import { CheckCircle2, Circle, ChevronDown } from 'lucide-react';
-import type { TaskWithTemplate } from '@/db/services';
+import type { TaskWithTemplate } from '@/hooks/useTasks';
 
 interface TaskSelectorButtonProps {
   /** 当前选中的任务 */

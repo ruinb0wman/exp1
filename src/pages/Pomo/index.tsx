@@ -32,18 +32,20 @@ export function Pomo() {
     resetTimer,
     updateSettings,
     loadTodayCount,
+    loadSettings,
   } = usePomoStore();
 
   const { tasks } = useTodayTasks(userId);
   const [showTaskSelector, setShowTaskSelector] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
 
-  // 加载今日完成数
+  // 加载设置和今日完成数
   useEffect(() => {
     if (userId) {
+      loadSettings(userId);
       loadTodayCount(userId);
     }
-  }, [userId, loadTodayCount]);
+  }, [userId, loadSettings, loadTodayCount]);
 
   // 获取选中的任务
   const selectedTask = tasks.find(t => t.instance.id === selectedTaskId);

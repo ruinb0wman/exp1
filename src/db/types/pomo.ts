@@ -26,6 +26,20 @@ export interface PomoSettings {
   soundEnabled: boolean; // 音效开关
 }
 
+// 数据库存储的设置记录（单条记录，id 固定为 1）
+export interface PomoSettingsRecord {
+  id?: number;
+  userId: number;
+  focusDuration: number;
+  shortBreakDuration: number;
+  longBreakDuration: number;
+  longBreakInterval: number;
+  autoStartBreaks: boolean;
+  autoStartPomos: boolean;
+  soundEnabled: boolean;
+  updatedAt: string; // ISO 格式 UTC 时间
+}
+
 // 默认设置
 export const DEFAULT_POMO_SETTINGS: PomoSettings = {
   focusDuration: 25,

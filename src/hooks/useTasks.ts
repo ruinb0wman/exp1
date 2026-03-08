@@ -140,7 +140,7 @@ export function useTaskTemplateActions() {
 
 // ==================== TaskInstance Hooks ====================
 
-interface TaskWithTemplate {
+export interface TaskWithTemplate {
   instance: TaskInstance;
   template: TaskTemplate;
 }
@@ -305,7 +305,7 @@ export function useTaskStatistics(
     setIsLoading(true);
     setError(null);
     try {
-      const data = await getTaskStatistics(userId, startDate, endDate);
+      const data = await getTaskStatistics(userId);
       setStats(data);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load statistics');

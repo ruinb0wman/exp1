@@ -1,6 +1,5 @@
 import { getDB } from "../index";
 import type { PomoSession, PomoSettings, PomoStatus } from "../types/pomo";
-import { DEFAULT_POMO_SETTINGS } from "../types/pomo";
 
 // 创建番茄钟会话
 export async function createPomoSession(
@@ -127,16 +126,24 @@ export async function getWeeklyPomoStats(userId: number): Promise<{
   };
 }
 
-// 获取用户的番茄钟设置（从 localStorage）
-export function getPomoSettings(): PomoSettings {
-  const stored = localStorage.getItem('pomoSettings');
-  if (stored) {
-    return { ...DEFAULT_POMO_SETTINGS, ...(JSON.parse(stored) as Partial<PomoSettings>) };
-  }
-  return { ...DEFAULT_POMO_SETTINGS };
+// 注意：getPomoSettings 和 savePomoSettings 已迁移到 userService.ts
+// 使用 getUserPomoSettings 和 updateUserPomoSettings 代替
+// 保留这两个函数作为兼容层，内部调用 userService
+
+import { getUserPomoSettings, updateUserPomoSettings } from './userService';
+
+/**
+ * @deprecated 使用 getUserPomoSettings(userId) 代替
+ * 获取用户的番茄钟设置（从 Dexie.js）
+ */
+export async function getPomoSettings(userId: number): Promise<PomoSettings> {
+  return getUserPomoSettings(userId);
 }
 
-// 保存用户的番茄钟设置
-export function savePomoSettings(settings: PomoSettings): void {
-  localStorage.setItem('pomoSettings', JSON.stringify(settings));
+/**
+ * @deprecated 使用 updateUserPomoSettings(userId, settings) 代替
+ * 保存用户的番茄钟设置
+ */
+export async function savePomoSettings(userId: number, settings: PomoSettings): Promise<void> {
+  await updateUserPomoSettings(userId, settings);
 }

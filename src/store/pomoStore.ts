@@ -7,9 +7,8 @@ import {
   abortPomoSession,
   incrementInterruptions,
   getTodayCompletedPomoCount,
-  getPomoSettings,
-  savePomoSettings,
 } from '@/db/services/pomoService';
+import { getUserPomoSettings, updateUserPomoSettings } from '@/db/services/userService';
 import { addPomoToTaskProgress } from '@/db/services/taskService';
 import { useUserStore } from './userStore';
 
@@ -24,11 +23,12 @@ interface PomoState {
   todayCount: number;
   currentSessionId: number | null;
   settings: PomoSettings;
+  isSettingsLoaded: boolean; // 设置是否已加载
   
   // 动作
   setMode: (mode: PomoMode) => void;
   setSelectedTask: (taskId: number | null) => void;
-  updateSettings: (settings: Partial<PomoSettings>) => void;
+  updateSettings: (settings: Partial<PomoSettings>) => Promise<void>;
   startTimer: () => Promise<void>;
   pauseTimer: () => void;
   resumeTimer: () => void;
@@ -36,6 +36,7 @@ interface PomoState {
   tick: () => void;
   loadTodayCount: (userId: number) => Promise<void>;
   resetTimer: () => void;
+  loadSettings: (userId: number) => Promise<void>;
 }
 
 // 音频上下文（用于提示音）
@@ -75,9 +76,7 @@ function getDurationForMode(mode: PomoMode, settings: PomoSettings): number {
   }
 }
 
-// 获取初始设置（从 localStorage 或默认值）
-const initialSettings = getPomoSettings();
-const initialDuration = getDurationForMode('focus', initialSettings);
+const initialDuration = getDurationForMode('focus', DEFAULT_POMO_SETTINGS);
 
 export const usePomoStore = create<PomoState>((set, get) => ({
   // 初始状态
@@ -89,7 +88,8 @@ export const usePomoStore = create<PomoState>((set, get) => ({
   selectedTaskId: null,
   todayCount: 0,
   currentSessionId: null,
-  settings: initialSettings,
+  settings: DEFAULT_POMO_SETTINGS,
+  isSettingsLoaded: false,
 
   // 切换模式
   setMode: (mode: PomoMode) => {
@@ -111,10 +111,18 @@ export const usePomoStore = create<PomoState>((set, get) => ({
   },
 
   // 更新设置
-  updateSettings: (newSettings: Partial<PomoSettings>) => {
+  updateSettings: async (newSettings: Partial<PomoSettings>) => {
     const { settings, mode, isRunning } = get();
+    const userStore = useUserStore.getState();
+    const userId = userStore.user?.id;
+    
     const updated = { ...settings, ...newSettings };
-    savePomoSettings(updated);
+    
+    // 保存到数据库
+    if (userId) {
+      await updateUserPomoSettings(userId, newSettings);
+    }
+    
     set({ settings: updated });
     
     // 如果不在运行中，更新当前倒计时
@@ -279,5 +287,22 @@ export const usePomoStore = create<PomoState>((set, get) => ({
       totalTime: duration,
       isPaused: false,
     });
+  },
+
+  // 加载设置
+  loadSettings: async (userId: number) => {
+    const settings = await getUserPomoSettings(userId);
+    const { mode, isRunning } = get();
+    
+    set({ settings, isSettingsLoaded: true });
+    
+    // 如果不在运行中，更新当前倒计时
+    if (!isRunning) {
+      const duration = getDurationForMode(mode, settings);
+      set({
+        timeLeft: duration,
+        totalTime: duration,
+      });
+    }
   },
 }));

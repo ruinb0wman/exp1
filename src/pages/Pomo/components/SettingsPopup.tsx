@@ -10,7 +10,7 @@ interface SettingsPopupProps {
   /** 当前设置 */
   settings: PomoSettings;
   /** 更新设置回调 */
-  onUpdateSettings: (settings: Partial<PomoSettings>) => void;
+  onUpdateSettings: (settings: Partial<PomoSettings>) => void | Promise<void>;
 }
 
 /**

@@ -1,6 +1,6 @@
 import { Popup } from '@/components/Popup';
 import { CheckCircle2, Circle } from 'lucide-react';
-import type { TaskWithTemplate } from '@/db/services';
+import type { TaskWithTemplate } from '@/hooks/useTasks';
 
 interface TaskSelectorProps {
   /** 是否显示弹窗 */

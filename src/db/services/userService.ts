@@ -1,5 +1,7 @@
 import { getDB } from '../index';
 import type { User, PointsHistory, PointsHistoryType } from '../types';
+import type { PomoSettings } from '../types/pomo';
+import { DEFAULT_POMO_SETTINGS } from '../types/pomo';
 import { calculateExpiredAt, getUserStartOfDay } from '@/libs/time';
 import { toUserDateString } from '@/libs/task';
 
@@ -174,4 +176,28 @@ export async function updateUserDayEndTime(
 
     return updateResult;
   });
+}
+
+/**
+ * 获取用户的番茄钟设置
+ * 如果不存在则返回默认设置
+ */
+export async function getUserPomoSettings(userId: number): Promise<PomoSettings> {
+  const db = getDB();
+  const user = await db.users.get(userId);
+  return user?.pomoSettings ? { ...DEFAULT_POMO_SETTINGS, ...user.pomoSettings } : { ...DEFAULT_POMO_SETTINGS };
+}
+
+/**
+ * 更新用户的番茄钟设置
+ */
+export async function updateUserPomoSettings(
+  userId: number,
+  settings: Partial<PomoSettings>
+): Promise<number> {
+  const db = getDB();
+  const user = await db.users.get(userId);
+  const currentSettings = user?.pomoSettings || { ...DEFAULT_POMO_SETTINGS };
+  const newSettings = { ...currentSettings, ...settings };
+  return db.users.update(userId, { pomoSettings: newSettings });
 }
