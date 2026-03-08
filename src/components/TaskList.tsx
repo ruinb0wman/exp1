@@ -140,8 +140,9 @@ export function TaskList({
           : tasks.map(({ instance, template }) => (
               <TaskInstanceCard
                 key={instance.id}
-                item={{ instance, template }}
-                onClick={handleTaskClick}
+                template={template}
+                instance={instance}
+                onClick={({ template, instance }) => instance && handleTaskClick({ instance, template })}
               />
             ))}
       </div>

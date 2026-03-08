@@ -22,8 +22,9 @@ export function TaskGroup({ dateGroup, tasks, onTaskClick }: TaskGroupProps) {
         {tasks.map((item) => (
           <TaskInstanceCard
             key={item.instance.id}
-            item={item}
-            onClick={onTaskClick}
+            template={item.template}
+            instance={item.instance}
+            onClick={({ template, instance }) => instance && onTaskClick({ template, instance })}
           />
         ))}
       </div>

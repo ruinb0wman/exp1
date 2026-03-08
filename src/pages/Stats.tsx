@@ -1,16 +1,15 @@
 import { useEffect, useState, useCallback } from "react";
 import { ChevronLeft } from "lucide-react";
 import { Calendar } from "../components/Calendar";
+import { TaskInstanceCard } from "@/components/TaskInstanceCard";
 import { useUserStore } from "@/store";
-import type { TaskInstance } from "@/db/types";
+import type { TaskTemplate, TaskInstance } from "@/db/types";
 import { useTaskInstanceGenerator } from "@/hooks/useTaskInstanceGenerator";
 import { formatLocalDate } from "@/libs/task";
 
-interface TaskDisplayItem {
-  id: number | string;
-  name: string;
-  exp: number;
-  status: TaskInstance["status"];
+interface DisplayTaskItem {
+  template: TaskTemplate;
+  instance?: TaskInstance;
   isPreview: boolean;
 }
 
@@ -20,7 +19,7 @@ function isSameDay(date1: Date, date2: Date): boolean {
 
 export function Stats() {
   const [selectedDate, setSelectedDate] = useState<Date | null>(new Date());
-  const [tasks, setTasks] = useState<TaskDisplayItem[]>([]);
+  const [tasks, setTasks] = useState<DisplayTaskItem[]>([]);
   const [isLoading, setIsLoading] = useState(false);
 
   const { user: currentUser } = useUserStore();
@@ -39,15 +38,7 @@ export function Stats() {
         // 使用 hook 获取该日期应该显示的任务（包含已有实例和预览）
         const displayTasks = await getDisplayTasksForDate(date);
 
-        const displayItems: TaskDisplayItem[] = displayTasks.map((item, index) => ({
-          id: item.instance?.id ?? `preview-${item.template.id}-${index}`,
-          name: item.template.title,
-          exp: item.instance?.rewardPoints ?? item.template.rewardPoints,
-          status: item.instance?.status ?? "pending",
-          isPreview: !item.instance, // 没有实际 instance 的就是预览
-        }));
-
-        setTasks(displayItems);
+        setTasks(displayTasks);
       } catch (error) {
         console.error("Failed to load tasks:", error);
         setTasks([]);
@@ -130,42 +121,17 @@ export function Stats() {
               No tasks for this day
             </div>
           ) : (
-            <div className="divide-y divide-border">
+            <div className="space-y-3">
               {tasks.map((task) => (
-                <div
-                  key={task.id}
-                  className={`flex gap-x-3 py-4 flex-row items-center ${task.isPreview ? "opacity-70" : ""
-                    }`}
-                >
-                  <input
-                    type="checkbox"
-                    checked={task.status === "completed"}
-                    className="custom-checkbox w-6 h-6"
-                    readOnly
-                    disabled={task.isPreview}
-                  />
-                  <div className="flex-1">
-                    <p
-                      className={`text-base ${task.status === "completed"
-                          ? "text-text-muted line-through"
-                          : "text-text-primary"
-                        }`}
-                    >
-                      {task.name}
-                      {task.isPreview && (
-                        <span className="ml-2 text-xs text-text-muted">
-                          (preview)
-                        </span>
-                      )}
-                    </p>
-                    <p className="text-sm text-text-muted">
-                      +{task.exp} exp
-                      {task.status === "skipped" && (
-                        <span className="ml-2 text-amber-500">(skipped)</span>
-                      )}
-                    </p>
-                  </div>
-                </div>
+                <TaskInstanceCard
+                  key={task.instance?.id ?? `preview-${task.template.id}`}
+                  template={task.template}
+                  instance={task.instance}
+                  isPreview={task.isPreview}
+                  onClick={() => {
+                    // 预览模式下不可点击，这里只是为了类型要求
+                  }}
+                />
               ))}
             </div>
           )}
