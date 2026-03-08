@@ -24,7 +24,7 @@ export function Stats() {
   const [isLoading, setIsLoading] = useState(false);
 
   const { user: currentUser } = useUserStore();
-  
+
   const { getDisplayTasksForDate } = useTaskInstanceGenerator({
     userId: currentUser?.id,
   });
@@ -67,9 +67,9 @@ export function Stats() {
 
   const formattedSelectedDate = selectedDate
     ? selectedDate.toLocaleDateString("en-US", {
-        month: "long",
-        day: "numeric",
-      })
+      month: "long",
+      day: "numeric",
+    })
     : "Select a date";
 
   const isSelectedToday = selectedDate ? isSameDay(selectedDate, new Date()) : false;
@@ -93,7 +93,7 @@ export function Stats() {
 
       <main className="px-4">
         {/* Calendar - 使用默认配置 */}
-        <div className="max-w-xs mx-auto">
+        <div className="mx-auto">
           <Calendar
             mode="single"
             value={selectedDate}
@@ -134,9 +134,8 @@ export function Stats() {
               {tasks.map((task) => (
                 <div
                   key={task.id}
-                  className={`flex gap-x-3 py-4 flex-row items-center ${
-                    task.isPreview ? "opacity-70" : ""
-                  }`}
+                  className={`flex gap-x-3 py-4 flex-row items-center ${task.isPreview ? "opacity-70" : ""
+                    }`}
                 >
                   <input
                     type="checkbox"
@@ -147,11 +146,10 @@ export function Stats() {
                   />
                   <div className="flex-1">
                     <p
-                      className={`text-base ${
-                        task.status === "completed"
+                      className={`text-base ${task.status === "completed"
                           ? "text-text-muted line-through"
                           : "text-text-primary"
-                      }`}
+                        }`}
                     >
                       {task.name}
                       {task.isPreview && (
