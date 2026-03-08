@@ -432,12 +432,10 @@ export async function getNoDateTaskInstances(
 }
 
 /**
- * 获取任务统计信息
+ * 获取任务统计信息（只统计有对应模板的实例）
  */
 export async function getTaskStatistics(
-  userId: number,
-  startDate?: string,
-  endDate?: string
+  userId: number
 ): Promise<{
   total: number;
   completed: number;
@@ -447,23 +445,24 @@ export async function getTaskStatistics(
   const db = getDB();
 
   // 获取该用户的所有任务实例
-  const allInstances = await db.taskInstances.where('userId').equals(userId).toArray();
+  const instances = await db.taskInstances.where('userId').equals(userId).toArray();
 
-  // 筛选：如果没有日期范围，返回全部；否则筛选 createdAt 在范围内的
-  let instances: TaskInstance[];
-  if (startDate && endDate) {
-    instances = allInstances.filter((instance) => {
-      return instance.createdAt >= startDate && instance.createdAt <= endDate;
-    });
-  } else {
-    instances = allInstances;
-  }
+  // 获取所有模板信息
+  const templateIds = [...new Set(instances.map(i => i.templateId))];
+  const templates = await db.taskTemplates
+    .where('id')
+    .anyOf(templateIds)
+    .toArray();
+  const templateMap = new Map(templates.map(t => [t.id!, t]));
+
+  // 只保留有对应模板的实例
+  const validInstances = instances.filter(i => templateMap.has(i.templateId));
 
   return {
-    total: instances.length,
-    completed: instances.filter((i) => i.status === 'completed').length,
-    pending: instances.filter((i) => i.status === 'pending').length,
-    skipped: instances.filter((i) => i.status === 'skipped').length,
+    total: validInstances.length,
+    completed: validInstances.filter((i) => i.status === 'completed').length,
+    pending: validInstances.filter((i) => i.status === 'pending').length,
+    skipped: validInstances.filter((i) => i.status === 'skipped').length,
   };
 }
 
@@ -479,12 +478,11 @@ export interface TaskHistoryItem {
 
 /**
  * 获取任务历史列表（支持状态筛选和分页）
+ * 按照 createdAt 从新到旧排序，支持滚动加载
  */
 export async function getTaskInstancesWithFilter(
   userId: number,
   filterStatus: TaskHistoryFilterStatus,
-  startDate: string,
-  endDate: string,
   offset: number,
   limit: number
 ): Promise<{ items: TaskHistoryItem[]; hasMore: boolean; total: number }> {
@@ -496,37 +494,41 @@ export async function getTaskInstancesWithFilter(
     .equals(userId)
     .toArray();
 
-  // 筛选：createdAt 在日期范围内
-  let instances = allInstances.filter((instance) => {
-    return instance.createdAt >= startDate && instance.createdAt <= endDate;
-  });
-
   // 应用状态筛选
+  let instances = allInstances;
   if (filterStatus !== 'all') {
     instances = instances.filter((i) => i.status === filterStatus);
   }
 
-  // 按创建时间倒序排列
+  // 按创建时间倒序排列（从新到旧）
   instances.sort((a, b) => {
     return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
   });
 
-  const total = instances.length;
+  // 获取所有需要的模板信息
+  const templateIds = [...new Set(instances.map(i => i.templateId))];
+  const templates = await db.taskTemplates
+    .where('id')
+    .anyOf(templateIds)
+    .toArray();
+  const templateMap = new Map(templates.map(t => [t.id, t]));
 
-  // 分页
-  const paginatedInstances = instances.slice(offset, offset + limit);
-
-  // 获取模板信息
-  const items: TaskHistoryItem[] = [];
-  for (const instance of paginatedInstances) {
-    const template = await db.taskTemplates.get(instance.templateId);
+  // 过滤掉没有对应模板的实例，并构建结果
+  const validItems: TaskHistoryItem[] = [];
+  for (const instance of instances) {
+    const template = templateMap.get(instance.templateId);
     if (template) {
-      items.push({ instance, template });
+      validItems.push({ instance, template });
     }
   }
 
+  const total = validItems.length;
+
+  // 分页
+  const paginatedItems = validItems.slice(offset, offset + limit);
+
   return {
-    items,
+    items: paginatedItems,
     hasMore: offset + limit < total,
     total,
   };

@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import {
   getTaskInstancesWithFilter,
   type TaskHistoryItem,
@@ -22,34 +22,10 @@ interface TaskStats {
   skipped: number;
 }
 
-/**
- * 获取UTC日期范围（最近N天）
- * @param daysAgo 多少天前开始（0表示今天）
- * @returns [startUTC, endUTC] ISO格式字符串
- */
-function getUTCDateRange(daysAgo: number = 30): [string, string] {
-  const now = new Date();
-  
-  // 结束时间：现在（UTC）
-  const endUTC = now.toISOString();
-  
-  // 开始时间：N天前的UTC开始
-  const startUTC = new Date(Date.UTC(
-    now.getUTCFullYear(),
-    now.getUTCMonth(),
-    now.getUTCDate() - daysAgo,
-    0, 0, 0, 0
-  )).toISOString();
-  
-  return [startUTC, endUTC];
-}
-
 export function useTaskHistory({ userId, pageSize = DEFAULT_PAGE_SIZE }: UseTaskHistoryOptions) {
   const [list, setList] = useState<TaskHistoryItem[]>([]);
   const [stats, setStats] = useState<TaskStats | null>(null);
   const [filterStatus, setFilterStatus] = useState<TaskHistoryFilterStatus>("all");
-  const [startDate, setStartDate] = useState<string>("");
-  const [endDate, setEndDate] = useState<string>("");
   const [offset, setOffset] = useState(0);
   const [hasMore, setHasMore] = useState(true);
   const [total, setTotal] = useState(0);
@@ -57,28 +33,26 @@ export function useTaskHistory({ userId, pageSize = DEFAULT_PAGE_SIZE }: UseTask
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // 初始化日期范围（最近30天，UTC时间）
-  useEffect(() => {
-    const [start, end] = getUTCDateRange(30);
-    setStartDate(start);
-    setEndDate(end);
-  }, []);
+  // 用于防止重复加载的标记
+  const loadingRef = useRef(false);
 
   // 加载统计数据
   const loadStats = useCallback(async () => {
     if (userId === null) return;
     try {
-      const data = await getTaskStatistics(userId, startDate || undefined, endDate || undefined);
+      const data = await getTaskStatistics(userId);
       setStats(data);
     } catch (err) {
       console.error("Failed to load task stats:", err);
     }
-  }, [userId, startDate, endDate]);
+  }, [userId]);
 
   // 加载列表数据
   const loadList = useCallback(async (isLoadMore = false) => {
     if (userId === null) return;
-    if (!startDate || !endDate) return;
+    if (loadingRef.current) return; // 防止重复加载
+
+    loadingRef.current = true;
 
     if (isLoadMore) {
       setIsLoadingMore(true);
@@ -93,8 +67,6 @@ export function useTaskHistory({ userId, pageSize = DEFAULT_PAGE_SIZE }: UseTask
       const result = await getTaskInstancesWithFilter(
         userId,
         filterStatus,
-        startDate,
-        endDate,
         newOffset,
         pageSize
       );
@@ -112,31 +84,32 @@ export function useTaskHistory({ userId, pageSize = DEFAULT_PAGE_SIZE }: UseTask
     } finally {
       setIsLoading(false);
       setIsLoadingMore(false);
+      loadingRef.current = false;
     }
-  }, [userId, filterStatus, startDate, endDate, offset, pageSize]);
+  }, [userId, filterStatus, offset, pageSize]);
 
   // 初始加载和筛选变化时刷新
   useEffect(() => {
-    if (userId !== null && startDate && endDate) {
+    if (userId !== null) {
       loadList(false);
       loadStats();
     }
-  }, [userId, filterStatus, startDate, endDate]);
+  }, [userId, filterStatus]);
 
+  // 加载更多
   const loadMore = useCallback(() => {
-    if (!isLoadingMore && hasMore) {
+    if (!isLoadingMore && hasMore && !loadingRef.current) {
       loadList(true);
     }
   }, [isLoadingMore, hasMore, loadList]);
 
-  /**
-   * 设置日期范围（使用UTC时间）
-   * @param start 开始日期 ISO格式（UTC）
-   * @param end 结束日期 ISO格式（UTC）
-   */
-  const setDateRange = useCallback((start: string, end: string) => {
-    setStartDate(start);
-    setEndDate(end);
+  // 切换筛选状态
+  const handleSetFilterStatus = useCallback((status: TaskHistoryFilterStatus) => {
+    setFilterStatus(status);
+    // 重置列表状态
+    setList([]);
+    setOffset(0);
+    setHasMore(true);
   }, []);
 
   return {
@@ -148,11 +121,8 @@ export function useTaskHistory({ userId, pageSize = DEFAULT_PAGE_SIZE }: UseTask
     isLoadingMore,
     error,
     filterStatus,
-    startDate,
-    endDate,
     loadMore,
-    setFilterStatus,
-    setDateRange,
+    setFilterStatus: handleSetFilterStatus,
     refresh: () => loadList(false),
   };
 }
