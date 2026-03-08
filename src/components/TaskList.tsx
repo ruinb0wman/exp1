@@ -12,8 +12,6 @@ interface TaskWithTemplate {
 interface TaskListProps {
   tasks: TaskWithTemplate[];
   isLoading: boolean;
-  onComplete: (instanceId: number, rewardPoints: number) => void;
-  onReset: (instanceId: number, rewardPoints: number) => void;
   onTaskClick?: (instance: TaskInstance, template: TaskTemplate) => void;
   title?: string;
   showViewAll?: boolean;
@@ -44,8 +42,6 @@ function TaskSkeleton() {
 interface TaskItemProps {
   instance: TaskInstance;
   template: TaskTemplate;
-  onComplete: (instanceId: number, rewardPoints: number) => void;
-  onReset: (instanceId: number, rewardPoints: number) => void;
   onClick?: (instance: TaskInstance, template: TaskTemplate) => void;
 }
 
@@ -182,8 +178,6 @@ function EmptyState({ message }: EmptyStateProps) {
 export function TaskList({
   tasks,
   isLoading,
-  onComplete,
-  onReset,
   onTaskClick,
   title = "Today's Tasks",
   showViewAll = true,
@@ -263,8 +257,6 @@ export function TaskList({
                 key={instance.id}
                 instance={instance}
                 template={template}
-                onComplete={onComplete}
-                onReset={onReset}
                 onClick={onTaskClick}
               />
             ))}

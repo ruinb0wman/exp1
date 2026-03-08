@@ -10,8 +10,6 @@ import { TaskList } from "@/components/TaskList";
 import { TaskDetailPopup } from "@/components/TaskDetailPopup";
 import type { TaskInstance, TaskTemplate } from "@/db/types";
 import {
-  completeTask,
-  resetTask,
   completeTaskInPopup,
   resetTaskInPopup,
   incrementTaskCount,
@@ -51,30 +49,6 @@ export function Home() {
     // 注意：generateToday 内部有防止重复执行的机制
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.id]);
-
-  // 处理完成任务
-  const handleComplete = useCallback(
-    async (instanceId: number, rewardPoints: number) => {
-      try {
-        await completeTask(instanceId, rewardPoints, complete, refreshTasks, refreshNoDateTasks);
-      } catch (error) {
-        console.error("Failed to complete task:", error);
-      }
-    },
-    [complete, refreshTasks, refreshNoDateTasks]
-  );
-
-  // 处理撤回任务
-  const handleReset = useCallback(
-    async (instanceId: number, rewardPoints: number) => {
-      try {
-        await resetTask(instanceId, rewardPoints, reset, refreshTasks, refreshNoDateTasks);
-      } catch (error) {
-        console.error("Failed to reset task:", error);
-      }
-    },
-    [reset, refreshTasks, refreshNoDateTasks]
-  );
 
   // 处理点击任务卡片
   const handleTaskClick = useCallback((instance: TaskInstance, template: TaskTemplate) => {
@@ -154,8 +128,6 @@ export function Home() {
         <TaskList
           tasks={pendingTasks}
           isLoading={isLoading}
-          onComplete={handleComplete}
-          onReset={handleReset}
           onTaskClick={handleTaskClick}
           title="Today's Tasks"
           showViewAll={true}
@@ -169,8 +141,6 @@ export function Home() {
             <TaskList
               tasks={filterPendingTasks(noDateTasks)}
               isLoading={isLoading}
-              onComplete={handleComplete}
-              onReset={handleReset}
               onTaskClick={handleTaskClick}
               title="No Date"
               showViewAll={false}
