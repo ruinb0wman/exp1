@@ -31,7 +31,10 @@ export function TaskSelector({
     onClose();
   };
 
-  const pendingTasks = tasks.filter(t => t.instance.status === 'pending');
+  // 只显示状态为 pending 且 completeRule 为 time 的任务
+  const pendingTasks = tasks.filter(
+    t => t.instance.status === 'pending' && t.template.completeRule === 'time'
+  );
 
   return (
     <Popup
