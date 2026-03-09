@@ -201,27 +201,17 @@ async function importWithOverwrite(data: ExportData['data']): Promise<ImportResu
           db.pointsHistory.clear(),
         ]);
 
-        // 写入新数据（移除 id 让数据库重新分配）
+        // 写入新数据（保留原始 id，使用 bulkPut 确保 ID 一致）
         await Promise.all([
-          db.taskTemplates.bulkAdd(
-            data.taskTemplates.map(({ id, ...rest }) => rest as TaskTemplate)
-          ),
-          db.taskInstances.bulkAdd(
-            data.taskInstances.map(({ id, ...rest }) => rest as TaskInstance)
-          ),
-          db.rewardTemplates.bulkAdd(
-            data.rewardTemplates.map(({ id, ...rest }) => rest as RewardTemplate)
-          ),
-          db.rewardInstances.bulkAdd(
-            data.rewardInstances.map(({ id, ...rest }) => rest as RewardInstance)
-          ),
+          db.taskTemplates.bulkPut(data.taskTemplates as TaskTemplate[]),
+          db.taskInstances.bulkPut(data.taskInstances as TaskInstance[]),
+          db.rewardTemplates.bulkPut(data.rewardTemplates as RewardTemplate[]),
+          db.rewardInstances.bulkPut(data.rewardInstances as RewardInstance[]),
           // 只导入第一个用户，并设置 id 为 1
           db.users.bulkAdd(
             data.users.slice(0, 1).map(({ id, ...rest }) => ({ ...rest, id: 1 } as User))
           ),
-          db.pointsHistory.bulkAdd(
-            data.pointsHistory.map(({ id, ...rest }) => rest as PointsHistory)
-          ),
+          db.pointsHistory.bulkPut(data.pointsHistory as PointsHistory[]),
         ]);
       }
     );
@@ -285,9 +275,8 @@ async function importWithMerge(data: ExportData['data']): Promise<ImportResult> 
           return true;
         });
         if (newTaskTemplates.length > 0) {
-          await db.taskTemplates.bulkAdd(
-            newTaskTemplates.map(({ id, ...rest }) => rest as TaskTemplate)
-          );
+          // 保留原始 ID 使用 bulkPut
+          await db.taskTemplates.bulkPut(newTaskTemplates as TaskTemplate[]);
           importedCount.taskTemplates = newTaskTemplates.length;
         }
 
@@ -303,9 +292,8 @@ async function importWithMerge(data: ExportData['data']): Promise<ImportResult> 
           return true;
         });
         if (newInstances.length > 0) {
-          await db.taskInstances.bulkAdd(
-            newInstances.map(({ id, ...rest }) => rest as TaskInstance)
-          );
+          // 保留原始 ID 使用 bulkPut
+          await db.taskInstances.bulkPut(newInstances as TaskInstance[]);
           importedCount.taskInstances = newInstances.length;
         }
 
@@ -321,9 +309,8 @@ async function importWithMerge(data: ExportData['data']): Promise<ImportResult> 
           return true;
         });
         if (newRewardTemplates.length > 0) {
-          await db.rewardTemplates.bulkAdd(
-            newRewardTemplates.map(({ id, ...rest }) => rest as RewardTemplate)
-          );
+          // 保留原始 ID 使用 bulkPut
+          await db.rewardTemplates.bulkPut(newRewardTemplates as RewardTemplate[]);
           importedCount.rewardTemplates = newRewardTemplates.length;
         }
 
@@ -339,9 +326,8 @@ async function importWithMerge(data: ExportData['data']): Promise<ImportResult> 
           return true;
         });
         if (newRewardInstances.length > 0) {
-          await db.rewardInstances.bulkAdd(
-            newRewardInstances.map(({ id, ...rest }) => rest as RewardInstance)
-          );
+          // 保留原始 ID 使用 bulkPut
+          await db.rewardInstances.bulkPut(newRewardInstances as RewardInstance[]);
           importedCount.rewardInstances = newRewardInstances.length;
         }
 
@@ -367,9 +353,8 @@ async function importWithMerge(data: ExportData['data']): Promise<ImportResult> 
           return true;
         });
         if (newHistory.length > 0) {
-          await db.pointsHistory.bulkAdd(
-            newHistory.map(({ id, ...rest }) => rest as PointsHistory)
-          );
+          // 保留原始 ID 使用 bulkPut
+          await db.pointsHistory.bulkPut(newHistory as PointsHistory[]);
           importedCount.pointsHistory = newHistory.length;
         }
       }

@@ -610,6 +610,34 @@ const displayDate = formatLocalDate(instance.completedAt);
   - `overwrite`：清空所有现有数据并导入
   - `merge`：智能合并数据，避免重复
 
+#### ID 保持机制（重要）
+
+**修复时间**：2026-03-09
+
+**问题**：早期版本使用 `bulkAdd` 并在导入时移除 `id` 字段，导致 ID 重新分配，破坏了 `taskInstances` 与 `taskTemplates` 之间的外键关联关系（`templateId` 指向不存在的 ID）。这会导致导入后部分任务实例丢失（orphaned instances）。
+
+**解决方案**：
+- 使用 `bulkPut` 替代 `bulkAdd`，保留原始 ID
+- 确保 `taskTemplates` 和 `taskInstances` 的 ID 在导入后保持一致
+- 相关表：taskTemplates, taskInstances, rewardTemplates, rewardInstances, pointsHistory
+
+**代码位置**：`src/db/services/exportImportService.ts`
+
+```typescript
+// 修复前（会导致 ID 错乱）
+db.taskTemplates.bulkAdd(
+  data.taskTemplates.map(({ id, ...rest }) => rest as TaskTemplate)  // ❌ ID 丢失
+)
+
+// 修复后（保持 ID 一致）
+db.taskTemplates.bulkPut(data.taskTemplates as TaskTemplate[])  // ✅ 保留原始 ID
+```
+
+**注意事项**：
+- `bulkPut` 会插入新记录或更新已存在的记录（基于 ID）
+- 用户数据仍特殊处理：只导入第一个用户，并强制设置 `id: 1`（保持单用户模式）
+- 如果备份中包含 orphaned instances（引用了不存在的 templateId），导入后仍会被查询过滤掉
+
 ---
 
 ## 安全考虑
