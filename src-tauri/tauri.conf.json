@@ -17,6 +17,9 @@
         "height": 600
       }
     ],
+    "trayIcon": {
+      "iconPath": "icons/tray_icon.png"
+    },
     "security": {
       "csp": null
     }
