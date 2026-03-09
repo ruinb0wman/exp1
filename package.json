@@ -1,5 +1,5 @@
 {
-  "name": "hello-tauri",
+  "name": "exp1",
   "private": true,
   "version": "0.1.0",
   "type": "module",
@@ -8,6 +8,8 @@
     "dev:pc": "tauri dev",
     "dev:android": "tauri android dev --host 192.168.1.5",
     "build": "tsc && vite build",
+    "build:pc": "tauri build",
+    "build:android": "tauri android build",
     "preview": "vite preview",
     "tauri": "tauri"
   },
