@@ -28,7 +28,7 @@ interface RowData {
 export function TaskContributionGraph({
   template,
   userId,
-  weeks = 26,
+  weeks: _weeks = 26,
 }: TaskContributionGraphProps) {
   const [rowsData, setRowsData] = useState<RowData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
