@@ -238,34 +238,14 @@ export const usePomoStore = create<PomoState>((set, get) => ({
 
   // 每秒滴答
   tick: () => {
-    const { timeLeft, isRunning, isPaused, totalTime, mode, settings } = get();
+    const { timeLeft, isRunning, isPaused } = get();
     
     if (!isRunning || isPaused) return;
 
     const newTimeLeft = timeLeft - 1;
     
-    if (newTimeLeft <= 0) {
-      // 时间到，自动完成
-      get().stopTimer(true);
-      
-      // 自动切换模式
-      if (settings.autoStartBreaks && mode === 'focus') {
-        const { todayCount } = get();
-        const nextMode = (todayCount % settings.longBreakInterval === 0) 
-          ? 'longBreak' 
-          : 'shortBreak';
-        get().setMode(nextMode);
-        if (settings.autoStartPomos) {
-          get().startTimer();
-        }
-      } else if (settings.autoStartPomos && mode !== 'focus') {
-        get().setMode('focus');
-        get().startTimer();
-      } else {
-        // 重置计时器显示
-        set({ timeLeft: totalTime });
-      }
-    } else {
+    // 只更新倒计时，完成逻辑由全局计时器 hook 处理
+    if (newTimeLeft >= 0) {
       set({ timeLeft: newTimeLeft });
     }
   },

@@ -1,10 +1,13 @@
-import { useEffect, useRef } from 'react';
 import { usePomoStore } from '@/store/pomoStore';
 import { POMO_MODE_CONFIG } from '@/db/types/pomo';
 
+/**
+ * 番茄钟计时器显示组件
+ * 
+ * 注意：计时逻辑已移至 useGlobalPomoTimer hook，此组件只负责显示
+ */
 export function PomoTimer() {
-  const { timeLeft, totalTime, mode, isRunning, isPaused, tick } = usePomoStore();
-  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const { timeLeft, totalTime, mode, isRunning, isPaused } = usePomoStore();
 
   // 格式化时间显示为 MM:SS
   const formatTime = (seconds: number): string => {
@@ -24,57 +27,8 @@ export function PomoTimer() {
   const circumference = radius * 2 * Math.PI;
   const strokeDashoffset = circumference - (progress / 100) * circumference;
 
-  // 计时器逻辑
-  useEffect(() => {
-    if (isRunning && !isPaused) {
-      intervalRef.current = setInterval(() => {
-        tick();
-      }, 1000);
-    }
-
-    return () => {
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current);
-        intervalRef.current = null;
-      }
-    };
-  }, [isRunning, isPaused, tick]);
-
-  // 页面可见性变化处理（后台运行）
-  useEffect(() => {
-    const handleVisibilityChange = () => {
-      // 使用 Page Visibility API 确保后台计时继续
-      if (document.hidden && isRunning && !isPaused) {
-        // 页面隐藏时，记录当前时间
-        sessionStorage.setItem('pomoHiddenAt', Date.now().toString());
-      } else if (!document.hidden && isRunning && !isPaused) {
-        // 页面显示时，计算时间差
-        const hiddenAt = sessionStorage.getItem('pomoHiddenAt');
-        if (hiddenAt) {
-          const diff = Math.floor((Date.now() - parseInt(hiddenAt)) / 1000);
-          // 批量处理tick
-          for (let i = 0; i < diff && i < 60; i++) {
-            tick();
-          }
-          sessionStorage.removeItem('pomoHiddenAt');
-        }
-      }
-    };
-
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-    return () => {
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
-    };
-  }, [isRunning, isPaused, tick]);
-
   return (
     <div className="relative flex items-center justify-center">
-      {/* 外圈发光效果 */}
-      {/* <div  */}
-      {/*   className="absolute inset-0 rounded-full blur-2xl opacity-20" */}
-      {/*   style={{ backgroundColor: config.color }} */}
-      {/* /> */}
-
       {/* SVG 进度环 */}
       <svg
         width={size}

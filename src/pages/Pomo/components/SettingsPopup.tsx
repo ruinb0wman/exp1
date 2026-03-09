@@ -35,7 +35,7 @@ export function SettingsPopup({
         <DurationSlider
           label="专注时长"
           value={settings.focusDuration}
-          min={5}
+          min={1}
           max={60}
           onChange={(val) => onUpdateSettings({ focusDuration: val })}
         />

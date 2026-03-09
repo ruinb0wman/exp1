@@ -17,6 +17,7 @@ import { Settings } from "./pages/Settings";
 import { DataImportExport } from "./pages/DataImportExport";
 import { useUserStore } from "./store/userStore";
 import { useExpiredTaskChecker } from "./hooks/useExpiredTaskChecker";
+import { useGlobalPomoTimer } from "./hooks/useGlobalPomoTimer";
 import { TitleBar } from "./components/TitleBar";
 
 function Layout() {
@@ -27,6 +28,9 @@ function Layout() {
   const { checkExpiredTasks } = useExpiredTaskChecker({
     userId: user?.id,
   });
+  
+  // 全局番茄钟计时器（确保后台也能计时）
+  useGlobalPomoTimer();
   
   useEffect(() => {
     if (!user) {
@@ -60,6 +64,9 @@ function SimpleLayout() {
   const { checkExpiredTasks } = useExpiredTaskChecker({
     userId: user?.id,
   });
+  
+  // 全局番茄钟计时器（确保后台也能计时）
+  useGlobalPomoTimer();
   
   useEffect(() => {
     if (!user) {

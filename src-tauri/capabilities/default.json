@@ -12,6 +12,11 @@
     "opener:default",
     "dialog:default",
     "fs:allow-write-text-file",
-    "fs:allow-read-text-file"
+    "fs:allow-read-text-file",
+    "notification:default",
+    "notification:allow-register-action-types",
+    "notification:allow-request-permission",
+    "notification:allow-show",
+    "notification:allow-register-listener"
   ]
 }

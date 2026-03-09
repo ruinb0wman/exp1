@@ -20,6 +20,7 @@ pub fn run() {
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_fs::init())
+        .plugin(tauri_plugin_notification::init())
         // 单例模式插件：确保只有一个应用实例运行
         .plugin(tauri_plugin_single_instance::init(handle_single_instance))
         .invoke_handler(tauri::generate_handler![greet])
