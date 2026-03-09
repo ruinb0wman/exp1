@@ -1,0 +1,61 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="none">
+  <!-- 背景圆 -->
+  <circle cx="256" cy="256" r="240" fill="#202127" stroke="#1a1a1a" stroke-width="8"/>
+  
+  <!-- 外圈装饰环 -->
+  <circle cx="256" cy="256" r="220" stroke="#f56565" stroke-width="4" stroke-linecap="round" stroke-dasharray="20 10" opacity="0.6"/>
+  
+  <!-- 任务卡片主体 -->
+  <rect x="136" y="156" width="240" height="200" rx="12" fill="#1b1b1f" stroke="#f56565" stroke-width="3"/>
+  
+  <!-- 任务卡片顶部装饰条 -->
+  <rect x="136" y="156" width="240" height="24" rx="12" fill="#f56565"/>
+  <rect x="136" y="168" width="240" height="12" fill="#f56565"/>
+  
+  <!-- 复选框 1 -->
+  <rect x="168" y="212" width="28" height="28" rx="6" stroke="#f56565" stroke-width="2.5" fill="none"/>
+  <path d="M174 226 L180 232 L190 220" stroke="#f56565" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+  
+  <!-- 任务文字线 1 -->
+  <line x1="212" y1="226" x2="344" y2="226" stroke="#4a4a4a" stroke-width="3" stroke-linecap="round"/>
+  
+  <!-- 复选框 2 -->
+  <rect x="168" y="264" width="28" height="28" rx="6" stroke="#f56565" stroke-width="2.5" fill="none"/>
+  <path d="M174 278 L180 284 L190 272" stroke="#f56565" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+  
+  <!-- 任务文字线 2 -->
+  <line x1="212" y1="278" x2="320" y2="278" stroke="#4a4a4a" stroke-width="3" stroke-linecap="round"/>
+  
+  <!-- 复选框 3 -->
+  <rect x="168" y="316" width="28" height="28" rx="6" stroke="#f56565" stroke-width="2.5" fill="none"/>
+  <path d="M174 330 L180 336 L190 324" stroke="#f56565" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+  
+  <!-- 任务文字线 3 -->
+  <line x1="212" y1="330" x2="336" y2="330" stroke="#4a4a4a" stroke-width="3" stroke-linecap="round"/>
+  
+  <!-- 星星/积分装饰 -->
+  <g transform="translate(380, 380)">
+    <polygon points="0,-24 7,-8 24,-8 10,2 16,18 0,10 -16,18 -10,2 -24,-8 -7,-8" 
+             fill="#f56565" opacity="0.9"/>
+    <polygon points="0,-18 5,-6 18,-6 8,1 12,14 0,8 -12,14 -8,1 -18,-6 -5,-6" 
+             fill="#ff7a7a"/>
+  </g>
+  
+  <!-- 小星星装饰 1 -->
+  <g transform="translate(100, 140)">
+    <polygon points="0,-12 3.5,-4 12,-4 5,1 8,9 0,5 -8,9 -5,1 -12,-4 -3.5,-4" 
+             fill="#f56565" opacity="0.7"/>
+  </g>
+  
+  <!-- 小星星装饰 2 -->
+  <g transform="translate(400, 150)">
+    <polygon points="0,-10 3,-3 10,-3 4,1 7,8 0,4 -7,8 -4,1 -10,-3 -3,-3" 
+             fill="#f56565" opacity="0.5"/>
+  </g>
+  
+  <!-- 小星星装饰 3 -->
+  <g transform="translate(120, 380)">
+    <polygon points="0,-8 2.5,-2 8,-2 3,1 5,6 0,3.5 -5,6 -3,1 -8,-2 -2.5,-2" 
+             fill="#f56565" opacity="0.6"/>
+  </g>
+</svg>

@@ -20,13 +20,6 @@
 - **语言**: TypeScript
 - 图标: lucide
 
-## 开发命令
-
-```bash
-# 默认启动的服务ip不对, 需要手动指定
-bun run tauri android dev -- --host <本机ip>
-```
-
 ### 视觉风格
 
 - **整体风格**：极简主义，深色主题
