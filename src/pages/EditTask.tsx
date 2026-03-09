@@ -178,7 +178,7 @@ export function EditTask() {
       } else {
         await create(taskData);
       }
-      navigate("/tasks", { replace: true });
+      navigate(-1);
     } catch (error) {
       console.error("Failed to save task:", error);
       alert(error instanceof Error ? error.message : "Failed to save task");
