@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback, useMemo } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { getDB } from "@/db";
 import type { TaskInstance, TaskTemplate } from "@/db/types";
 import { formatLocalDate, formatLocalDateToYYYYMMDD } from "@/libs/time";
@@ -7,6 +7,7 @@ interface TaskContributionGraphProps {
   template: TaskTemplate;
   userId: number;
   /** 显示多少周的数据，默认 26 周（约半年） */
+  // 此参数已废弃，保留是为了兼容现有调用
   weeks?: number;
 }
 
@@ -16,7 +17,7 @@ interface DayData {
   instance?: TaskInstance;
 }
 
-interface WeekData {
+interface RowData {
   days: DayData[];
 }
 
@@ -29,7 +30,7 @@ export function TaskContributionGraph({
   userId,
   weeks = 26,
 }: TaskContributionGraphProps) {
-  const [weeksData, setWeeksData] = useState<WeekData[]>([]);
+  const [rowsData, setRowsData] = useState<RowData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [totalStats, setTotalStats] = useState({ completed: 0, total: 0 });
 
@@ -38,12 +39,12 @@ export function TaskContributionGraph({
     try {
       const db = getDB();
 
-      // 计算日期范围
-      const endDate = new Date();
-      const startDate = new Date();
-      startDate.setDate(endDate.getDate() - weeks * 7);
+      // 计算日期范围：180天前到今天
+      const totalDays = 180;
+      const daysPerRow = 30;
+      const rows = 6;
 
-      // 查询该模板在日期范围内的所有实例
+      // 查询该模板的所有实例
       const instances = await db.taskInstances
         .where("templateId")
         .equals(template.id!)
@@ -64,20 +65,23 @@ export function TaskContributionGraph({
         }
       });
 
-      // 生成周数据
-      const newWeeksData: WeekData[] = [];
-      const currentDate = new Date(startDate);
-
-      // 调整到周一开始
-      const dayOfWeek = currentDate.getDay();
-      currentDate.setDate(currentDate.getDate() - (dayOfWeek === 0 ? 6 : dayOfWeek - 1));
+      // 生成行数据：180天，每行30天，共6行
+      // 最后一格是今天，所以起始日期是今天往前推179天
+      const newRowsData: RowData[] = [];
+      const startDate = new Date();
+      startDate.setDate(startDate.getDate() - (totalDays - 1)); // 179天前
 
       let completedCount = 0;
       let totalCount = 0;
 
-      for (let w = 0; w < weeks; w++) {
-        const weekDays: DayData[] = [];
-        for (let d = 0; d < 7; d++) {
+      for (let r = 0; r < rows; r++) {
+        const rowDays: DayData[] = [];
+        for (let d = 0; d < daysPerRow; d++) {
+          const currentDate = new Date(startDate);
+          // 计算当前格子的日期：行号 * 30 + 列号
+          const dayOffset = r * daysPerRow + d;
+          currentDate.setDate(startDate.getDate() + dayOffset);
+
           // 使用本地日期生成 key
           const dateStr = formatLocalDateToYYYYMMDD(currentDate);
           const instance = instanceMap.get(dateStr);
@@ -91,25 +95,23 @@ export function TaskContributionGraph({
             }
           }
 
-          weekDays.push({
+          rowDays.push({
             date: dateStr,
             status,
             instance,
           });
-
-          currentDate.setDate(currentDate.getDate() + 1);
         }
-        newWeeksData.push({ days: weekDays });
+        newRowsData.push({ days: rowDays });
       }
 
-      setWeeksData(newWeeksData);
+      setRowsData(newRowsData);
       setTotalStats({ completed: completedCount, total: totalCount });
     } catch (error) {
       console.error("加载任务贡献图数据失败:", error);
     } finally {
       setIsLoading(false);
     }
-  }, [template.id, userId, weeks]);
+  }, [template.id, userId]);
 
   useEffect(() => {
     fetchData();
@@ -144,8 +146,7 @@ export function TaskContributionGraph({
     }
   };
 
-  // 星期标签
-  const weekDays = useMemo(() => ["一", "三", "五", "日"], []);
+
 
   if (isLoading) {
     return (
@@ -167,23 +168,13 @@ export function TaskContributionGraph({
         </span>
       </div>
 
-      {/* 贡献图 */}
-      <div className="flex gap-1 overflow-x-auto pb-2 scrollbar-hide">
-        {/* 星期标签 */}
-        <div className="flex flex-col gap-1 mr-1">
-          {weekDays.map((day) => (
-            <div key={day} className="h-3 text-[8px] text-text-muted flex items-center">
-              {day}
-            </div>
-          ))}
-        </div>
-
-        {/* 周数据 */}
-        {weeksData.map((week, weekIndex) => (
-          <div key={weekIndex} className="flex flex-col gap-1">
-            {week.days.map((day, dayIndex) => (
+      {/* 贡献图：6行 x 30列 */}
+      <div className="flex flex-col gap-1 overflow-x-auto pb-2 scrollbar-hide">
+        {rowsData.map((row, rowIndex) => (
+          <div key={rowIndex} className="flex gap-1">
+            {row.days.map((day, dayIndex) => (
               <div
-                key={`${weekIndex}-${dayIndex}`}
+                key={`${rowIndex}-${dayIndex}`}
                 className={`w-3 h-3 rounded-sm ${getColorClass(day.status)} transition-all duration-200 hover:ring-2 hover:ring-primary/50 cursor-pointer`}
                 title={getTooltipText(day)}
               />
@@ -201,10 +192,6 @@ export function TaskContributionGraph({
         <div className="flex items-center gap-1">
           <div className="w-2.5 h-2.5 rounded-sm bg-yellow-600" />
           <span>跳过</span>
-        </div>
-        <div className="flex items-center gap-1">
-          <div className="w-2.5 h-2.5 rounded-sm bg-surface-light" />
-          <span>未完成</span>
         </div>
         <div className="flex items-center gap-1">
           <div className="w-2.5 h-2.5 rounded-sm bg-surface-light/50" />
