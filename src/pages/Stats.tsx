@@ -2,10 +2,13 @@ import { useEffect, useState, useCallback } from "react";
 import { ChevronLeft } from "lucide-react";
 import { Calendar } from "../components/Calendar";
 import { TaskInstanceCard } from "@/components/TaskInstanceCard";
+import { TaskDetailPopup } from "@/components/TaskDetailPopup";
 import { useUserStore } from "@/store";
 import type { TaskTemplate, TaskInstance } from "@/db/types";
 import { useTaskInstanceGenerator } from "@/hooks/useTaskInstanceGenerator";
+import { useTaskInstanceActions } from "@/hooks/useTasks";
 import { formatLocalDate } from "@/libs/task";
+import { completeTaskInPopup, resetTaskInPopup, incrementTaskCount } from "@/pages/Home/lib";
 
 interface DisplayTaskItem {
   template: TaskTemplate;
@@ -22,7 +25,12 @@ export function Stats() {
   const [tasks, setTasks] = useState<DisplayTaskItem[]>([]);
   const [isLoading, setIsLoading] = useState(false);
 
+  // 任务详情 popup 状态
+  const [selectedTask, setSelectedTask] = useState<{ instance: TaskInstance; template: TaskTemplate } | null>(null);
+  const [isDetailOpen, setIsDetailOpen] = useState(false);
+
   const { user: currentUser } = useUserStore();
+  const { complete, reset } = useTaskInstanceActions();
 
   const { getDisplayTasksForDate } = useTaskInstanceGenerator({
     userId: currentUser?.id,
@@ -64,6 +72,70 @@ export function Stats() {
     : "Select a date";
 
   const isSelectedToday = selectedDate ? isSameDay(selectedDate, new Date()) : false;
+
+  // 处理点击任务卡片
+  const handleTaskClick = useCallback((instance: TaskInstance, template: TaskTemplate) => {
+    setSelectedTask({ instance, template });
+    setIsDetailOpen(true);
+  }, []);
+
+  // 关闭任务详情 popup
+  const handleCloseDetail = useCallback(() => {
+    setIsDetailOpen(false);
+    setTimeout(() => setSelectedTask(null), 300);
+  }, []);
+
+  // 刷新任务列表
+  const refreshTasks = useCallback(async () => {
+    if (selectedDate) {
+      await loadTasksForDate(selectedDate);
+    }
+  }, [selectedDate]);
+
+  // 在 popup 中完成任务
+  const handleCompleteInPopup = useCallback(async () => {
+    if (!selectedTask) return;
+    const { instance, template } = selectedTask;
+    try {
+      await completeTaskInPopup(
+        instance,
+        template,
+        complete,
+        refreshTasks,
+        async () => {}, // noDateTasks refresh
+        handleCloseDetail
+      );
+    } catch (error) {
+      console.error("Failed to complete task:", error);
+    }
+  }, [selectedTask, complete, refreshTasks, handleCloseDetail]);
+
+  // 在 popup 中撤回任务
+  const handleResetInPopup = useCallback(async () => {
+    if (!selectedTask) return;
+    const { instance, template } = selectedTask;
+    try {
+      await resetTaskInPopup(instance, template, reset, refreshTasks, async () => {}, handleCloseDetail);
+    } catch (error) {
+      console.error("Failed to reset task:", error);
+    }
+  }, [selectedTask, reset, refreshTasks, handleCloseDetail]);
+
+  // 在 popup 中增加一次进度（用于 count 类型任务）
+  const handleIncrementCount = useCallback(async () => {
+    if (!selectedTask) return;
+    const { instance, template } = selectedTask;
+    try {
+      const updated = await incrementTaskCount(instance, template, refreshTasks, async () => {});
+
+      // 刷新选中的任务状态
+      if (updated) {
+        setSelectedTask({ instance: updated.instance, template: updated.template! });
+      }
+    } catch (error) {
+      console.error("Failed to increment count:", error);
+    }
+  }, [selectedTask, refreshTasks]);
 
   return (
     <div className="min-h-screen pb-24 bg-background">
@@ -128,8 +200,10 @@ export function Stats() {
                   template={task.template}
                   instance={task.instance}
                   isPreview={task.isPreview}
-                  onClick={() => {
-                    // 预览模式下不可点击，这里只是为了类型要求
+                  onClick={({ instance, template }) => {
+                    if (instance && !task.isPreview) {
+                      handleTaskClick(instance, template);
+                    }
                   }}
                 />
               ))}
@@ -137,6 +211,17 @@ export function Stats() {
           )}
         </div>
       </main>
+
+      {/* 任务详情 Popup */}
+      <TaskDetailPopup
+        isOpen={isDetailOpen}
+        onClose={handleCloseDetail}
+        instance={selectedTask?.instance ?? null}
+        template={selectedTask?.template ?? null}
+        onComplete={handleCompleteInPopup}
+        onReset={handleResetInPopup}
+        onIncrementCount={handleIncrementCount}
+      />
     </div>
   );
 }
