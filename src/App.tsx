@@ -41,7 +41,7 @@ function Layout() {
   }, [user?.id, checkExpiredTasks]);
   
   return (
-    <div className="min-h-screen-safe pt-safe">
+    <div className="min-h-screen-safe pt-safe landscape:pl-56">
       <Outlet />
       <BottomNav />
     </div>
@@ -71,8 +71,12 @@ function SimpleLayout() {
   }, [user?.id, checkExpiredTasks]);
   
   return (
-    <div className="min-h-screen-safe pt-safe">
+    <div className="min-h-screen-safe pt-safe landscape:pl-56">
       <Outlet />
+      {/* 横屏时显示导航栏 */}
+      <div className="hidden landscape:block">
+        <BottomNav />
+      </div>
     </div>
   );
 }
