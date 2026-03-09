@@ -42,6 +42,12 @@ export function formatLocalDate(date: Date | string): string {
 }
 
 /**
+ * 将UTC时间戳或Date转换为本地日期字符串 YYYY-MM-DD（formatLocalDate的别名）
+ * 用于统一生成本地日期键
+ */
+export const formatLocalDateToYYYYMMDD = formatLocalDate;
+
+/**
  * 格式化UTC日期为本地时间字符串 YYYY-MM-DD HH:mm（用于显示）
  */
 export function formatLocalDateTime(date: Date | string): string {

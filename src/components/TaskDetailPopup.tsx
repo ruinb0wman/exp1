@@ -1,6 +1,7 @@
 import { useNavigate } from "react-router";
 import { CheckCircle2, XCircle, Clock, RefreshCw, Calendar, AlignLeft, Pencil } from "lucide-react";
 import { Popup } from "./Popup";
+import { TaskContributionGraph } from "./TaskContributionGraph";
 import type { TaskInstance, TaskTemplate } from "@/db/types";
 import { isExpired, getExpireTimeText } from "@/libs/time";
 import { getTaskProgressPercent } from "@/db/services";
@@ -235,6 +236,11 @@ function TaskDetailContent({
             />
           </div>
         </div>
+      )}
+
+      {/* 任务完成统计图 - 仅对重复任务显示 */}
+      {template.repeatMode !== "none" && (
+        <TaskContributionGraph template={template} userId={instance.userId} weeks={20} />
       )}
 
       {/* 过期提示 */}
