@@ -17,6 +17,7 @@ import { Settings } from "./pages/Settings";
 import { DataImportExport } from "./pages/DataImportExport";
 import { useUserStore } from "./store/userStore";
 import { useExpiredTaskChecker } from "./hooks/useExpiredTaskChecker";
+import { TitleBar } from "./components/TitleBar";
 
 function Layout() {
   // 全局初始化用户
@@ -41,10 +42,13 @@ function Layout() {
   }, [user?.id, checkExpiredTasks]);
   
   return (
-    <div className="min-h-screen-safe pt-safe landscape:pl-56">
-      <Outlet />
-      <BottomNav />
-    </div>
+    <>
+      <TitleBar />
+      <div className="min-h-screen-safe pt-safe landscape:pl-56 mt-8">
+        <Outlet />
+        <BottomNav />
+      </div>
+    </>
   );
 }
 
@@ -71,13 +75,16 @@ function SimpleLayout() {
   }, [user?.id, checkExpiredTasks]);
   
   return (
-    <div className="min-h-screen-safe pt-safe landscape:pl-56">
-      <Outlet />
-      {/* 横屏时显示导航栏 */}
-      <div className="hidden landscape:block">
-        <BottomNav />
+    <>
+      <TitleBar />
+      <div className="min-h-screen-safe pt-safe landscape:pl-56 mt-8">
+        <Outlet />
+        {/* 横屏时显示导航栏 */}
+        <div className="hidden landscape:block">
+          <BottomNav />
+        </div>
       </div>
-    </div>
+    </>
   );
 }
 
