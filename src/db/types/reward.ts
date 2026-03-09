@@ -5,6 +5,8 @@ export type ReplenishmentMode = 'none' | 'daily' | 'weekly' | 'monthly';
 export const REWARD_ICONS = [
   'Gift',
   'Coffee',
+  'Beer',
+  'Cigarette',
   'Gamepad2',
   'ShoppingBag',
   'BookOpen',

@@ -2,6 +2,8 @@ import type { LucideProps } from 'lucide-react';
 import {
   Gift,
   Coffee,
+  Beer,
+  Cigarette,
   Gamepad2,
   ShoppingBag,
   BookOpen,
@@ -32,6 +34,8 @@ import type { RewardIconName, RewardIconColor } from '@/db/types';
 const iconMap: Record<RewardIconName, React.ComponentType<LucideProps>> = {
   Gift,
   Coffee,
+  Beer,
+  Cigarette,
   Gamepad2,
   ShoppingBag,
   BookOpen,
