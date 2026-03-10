@@ -65,6 +65,7 @@ export interface RewardTemplate {
   repeatDaysOfMonth?: number[]; // 月, 1-31, 例如[6,10]表示6号和10号补货
   replenishmentNum?: number; // 每次补货的数量
   replenishmentLimit?: number; // 最大库存限制, 补货不能超过最大库存
+  currentStock?: number; // 当前库存数量（可兑换的数量）
   icon: RewardIconName; // 图标名称
   iconColor?: RewardIconColor; // 图标颜色
   createdAt?: string; // 模板创建时间

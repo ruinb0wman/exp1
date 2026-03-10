@@ -40,7 +40,13 @@ export function Store() {
   const handleRedeem = useCallback(async () => {
     if (!selectedReward || !user) return;
 
-    const { template } = selectedReward;
+    const { template, availableCount } = selectedReward;
+
+    // 检查库存
+    if (availableCount <= 0) {
+      setRedeemError("库存不足");
+      return;
+    }
 
     // 检查积分是否足够
     if (currentPoints < template.pointsCost) {
@@ -49,7 +55,7 @@ export function Store() {
     }
 
     try {
-      // 创建奖励实例
+      // 兑换奖励（带库存检查）
       await redeem(template.id!, user.id, template.validDuration);
 
       // 扣除积分
@@ -64,7 +70,7 @@ export function Store() {
     } catch (err) {
       setRedeemError(err instanceof Error ? err.message : "兑换失败");
     }
-  }, [selectedReward, user, redeem, refresh]);
+  }, [selectedReward, user, redeem, refresh, currentPoints]);
 
   // 格式化有效期显示
   const formatDuration = (seconds: number): string => {
@@ -280,11 +286,17 @@ export function Store() {
             {/* Action Button */}
             <button
               onClick={handleRedeem}
-              disabled={isActionLoading || currentPoints < selectedReward.template.pointsCost}
+              disabled={
+                isActionLoading || 
+                currentPoints < selectedReward.template.pointsCost ||
+                selectedReward.availableCount <= 0
+              }
               className="w-full h-14 bg-primary text-white font-bold text-lg rounded-xl flex items-center justify-center shadow-lg shadow-primary/30 hover:bg-primary-light transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isActionLoading ? (
                 <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin" />
+              ) : selectedReward.availableCount <= 0 ? (
+                "库存不足"
               ) : currentPoints < selectedReward.template.pointsCost ? (
                 "积分不足"
               ) : (

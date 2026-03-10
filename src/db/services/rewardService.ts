@@ -125,6 +125,7 @@ export async function toggleRewardTemplateEnabled(
 
 /**
  * 创建奖励实例（兑换奖励）
+ * 注意：此函数不检查库存，直接使用 createRewardInstanceWithStockCheck
  */
 export async function createRewardInstance(
   instance: Omit<RewardInstance, 'id' | 'createdAt'>
@@ -137,6 +138,55 @@ export async function createRewardInstance(
   };
 
   return db.rewardInstances.add(newInstance);
+}
+
+/**
+ * 兑换奖励（带库存检查）
+ * 检查库存、扣除库存，然后创建奖励实例
+ */
+export async function redeemRewardWithStockCheck(
+  templateId: number,
+  userId: number
+): Promise<number> {
+  const db = getDB();
+
+  return db.transaction('rw', db.rewardTemplates, db.rewardInstances, async () => {
+    const template = await db.rewardTemplates.get(templateId);
+    if (!template) {
+      throw new Error('Reward template not found');
+    }
+
+    if (!template.enabled) {
+      throw new Error('Reward template is disabled');
+    }
+
+    // 检查库存
+    const currentStock = template.currentStock ?? 0;
+    if (currentStock <= 0) {
+      throw new Error('Reward out of stock');
+    }
+
+    // 扣除库存
+    await db.rewardTemplates.update(templateId, {
+      currentStock: currentStock - 1,
+      updatedAt: new Date().toISOString(),
+    });
+
+    // 创建奖励实例
+    const expiresAt = template.validDuration > 0
+      ? new Date(Date.now() + template.validDuration * 1000).toISOString()
+      : undefined;
+
+    const newInstance: Omit<RewardInstance, 'id' | 'createdAt'> = {
+      templateId,
+      userId,
+      status: 'available',
+      expiresAt,
+    };
+
+    const id = await createRewardInstance(newInstance);
+    return id;
+  });
 }
 
 /**
@@ -379,14 +429,12 @@ export async function getUserBackpack(
 
 /**
  * 获取商店的奖励模板（启用的模板，包含库存数量）
+ * 修改：使用 currentStock 而不是实例数量
  */
 export async function getStoreRewardTemplates(
   userId: number
 ): Promise<Array<{ template: RewardTemplate; availableCount: number }>> {
   const db = getDB();
-
-  // 先检查并更新过期状态
-  await checkAndUpdateExpiredRewards(userId);
 
   const templates = await db.rewardTemplates
     .where('userId')
@@ -397,12 +445,8 @@ export async function getStoreRewardTemplates(
   const result: Array<{ template: RewardTemplate; availableCount: number }> = [];
 
   for (const template of templates) {
-    const availableCount = await db.rewardInstances
-      .where('templateId')
-      .equals(template.id!)
-      .and(i => i.status === 'available')
-      .count();
-
+    // 使用 currentStock 作为库存数量（如果没有则默认为0）
+    const availableCount = template.currentStock ?? 0;
     result.push({ template, availableCount });
   }
 
@@ -488,6 +532,7 @@ export async function getTemplatesNeedingReplenishment(
 
 /**
  * 为模板补货
+ * 修改：增加 currentStock 而不是直接创建实例
  */
 export async function replenishRewardTemplate(templateId: number): Promise<number> {
   const db = getDB();
@@ -501,22 +546,18 @@ export async function replenishRewardTemplate(templateId: number): Promise<numbe
     throw new Error('Reward template is disabled');
   }
 
-  // 检查当前库存
-  const currentCount = await db.rewardInstances
-    .where('templateId')
-    .equals(templateId)
-    .and(i => i.status === 'available')
-    .count();
+  // 使用 currentStock 作为当前库存（如果没有则默认为0）
+  const currentStock = template.currentStock ?? 0;
 
   // 检查库存限制
-  if (template.replenishmentLimit !== undefined && currentCount >= template.replenishmentLimit) {
+  if (template.replenishmentLimit !== undefined && currentStock >= template.replenishmentLimit) {
     return 0; // 已达到库存上限，无需补货
   }
 
   // 计算补货数量
   let replenishCount = template.replenishmentNum || 1;
   if (template.replenishmentLimit !== undefined) {
-    const availableSpace = template.replenishmentLimit - currentCount;
+    const availableSpace = template.replenishmentLimit - currentStock;
     replenishCount = Math.min(replenishCount, availableSpace);
   }
 
@@ -524,21 +565,12 @@ export async function replenishRewardTemplate(templateId: number): Promise<numbe
     return 0;
   }
 
-  // 创建奖励实例
-  const expiresAt = template.validDuration > 0
-    ? new Date(Date.now() + template.validDuration * 1000).toISOString()
-    : undefined;
+  // 更新库存数量
+  const newStock = currentStock + replenishCount;
+  await db.rewardTemplates.update(templateId, {
+    currentStock: newStock,
+    updatedAt: new Date().toISOString(),
+  });
 
-  const newInstances: Omit<RewardInstance, 'id' | 'createdAt'>[] = Array.from(
-    { length: replenishCount },
-    () => ({
-      templateId,
-      userId: template.userId,
-      status: 'available' as RewardStatus,
-      expiresAt,
-    })
-  );
-
-  const ids = await createRewardInstances(newInstances);
-  return ids.length;
+  return replenishCount;
 }

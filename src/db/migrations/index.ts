@@ -85,4 +85,32 @@ export function migration(db: DB) {
     pointsHistory: '++id, userId, type, createdAt, [userId+createdAt]',
     pomoSessions: '++id, userId, taskId, mode, status, startedAt'
   });
+
+  // Version 8: 添加 rewardTemplates 的 currentStock 字段
+  db.version(8).stores({
+    taskTemplates: '++id, userId, repeatMode, enabled, *subtasks, [userId+enabled]',
+    taskInstances: '++id, userId, templateId, startAt, status, createdAt, [templateId+startAt]',
+    rewardTemplates: '++id, userId, replenishmentMode, enabled',
+    rewardInstances: '++id, templateId, userId, status, expiresAt',
+    users: '++id, name',
+    pointsHistory: '++id, userId, type, createdAt, [userId+createdAt]',
+    pomoSessions: '++id, userId, taskId, mode, status, startedAt'
+  }).upgrade(async (tx) => {
+    // 初始化 currentStock：将现有 available 状态的实例数量作为初始库存
+    const templates = await tx.table('rewardTemplates').toArray();
+    for (const template of templates) {
+      if (template.currentStock === undefined) {
+        // 计算当前可用的实例数量作为初始库存
+        const availableCount = await tx.table('rewardInstances')
+          .where('templateId')
+          .equals(template.id)
+          .and((i: { status: string }) => i.status === 'available')
+          .count();
+        
+        await tx.table('rewardTemplates').update(template.id, {
+          currentStock: availableCount
+        });
+      }
+    }
+  });
 }

@@ -113,6 +113,15 @@ export function EditReward() {
     // Convert days to seconds for storage
     const validDurationSeconds = hasValidDuration ? validDurationDays * 86400 : 0;
 
+    // 计算初始库存：如果启用了补货模式，初始库存设为 replenishmentNum 或 replenishmentLimit（取较小值）
+    // 仅在创建新奖励时设置，编辑时保留原值
+    let initialStock: number | undefined = undefined;
+    if (!isEditing && restockValues[restockIndex] !== "none") {
+      const limit = hasStockLimit ? replenishmentLimit : undefined;
+      const num = replenishmentNum || 1;
+      initialStock = limit !== undefined ? Math.min(num, limit) : num;
+    }
+
     const rewardData: Omit<RewardTemplate, "id" | "createdAt" | "updatedAt"> = {
       userId: user.id,
       title,
@@ -126,13 +135,16 @@ export function EditReward() {
       repeatDaysOfMonth: restockValues[restockIndex] === "monthly" ? repeatDaysOfMonth : undefined,
       replenishmentNum: restockValues[restockIndex] !== "none" ? replenishmentNum : undefined,
       replenishmentLimit: hasStockLimit ? replenishmentLimit : undefined,
+      currentStock: initialStock,
       icon: selectedIcon,
       iconColor: selectedColor,
     };
 
     try {
       if (isEditing && rewardId) {
-        await update(rewardId, rewardData);
+        // 编辑时排除 currentStock 字段，保留原值
+        const { currentStock: _, ...updateData } = rewardData;
+        await update(rewardId, updateData);
       } else {
         await create(rewardData);
       }
