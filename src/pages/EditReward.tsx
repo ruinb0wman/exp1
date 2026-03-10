@@ -155,7 +155,7 @@ export function EditReward() {
   }
 
   return (
-    <div className="min-h-screen bg-background pb-32">
+    <div className="relative min-h-screen bg-background pb-32">
       <Header title={isEditing ? "Edit Reward" : "Create Reward"} back />
 
       <main className="flex-1 px-4 py-6 space-y-6">
@@ -490,7 +490,7 @@ export function EditReward() {
       </main>
 
       {/* Bottom CTA Button */}
-      <div className="fixed bottom-0 left-0 right-0 p-4 pb-8 bg-gradient-to-t from-background to-transparent">
+      <div className="absolute bottom-0 left-0 right-0 p-4 pb-8 bg-gradient-to-t from-background to-transparent">
         <button
           onClick={handleSubmit}
           disabled={!title.trim() || isSubmitting}
