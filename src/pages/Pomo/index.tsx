@@ -15,6 +15,7 @@ import {
 export function Pomo() {
   const userStore = useUserStore();
   const userId = userStore.user?.id ?? 1;
+  const dayEndTime = userStore.user?.dayEndTime;
 
   const {
     mode,
@@ -35,7 +36,7 @@ export function Pomo() {
     loadSettings,
   } = usePomoStore();
 
-  const { tasks } = useTodayTasks(userId);
+  const { tasks } = useTodayTasks(userId, dayEndTime);
   const [showTaskSelector, setShowTaskSelector] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
 
