@@ -160,17 +160,19 @@ export async function redeemRewardWithStockCheck(
       throw new Error('Reward template is disabled');
     }
 
-    // 检查库存
-    const currentStock = template.currentStock ?? 0;
-    if (currentStock <= 0) {
-      throw new Error('Reward out of stock');
-    }
+    // 检查库存（仅对自动补货的奖品）
+    if (template.replenishmentMode !== 'none') {
+      const currentStock = template.currentStock ?? 0;
+      if (currentStock <= 0) {
+        throw new Error('Reward out of stock');
+      }
 
-    // 扣除库存
-    await db.rewardTemplates.update(templateId, {
-      currentStock: currentStock - 1,
-      updatedAt: new Date().toISOString(),
-    });
+      // 扣除库存
+      await db.rewardTemplates.update(templateId, {
+        currentStock: currentStock - 1,
+        updatedAt: new Date().toISOString(),
+      });
+    }
 
     // 创建奖励实例
     const expiresAt = template.validDuration > 0
@@ -445,8 +447,10 @@ export async function getStoreRewardTemplates(
   const result: Array<{ template: RewardTemplate; availableCount: number }> = [];
 
   for (const template of templates) {
-    // 使用 currentStock 作为库存数量（如果没有则默认为0）
-    const availableCount = template.currentStock ?? 0;
+    // 对不自动补货的奖品，库存为无限；否则使用 currentStock
+    const availableCount = template.replenishmentMode === 'none'
+      ? Infinity
+      : (template.currentStock ?? 0);
     result.push({ template, availableCount });
   }
 

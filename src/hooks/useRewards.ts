@@ -11,7 +11,6 @@ import {
   getAvailableRewardInstances,
   getUserBackpack,
   getRewardStatistics,
-  createRewardInstance,
   useRewardInstance,
   checkAndUpdateExpiredRewards,
   replenishRewardTemplate,

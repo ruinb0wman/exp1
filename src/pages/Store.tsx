@@ -180,7 +180,7 @@ export function Store() {
                       {template.pointsCost} PTS
                     </p>
                   </div>
-                  {availableCount > 0 && (
+                  {template.replenishmentMode !== 'none' && availableCount > 0 && (
                     <p className="text-text-muted text-xs mt-0.5">
                       库存: {availableCount}
                     </p>
@@ -289,13 +289,13 @@ export function Store() {
               disabled={
                 isActionLoading || 
                 currentPoints < selectedReward.template.pointsCost ||
-                selectedReward.availableCount <= 0
+                (selectedReward.template.replenishmentMode !== 'none' && selectedReward.availableCount <= 0)
               }
               className="w-full h-14 bg-primary text-white font-bold text-lg rounded-xl flex items-center justify-center shadow-lg shadow-primary/30 hover:bg-primary-light transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isActionLoading ? (
                 <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin" />
-              ) : selectedReward.availableCount <= 0 ? (
+              ) : selectedReward.template.replenishmentMode !== 'none' && selectedReward.availableCount <= 0 ? (
                 "库存不足"
               ) : currentPoints < selectedReward.template.pointsCost ? (
                 "积分不足"
