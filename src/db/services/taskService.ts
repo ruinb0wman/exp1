@@ -1,6 +1,8 @@
 import { getDB } from '../index';
 import type { TaskTemplate, TaskInstance, TaskStatus, RepeatMode } from '../types';
+
 import { getUserStartOfDay, getUserEndOfDay, getUserCurrentDate, isExpired } from '@/libs/time';
+import { updateUserPoints } from './userService';
 
 // ==================== TaskTemplate CRUD ====================
 
@@ -548,7 +550,7 @@ export async function updateTaskProgress(
 ): Promise<number> {
   const db = getDB();
 
-  return db.transaction('rw', db.taskInstances, db.taskTemplates, async () => {
+  return db.transaction('rw', db.taskInstances, db.taskTemplates, db.pointsHistory, async () => {
     const instance = await db.taskInstances.get(instanceId);
     if (!instance) {
       throw new Error('Task instance not found');
@@ -579,6 +581,16 @@ export async function updateTaskProgress(
     if (shouldComplete) {
       updates.status = 'completed';
       updates.completedAt = new Date().toISOString();
+
+      // 任务完成时自动发放积分奖励
+      if (template.rewardPoints && template.rewardPoints > 0) {
+        await updateUserPoints(
+          instance.userId,
+          template.rewardPoints,
+          'task_reward',
+          instanceId
+        );
+      }
     } else if (shouldReset) {
       updates.status = 'pending';
       updates.completedAt = undefined;

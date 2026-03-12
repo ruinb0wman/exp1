@@ -6,6 +6,7 @@ const state: { db: null | ReturnType<typeof createDB> } = {
   db: null
 };
 
+// using for debugging
 //@ts-ignore
 window.dbstate = state;
 

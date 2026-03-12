@@ -182,35 +182,27 @@ export const usePomoStore = create<PomoState>((set, get) => ({
 
   // 停止计时
   stopTimer: async (completed: boolean) => {
-    const { currentSessionId, totalTime, timeLeft, mode, settings } = get();
+    const { currentSessionId, totalTime, timeLeft, mode, settings, selectedTaskId } = get();
     const userStore = useUserStore.getState();
-    
+
     if (!currentSessionId) return;
 
     const actualDuration = totalTime - timeLeft;
-    
+
     if (completed) {
       await completePomoSession(currentSessionId, actualDuration);
-      
-      // 专注完成奖励积分
+
+      // 专注完成
       if (mode === 'focus') {
         const userId = userStore.user?.id;
-        if (userId) {
-          await userStore.addPoints(
-            5, // 每个番茄5积分
-            'task_reward',
-            currentSessionId
-          );
-        }
-        
+
         // 刷新今日计数
         if (userId) {
           const count = await getTodayCompletedPomoCount(userId);
           set({ todayCount: count });
         }
-        
-        // 更新关联任务的进度
-        const { selectedTaskId } = get();
+
+        // 更新关联任务的进度（任务完成时积分会在 updateTaskProgress 中自动发放）
         if (selectedTaskId) {
           try {
             await addPomoToTaskProgress(selectedTaskId, actualDuration);
@@ -220,7 +212,7 @@ export const usePomoStore = create<PomoState>((set, get) => ({
           }
         }
       }
-      
+
       // 播放完成音效
       if (settings.soundEnabled) {
         playNotificationSound();
