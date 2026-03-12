@@ -55,7 +55,7 @@ export function BackpackItemList({
       <div className="grid grid-cols-5 gap-2">
         {groupedItems.map((grouped) => (
           <button
-            key={grouped.template.id}
+            key={`${grouped.template.id}-${grouped.instances[0]?.createdAt}`}
             onClick={() => handleGroupedItemClick(grouped)}
             className="relative flex flex-col items-center p-2 rounded-xl bg-surface border border-border hover:bg-surface-light active:scale-[0.98] transition-all"
           >
