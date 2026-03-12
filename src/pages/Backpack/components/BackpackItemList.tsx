@@ -1,8 +1,8 @@
 import { Clock, CheckCircle2, ArrowLeft, Package } from "lucide-react";
 import { DynamicIcon } from "@/components/DynamicIcon";
 import { StatusBadge } from "./StatusBadge";
-import { formatDate, getTimeLeft } from "../lib";
-import type { RewardWithTemplate } from "../lib";
+import { formatDate, getTimeLeft, groupRewardsByTemplate } from "../lib";
+import type { RewardWithTemplate, GroupedReward } from "../lib";
 
 interface BackpackItemListProps {
   items: RewardWithTemplate[];
@@ -41,6 +41,56 @@ export function BackpackItemList({
     );
   }
 
+  // 可用标签页使用网格布局（合并相同模板）
+  if (activeTab === "available") {
+    const groupedItems = groupRewardsByTemplate(items);
+
+    const handleGroupedItemClick = (grouped: GroupedReward) => {
+      // 使用第一个可用实例
+      const instance = grouped.instances[0];
+      onItemClick({ instance, template: grouped.template });
+    };
+
+    return (
+      <div className="grid grid-cols-5 gap-2">
+        {groupedItems.map((grouped) => (
+          <button
+            key={grouped.template.id}
+            onClick={() => handleGroupedItemClick(grouped)}
+            className="relative flex flex-col items-center p-2 rounded-xl bg-surface border border-border hover:bg-surface-light active:scale-[0.98] transition-all"
+          >
+            {/* Icon */}
+            <div
+              className="w-12 h-12 rounded-xl flex items-center justify-center shrink-0 mb-2"
+              style={{
+                backgroundColor: `${grouped.template.iconColor ?? "#f56565"}20`,
+              }}
+            >
+              <DynamicIcon
+                name={grouped.template.icon}
+                color={grouped.template.iconColor ?? "#f56565"}
+                className="w-6 h-6"
+              />
+            </div>
+
+            {/* Title */}
+            <p className="text-text-primary text-xs font-medium text-center line-clamp-2 leading-tight">
+              {grouped.template.title}
+            </p>
+
+            {/* Count Badge */}
+            {grouped.count > 1 && (
+              <div className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 bg-primary text-white text-[10px] font-bold rounded-full flex items-center justify-center shadow-sm">
+                {grouped.count}
+              </div>
+            )}
+          </button>
+        ))}
+      </div>
+    );
+  }
+
+  // 已使用和已过期标签页保持原有列表样式
   return (
     <div className="space-y-3">
       {items.map(({ instance, template }) => (

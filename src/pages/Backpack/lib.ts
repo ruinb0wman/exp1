@@ -5,6 +5,13 @@ export interface RewardWithTemplate {
   template: RewardTemplate;
 }
 
+// 合并后的奖励类型（用于可用标签页的网格显示）
+export interface GroupedReward {
+  template: RewardTemplate;
+  instances: RewardInstance[];
+  count: number;
+}
+
 export type TabKey = "available" | "used" | "expired";
 
 export interface Tab {
@@ -63,4 +70,32 @@ export function getTabs(
       count: items.filter((i) => i.instance.status === "expired").length,
     },
   ];
+}
+
+// 按模板和实例特征合并奖励（用于可用标签页的网格显示）
+export function groupRewardsByTemplate(
+  items: RewardWithTemplate[]
+): GroupedReward[] {
+  const groups = new Map<string, GroupedReward>();
+
+  for (const { instance, template } of items) {
+    if (instance.status !== "available") continue;
+
+    // 创建复合键：模板ID + 实例特征（createdAt + expiresAt）
+    const key = `${template.id}-${instance.createdAt}-${instance.expiresAt ?? 'null'}`;
+
+    if (!groups.has(key)) {
+      groups.set(key, {
+        template,
+        instances: [],
+        count: 0,
+      });
+    }
+
+    const group = groups.get(key)!;
+    group.instances.push(instance);
+    group.count++;
+  }
+
+  return Array.from(groups.values());
 }
