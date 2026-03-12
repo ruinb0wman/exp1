@@ -8,9 +8,8 @@ import {
   CheckCircle,
   Loader2,
 } from "lucide-react";
-import { open, save } from "@tauri-apps/plugin-dialog";
-import { readTextFile, writeTextFile } from "@tauri-apps/plugin-fs";
 import { Popup } from "@/components/Popup";
+import { fileSystem } from "@/libs/fileSystem";
 import {
   exportAllData,
   generateExportFilename,
@@ -48,19 +47,14 @@ export function DataImportExport() {
       const exportData = await exportAllData();
       const jsonContent = JSON.stringify(exportData, null, 2);
 
-      // 选择保存路径
-      const filePath = await save({
-        defaultPath: generateExportFilename(),
-        filters: [
-          {
-            name: "JSON",
-            extensions: ["json"],
-          },
-        ],
+      // 保存文件
+      const success = await fileSystem.saveFile({
+        content: jsonContent,
+        filename: generateExportFilename(),
+        mimeType: "application/json",
       });
 
-      if (filePath) {
-        await writeTextFile(filePath, jsonContent);
+      if (success) {
         setExportSuccess(true);
         setTimeout(() => setExportSuccess(false), 3000);
       }
@@ -75,21 +69,15 @@ export function DataImportExport() {
   // 处理文件选择
   const handleFileSelect = useCallback(async () => {
     try {
-      const selected = await open({
+      setIsImporting(true);
+
+      const file = await fileSystem.selectFile({
+        accept: ".json",
         multiple: false,
-        directory: false,
-        filters: [
-          {
-            name: "JSON",
-            extensions: ["json"],
-          },
-        ],
       });
 
-      if (selected && typeof selected === "string") {
-        setIsImporting(true);
-        const content = await readTextFile(selected);
-        const data = JSON.parse(content) as ExportData;
+      if (file) {
+        const data = JSON.parse(file.content) as ExportData;
 
         // 验证数据
         const preview = validateImportData(data);

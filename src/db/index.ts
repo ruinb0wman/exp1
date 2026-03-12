@@ -6,6 +6,9 @@ const state: { db: null | ReturnType<typeof createDB> } = {
   db: null
 };
 
+//@ts-ignore
+window.dbstate = state;
+
 function getDB() {
   if (state.db) {
     return state.db;
