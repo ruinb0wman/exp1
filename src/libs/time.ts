@@ -341,3 +341,25 @@ export function formatDuration(seconds: number): string {
   }
   return `${days} 天`;
 }
+
+/**
+ * 格式化为相对时间（今天/昨天/X天前/MM-DD）
+ * 用于积分历史、任务历史等列表的时间显示
+ * @param dateStr ISO格式日期字符串
+ * @returns 格式化后的相对时间字符串
+ */
+export function formatRelativeDate(dateStr: string): string {
+  const date = new Date(dateStr);
+  const now = new Date();
+  const diffDays = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60 * 24));
+
+  if (diffDays === 0) {
+    return `今天 ${date.getHours().toString().padStart(2, "0")}:${date.getMinutes().toString().padStart(2, "0")}`;
+  } else if (diffDays === 1) {
+    return `昨天 ${date.getHours().toString().padStart(2, "0")}:${date.getMinutes().toString().padStart(2, "0")}`;
+  } else if (diffDays < 7) {
+    return `${diffDays}天前`;
+  } else {
+    return `${date.getMonth() + 1}/${date.getDate()}`;
+  }
+}

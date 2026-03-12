@@ -1,132 +1,10 @@
-import { useState } from "react";
-import { ChevronDown, Loader2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { Header } from "@/components/Header";
 import { useUserStore } from "@/store";
-import { usePointsHistory, type PointsHistoryFilterType } from "@/hooks/usePointsHistory";
-import type { PointsHistory } from "@/db/types";
-import { BookOpen, Gift, RotateCcw, Settings } from "lucide-react";
-
-const filterTabs: { key: PointsHistoryFilterType; label: string }[] = [
-  { key: "all", label: "全部" },
-  { key: "task_reward", label: "任务" },
-  { key: "reward_exchange", label: "消费" },
-];
-
-// 获取类型图标
-function getTypeIcon(type: PointsHistory["type"]) {
-  switch (type) {
-    case "task_reward":
-      return BookOpen;
-    case "task_undo":
-      return RotateCcw;
-    case "reward_exchange":
-      return Gift;
-    case "admin_adjustment":
-      return Settings;
-    default:
-      return BookOpen;
-  }
-}
-
-// 获取类型标签
-function getTypeLabel(type: PointsHistory["type"]) {
-  switch (type) {
-    case "task_reward":
-      return "任务奖励";
-    case "task_undo":
-      return "撤销扣除";
-    case "reward_exchange":
-      return "兑换奖励";
-    case "admin_adjustment":
-      return "系统调整";
-    default:
-      return "";
-  }
-}
-
-// 格式化日期
-function formatDate(dateStr: string): string {
-  const date = new Date(dateStr);
-  const now = new Date();
-  const diffDays = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60 * 24));
-
-  if (diffDays === 0) {
-    return `今天 ${date.getHours().toString().padStart(2, "0")}:${date.getMinutes().toString().padStart(2, "0")}`;
-  } else if (diffDays === 1) {
-    return `昨天 ${date.getHours().toString().padStart(2, "0")}:${date.getMinutes().toString().padStart(2, "0")}`;
-  } else if (diffDays < 7) {
-    return `${diffDays}天前`;
-  } else {
-    return `${date.getMonth() + 1}/${date.getDate()}`;
-  }
-}
-
-// 日期选择器组件
-function DateRangePicker({
-  startDate,
-  endDate,
-  onChange,
-}: {
-  startDate: string;
-  endDate: string;
-  onChange: (start: string, end: string) => void;
-}) {
-  const [isOpen, setIsOpen] = useState(false);
-
-  const formatDisplayDate = (dateStr: string) => {
-    const date = new Date(dateStr);
-    return `${date.getMonth() + 1}/${date.getDate()}`;
-  };
-
-  const handleQuickSelect = (days: number) => {
-    const now = new Date();
-    // 使用UTC时间计算日期范围
-    const endUTC = now.toISOString();
-    const startUTC = new Date(Date.UTC(
-      now.getUTCFullYear(),
-      now.getUTCMonth(),
-      now.getUTCDate() - days,
-      0, 0, 0, 0
-    )).toISOString();
-    onChange(startUTC, endUTC);
-    setIsOpen(false);
-  };
-
-  return (
-    <div className="relative">
-      <button
-        onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-surface border border-border text-text-secondary text-sm hover:bg-surface-light transition-colors"
-      >
-        <span>
-          {formatDisplayDate(startDate)} - {formatDisplayDate(endDate)}
-        </span>
-        <ChevronDown className={`w-4 h-4 transition-transform ${isOpen ? "rotate-180" : ""}`} />
-      </button>
-
-      {isOpen && (
-        <>
-          <div className="fixed inset-0 z-40" onClick={() => setIsOpen(false)} />
-          <div className="absolute top-full right-0 mt-2 w-48 rounded-xl bg-surface border border-border shadow-lg z-50 py-1">
-            {[
-              { label: "最近7天", days: 7 },
-              { label: "最近30天", days: 30 },
-              { label: "最近90天", days: 90 },
-            ].map((item) => (
-              <button
-                key={item.days}
-                onClick={() => handleQuickSelect(item.days)}
-                className="w-full px-4 py-2 text-left text-text-primary hover:bg-surface-light transition-colors text-sm"
-              >
-                {item.label}
-              </button>
-            ))}
-          </div>
-        </>
-      )}
-    </div>
-  );
-}
+import { usePointsHistory } from "@/hooks/usePointsHistory";
+import { formatRelativeDate } from "@/libs/time";
+import { filterTabs, getTypeIcon, getTypeLabel } from "./lib";
+import { DateRangePicker } from "./components/DateRangePicker";
 
 export function PointsHistory() {
   const { user } = useUserStore();
@@ -273,7 +151,7 @@ export function PointsHistory() {
                       {getTypeLabel(item.type)}
                     </p>
                     <p className="text-text-secondary text-sm">
-                      {formatDate(item.createdAt)}
+                      {formatRelativeDate(item.createdAt)}
                     </p>
                   </div>
                   <p
