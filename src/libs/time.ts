@@ -326,3 +326,18 @@ export function getUTCRangeFromLocalDate(localDateStr: string): [string, string]
   const endUTC = new Date(Date.UTC(year, month - 1, day, 23, 59, 59, 999)).toISOString();
   return [startUTC, endUTC];
 }
+
+/**
+ * 格式化持续时间（秒数）为可读字符串
+ * @param seconds 持续时间（秒）
+ * @returns 格式化后的字符串，如 "永久有效"、"3 个月"、"7 天"
+ */
+export function formatDuration(seconds: number): string {
+  if (seconds <= 0) return "永久有效";
+  const days = Math.floor(seconds / 86400);
+  if (days >= 30) {
+    const months = Math.floor(days / 30);
+    return `${months} 个月`;
+  }
+  return `${days} 天`;
+}
