@@ -14,7 +14,7 @@ import {
   useRewardInstance,
   checkAndUpdateExpiredRewards,
   replenishRewardTemplate,
-  redeemRewardWithStockCheck,
+  redeemRewardsWithStockCheck,
 } from '@/db/services';
 
 // ==================== RewardTemplate Hooks ====================
@@ -253,17 +253,23 @@ export function useRewardInstanceActions() {
   /**
    * 兑换奖励（带库存检查）
    * 会自动检查库存、扣除库存并创建奖励实例
+   * @param templateId 奖励模板ID
+   * @param userId 用户ID
+   * @param _validDuration 保留参数以保持兼容性，实际从模板读取
+   * @param quantity 兑换数量，默认为1
+   * @returns 创建的奖励实例ID数组
    */
   const redeem = useCallback(async (
     templateId: number,
     userId: number,
-    _validDuration: number // 保留参数以保持兼容性，实际从模板读取
+    _validDuration: number, // 保留参数以保持兼容性，实际从模板读取
+    quantity: number = 1
   ) => {
     setIsLoading(true);
     setError(null);
     try {
-      const id = await redeemRewardWithStockCheck(templateId, userId);
-      return id;
+      const ids = await redeemRewardsWithStockCheck(templateId, userId, quantity);
+      return ids;
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to redeem reward');
       throw err;

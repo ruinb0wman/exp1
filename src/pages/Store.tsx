@@ -4,6 +4,7 @@ import { Search, Star, Plus, Sparkles, Package, Clock, Pencil } from "lucide-rea
 import { Header } from "@/components/Header";
 import { Popup } from "@/components/Popup";
 import { DynamicIcon } from "@/components/DynamicIcon";
+import { NumberInput } from "@/components/NumberInput";
 import { useUserStore } from "@/store";
 import { useStoreRewards, useRewardInstanceActions } from "@/hooks/useRewards";
 import type { RewardTemplate } from "@/db/types";
@@ -23,6 +24,7 @@ export function Store() {
   const [selectedReward, setSelectedReward] = useState<StoreReward | null>(null);
   const [isPopupOpen, setIsPopupOpen] = useState(false);
   const [redeemError, setRedeemError] = useState<string | null>(null);
+  const [redeemQuantity, setRedeemQuantity] = useState(1);
 
   // 搜索过滤
   const filteredRewards = rewards.filter(({ template }) =>
@@ -33,33 +35,46 @@ export function Store() {
   const handleRewardClick = (reward: StoreReward) => {
     setSelectedReward(reward);
     setRedeemError(null);
+    setRedeemQuantity(1);
     setIsPopupOpen(true);
   };
+
+  // 计算最大可兑换数量
+  const getMaxQuantity = useCallback(() => {
+    if (!selectedReward) return 1;
+    const { template, availableCount } = selectedReward;
+    const maxByPoints = Math.floor(currentPoints / template.pointsCost);
+    const maxByStock = template.replenishmentMode === 'none' ? Infinity : availableCount;
+    return Math.min(maxByPoints, maxByStock, 99); // 最大限制99个
+  }, [selectedReward, currentPoints]);
+
+
 
   // 处理兑换
   const handleRedeem = useCallback(async () => {
     if (!selectedReward || !user) return;
 
     const { template, availableCount } = selectedReward;
+    const totalCost = template.pointsCost * redeemQuantity;
 
     // 检查库存
-    if (availableCount <= 0) {
+    if (template.replenishmentMode !== 'none' && availableCount < redeemQuantity) {
       setRedeemError("库存不足");
       return;
     }
 
     // 检查积分是否足够
-    if (currentPoints < template.pointsCost) {
+    if (currentPoints < totalCost) {
       setRedeemError("积分不足");
       return;
     }
 
     try {
       // 兑换奖励（带库存检查）
-      await redeem(template.id!, user.id, template.validDuration);
+      await redeem(template.id!, user.id, template.validDuration, redeemQuantity);
 
       // 扣除积分
-      await useUserStore.getState().spendPoints(template.pointsCost, "reward_exchange", template.id);
+      await useUserStore.getState().spendPoints(totalCost, "reward_exchange", template.id);
 
       // 刷新商店列表
       await refresh();
@@ -67,10 +82,11 @@ export function Store() {
       // 关闭 popup
       setIsPopupOpen(false);
       setSelectedReward(null);
+      setRedeemQuantity(1);
     } catch (err) {
       setRedeemError(err instanceof Error ? err.message : "兑换失败");
     }
-  }, [selectedReward, user, redeem, refresh, currentPoints]);
+  }, [selectedReward, user, redeem, refresh, currentPoints, redeemQuantity]);
 
   // 格式化有效期显示
   const formatDuration = (seconds: number): string => {
@@ -278,6 +294,26 @@ export function Store() {
               </div>
             )}
 
+            {/* Quantity Selector */}
+            <div className="bg-surface rounded-xl p-4">
+              <div className="flex items-center justify-between mb-3">
+                <span className="text-text-secondary text-sm">兑换数量</span>
+                <NumberInput
+                  value={redeemQuantity}
+                  onChange={setRedeemQuantity}
+                  min={1}
+                  max={getMaxQuantity()}
+                  size="md"
+                />
+              </div>
+              <div className="flex items-center justify-between pt-3 border-t border-border">
+                <span className="text-text-secondary text-sm">总计</span>
+                <span className="text-primary font-bold text-lg">
+                  {(selectedReward.template.pointsCost * redeemQuantity).toLocaleString()} PTS
+                </span>
+              </div>
+            </div>
+
             {/* Error Message */}
             {redeemError && (
               <p className="text-primary text-sm text-center">{redeemError}</p>
@@ -288,19 +324,19 @@ export function Store() {
               onClick={handleRedeem}
               disabled={
                 isActionLoading || 
-                currentPoints < selectedReward.template.pointsCost ||
-                (selectedReward.template.replenishmentMode !== 'none' && selectedReward.availableCount <= 0)
+                currentPoints < selectedReward.template.pointsCost * redeemQuantity ||
+                (selectedReward.template.replenishmentMode !== 'none' && selectedReward.availableCount < redeemQuantity)
               }
               className="w-full h-14 bg-primary text-white font-bold text-lg rounded-xl flex items-center justify-center shadow-lg shadow-primary/30 hover:bg-primary-light transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isActionLoading ? (
                 <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin" />
-              ) : selectedReward.template.replenishmentMode !== 'none' && selectedReward.availableCount <= 0 ? (
+              ) : selectedReward.template.replenishmentMode !== 'none' && selectedReward.availableCount < redeemQuantity ? (
                 "库存不足"
-              ) : currentPoints < selectedReward.template.pointsCost ? (
+              ) : currentPoints < selectedReward.template.pointsCost * redeemQuantity ? (
                 "积分不足"
               ) : (
-                `兑换 - ${selectedReward.template.pointsCost} PTS`
+                `兑换 ${redeemQuantity} 个`
               )}
             </button>
           </div>

@@ -6,6 +6,7 @@ import { IconPicker } from "@/components/IconPicker";
 import { DynamicIcon } from "@/components/DynamicIcon";
 import { MultiSelectGrid } from "@/components/MultiSelectGrid";
 import { Package, Clock, Sparkles } from "lucide-react";
+import { NumberInput } from "@/components/NumberInput";
 import type { RewardTemplate, RewardIconName, RewardIconColor, ReplenishmentMode } from "@/db/types";
 import { REWARD_ICON_COLORS } from "@/db/types";
 import { useRewardTemplate, useRewardTemplateActions } from "@/hooks/useRewards";
@@ -232,28 +233,13 @@ export function EditReward() {
                 Point Cost
               </p>
             </div>
-            <div className="shrink-0">
-              <div className="flex items-center gap-2 text-text-primary">
-                <button
-                  onClick={() => setPointsCost(Math.max(0, pointsCost - 10))}
-                  className="text-lg font-medium leading-normal flex h-8 w-8 items-center justify-center rounded-full bg-surface-light hover:bg-surface-light/80 transition-colors"
-                >
-                  -
-                </button>
-                <input
-                  type="number"
-                  value={pointsCost}
-                  onChange={(e) => setPointsCost(parseInt(e.target.value) || 0)}
-                  className="text-base font-medium leading-normal w-14 p-0 text-center bg-transparent focus:outline-none focus:ring-0 border-none [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
-                />
-                <button
-                  onClick={() => setPointsCost(pointsCost + 10)}
-                  className="text-lg font-medium leading-normal flex h-8 w-8 items-center justify-center rounded-full bg-surface-light hover:bg-surface-light/80 transition-colors"
-                >
-                  +
-                </button>
-              </div>
-            </div>
+            <NumberInput
+              value={pointsCost}
+              onChange={setPointsCost}
+              min={0}
+              step={10}
+              size="lg"
+            />
           </div>
 
           {/* Enabled Toggle */}
@@ -309,28 +295,12 @@ export function EditReward() {
             {hasValidDuration && (
               <div className="flex items-center gap-4 pt-2 border-t border-surface-light">
                 <p className="text-text-secondary text-sm">Valid for</p>
-                <div className="flex items-center gap-2">
-                  <button
-                    onClick={() => setValidDurationDays(Math.max(1, validDurationDays - 1))}
-                    className="text-base font-medium flex h-7 w-7 items-center justify-center rounded-full bg-surface-light hover:bg-surface-light/80 transition-colors"
-                  >
-                    -
-                  </button>
-                  <input
-                    type="number"
-                    min={1}
-                    value={validDurationDays}
-                    onChange={(e) => setValidDurationDays(Math.max(1, parseInt(e.target.value) || 1))}
-                    className="text-base font-medium w-12 p-0 text-center bg-transparent focus:outline-none focus:ring-0 border-none [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
-                  />
-                  <button
-                    onClick={() => setValidDurationDays(validDurationDays + 1)}
-                    className="text-base font-medium flex h-7 w-7 items-center justify-center rounded-full bg-surface-light hover:bg-surface-light/80 transition-colors"
-                  >
-                    +
-                  </button>
-                </div>
-                <p className="text-text-secondary text-sm">days</p>
+                <NumberInput
+                  value={validDurationDays}
+                  onChange={setValidDurationDays}
+                  min={1}
+                  suffix="days"
+                />
               </div>
             )}
 
@@ -357,33 +327,13 @@ export function EditReward() {
             {/* Restock Interval */}
             {restockMode !== "none" && (
               <div className="flex items-center gap-4 pt-2 border-t border-surface-light">
-                <p className="text-text-secondary text-sm">Every</p>
-                <div className="flex items-center gap-2">
-                  <button
-                    onClick={() => setRepeatInterval(Math.max(1, repeatInterval - 1))}
-                    className="text-base font-medium flex h-7 w-7 items-center justify-center rounded-full bg-surface-light hover:bg-surface-light/80 transition-colors"
-                  >
-                    -
-                  </button>
-                  <input
-                    type="number"
-                    min={1}
-                    value={repeatInterval}
-                    onChange={(e) => setRepeatInterval(Math.max(1, parseInt(e.target.value) || 1))}
-                    className="text-base font-medium w-10 p-0 text-center bg-transparent focus:outline-none focus:ring-0 border-none [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
-                  />
-                  <button
-                    onClick={() => setRepeatInterval(repeatInterval + 1)}
-                    className="text-base font-medium flex h-7 w-7 items-center justify-center rounded-full bg-surface-light hover:bg-surface-light/80 transition-colors"
-                  >
-                    +
-                  </button>
-                </div>
-                <p className="text-text-secondary text-sm">
-                  {restockMode === "daily" && "days"}
-                  {restockMode === "weekly" && "weeks"}
-                  {restockMode === "monthly" && "months"}
-                </p>
+                <NumberInput
+                  value={repeatInterval}
+                  onChange={setRepeatInterval}
+                  min={1}
+                  label="Every"
+                  suffix={restockMode === "daily" ? "days" : restockMode === "weekly" ? "weeks" : "months"}
+                />
               </div>
             )}
 
@@ -416,30 +366,12 @@ export function EditReward() {
             {/* Restock Amount */}
             {restockMode !== "none" && (
               <div className="flex items-center gap-4 pt-2 border-t border-surface-light">
-                <div className="flex items-center gap-4 flex-1">
-                  <p className="text-text-secondary text-sm">Restock amount</p>
-                  <div className="flex items-center gap-2">
-                    <button
-                      onClick={() => setReplenishmentNum(Math.max(1, replenishmentNum - 1))}
-                      className="text-base font-medium flex h-7 w-7 items-center justify-center rounded-full bg-surface-light hover:bg-surface-light/80 transition-colors"
-                    >
-                      -
-                    </button>
-                    <input
-                      type="number"
-                      min={1}
-                      value={replenishmentNum}
-                      onChange={(e) => setReplenishmentNum(Math.max(1, parseInt(e.target.value) || 1))}
-                      className="text-base font-medium w-10 p-0 text-center bg-transparent focus:outline-none focus:ring-0 border-none [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
-                    />
-                    <button
-                      onClick={() => setReplenishmentNum(replenishmentNum + 1)}
-                      className="text-base font-medium flex h-7 w-7 items-center justify-center rounded-full bg-surface-light hover:bg-surface-light/80 transition-colors"
-                    >
-                      +
-                    </button>
-                  </div>
-                </div>
+                <NumberInput
+                  value={replenishmentNum}
+                  onChange={setReplenishmentNum}
+                  min={1}
+                  label="Restock amount"
+                />
               </div>
             )}
 
@@ -471,28 +403,12 @@ export function EditReward() {
 
                 {hasStockLimit && (
                   <div className="flex items-center gap-4">
-                    <p className="text-text-secondary text-sm">Max stock</p>
-                    <div className="flex items-center gap-2">
-                      <button
-                        onClick={() => setReplenishmentLimit(Math.max(1, replenishmentLimit - 1))}
-                        className="text-base font-medium flex h-7 w-7 items-center justify-center rounded-full bg-surface-light hover:bg-surface-light/80 transition-colors"
-                      >
-                        -
-                      </button>
-                      <input
-                        type="number"
-                        min={1}
-                        value={replenishmentLimit}
-                        onChange={(e) => setReplenishmentLimit(Math.max(1, parseInt(e.target.value) || 1))}
-                        className="text-base font-medium w-12 p-0 text-center bg-transparent focus:outline-none focus:ring-0 border-none [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
-                      />
-                      <button
-                        onClick={() => setReplenishmentLimit(replenishmentLimit + 1)}
-                        className="text-base font-medium flex h-7 w-7 items-center justify-center rounded-full bg-surface-light hover:bg-surface-light/80 transition-colors"
-                      >
-                        +
-                      </button>
-                    </div>
+                    <NumberInput
+                      value={replenishmentLimit}
+                      onChange={setReplenishmentLimit}
+                      min={1}
+                      label="Max stock"
+                    />
                   </div>
                 )}
               </div>

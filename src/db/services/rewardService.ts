@@ -148,7 +148,28 @@ export async function redeemRewardWithStockCheck(
   templateId: number,
   userId: number
 ): Promise<number> {
+  const ids = await redeemRewardsWithStockCheck(templateId, userId, 1);
+  return ids[0];
+}
+
+/**
+ * 批量兑换奖励（带库存检查）
+ * 检查库存、扣除库存，然后批量创建奖励实例
+ * @param templateId 奖励模板ID
+ * @param userId 用户ID
+ * @param quantity 兑换数量
+ * @returns 创建的奖励实例ID数组
+ */
+export async function redeemRewardsWithStockCheck(
+  templateId: number,
+  userId: number,
+  quantity: number
+): Promise<number[]> {
   const db = getDB();
+
+  if (quantity <= 0) {
+    throw new Error('Quantity must be greater than 0');
+  }
 
   return db.transaction('rw', db.rewardTemplates, db.rewardInstances, async () => {
     const template = await db.rewardTemplates.get(templateId);
@@ -163,31 +184,34 @@ export async function redeemRewardWithStockCheck(
     // 检查库存（仅对自动补货的奖品）
     if (template.replenishmentMode !== 'none') {
       const currentStock = template.currentStock ?? 0;
-      if (currentStock <= 0) {
+      if (currentStock < quantity) {
         throw new Error('Reward out of stock');
       }
 
       // 扣除库存
       await db.rewardTemplates.update(templateId, {
-        currentStock: currentStock - 1,
+        currentStock: currentStock - quantity,
         updatedAt: new Date().toISOString(),
       });
     }
 
-    // 创建奖励实例
+    // 批量创建奖励实例
     const expiresAt = template.validDuration > 0
       ? new Date(Date.now() + template.validDuration * 1000).toISOString()
       : undefined;
 
-    const newInstance: Omit<RewardInstance, 'id' | 'createdAt'> = {
-      templateId,
-      userId,
-      status: 'available',
-      expiresAt,
-    };
+    const newInstances: Omit<RewardInstance, 'id' | 'createdAt'>[] = Array.from(
+      { length: quantity },
+      () => ({
+        templateId,
+        userId,
+        status: 'available',
+        expiresAt,
+      })
+    );
 
-    const id = await createRewardInstance(newInstance);
-    return id;
+    const ids = await createRewardInstances(newInstances);
+    return ids;
   });
 }
 
