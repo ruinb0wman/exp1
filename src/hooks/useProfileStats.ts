@@ -12,56 +12,12 @@ export interface ProfileStats {
   currentStreak: number;
 }
 
-export interface RecentActivity {
-  id: number;
-  title: string;
-  subtitle: string;
-  points: number;
-  type: 'income' | 'expense';
-  createdAt: string;
-}
-
 interface UseProfileStatsReturn {
   stats: ProfileStats;
-  recentActivity: RecentActivity[];
+  recentHistory: PointsHistory[];
   isLoading: boolean;
   error: string | null;
   refresh: () => Promise<void>;
-}
-
-function getActivityTitle(history: PointsHistory, taskTitle?: string, rewardTitle?: string): string {
-  switch (history.type) {
-    case 'task_reward':
-      return taskTitle || '完成任务';
-    case 'task_undo':
-      return taskTitle ? `撤销: ${taskTitle}` : '撤销任务完成';
-    case 'reward_exchange':
-      return rewardTitle ? `兑换: ${rewardTitle}` : '兑换奖励';
-    case 'admin_adjustment':
-      return history.amount > 0 ? '积分调整 (+)' : '积分调整 (-)';
-    default:
-      return '其他操作';
-  }
-}
-
-/**
- * 获取活动时间的相对描述
- * 使用UTC时间进行比较
- */
-function getActivitySubtitle(history: PointsHistory): string {
-  const date = new Date(history.createdAt);
-  const now = new Date();
-  const diffMs = now.getTime() - date.getTime();
-  const diffMins = Math.floor(diffMs / 60000);
-  const diffHours = Math.floor(diffMs / 3600000);
-  const diffDays = Math.floor(diffMs / 86400000);
-
-  if (diffMins < 1) return '刚刚';
-  if (diffMins < 60) return `${diffMins} 分钟前`;
-  if (diffHours < 24) return `${diffHours} 小时前`;
-  if (diffDays < 7) return `${diffDays} 天前`;
-  // 使用本地时间显示日期
-  return date.toLocaleDateString('zh-CN', { month: 'short', day: 'numeric' });
 }
 
 /**
@@ -139,7 +95,7 @@ export function useProfileStats(userId: number | null): UseProfileStatsReturn {
     itemsRedeemed: 0,
     currentStreak: 0,
   });
-  const [recentActivity, setRecentActivity] = useState<RecentActivity[]>([]);
+  const [recentHistory, setRecentHistory] = useState<PointsHistory[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -151,7 +107,7 @@ export function useProfileStats(userId: number | null): UseProfileStatsReturn {
         itemsRedeemed: 0,
         currentStreak: 0,
       });
-      setRecentActivity([]);
+      setRecentHistory([]);
       return;
     }
 
@@ -190,35 +146,7 @@ export function useProfileStats(userId: number | null): UseProfileStatsReturn {
         .sortBy('createdAt');
 
       const recent20 = historyRecords.slice(0, 20);
-
-      // 获取关联的任务和奖励标题
-      const activityItems: RecentActivity[] = await Promise.all(
-        recent20.map(async (history): Promise<RecentActivity> => {
-          let taskTitle: string | undefined;
-          let rewardTitle: string | undefined;
-
-          if (history.relatedTemplateId) {
-            if (history.type === 'task_reward' || history.type === 'task_undo') {
-              const template = await db.taskTemplates.get(history.relatedTemplateId);
-              taskTitle = template?.title;
-            } else if (history.type === 'reward_exchange') {
-              const template = await db.rewardTemplates.get(history.relatedTemplateId);
-              rewardTitle = template?.title;
-            }
-          }
-
-          return {
-            id: history.id!,
-            title: getActivityTitle(history, taskTitle, rewardTitle),
-            subtitle: getActivitySubtitle(history),
-            points: history.amount,
-            type: history.amount > 0 ? 'income' : 'expense',
-            createdAt: history.createdAt,
-          };
-        })
-      );
-
-      setRecentActivity(activityItems);
+      setRecentHistory(recent20);
     } catch (err) {
       setError(err instanceof Error ? err.message : '加载数据失败');
     } finally {
@@ -232,7 +160,7 @@ export function useProfileStats(userId: number | null): UseProfileStatsReturn {
 
   return {
     stats,
-    recentActivity,
+    recentHistory,
     isLoading,
     error,
     refresh: fetchStats,
