@@ -550,7 +550,7 @@ export async function updateTaskProgress(
 ): Promise<number> {
   const db = getDB();
 
-  return db.transaction('rw', db.taskInstances, db.taskTemplates, db.pointsHistory, async () => {
+  return db.transaction('rw', db.taskInstances, db.taskTemplates, db.pointsHistory, db.users, async () => {
     const instance = await db.taskInstances.get(instanceId);
     if (!instance) {
       throw new Error('Task instance not found');
