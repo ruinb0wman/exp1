@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import { Popup } from "@/components/Popup";
 import { fileSystem } from "@/libs/fileSystem";
+import { useUserStore } from "@/store/userStore";
 import {
   exportAllData,
   generateExportFilename,
@@ -23,6 +24,7 @@ import {
 
 export function DataImportExport() {
   const navigate = useNavigate();
+  const { refreshUser } = useUserStore();
 
 
   // 导出状态
@@ -114,6 +116,11 @@ export function DataImportExport() {
         const result = await importData(pendingImportData, strategy);
         setImportResult(result);
         setShowResultDialog(true);
+
+        // 导入成功后刷新用户积分
+        if (result.success && result.userId) {
+          await refreshUser();
+        }
       } catch (error) {
         setImportResult({
           success: false,
@@ -125,7 +132,7 @@ export function DataImportExport() {
         setPendingImportData(null);
       }
     },
-    [pendingImportData]
+    [pendingImportData, refreshUser]
   );
 
   return (

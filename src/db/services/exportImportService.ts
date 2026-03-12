@@ -28,6 +28,7 @@ export type ImportStrategy = 'overwrite' | 'merge';
 export interface ImportResult {
   success: boolean;
   message: string;
+  userId?: number; // 导入的用户ID，用于刷新积分
   stats?: {
     taskTemplates: number;
     taskInstances: number;
@@ -219,6 +220,7 @@ async function importWithOverwrite(data: ExportData['data']): Promise<ImportResu
     return {
       success: true,
       message: '数据导入成功（全量覆盖）',
+      userId: 1, // 覆盖导入后用户ID为1
       stats: {
         taskTemplates: data.taskTemplates.length,
         taskInstances: data.taskInstances.length,
@@ -362,12 +364,17 @@ async function importWithMerge(data: ExportData['data']): Promise<ImportResult> 
 
     const totalImported = Object.values(importedCount).reduce((a, b) => a + b, 0);
 
+    // 获取当前用户ID（合并模式下，用户ID为1或现有用户的ID）
+    const existingUsers = await db.users.toArray();
+    const userId = existingUsers.length > 0 ? existingUsers[0].id : 1;
+
     return {
       success: true,
       message:
         totalImported > 0
           ? `成功合并 ${totalImported} 条数据`
           : '没有需要导入的新数据（所有数据已存在）',
+      userId,
       stats: importedCount,
     };
   } catch (error) {
