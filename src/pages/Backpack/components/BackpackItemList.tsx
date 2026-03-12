@@ -1,4 +1,5 @@
-import { Clock, CheckCircle2, ArrowLeft, Package } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Clock, CheckCircle2, ArrowLeft, Package, ChevronDown } from "lucide-react";
 import { DynamicIcon } from "@/components/DynamicIcon";
 import { StatusBadge } from "./StatusBadge";
 import { formatDate, getTimeLeft, groupRewardsByTemplate } from "../lib";
@@ -11,12 +12,20 @@ interface BackpackItemListProps {
   onItemClick: (item: RewardWithTemplate) => void;
 }
 
+const PAGE_SIZE = 20;
+
 export function BackpackItemList({
   items,
   isLoading,
   activeTab,
   onItemClick,
 }: BackpackItemListProps) {
+  const [displayCount, setDisplayCount] = useState(PAGE_SIZE);
+
+  // 当标签页或数据变化时重置显示数量
+  useEffect(() => {
+    setDisplayCount(PAGE_SIZE);
+  }, [activeTab, items.length]);
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-12">
@@ -91,9 +100,13 @@ export function BackpackItemList({
   }
 
   // 已使用和已过期标签页保持原有列表样式
+  const displayItems = items.slice(0, displayCount);
+  const hasMore = items.length > displayCount;
+  const remainingCount = items.length - displayCount;
+
   return (
     <div className="space-y-3">
-      {items.map(({ instance, template }) => (
+      {displayItems.map(({ instance, template }) => (
         <button
           key={instance.id}
           onClick={() => onItemClick({ instance, template })}
@@ -151,6 +164,19 @@ export function BackpackItemList({
           )}
         </button>
       ))}
+
+      {/* Load More Button */}
+      {hasMore && (
+        <button
+          onClick={() => setDisplayCount(prev => prev + PAGE_SIZE)}
+          className="w-full py-3 flex items-center justify-center gap-2 text-text-secondary hover:text-primary transition-colors border border-dashed border-border rounded-xl hover:border-primary/50"
+        >
+          <ChevronDown className="w-4 h-4" />
+          <span className="text-sm">
+            加载更多 ({remainingCount} 个)
+          </span>
+        </button>
+      )}
     </div>
   );
 }

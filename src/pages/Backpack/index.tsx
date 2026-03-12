@@ -46,9 +46,17 @@ export function Backpack() {
   }, [user?.id, checkExpired, refresh]);
 
   // 过滤物品
-  const filteredItems = items.filter(
-    ({ instance }) => instance.status === activeTab
-  );
+  const filteredItems = items
+    .filter(({ instance }) => instance.status === activeTab)
+    .sort((a, b) => {
+      // 已使用标签页按使用时间从新到旧排序
+      if (activeTab === "used") {
+        const timeA = a.instance.usedAt ? new Date(a.instance.usedAt).getTime() : 0;
+        const timeB = b.instance.usedAt ? new Date(b.instance.usedAt).getTime() : 0;
+        return timeB - timeA;
+      }
+      return 0;
+    });
 
   // 处理物品点击
   const handleItemClick = (item: RewardWithTemplate) => {
