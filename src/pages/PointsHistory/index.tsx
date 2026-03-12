@@ -1,10 +1,64 @@
+import { useEffect, useState } from "react";
 import { Loader2 } from "lucide-react";
 import { Header } from "@/components/Header";
 import { useUserStore } from "@/store";
 import { usePointsHistory } from "@/hooks/usePointsHistory";
 import { formatRelativeDate } from "@/libs/time";
-import { filterTabs, getTypeIcon, getTypeLabel } from "./lib";
+import type { PointsHistory } from "@/db/types";
+import { filterTabs, getTypeIcon, getTypeLabel, getRelatedEntityName } from "./lib";
 import { DateRangePicker } from "./components/DateRangePicker";
+
+// 历史记录项组件
+function HistoryItem({ item }: { item: PointsHistory }) {
+  const [entityName, setEntityName] = useState<string | null>(null);
+  const Icon = getTypeIcon(item.type);
+  const isPositive = item.amount > 0;
+
+  useEffect(() => {
+    let mounted = true;
+    getRelatedEntityName(item).then((name) => {
+      if (mounted) {
+        setEntityName(name);
+      }
+    });
+    return () => {
+      mounted = false;
+    };
+  }, [item]);
+
+  return (
+    <div className="flex items-center gap-4 rounded-xl bg-surface p-4 border border-border">
+      <div
+        className={`w-10 h-10 shrink-0 rounded-lg flex items-center justify-center ${
+          isPositive ? "bg-green-500/20 text-green-500" : "bg-primary/20 text-primary"
+        }`}
+      >
+        <Icon className="w-5 h-5" />
+      </div>
+      <div className="flex-1 min-w-0">
+        <p className="text-text-primary font-medium">
+          {getTypeLabel(item.type)}
+        </p>
+        {entityName && (
+          <p className="text-text-secondary text-sm truncate">
+            {entityName}
+          </p>
+        )}
+        <p className="text-text-muted text-xs">
+          {formatRelativeDate(item.createdAt)}
+        </p>
+      </div>
+      <p
+        className={`font-bold text-lg ${
+          isPositive ? "text-green-500" : "text-primary"
+        }`}
+      >
+        {isPositive ? "+" : ""}
+        {item.amount}
+      </p>
+    </div>
+  );
+}
 
 export function PointsHistory() {
   const { user } = useUserStore();
@@ -130,41 +184,9 @@ export function PointsHistory() {
           </div>
         ) : (
           <div className="flex flex-col gap-2">
-            {list.map((item) => {
-              const Icon = getTypeIcon(item.type);
-              const isPositive = item.amount > 0;
-
-              return (
-                <div
-                  key={item.id}
-                  className="flex items-center gap-4 rounded-xl bg-surface p-4 border border-border"
-                >
-                  <div
-                    className={`w-10 h-10 shrink-0 rounded-lg flex items-center justify-center ${
-                      isPositive ? "bg-green-500/20 text-green-500" : "bg-primary/20 text-primary"
-                    }`}
-                  >
-                    <Icon className="w-5 h-5" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-text-primary font-medium">
-                      {getTypeLabel(item.type)}
-                    </p>
-                    <p className="text-text-secondary text-sm">
-                      {formatRelativeDate(item.createdAt)}
-                    </p>
-                  </div>
-                  <p
-                    className={`font-bold text-lg ${
-                      isPositive ? "text-green-500" : "text-primary"
-                    }`}
-                  >
-                    {isPositive ? "+" : ""}
-                    {item.amount}
-                  </p>
-                </div>
-              );
-            })}
+            {list.map((item) => (
+              <HistoryItem key={item.id} item={item} />
+            ))}
 
             {/* Load More */}
             {hasMore && (

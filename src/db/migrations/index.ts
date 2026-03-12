@@ -113,4 +113,47 @@ export function migration(db: DB) {
       }
     }
   });
+
+  // Version 9: 将 pointsHistory 的 relatedEntityId 重命名为 relatedTemplateId
+  // 并统一存储 templateId 而非 instanceId
+  db.version(9).stores({
+    taskTemplates: '++id, userId, repeatMode, enabled, *subtasks, [userId+enabled]',
+    taskInstances: '++id, userId, templateId, startAt, status, createdAt, [templateId+startAt]',
+    rewardTemplates: '++id, userId, replenishmentMode, enabled',
+    rewardInstances: '++id, templateId, userId, status, expiresAt',
+    users: '++id, name',
+    pointsHistory: '++id, userId, type, createdAt, [userId+createdAt]',
+    pomoSessions: '++id, userId, taskId, mode, status, startedAt'
+  }).upgrade(async (tx) => {
+    const histories = await tx.table('pointsHistory').toArray();
+
+    for (const history of histories) {
+      if (history.relatedEntityId !== undefined) {
+        let templateId: number | null = null;
+
+        // task_reward 和 task_undo: 需要从 instanceId 获取 templateId
+        if (history.type === 'task_reward' || history.type === 'task_undo') {
+          const instance = await tx.table('taskInstances').get(history.relatedEntityId);
+          if (instance) {
+            templateId = instance.templateId;
+          } else {
+            // instance 已被删除，删除此 history 记录
+            await tx.table('pointsHistory').delete(history.id);
+            continue;
+          }
+        } else if (history.type === 'reward_exchange') {
+          // reward_exchange: relatedEntityId 已经是 templateId
+          templateId = history.relatedEntityId;
+        }
+
+        // 更新记录：删除旧字段，添加新字段
+        if (templateId !== null) {
+          await tx.table('pointsHistory').update(history.id, {
+            relatedTemplateId: templateId,
+            relatedEntityId: undefined
+          });
+        }
+      }
+    }
+  });
 }

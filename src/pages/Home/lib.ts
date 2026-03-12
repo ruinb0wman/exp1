@@ -7,6 +7,7 @@ import type { TaskInstance, TaskTemplate } from "@/db/types";
  */
 export async function completeTask(
   instanceId: number,
+  templateId: number,
   rewardPoints: number,
   complete: (instanceId: number) => Promise<void>,
   refreshTasks: () => Promise<void>,
@@ -17,7 +18,7 @@ export async function completeTask(
   await refreshTasks();
   await refreshNoDateTasks();
   // 添加积分
-  await useUserStore.getState().addPoints(rewardPoints, "task_reward", instanceId);
+  await useUserStore.getState().addPoints(rewardPoints, "task_reward", templateId);
 }
 
 /**
@@ -25,6 +26,7 @@ export async function completeTask(
  */
 export async function resetTask(
   instanceId: number,
+  templateId: number,
   rewardPoints: number,
   reset: (instanceId: number) => Promise<void>,
   refreshTasks: () => Promise<void>,
@@ -35,7 +37,7 @@ export async function resetTask(
   await refreshTasks();
   await refreshNoDateTasks();
   // 扣除积分
-  await useUserStore.getState().spendPoints(rewardPoints, "task_reward", instanceId);
+  await useUserStore.getState().spendPoints(rewardPoints, "task_reward", templateId);
 }
 
 /**
@@ -70,7 +72,7 @@ export async function resetTaskInPopup(
   await reset(instance.id!);
   await refreshTasks();
   await refreshNoDateTasks();
-  await useUserStore.getState().spendPoints(template.rewardPoints, "task_reward", instance.id!);
+  await useUserStore.getState().spendPoints(template.rewardPoints, "task_reward", template.id!);
   onSuccess();
 }
 
@@ -93,7 +95,7 @@ export async function incrementTaskCount(
   // 如果进度达到目标，发放积分
   const progressAfter = progressBefore + 1;
   if (progressAfter >= target && progressBefore < target) {
-    await useUserStore.getState().addPoints(template.rewardPoints, "task_reward", instance.id!);
+    await useUserStore.getState().addPoints(template.rewardPoints, "task_reward", template.id!);
   }
 
   // 刷新任务列表

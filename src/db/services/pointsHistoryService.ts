@@ -153,7 +153,7 @@ export async function getPointsStats(
  */
 export async function recordTaskUndo(
   userId: number,
-  taskInstanceId: number,
+  taskTemplateId: number,
   pointsToDeduct: number
 ): Promise<number> {
   const db = getDB();
@@ -162,7 +162,7 @@ export async function recordTaskUndo(
     userId,
     amount: -Math.abs(pointsToDeduct),
     type: 'task_undo',
-    relatedEntityId: taskInstanceId,
+    relatedTemplateId: taskTemplateId,
     createdAt: new Date().toISOString(),
   };
 
@@ -170,28 +170,28 @@ export async function recordTaskUndo(
 }
 
 /**
- * 获取某个任务实例的所有积分记录
+ * 获取某个任务模板的所有积分记录
  */
 export async function getTaskPointsRecords(
   userId: number,
-  taskInstanceId: number
+  taskTemplateId: number
 ): Promise<PointsHistory[]> {
   const db = getDB();
 
   return db.pointsHistory
     .where({ userId })
-    .filter((item) => item.relatedEntityId === taskInstanceId)
+    .filter((item) => item.relatedTemplateId === taskTemplateId)
     .reverse()
     .sortBy('createdAt');
 }
 
 /**
- * 获取某个任务实例的净积分（用于判断能否撤销）
+ * 获取某个任务模板的净积分（用于判断能否撤销）
  */
 export async function getTaskNetPoints(
   userId: number,
-  taskInstanceId: number
+  taskTemplateId: number
 ): Promise<number> {
-  const records = await getTaskPointsRecords(userId, taskInstanceId);
+  const records = await getTaskPointsRecords(userId, taskTemplateId);
   return records.reduce((sum, record) => sum + record.amount, 0);
 }

@@ -197,19 +197,13 @@ export function useProfileStats(userId: number | null): UseProfileStatsReturn {
           let taskTitle: string | undefined;
           let rewardTitle: string | undefined;
 
-          if (history.relatedEntityId) {
+          if (history.relatedTemplateId) {
             if (history.type === 'task_reward' || history.type === 'task_undo') {
-              const instance = await db.taskInstances.get(history.relatedEntityId);
-              if (instance) {
-                const template = await db.taskTemplates.get(instance.templateId);
-                taskTitle = template?.title;
-              }
+              const template = await db.taskTemplates.get(history.relatedTemplateId);
+              taskTitle = template?.title;
             } else if (history.type === 'reward_exchange') {
-              const instance = await db.rewardInstances.get(history.relatedEntityId);
-              if (instance) {
-                const template = await db.rewardTemplates.get(instance.templateId);
-                rewardTitle = template?.title;
-              }
+              const template = await db.rewardTemplates.get(history.relatedTemplateId);
+              rewardTitle = template?.title;
             }
           }
 

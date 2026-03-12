@@ -82,16 +82,17 @@ export function TaskHistory() {
   const handleTaskAction = async (
     action: "complete" | "reset",
     instanceId: number,
+    templateId: number,
     rewardPoints: number
   ) => {
     setIsActionLoading(true);
     try {
       if (action === "complete") {
         await complete(instanceId);
-        await useUserStore.getState().addPoints(rewardPoints, "task_reward", instanceId);
+        await useUserStore.getState().addPoints(rewardPoints, "task_reward", templateId);
       } else {
         await reset(instanceId);
-        await useUserStore.getState().spendPoints(rewardPoints, "task_reward", instanceId);
+        await useUserStore.getState().spendPoints(rewardPoints, "task_reward", templateId);
       }
       // 刷新列表
       await refresh();
@@ -170,13 +171,13 @@ export function TaskHistory() {
         instance={selectedInstance}
         template={selectedTemplate}
         onComplete={() => {
-          if (selectedInstance) {
-            handleTaskAction("complete", selectedInstance.id!, selectedInstance.rewardPoints);
+          if (selectedInstance && selectedTemplate) {
+            handleTaskAction("complete", selectedInstance.id!, selectedTemplate.id!, selectedInstance.rewardPoints);
           }
         }}
         onReset={() => {
-          if (selectedInstance) {
-            handleTaskAction("reset", selectedInstance.id!, selectedInstance.rewardPoints);
+          if (selectedInstance && selectedTemplate) {
+            handleTaskAction("reset", selectedInstance.id!, selectedTemplate.id!, selectedInstance.rewardPoints);
           }
         }}
         isLoading={isActionLoading}

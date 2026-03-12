@@ -17,8 +17,8 @@ interface UserState {
   initUser: () => Promise<void>;
   refreshUser: () => Promise<void>;
   updateUser: (updates: Partial<Omit<User, 'id' | 'createdAt'>>) => Promise<void>;
-  addPoints: (amount: number, type: PointsHistoryType, relatedEntityId?: number) => Promise<void>;
-  spendPoints: (amount: number, type: PointsHistoryType, relatedEntityId?: number) => Promise<void>;
+  addPoints: (amount: number, type: PointsHistoryType, relatedTemplateId?: number) => Promise<void>;
+  spendPoints: (amount: number, type: PointsHistoryType, relatedTemplateId?: number) => Promise<void>;
   // 计算当前积分
   calculatePoints: () => Promise<number>;
 }
@@ -87,7 +87,7 @@ export const useUserStore = create<UserState>((set, get) => ({
     }
   },
 
-  addPoints: async (amount, type, relatedEntityId) => {
+  addPoints: async (amount, type, relatedTemplateId) => {
     const { user } = get();
     if (!user) {
       throw new Error('User not initialized');
@@ -95,7 +95,7 @@ export const useUserStore = create<UserState>((set, get) => ({
 
     set({ isLoading: true, error: null });
     try {
-      await updateUserPointsService(user.id, Math.abs(amount), type, relatedEntityId);
+      await updateUserPointsService(user.id, Math.abs(amount), type, relatedTemplateId);
       // 重新计算积分
       const newPoints = await calculateUserPoints(user.id);
       set({ currentPoints: newPoints, isLoading: false });
@@ -108,7 +108,7 @@ export const useUserStore = create<UserState>((set, get) => ({
     }
   },
 
-  spendPoints: async (amount, type, relatedEntityId) => {
+  spendPoints: async (amount, type, relatedTemplateId) => {
     const { user } = get();
     if (!user) {
       throw new Error('User not initialized');
@@ -116,7 +116,7 @@ export const useUserStore = create<UserState>((set, get) => ({
 
     set({ isLoading: true, error: null });
     try {
-      await updateUserPointsService(user.id, -Math.abs(amount), type, relatedEntityId);
+      await updateUserPointsService(user.id, -Math.abs(amount), type, relatedTemplateId);
       // 重新计算积分
       const newPoints = await calculateUserPoints(user.id);
       set({ currentPoints: newPoints, isLoading: false });
