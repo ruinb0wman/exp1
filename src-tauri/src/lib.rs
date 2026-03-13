@@ -1,9 +1,60 @@
 use tauri::Manager;
+use std::sync::Arc;
+
+mod pomo_timer;
+use pomo_timer::{PomoTimerManager, PomoMode, PomoTimerData};
 
 // Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
 #[tauri::command]
 fn greet(name: &str) -> String {
     format!("Hello, {}! You've been greeted from Rust!", name)
+}
+
+/// 启动番茄钟计时器
+#[tauri::command]
+async fn start_pomo_timer(
+    app: tauri::AppHandle,
+    mode: String,
+    duration: i64,
+    session_id: Option<i64>,
+) -> Result<(), String> {
+    let mode = match mode.as_str() {
+        "focus" => PomoMode::Focus,
+        "shortBreak" => PomoMode::ShortBreak,
+        "longBreak" => PomoMode::LongBreak,
+        _ => return Err("无效的模式".to_string()),
+    };
+
+    let manager = pomo_timer::get_timer_manager(&app);
+    manager.start_timer(app, mode, duration, session_id).await
+}
+
+/// 暂停番茄钟计时器
+#[tauri::command]
+async fn pause_pomo_timer(app: tauri::AppHandle) -> Result<(), String> {
+    let manager = pomo_timer::get_timer_manager(&app);
+    manager.pause_timer(app).await
+}
+
+/// 恢复番茄钟计时器
+#[tauri::command]
+async fn resume_pomo_timer(app: tauri::AppHandle) -> Result<(), String> {
+    let manager = pomo_timer::get_timer_manager(&app);
+    manager.resume_timer(app).await
+}
+
+/// 停止番茄钟计时器
+#[tauri::command]
+async fn stop_pomo_timer(app: tauri::AppHandle) -> Result<PomoTimerData, String> {
+    let manager = pomo_timer::get_timer_manager(&app);
+    Ok(manager.stop_timer().await)
+}
+
+/// 获取番茄钟计时器状态
+#[tauri::command]
+async fn get_pomo_timer_state(app: tauri::AppHandle) -> Result<PomoTimerData, String> {
+    let manager = pomo_timer::get_timer_manager(&app);
+    Ok(manager.get_data().await)
 }
 
 /// 处理单例模式：当第二个实例启动时，聚焦到已存在的窗口
@@ -22,9 +73,20 @@ pub fn run() {
         .plugin(tauri_plugin_notification::init())
         // 单例模式插件：确保只有一个应用实例运行
         .plugin(tauri_plugin_single_instance::init(handle_single_instance))
-        .invoke_handler(tauri::generate_handler![greet])
+        .invoke_handler(tauri::generate_handler![
+            greet,
+            start_pomo_timer,
+            pause_pomo_timer,
+            resume_pomo_timer,
+            stop_pomo_timer,
+            get_pomo_timer_state,
+        ])
         // 只在桌面端设置托盘
         .setup(|app| {
+            // 初始化番茄钟计时器管理器
+            let manager = Arc::new(PomoTimerManager::new());
+            app.manage(manager);
+            
             #[cfg(desktop)]
             setup_tray(app)?;
             Ok(())

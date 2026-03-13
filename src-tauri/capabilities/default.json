@@ -17,5 +17,14 @@
     "notification:allow-request-permission",
     "notification:allow-show",
     "notification:allow-register-listener"
-  ]
+  ],
+  "commands": {
+    "allow": [
+      "start_pomo_timer",
+      "pause_pomo_timer",
+      "resume_pomo_timer",
+      "stop_pomo_timer",
+      "get_pomo_timer_state"
+    ]
+  }
 }
