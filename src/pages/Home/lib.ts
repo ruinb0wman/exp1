@@ -54,7 +54,7 @@ export async function completeTaskInPopup(
   await complete(instance.id!);
   await refreshTasks();
   await refreshNoDateTasks();
-  await useUserStore.getState().addPoints(template.rewardPoints, "task_reward", instance.id!);
+  await useUserStore.getState().addPoints(template.rewardPoints, "task_reward", template.id!);
   onSuccess();
 }
 
