@@ -18,6 +18,7 @@ import { DataImportExport } from "./pages/DataImportExport";
 import { useUserStore } from "./store/userStore";
 import { useExpiredTaskChecker } from "./hooks/useExpiredTaskChecker";
 import { useGlobalPomoTimer } from "./hooks/useGlobalPomoTimer";
+import { useEscHideWindow } from "./hooks/useEscHideWindow";
 import { TitleBar } from "./components/TitleBar";
 
 function Layout() {
@@ -31,6 +32,9 @@ function Layout() {
   
   // 全局番茄钟计时器（确保后台也能计时）
   useGlobalPomoTimer();
+  
+  // ESC 隐藏窗口
+  useEscHideWindow();
   
   useEffect(() => {
     if (!user) {
@@ -67,6 +71,9 @@ function SimpleLayout() {
   
   // 全局番茄钟计时器（确保后台也能计时）
   useGlobalPomoTimer();
+  
+  // ESC 隐藏窗口
+  useEscHideWindow();
   
   useEffect(() => {
     if (!user) {
