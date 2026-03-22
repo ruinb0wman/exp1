@@ -306,6 +306,7 @@ export async function resetTaskInstance(id: number): Promise<number> {
   return db.taskInstances.update(id, {
     status: 'pending',
     completedAt: undefined,
+    completeProgress: 0,
   });
 }
 
