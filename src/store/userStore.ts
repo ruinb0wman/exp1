@@ -95,9 +95,9 @@ export const useUserStore = create<UserState>((set, get) => ({
 
     set({ isLoading: true, error: null });
     try {
-      await updateUserPointsService(user.id, Math.abs(amount), type, relatedTemplateId);
-      // 重新计算积分
-      const newPoints = await calculateUserPoints(user.id);
+      // updateUserPointsService 现在返回新的积分余额
+      const newPoints = await updateUserPointsService(user.id, Math.abs(amount), type, relatedTemplateId);
+      // 直接使用返回的新积分，避免再次查询数据库
       set({ currentPoints: newPoints, isLoading: false });
     } catch (error) {
       set({
@@ -116,9 +116,9 @@ export const useUserStore = create<UserState>((set, get) => ({
 
     set({ isLoading: true, error: null });
     try {
-      await updateUserPointsService(user.id, -Math.abs(amount), type, relatedTemplateId);
-      // 重新计算积分
-      const newPoints = await calculateUserPoints(user.id);
+      // updateUserPointsService 现在返回新的积分余额
+      const newPoints = await updateUserPointsService(user.id, -Math.abs(amount), type, relatedTemplateId);
+      // 直接使用返回的新积分，避免再次查询数据库
       set({ currentPoints: newPoints, isLoading: false });
     } catch (error) {
       set({

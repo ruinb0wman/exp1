@@ -7,7 +7,7 @@ import { filterTabs } from "./lib";
 import { DateRangePicker } from "./components/DateRangePicker";
 
 export function PointsHistory() {
-  const { user } = useUserStore();
+  const { user, currentPoints } = useUserStore();
 
   const {
     list,
@@ -52,7 +52,7 @@ export function PointsHistory() {
             <div>
               <p className="text-text-secondary text-xs mb-1">结余</p>
               <p className="text-text-primary text-xl font-bold">
-                {isLoading ? "-" : stats?.balance ?? 0}
+                {currentPoints}
               </p>
             </div>
           </div>

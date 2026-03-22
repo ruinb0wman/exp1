@@ -50,31 +50,34 @@ export async function updateUser(
 }
 
 /**
- * 更新用户积分 - 只添加积分历史记录，不直接存储 currentPoints
- * 积分通过 calculateUserPoints 函数实时计算
+ * 更新用户积分 - 在事务内添加积分历史记录并计算新积分
+ * @returns 返回更新后的新积分余额
  */
 export async function updateUserPoints(
   userId: number,
   amount: number,
   type: PointsHistoryType,
   relatedTemplateId?: number
-): Promise<void> {
+): Promise<number> {
   const db = getDB();
 
-  await db.transaction('rw', db.users, db.pointsHistory, async () => {
+  return db.transaction('rw', db.users, db.pointsHistory, async () => {
     const user = await db.users.get(userId);
     if (!user) {
       throw new Error('User not found');
     }
 
-    // 计算当前积分，检查是否足够扣除
-    const currentPoints = await calculateUserPoints(userId);
+    // 在事务内查询所有积分记录并计算当前积分
+    const records = await db.pointsHistory.where('userId').equals(userId).toArray();
+    const currentPoints = records.reduce((sum, record) => sum + record.amount, 0);
+    
+    // 检查积分是否足够扣除
     const newPoints = currentPoints + amount;
     if (newPoints < 0) {
       throw new Error('Insufficient points');
     }
 
-    // 只添加积分历史记录，不再更新 user.currentPoints
+    // 添加积分历史记录
     const history: PointsHistory = {
       userId,
       amount,
@@ -83,6 +86,9 @@ export async function updateUserPoints(
       createdAt: new Date().toISOString(),
     };
     await db.pointsHistory.add(history);
+
+    // 返回计算后的新积分（包含刚添加的记录）
+    return newPoints;
   });
 }
 
