@@ -1,4 +1,5 @@
 import type { DB } from "../types";
+import { migrationV10 } from "../sync/migrations";
 
 export function migration(db: DB) {
   // Version 1 (初始版本)
@@ -156,4 +157,7 @@ export function migration(db: DB) {
       }
     }
   });
+
+  // Version 10: 添加同步系统影子表
+  migrationV10(db);
 }

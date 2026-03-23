@@ -1,5 +1,6 @@
 import { useEffect } from "react";
 import { BrowserRouter, Routes, Route, Outlet } from "react-router";
+import { invoke } from "@tauri-apps/api/core";
 import { BottomNav } from "./components/BottomNav";
 import { ConfirmProvider } from "./hooks/useConfirm";
 import { Home } from "./pages/Home";
@@ -20,6 +21,7 @@ import { useExpiredTaskChecker } from "./hooks/useExpiredTaskChecker";
 import { useGlobalPomoTimer } from "./hooks/useGlobalPomoTimer";
 import { useEscHideWindow } from "./hooks/useEscHideWindow";
 import { TitleBar } from "./components/TitleBar";
+import { setDeviceId } from "./db";
 
 function Layout() {
   // 全局初始化用户
@@ -103,6 +105,22 @@ function SimpleLayout() {
 }
 
 function App() {
+  // 初始化平台检测
+  useEffect(() => {
+    const initPlatform = async () => {
+      try {
+        const platform = await invoke<string>("get_platform");
+        // 根据平台设置 deviceId：mobile 平台设为 'mobile'，其他设为 'pc'
+        setDeviceId(platform === "mobile" ? "mobile" : "pc");
+      } catch (error) {
+        console.error("Failed to detect platform:", error);
+        // 默认设为 pc
+        setDeviceId("pc");
+      }
+    };
+    initPlatform();
+  }, []);
+
   return (
     <ConfirmProvider>
       <BrowserRouter>

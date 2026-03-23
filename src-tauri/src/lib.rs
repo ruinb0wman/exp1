@@ -2,7 +2,9 @@ use tauri::Manager;
 use std::sync::Arc;
 
 mod pomo_timer;
+mod sync;
 use pomo_timer::{PomoTimerManager, PomoMode, PomoTimerData};
+use sync::{start_sync_server, stop_sync_server, get_server_status, set_pc_sync_data, get_merged_sync_data, clear_sync_session};
 
 // Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
 #[tauri::command]
@@ -57,7 +59,21 @@ async fn get_pomo_timer_state(app: tauri::AppHandle) -> Result<PomoTimerData, St
     Ok(manager.get_data().await)
 }
 
-/// 处理单例模式：当第二个实例启动时，聚焦到已存在的窗口
+/// 获取当前平台类型
+#[tauri::command]
+fn get_platform() -> &'static str {
+    #[cfg(desktop)]
+    {
+        "desktop"
+    }
+    #[cfg(mobile)]
+    {
+        "mobile"
+    }
+}
+
+/// 处理单例模式：当第二个实例启动时，聚焦到已存在的窗口（仅桌面端）
+#[cfg(desktop)]
 fn handle_single_instance(app: &tauri::AppHandle, _args: Vec<String>, _cwd: String) {
     if let Some(window) = app.get_webview_window("main") {
         let _ = window.show();
@@ -67,12 +83,18 @@ fn handle_single_instance(app: &tauri::AppHandle, _args: Vec<String>, _cwd: Stri
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
-    tauri::Builder::default()
+    let mut builder = tauri::Builder::default()
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_fs::init())
-        .plugin(tauri_plugin_notification::init())
-        // 单例模式插件：确保只有一个应用实例运行
-        .plugin(tauri_plugin_single_instance::init(handle_single_instance))
+        .plugin(tauri_plugin_notification::init());
+
+        // 单例模式插件：只在桌面端启用
+    #[cfg(desktop)]
+    {
+        builder = builder.plugin(tauri_plugin_single_instance::init(handle_single_instance));
+    }
+
+    builder
         .invoke_handler(tauri::generate_handler![
             greet,
             start_pomo_timer,
@@ -80,6 +102,13 @@ pub fn run() {
             resume_pomo_timer,
             stop_pomo_timer,
             get_pomo_timer_state,
+            start_sync_server,
+            stop_sync_server,
+            get_server_status,
+            get_platform,
+            set_pc_sync_data,
+            get_merged_sync_data,
+            clear_sync_session,
         ])
         // 只在桌面端设置托盘
         .setup(|app| {
