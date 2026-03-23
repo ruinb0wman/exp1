@@ -62,7 +62,7 @@ export function QRScanner({ onScan, onCancel, isOpen }: QRScannerProps) {
       
       // 如果有多个相机，优先选择后置相机
       if (devices && devices.length > 0) {
-        const backCamera = devices.find(d => 
+        const backCamera = devices.find((d: { id: string; label: string }) => 
           d.label.toLowerCase().includes('back') || 
           d.label.toLowerCase().includes('rear') ||
           d.label.toLowerCase().includes('后置')
@@ -90,7 +90,7 @@ export function QRScanner({ onScan, onCancel, isOpen }: QRScannerProps) {
           if (scanner.isScanning) {
             scanner.stop().then(() => {
               onScan(decodedText);
-            }).catch((err) => {
+            }).catch((err: Error) => {
               console.error('Error stopping scanner after scan:', err);
               onScan(decodedText);
             });
@@ -133,7 +133,7 @@ export function QRScanner({ onScan, onCancel, isOpen }: QRScannerProps) {
   useEffect(() => {
     if (!isOpen) {
       if (scannerRef.current && scannerRef.current.isScanning) {
-        scannerRef.current.stop().catch((err) => {
+        scannerRef.current.stop().catch((err: Error) => {
           // 忽略 "scanner is not running" 错误
           if (!err.message?.includes('not running')) {
             console.error('Error stopping scanner:', err);
@@ -151,7 +151,7 @@ export function QRScanner({ onScan, onCancel, isOpen }: QRScannerProps) {
     return () => {
       clearTimeout(timer);
       if (scannerRef.current && scannerRef.current.isScanning) {
-        scannerRef.current.stop().catch((err) => {
+        scannerRef.current.stop().catch((err: Error) => {
           // 忽略 "scanner is not running" 错误
           if (!err.message?.includes('not running')) {
             console.error('Error stopping scanner:', err);

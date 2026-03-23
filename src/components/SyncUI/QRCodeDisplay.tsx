@@ -30,11 +30,11 @@ export function QRCodeDisplay({
       },
       errorCorrectionLevel: 'H',
     })
-      .then(url => {
+      .then((url: string) => {
         setDataUrl(url);
         setError('');
       })
-      .catch(err => {
+      .catch((err: Error) => {
         console.error('QR code generation failed:', err);
         setError('生成二维码失败');
       });

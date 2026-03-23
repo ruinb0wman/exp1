@@ -65,7 +65,7 @@ export const useUserStore = create<UserState>((set, get) => ({
     }
   },
 
-  updateUser: async (updates) => {
+  updateUser: async (updates: Partial<Omit<User, 'id' | 'createdAt'>>) => {
     const { user } = get();
     if (!user) {
       throw new Error('User not initialized');
@@ -87,7 +87,7 @@ export const useUserStore = create<UserState>((set, get) => ({
     }
   },
 
-  addPoints: async (amount, type, relatedTemplateId) => {
+  addPoints: async (amount: number, type: PointsHistoryType, relatedTemplateId?: number) => {
     const { user } = get();
     if (!user) {
       throw new Error('User not initialized');
@@ -108,7 +108,7 @@ export const useUserStore = create<UserState>((set, get) => ({
     }
   },
 
-  spendPoints: async (amount, type, relatedTemplateId) => {
+  spendPoints: async (amount: number, type: PointsHistoryType, relatedTemplateId?: number) => {
     const { user } = get();
     if (!user) {
       throw new Error('User not initialized');

@@ -1,5 +1,5 @@
 import { usePomoStore } from '@/store/pomoStore';
-import { POMO_MODE_CONFIG } from '@/db/types/pomo';
+import { POMO_MODE_CONFIG, type PomoMode } from '@/db/types/pomo';
 
 /**
  * 番茄钟计时器显示组件
@@ -18,7 +18,7 @@ export function PomoTimer() {
 
   // 计算进度百分比
   const progress = ((totalTime - timeLeft) / totalTime) * 100;
-  const config = POMO_MODE_CONFIG[mode];
+  const config = POMO_MODE_CONFIG[mode as PomoMode];
 
   // 圆形进度条参数
   const size = 280;
