@@ -7,24 +7,30 @@ AI coding assistant guidelines for this Tauri v2 + React 19 + TypeScript project
 - **Frontend**: React 19 + Vite + Tailwind CSS v4 + Zustand
 - **Backend**: Rust (Tauri v2)
 - **Database**: Dexie.js (IndexedDB wrapper)
-- **Package Manager**: Bun
+- **Package Manager**: pnpm
 - **TypeScript**: Strict mode enabled
 
 ## Build Commands
 
 ```bash
 # Development
-bun run dev              # Frontend only
-bun run dev:pc           # Desktop (Tauri)
-bun run dev:android      # Android (with host IP)
+pnpm run dev              # Frontend only
+pnpm run dev:pc           # Desktop (Tauri)
+pnpm run dev:android      # Android (with host IP)
 
 # Build
-bun run build            # Frontend production build
-bun run build:pc         # Desktop production build
-bun run build:android    # Android production build
+pnpm run build            # Frontend production build
+pnpm run build:pc         # Desktop production build
+pnpm run build:android    # Android production build
 
 # Type Checking
-bunx tsc --noEmit        # TypeScript check
+pnpm run build            # Runs tsc && vite build
+pnpmx tsc --noEmit        # TypeScript check only
+
+# Testing
+pnpmx vitest              # Run all tests
+pnpmx vitest [pattern]    # Run tests matching pattern
+pnpmx vitest --reporter=verbose  # Verbose output
 
 # Rust (in src-tauri/)
 cd src-tauri && cargo check
@@ -131,13 +137,16 @@ src/
 │   ├── types/      # TypeScript types
 │   ├── services/   # DB operations
 │   └── migrations/ # Schema migrations
+├── services/       # Business logic (sync, etc.)
 ├── libs/           # Utility functions
 └── index.css       # Global styles + Tailwind
 
 src-tauri/
 ├── src/
 │   ├── main.rs     # Entry point
-│   └── lib.rs      # Commands + setup
+│   ├── lib.rs      # Commands + setup
+│   ├── pomo_timer.rs
+│   └── sync/
 └── Cargo.toml
 ```
 
@@ -147,4 +156,4 @@ src-tauri/
 - **Path alias** - always use `@/` not relative `../`
 - **UTC timestamps** - store as ISO strings, convert for display only
 - **Database** - Dexie.js with transactions for consistency
-- **No tests currently** - add Vitest for frontend if needed
+- **Tests** - Vitest with jsdom environment, located alongside source files

@@ -1,4 +1,4 @@
-package com.ruinb0w.hello_tauri
+package com.ruinb0w.exp1
 
 import android.os.Bundle
 import androidx.activity.enableEdgeToEdge
