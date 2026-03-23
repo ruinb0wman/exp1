@@ -22,7 +22,7 @@ export function PomoHeader({
   onOpenSettings,
 }: PomoHeaderProps) {
   return (
-    <header className="px-4 pt-12 pb-4 flex items-center justify-between">
+    <header className="px-4 pb-4 flex items-center justify-between">
       <div className="flex items-center gap-2">
         <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
           <Timer className="w-5 h-5 text-primary" />

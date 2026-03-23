@@ -80,7 +80,7 @@ export function Settings() {
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="bg-background">
       <header className="flex items-center p-4 pb-2 sticky top-0 bg-background z-10">
         <button
           onClick={() => navigate(-1)}
@@ -93,7 +93,7 @@ export function Settings() {
         </h1>
       </header>
 
-      <div className="p-4 pt-6">
+      <div className="p-4">
         <div className="mb-6">
           <h2 className="text-text-secondary text-sm font-medium px-2 mb-3">
             时间设置

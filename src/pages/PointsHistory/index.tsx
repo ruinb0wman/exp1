@@ -29,7 +29,7 @@ export function PointsHistory() {
   });
 
   return (
-    <div className="min-h-screen-safe pt-safe bg-background">
+    <div className="bg-background">
       {/* Header */}
       <Header title="积分明细" back />
 

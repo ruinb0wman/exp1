@@ -26,12 +26,19 @@
 html {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  background-color: #1b1b1f;
 }
 
 body {
   min-height: 100dvh;
   background-color: #1b1b1f;
   color: #ffffff;
+}
+
+/* Ensure root element has correct background for status bar transparency */
+#root {
+  background-color: #1b1b1f;
+  min-height: 100dvh;
 }
 
 /* Custom checkbox styles */

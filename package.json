@@ -4,10 +4,9 @@
   "version": "0.1.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
-    "dev:pc": "VITE_DEV_PORT=1420 tauri dev",
-    "dev:android": "VITE_DEV_PORT=1422 tauri android dev --host 192.168.1.5",
-    "dev:android-quick": "TAURI_DEV_HOST=192.168.1.5 VITE_DEV_PORT=1422 vite --host 0.0.0.0",
+    "dev": "vite --host --port 1420",
+    "dev:pc": "tauri dev --no-dev-server",
+    "dev:android": "tauri android dev --host 192.168.1.5 --no-dev-server",
     "build": "tsc && vite build",
     "build:pc": "tauri build",
     "build:android": "tauri android build",

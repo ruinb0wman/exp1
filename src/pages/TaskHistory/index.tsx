@@ -110,7 +110,7 @@ export function TaskHistory() {
   const selectedTemplate = selectedTask?.template ?? null;
 
   return (
-    <div className="min-h-screen-safe pt-safe bg-background flex flex-col">
+    <div className="bg-background flex flex-col">
       {/* Header */}
       <Header title="任务历史" back />
 

@@ -116,9 +116,9 @@ export function Home() {
   const isLoading = isUserLoading || isTasksLoading || isNoDateTasksLoading || isGenerating;
 
   return (
-    <div className="min-h-screen pb-24 bg-background">
+    <div className="pb-24 bg-background">
       {/* Header */}
-      <header className="px-4 pt-6 pb-4">
+      <header className="px-4 pb-4">
         <HomeHeader user={user} currentPoints={currentPoints} />
         <Progress completedCount={completedCount} totalCount={totalCount} />
       </header>

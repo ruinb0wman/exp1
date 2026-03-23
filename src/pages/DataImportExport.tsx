@@ -136,7 +136,7 @@ export function DataImportExport() {
   );
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="bg-background">
       {/* Header */}
       <header className="flex items-center p-4 pb-2 sticky top-0 bg-background z-10">
         <button
@@ -151,7 +151,7 @@ export function DataImportExport() {
       </header>
 
       {/* Content */}
-      <div className="p-4 pt-6">
+      <div className="p-4">
         {/* 导出卡片 */}
         <div className="rounded-xl bg-surface p-5 border border-border mb-4">
           <div className="flex items-start gap-4">
