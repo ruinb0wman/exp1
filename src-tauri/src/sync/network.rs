@@ -1,5 +1,6 @@
 //! 网络工具函数
 
+use base64::Engine;
 use std::net::{IpAddr, Ipv4Addr, SocketAddr, TcpListener};
 
 /// 获取本地局域网 IP 地址
@@ -157,56 +158,12 @@ pub fn generate_qr_data(ip: &str, port: u16) -> Result<String, String> {
         .map_err(|e| format!("Failed to finish compression: {}", e))?;
 
     // base64 编码
-    Ok(base64::encode(compressed))
-}
-
-/// 解析 QR 码数据
-pub fn parse_qr_data(data: &str) -> Result<QRPayload, String> {
-    use flate2::read::GzDecoder;
-    use std::io::Read;
-
-    // base64 解码
-    let compressed = base64::decode(data).map_err(|e| format!("Failed to decode base64: {}", e))?;
-
-    // gzip 解压
-    let mut decoder = GzDecoder::new(&compressed[..]);
-    let mut json_str = String::new();
-    decoder
-        .read_to_string(&mut json_str)
-        .map_err(|e| format!("Failed to decompress: {}", e))?;
-
-    // JSON 解析
-    let payload: QRPayload =
-        serde_json::from_str(&json_str).map_err(|e| format!("Failed to parse JSON: {}", e))?;
-
-    Ok(payload)
-}
-
-/// QR 码数据负载
-#[derive(Debug, Clone, serde::Deserialize, serde::Serialize)]
-pub struct QRPayload {
-    pub v: i32,
-    pub ip: String,
-    pub port: u16,
-    pub ts: i64,
+    Ok(base64::engine::general_purpose::STANDARD.encode(compressed))
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-
-    #[test]
-    fn test_generate_and_parse_qr_data() {
-        let ip = "192.168.1.100";
-        let port = 8765u16;
-
-        let encoded = generate_qr_data(ip, port).unwrap();
-        let decoded = parse_qr_data(&encoded).unwrap();
-
-        assert_eq!(decoded.v, 1);
-        assert_eq!(decoded.ip, ip);
-        assert_eq!(decoded.port, port);
-    }
 
     #[test]
     fn test_find_available_port() {

@@ -1,5 +1,6 @@
 //! QR 码生成
 
+use base64::Engine;
 use image::{ImageBuffer, Luma};
 use qrcode::QrCode;
 
@@ -25,18 +26,8 @@ pub fn generate_qr_code(data: &str, size: u32) -> Result<String, String> {
     }
 
     // Base64 编码
-    let base64 = base64::encode(&png_data);
+    let base64 = base64::engine::general_purpose::STANDARD.encode(&png_data);
     Ok(format!("data:image/png;base64,{}", base64))
-}
-
-/// 生成同步服务器 QR 码
-///
-/// 自动获取 IP 和端口，生成完整的 QR 码数据
-pub fn generate_sync_qr_code(ip: &str, port: u16, size: u32) -> Result<String, String> {
-    use crate::sync::network::generate_qr_data;
-
-    let qr_data = generate_qr_data(ip, port)?;
-    generate_qr_code(&qr_data, size)
 }
 
 #[cfg(test)]

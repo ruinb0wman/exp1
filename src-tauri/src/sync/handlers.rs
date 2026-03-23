@@ -18,7 +18,6 @@ use crate::sync::{
 
 /// 应用状态
 pub struct AppState {
-    pub device_id: DeviceId,
     pub sessions: Mutex<Vec<SyncSession>>,
     /// 存储手机上传的数据
     pub mobile_data: RwLock<std::collections::HashMap<String, SyncData>>,
@@ -35,7 +34,6 @@ pub struct AppState {
 impl AppState {
     pub fn new() -> Self {
         Self {
-            device_id: DeviceId::Pc,
             sessions: Mutex::new(Vec::new()),
             mobile_data: RwLock::new(std::collections::HashMap::new()),
             pc_data_raw: RwLock::new(std::collections::HashMap::new()),
@@ -384,21 +382,4 @@ fn decompress_gzip(data: &[u8]) -> Result<Vec<u8>, String> {
     Ok(result)
 }
 
-/// 压缩 gzip 数据
-fn compress_gzip<T: serde::Serialize>(data: &T) -> Result<Vec<u8>, String> {
-    use flate2::write::GzEncoder;
-    use flate2::Compression;
-    use std::io::Write;
 
-    let json = serde_json::to_vec(data)
-        .map_err(|e| format!("Serialization failed: {}", e))?;
-
-    let mut encoder = GzEncoder::new(Vec::new(), Compression::default());
-    encoder
-        .write_all(&json)
-        .map_err(|e| format!("Compression failed: {}", e))?;
-
-    encoder
-        .finish()
-        .map_err(|e| format!("Compression finish failed: {}", e))
-}

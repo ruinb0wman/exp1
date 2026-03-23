@@ -61,20 +61,6 @@ pub struct SyncMetadata {
     pub is_deleted: bool,
 }
 
-/// 同步快照
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct SyncSnapshot {
-    pub id: Option<i64>,
-    pub session_id: String,
-    pub table: SyncTable,
-    pub sync_id: String,
-    pub version: i32,
-    pub data_hash: String,
-    pub synced_at: DateTime<Utc>,
-    pub device: DeviceId,
-}
-
 /// 同步会话
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -187,46 +173,11 @@ pub struct FieldConflict {
     pub remote_value: Option<serde_json::Value>,
 }
 
-/// 冲突解决请求
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct ResolveRequest {
-    pub session_id: String,
-    pub resolutions: Vec<ConflictResolution>,
-}
-
-/// 单个冲突解决
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct ConflictResolution {
-    pub table: SyncTable,
-    pub sync_id: String,
-    pub field: String,
-    pub choice: ResolutionChoice,
-}
-
-/// 解决选择
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub enum ResolutionChoice {
-    Local,
-    Remote,
-}
-
 /// 下载数据请求
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct DownloadRequest {
     pub session_id: String,
-}
-
-/// 合并请求（前端提供本地数据进行合并）
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct MergeRequest {
-    pub session_id: String,
-    pub base_data: SyncData,
-    pub local_data: SyncData,
 }
 
 /// 服务器状态
@@ -237,14 +188,6 @@ pub struct ServerStatus {
     pub port: Option<u16>,
     pub ip: Option<String>,
     pub qr_code: Option<String>,
-}
-
-/// 合并结果
-#[derive(Debug, Clone)]
-pub struct MergeResult {
-    pub success: bool,
-    pub merged_data: Option<SyncData>,
-    pub conflicts: Vec<FieldConflict>,
 }
 
 /// 完成同步请求
