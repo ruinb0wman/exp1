@@ -1,9 +1,32 @@
+import { useEffect, useState } from "react";
+import { invoke } from "@tauri-apps/api/core";
+
 /**
  * PC端标题栏组件
  * - 使用 data-tauri-drag-region 实现窗口拖动
  * - 无系统控制按钮（缩小/放大/关闭）
+ * - 仅在桌面端显示
  */
 export function TitleBar() {
+  const [isDesktop, setIsDesktop] = useState(true);
+
+  useEffect(() => {
+    const checkPlatform = async () => {
+      try {
+        const platform = await invoke<string>("get_platform");
+        setIsDesktop(platform !== "mobile");
+      } catch (error) {
+        console.error("Failed to detect platform:", error);
+        setIsDesktop(true);
+      }
+    };
+    checkPlatform();
+  }, []);
+
+  if (!isDesktop) {
+    return null;
+  }
+
   return (
     <div
       data-tauri-drag-region
