@@ -46,6 +46,7 @@ android {
             }
         }
         getByName("release") {
+            manifestPlaceholders["usesCleartextTraffic"] = "true"
             isMinifyEnabled = true
             signingConfig = signingConfigs.getByName("release")
             proguardFiles(
