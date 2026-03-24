@@ -88,6 +88,12 @@ pub fn run() {
         .plugin(tauri_plugin_fs::init())
         .plugin(tauri_plugin_notification::init());
 
+    // 只在桌面端启用全局快捷键插件
+    #[cfg(desktop)]
+    {
+        builder = builder.plugin(tauri_plugin_global_shortcut::Builder::new().build());
+    }
+
         // 单例模式插件：只在桌面端启用
     #[cfg(desktop)]
     {
@@ -110,14 +116,17 @@ pub fn run() {
             get_merged_sync_data,
             clear_sync_session,
         ])
-        // 只在桌面端设置托盘
+        // 只在桌面端设置托盘和DevTools快捷键
         .setup(|app| {
             // 初始化番茄钟计时器管理器
             let manager = Arc::new(PomoTimerManager::new());
             app.manage(manager);
             
             #[cfg(desktop)]
-            setup_tray(app)?;
+            {
+                setup_tray(app)?;
+                setup_devtools_shortcut(app)?;
+            }
             Ok(())
         })
         // 只在桌面端阻止窗口关闭
@@ -177,5 +186,30 @@ fn setup_tray(app: &mut tauri::App) -> Result<(), Box<dyn std::error::Error>> {
         })
         .build(app)?;
 
+    Ok(())
+}
+
+/// 设置DevTools快捷键（仅桌面端）
+#[cfg(desktop)]
+fn setup_devtools_shortcut(app: &mut tauri::App) -> Result<(), Box<dyn std::error::Error>> {
+    use tauri_plugin_global_shortcut::{GlobalShortcutExt, Shortcut, Code, Modifiers};
+    
+    let app_handle = app.handle().clone();
+    
+    // 定义快捷键: Ctrl+Shift+I
+    let shortcut = Shortcut::new(Some(Modifiers::CONTROL | Modifiers::SHIFT), Code::KeyI);
+    
+    // 注册快捷键
+    app.global_shortcut().on_shortcut(shortcut, move |_app, _shortcut, _event| {
+        if let Some(window) = app_handle.get_webview_window("main") {
+            // 切换DevTools状态
+            if window.is_devtools_open() {
+                let _ = window.close_devtools();
+            } else {
+                let _ = window.open_devtools();
+            }
+        }
+    })?;
+    
     Ok(())
 }
