@@ -51,7 +51,7 @@ function getDB() {
 export { getDB };
 
 const createDB = () => {
-  const db = new Dexie('exp-v3') as DB;
+  const db = new Dexie('exp-v4') as DB;
   migration(db);
 
   // 注册同步中间件
