@@ -212,4 +212,20 @@ export function migration(db: DB) {
       }
     }
   });
+
+  // Version 13: 将 pointsHistory 的 relatedTemplateId 改为 relatedInstanceId
+  // 清空历史数据，因为关联关系从 template 改为 instance
+  db.version(13).stores({
+    taskTemplates: '++id, userId, repeatMode, enabled, *subtasks, [userId+enabled]',
+    taskInstances: '++id, userId, templateId, startAt, status, createdAt, [templateId+startAt]',
+    rewardTemplates: '++id, userId, replenishmentMode, enabled',
+    rewardInstances: '++id, templateId, userId, status, expiresAt',
+    users: '++id, name',
+    pointsHistory: '++id, userId, type, createdAt, [userId+createdAt]',
+    pomoSessions: '++id, userId, taskId, mode, status, startedAt'
+  }).upgrade(async (tx) => {
+    // 清空 pointsHistory 表，因为关联关系从 template 改为 instance
+    // 历史数据无法准确迁移，直接清空
+    await tx.table('pointsHistory').clear();
+  });
 }

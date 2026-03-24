@@ -17,8 +17,8 @@ interface UserState {
   initUser: () => Promise<void>;
   refreshUser: () => Promise<void>;
   updateUser: (updates: Partial<Omit<User, 'id' | 'createdAt'>>) => Promise<void>;
-  addPoints: (amount: number, type: PointsHistoryType, relatedTemplateId?: number) => Promise<void>;
-  spendPoints: (amount: number, type: PointsHistoryType, relatedTemplateId?: number) => Promise<void>;
+  addPoints: (amount: number, type: PointsHistoryType, relatedInstanceId?: number) => Promise<void>;
+  spendPoints: (amount: number, type: PointsHistoryType, relatedInstanceId?: number) => Promise<void>;
   // 计算当前积分
   calculatePoints: () => Promise<number>;
 }
@@ -87,7 +87,7 @@ export const useUserStore = create<UserState>((set, get) => ({
     }
   },
 
-  addPoints: async (amount: number, type: PointsHistoryType, relatedTemplateId?: number) => {
+  addPoints: async (amount: number, type: PointsHistoryType, relatedInstanceId?: number) => {
     const { user } = get();
     if (!user) {
       throw new Error('User not initialized');
@@ -96,7 +96,7 @@ export const useUserStore = create<UserState>((set, get) => ({
     set({ isLoading: true, error: null });
     try {
       // updateUserPointsService 现在返回新的积分余额
-      const newPoints = await updateUserPointsService(user.id, Math.abs(amount), type, relatedTemplateId);
+      const newPoints = await updateUserPointsService(user.id, Math.abs(amount), type, relatedInstanceId);
       // 直接使用返回的新积分，避免再次查询数据库
       set({ currentPoints: newPoints, isLoading: false });
     } catch (error) {
@@ -108,7 +108,7 @@ export const useUserStore = create<UserState>((set, get) => ({
     }
   },
 
-  spendPoints: async (amount: number, type: PointsHistoryType, relatedTemplateId?: number) => {
+  spendPoints: async (amount: number, type: PointsHistoryType, relatedInstanceId?: number) => {
     const { user } = get();
     if (!user) {
       throw new Error('User not initialized');
@@ -117,7 +117,7 @@ export const useUserStore = create<UserState>((set, get) => ({
     set({ isLoading: true, error: null });
     try {
       // updateUserPointsService 现在返回新的积分余额
-      const newPoints = await updateUserPointsService(user.id, -Math.abs(amount), type, relatedTemplateId);
+      const newPoints = await updateUserPointsService(user.id, -Math.abs(amount), type, relatedInstanceId);
       // 直接使用返回的新积分，避免再次查询数据库
       set({ currentPoints: newPoints, isLoading: false });
     } catch (error) {

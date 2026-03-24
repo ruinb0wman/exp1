@@ -57,7 +57,7 @@ export async function updateUserPoints(
   userId: number,
   amount: number,
   type: PointsHistoryType,
-  relatedTemplateId?: number
+  relatedInstanceId?: number
 ): Promise<number> {
   const db = getDB();
 
@@ -82,7 +82,7 @@ export async function updateUserPoints(
       userId,
       amount,
       type,
-      relatedTemplateId,
+      relatedInstanceId,
       createdAt: new Date().toISOString(),
     };
     await db.pointsHistory.add(history);

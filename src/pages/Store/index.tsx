@@ -57,11 +57,13 @@ export function Store() {
     }
 
     try {
-      // 兑换奖励（带库存检查）
-      await redeem(template.id!, user.id, template.validDuration, redeemQuantity);
+      // 兑换奖励（带库存检查），获取创建的奖励实例ID
+      const instanceIds = await redeem(template.id!, user.id, template.validDuration, redeemQuantity);
 
-      // 扣除积分
-      await useUserStore.getState().spendPoints(totalCost, "reward_exchange", template.id);
+      // 扣除积分，关联到第一个奖励实例
+      if (instanceIds.length > 0) {
+        await useUserStore.getState().spendPoints(totalCost, "reward_exchange", instanceIds[0]);
+      }
 
       // 刷新商店列表
       await refresh();

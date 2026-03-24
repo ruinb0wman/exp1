@@ -2,7 +2,8 @@ import { useEffect, useState } from "react";
 import { BookOpen, Gift, RotateCcw, Settings, type LucideIcon } from "lucide-react";
 import type { PointsHistory, PointsHistoryType } from "@/db/types";
 import { formatRelativeDate } from "@/libs/time";
-import { getTaskTemplateById, getRewardTemplateById } from "@/db/services";
+import { getTaskInstanceById, getRewardInstanceById } from "@/db/services";
+
 
 // 获取类型图标
 export function getPointsHistoryIcon(type: PointsHistoryType): LucideIcon {
@@ -40,18 +41,18 @@ export function getPointsHistoryLabel(type: PointsHistoryType): string {
 export async function getRelatedEntityName(
   item: PointsHistory
 ): Promise<string | null> {
-  if (!item.relatedTemplateId) return null;
+  if (!item.relatedInstanceId) return null;
 
   try {
     switch (item.type) {
       case "task_reward":
       case "task_undo": {
-        const template = await getTaskTemplateById(item.relatedTemplateId);
-        return template?.title ?? null;
+        const instance = await getTaskInstanceById(item.relatedInstanceId);
+        return instance?.template?.title ?? null;
       }
       case "reward_exchange": {
-        const template = await getRewardTemplateById(item.relatedTemplateId);
-        return template?.title ?? null;
+        const instance = await getRewardInstanceById(item.relatedInstanceId);
+        return instance?.template?.title ?? null;
       }
       case "admin_adjustment":
       default:
