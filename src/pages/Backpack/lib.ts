@@ -99,5 +99,12 @@ export function groupRewardsByTemplate(
     group.count++;
   }
 
+  // 对每个分组内的实例按创建时间排序（FIFO）
+  for (const group of groups.values()) {
+    group.instances.sort((a, b) => 
+      new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+    );
+  }
+
   return Array.from(groups.values());
 }

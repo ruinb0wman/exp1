@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router";
-import { ArrowLeft, Sparkles, CheckCircle2 } from "lucide-react";
+import { ArrowLeft, Sparkles, CheckCircle2, Minus, Plus, Package } from "lucide-react";
 import { Header } from "@/components/Header";
 import { Popup } from "@/components/Popup";
 import { DynamicIcon } from "@/components/DynamicIcon";
@@ -12,24 +12,23 @@ import {
 import { StatsCard } from "./components/StatsCard";
 import { TabBar } from "./components/TabBar";
 import { BackpackItemList } from "./components/BackpackItemList";
-import { formatDate, getTimeLeft, getTabs, type RewardWithTemplate, type TabKey } from "./lib";
+import { formatDate, getTimeLeft, getTabs, type GroupedReward, type TabKey } from "./lib";
 
 export function Backpack() {
   const navigate = useNavigate();
   const { user } = useUserStore();
   const { items, isLoading, refresh } = useUserBackpack(user?.id ?? 0);
   const {
-    useReward,
+    useRewardsBatch,
     checkExpired,
     isLoading: isActionLoading,
   } = useRewardInstanceActions();
 
-  const [selectedItem, setSelectedItem] = useState<RewardWithTemplate | null>(
-    null
-  );
+  const [selectedGroup, setSelectedGroup] = useState<GroupedReward | null>(null);
   const [isPopupOpen, setIsPopupOpen] = useState(false);
   const [useError, setUseError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<TabKey>("available");
+  const [useQuantity, setUseQuantity] = useState(1);
 
   // 定期检查过期状态
   useEffect(() => {
@@ -58,26 +57,38 @@ export function Backpack() {
       return 0;
     });
 
-  // 处理物品点击
-  const handleItemClick = (item: RewardWithTemplate) => {
-    if (item.instance.status !== "available") return;
-    setSelectedItem(item);
+  // 处理物品点击（现在接收 GroupedReward）
+  const handleItemClick = (group: GroupedReward) => {
+    setSelectedGroup(group);
+    setUseQuantity(1); // 重置为1
     setUseError(null);
     setIsPopupOpen(true);
   };
 
-  // 处理使用
+  // 处理批量使用
   const handleUse = async () => {
-    if (!selectedItem) return;
+    if (!selectedGroup) return;
 
     try {
-      await useReward(selectedItem.instance.id!);
+      const instanceIds = selectedGroup.instances.map(i => i.id!);
+      await useRewardsBatch(instanceIds, useQuantity);
       await refresh();
       setIsPopupOpen(false);
-      setSelectedItem(null);
+      setSelectedGroup(null);
+      // 可以在这里添加成功提示
     } catch (err) {
       setUseError(err instanceof Error ? err.message : "使用失败");
     }
+  };
+
+  // 调整使用数量
+  const decreaseQuantity = () => {
+    setUseQuantity(prev => Math.max(1, prev - 1));
+  };
+
+  const increaseQuantity = () => {
+    if (!selectedGroup) return;
+    setUseQuantity(prev => Math.min(selectedGroup.count, prev + 1));
   };
 
   const tabs = getTabs(items);
@@ -120,41 +131,41 @@ export function Backpack() {
         position="bottom"
         title="Reward Details"
       >
-        {selectedItem && (
+        {selectedGroup && (
           <div className="space-y-6 py-2">
             {/* Icon & Title */}
             <div className="flex flex-col items-center gap-4">
               <div
                 className="w-24 h-24 rounded-2xl flex items-center justify-center"
                 style={{
-                  backgroundColor: `${selectedItem.template.iconColor ?? "#f56565"}20`,
+                  backgroundColor: `${selectedGroup.template.iconColor ?? "#f56565"}20`,
                 }}
               >
                 <DynamicIcon
-                  name={selectedItem.template.icon}
-                  color={selectedItem.template.iconColor ?? "#f56565"}
+                  name={selectedGroup.template.icon}
+                  color={selectedGroup.template.iconColor ?? "#f56565"}
                   className="w-12 h-12"
                 />
               </div>
               <div className="text-center">
                 <h3 className="text-xl font-bold text-text-primary">
-                  {selectedItem.template.title}
+                  {selectedGroup.template.title}
                 </h3>
-                {selectedItem.template.description && (
+                {selectedGroup.template.description && (
                   <p className="text-text-secondary text-sm mt-1">
-                    {selectedItem.template.description}
+                    {selectedGroup.template.description}
                   </p>
                 )}
               </div>
             </div>
 
             {/* Info Cards */}
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-3 gap-3">
               <div className="bg-surface rounded-xl p-4 text-center">
                 <div className="flex items-center justify-center gap-1 text-primary mb-1">
                   <Sparkles className="w-4 h-4" />
                   <span className="text-lg font-bold">
-                    {selectedItem.template.pointsCost}
+                    {selectedGroup.template.pointsCost}
                   </span>
                 </div>
                 <p className="text-text-muted text-xs">兑换 exp</p>
@@ -166,33 +177,71 @@ export function Backpack() {
                 </div>
                 <p className="text-text-muted text-xs">状态</p>
               </div>
+              <div className="bg-surface rounded-xl p-4 text-center">
+                <div className="flex items-center justify-center gap-1 text-primary mb-1">
+                  <Package className="w-4 h-4" />
+                  <span className="text-lg font-bold">{selectedGroup.count}</span>
+                </div>
+                <p className="text-text-muted text-xs">拥有数量</p>
+              </div>
             </div>
 
             {/* Time Info */}
             <div className="bg-surface rounded-xl p-4 space-y-2">
               <div className="flex items-center justify-between">
-                <span className="text-text-secondary text-sm">兑换时间</span>
+                <span className="text-text-secondary text-sm">最早兑换</span>
                 <span className="text-text-primary text-sm">
-                  {formatDate(selectedItem.instance.createdAt)}
+                  {formatDate(selectedGroup.instances[0]?.createdAt)}
                 </span>
               </div>
-              {selectedItem.instance.expiresAt && (
+              {selectedGroup.instances[0]?.expiresAt && (
                 <div className="flex items-center justify-between">
                   <span className="text-text-secondary text-sm">过期时间</span>
                   <span className="text-amber-400 text-sm">
-                    {formatDate(selectedItem.instance.expiresAt)}
+                    {formatDate(selectedGroup.instances[0].expiresAt)}
                   </span>
                 </div>
               )}
-              {selectedItem.instance.expiresAt && (
+              {selectedGroup.instances[0]?.expiresAt && (
                 <div className="flex items-center justify-between pt-2 border-t border-border">
                   <span className="text-text-secondary text-sm">剩余时间</span>
                   <span className="text-amber-400 text-sm font-medium">
-                    {getTimeLeft(selectedItem.instance.expiresAt)}
+                    {getTimeLeft(selectedGroup.instances[0].expiresAt)}
                   </span>
                 </div>
               )}
             </div>
+
+            {/* Quantity Selector (only show if count > 1) */}
+            {selectedGroup.count > 1 && (
+              <div className="bg-surface rounded-xl p-4">
+                <div className="flex items-center justify-between mb-3">
+                  <span className="text-text-secondary text-sm">使用数量</span>
+                  <span className="text-text-primary text-sm font-medium">
+                    {useQuantity} / {selectedGroup.count}
+                  </span>
+                </div>
+                <div className="flex items-center justify-center gap-4">
+                  <button
+                    onClick={decreaseQuantity}
+                    disabled={useQuantity <= 1 || isActionLoading}
+                    className="w-12 h-12 rounded-xl bg-background border border-border flex items-center justify-center text-text-primary hover:bg-surface-light disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  >
+                    <Minus className="w-5 h-5" />
+                  </button>
+                  <div className="w-20 h-12 rounded-xl bg-background border border-border flex items-center justify-center">
+                    <span className="text-xl font-bold text-text-primary">{useQuantity}</span>
+                  </div>
+                  <button
+                    onClick={increaseQuantity}
+                    disabled={useQuantity >= selectedGroup.count || isActionLoading}
+                    className="w-12 h-12 rounded-xl bg-background border border-border flex items-center justify-center text-text-primary hover:bg-surface-light disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  >
+                    <Plus className="w-5 h-5" />
+                  </button>
+                </div>
+              </div>
+            )}
 
             {/* Error Message */}
             {useError && (
@@ -202,11 +251,13 @@ export function Backpack() {
             {/* Action Button */}
             <button
               onClick={handleUse}
-              disabled={isActionLoading}
+              disabled={isActionLoading || selectedGroup.count === 0}
               className="w-full h-14 bg-primary text-white font-bold text-lg rounded-xl flex items-center justify-center shadow-lg shadow-primary/30 hover:bg-primary-light transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isActionLoading ? (
                 <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin" />
+              ) : selectedGroup.count > 1 ? (
+                `使用 ${useQuantity} 个奖励`
               ) : (
                 "使用奖励"
               )}

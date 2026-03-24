@@ -9,7 +9,7 @@ interface BackpackItemListProps {
   items: RewardWithTemplate[];
   isLoading: boolean;
   activeTab: "available" | "used" | "expired";
-  onItemClick: (item: RewardWithTemplate) => void;
+  onItemClick: (group: GroupedReward) => void;
 }
 
 const PAGE_SIZE = 20;
@@ -54,18 +54,12 @@ export function BackpackItemList({
   if (activeTab === "available") {
     const groupedItems = groupRewardsByTemplate(items);
 
-    const handleGroupedItemClick = (grouped: GroupedReward) => {
-      // 使用第一个可用实例
-      const instance = grouped.instances[0];
-      onItemClick({ instance, template: grouped.template });
-    };
-
     return (
       <div className="grid grid-cols-5 gap-2">
         {groupedItems.map((grouped) => (
           <button
             key={`${grouped.template.id}-${grouped.instances[0]?.createdAt}`}
-            onClick={() => handleGroupedItemClick(grouped)}
+            onClick={() => onItemClick(grouped)}
             className="relative flex flex-col items-center p-2 rounded-xl bg-surface border border-border hover:bg-surface-light active:scale-[0.98] transition-all"
           >
             {/* Icon */}
@@ -109,7 +103,11 @@ export function BackpackItemList({
       {displayItems.map(({ instance, template }) => (
         <button
           key={instance.id}
-          onClick={() => onItemClick({ instance, template })}
+          onClick={() => onItemClick({
+            template,
+            instances: [instance],
+            count: 1,
+          })}
           disabled={instance.status !== "available"}
           className={`w-full flex items-center gap-4 p-4 rounded-xl bg-surface border border-border text-left transition-colors ${
             instance.status === "available"

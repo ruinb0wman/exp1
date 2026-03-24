@@ -12,6 +12,7 @@ import {
   getUserBackpack,
   getRewardStatistics,
   useRewardInstance,
+  useRewardInstances,
   checkAndUpdateExpiredRewards,
   replenishRewardTemplate,
   redeemRewardsWithStockCheck,
@@ -291,6 +292,26 @@ export function useRewardInstanceActions() {
     }
   }, []);
 
+  /**
+   * 批量使用奖励实例
+   * @param instanceIds 实例ID数组
+   * @param quantity 要使用数量，不传则使用全部
+   * @returns 实际使用的数量
+   */
+  const useRewardsBatch = useCallback(async (instanceIds: number[], quantity?: number) => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const count = await useRewardInstances(instanceIds, quantity);
+      return count;
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to use rewards');
+      throw err;
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
   const checkExpired = useCallback(async (userId?: number) => {
     setIsLoading(true);
     setError(null);
@@ -319,7 +340,7 @@ export function useRewardInstanceActions() {
     }
   }, []);
 
-  return { redeem, useReward, checkExpired, replenish, isLoading, error };
+  return { redeem, useReward, useRewardsBatch, checkExpired, replenish, isLoading, error };
 }
 
 // ==================== Statistics Hooks ====================

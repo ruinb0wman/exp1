@@ -329,6 +329,62 @@ export async function useRewardInstance(id: number): Promise<number> {
 }
 
 /**
+ * 批量使用奖励实例
+ * 按创建时间排序（FIFO），过滤掉已过期/已使用的实例
+ * @param ids 实例ID数组
+ * @param quantity 要使用数量，默认为全部
+ * @returns 实际使用的数量
+ */
+export async function useRewardInstances(
+  ids: number[],
+  quantity?: number
+): Promise<number> {
+  const db = getDB();
+  const now = new Date().toISOString();
+
+  return db.transaction('rw', db.rewardInstances, async () => {
+    // 获取所有实例
+    const instances = await db.rewardInstances.bulkGet(ids);
+
+    // 过滤有效实例（available + 未过期）
+    const validInstances = instances
+      .filter((instance): instance is NonNullable<typeof instance> => {
+        if (!instance) return false;
+        if (instance.status !== 'available') return false;
+        if (instance.expiresAt && instance.expiresAt < now) return false;
+        return true;
+      })
+      // 按创建时间排序（FIFO）
+      .sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
+
+    if (validInstances.length === 0) {
+      throw new Error('No valid reward instances found');
+    }
+
+    // 确定实际使用数量
+    const useCount = quantity !== undefined
+      ? Math.min(quantity, validInstances.length)
+      : validInstances.length;
+
+    // 取前 useCount 个实例
+    const instancesToUse = validInstances.slice(0, useCount);
+
+    // 批量更新
+    const updates = instancesToUse.map((instance) => ({
+      key: instance.id!,
+      changes: {
+        status: 'used' as const,
+        usedAt: now,
+      },
+    }));
+
+    await db.rewardInstances.bulkUpdate(updates);
+
+    return useCount;
+  });
+}
+
+/**
  * 检查并更新过期状态
  */
 export async function checkAndUpdateExpiredRewards(userId?: number): Promise<number> {
