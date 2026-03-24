@@ -338,6 +338,7 @@ export async function deleteTaskInstancesByTemplateId(templateId: number): Promi
 
 /**
  * 获取任务实例及其模板信息
+ * 注意：现在 template 直接存储在 instance 中，此函数主要用于兼容旧代码
  */
 export async function getTaskInstanceWithTemplate(
   instanceId: number
@@ -349,14 +350,15 @@ export async function getTaskInstanceWithTemplate(
     return undefined;
   }
 
-  const template = await db.taskTemplates.get(instance.templateId);
-  return { instance, template };
+  // 优先使用 instance 中存储的 template 快照
+  return { instance, template: instance.template };
 }
 
 
 
 /**
  * 获取用户的今日任务（包含模板信息）（更新：支持 dayEndTime）
+ * 注意：现在 template 直接存储在 instance 中
  */
 export async function getTodayTaskInstances(
   userId: number,
@@ -380,21 +382,19 @@ export async function getTodayTaskInstances(
     .and((instance) => instance.userId === userId)
     .toArray();
 
-  const result: Array<{ instance: TaskInstance; template: TaskTemplate }> = [];
-
-  for (const instance of instances) {
-    const template = await db.taskTemplates.get(instance.templateId);
-    if (template) {
-      result.push({ instance, template });
-    }
-  }
-
-  return result;
+  // 直接从 instance 中获取 template，无需额外查询
+  return instances
+    .filter((instance) => instance.template) // 过滤掉没有 template 的实例
+    .map((instance) => ({
+      instance,
+      template: instance.template,
+    }));
 }
 
 /**
  * 获取用户没有日期的任务（包含模板信息）
  * No Date 任务定义为：repeatMode 为 'none' 的 template 对应的 instance
+ * 注意：现在 template 直接存储在 instance 中
  */
 export async function getNoDateTaskInstances(
   userId: number
@@ -409,33 +409,18 @@ export async function getNoDateTaskInstances(
 
   const noDateInstances = instances.filter((instance) => !instance.startAt);
 
-  if (noDateInstances.length === 0) {
-    return [];
-  }
-
-  // 获取对应的任务模板
-  const templateIds = [...new Set(noDateInstances.map(i => i.templateId))];
-  const templates = await db.taskTemplates
-    .where('id')
-    .anyOf(templateIds)
-    .toArray();
-
-  const templateMap = new Map(templates.map(t => [t.id, t]));
-
-  const result: Array<{ instance: TaskInstance; template: TaskTemplate }> = [];
-
-  for (const instance of noDateInstances) {
-    const template = templateMap.get(instance.templateId);
-    if (template) {
-      result.push({ instance, template });
-    }
-  }
-
-  return result;
+  // 直接从 instance 中获取 template，无需额外查询
+  return noDateInstances
+    .filter((instance) => instance.template)
+    .map((instance) => ({
+      instance,
+      template: instance.template,
+    }));
 }
 
 /**
  * 获取任务统计信息（只统计有对应模板的实例）
+ * 注意：现在 template 直接存储在 instance 中
  */
 export async function getTaskStatistics(
   userId: number
@@ -450,16 +435,8 @@ export async function getTaskStatistics(
   // 获取该用户的所有任务实例
   const instances = await db.taskInstances.where('userId').equals(userId).toArray();
 
-  // 获取所有模板信息
-  const templateIds = [...new Set(instances.map(i => i.templateId))];
-  const templates = await db.taskTemplates
-    .where('id')
-    .anyOf(templateIds)
-    .toArray();
-  const templateMap = new Map(templates.map(t => [t.id!, t]));
-
-  // 只保留有对应模板的实例
-  const validInstances = instances.filter(i => templateMap.has(i.templateId));
+  // 只保留有 template 字段的实例
+  const validInstances = instances.filter(i => i.template);
 
   return {
     total: validInstances.length,
@@ -482,6 +459,7 @@ export interface TaskHistoryItem {
 /**
  * 获取任务历史列表（支持状态筛选和分页）
  * 按照 createdAt 从新到旧排序，支持滚动加载
+ * 注意：现在 template 直接存储在 instance 中
  */
 export async function getTaskInstancesWithFilter(
   userId: number,
@@ -508,20 +486,11 @@ export async function getTaskInstancesWithFilter(
     return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
   });
 
-  // 获取所有需要的模板信息
-  const templateIds = [...new Set(instances.map(i => i.templateId))];
-  const templates = await db.taskTemplates
-    .where('id')
-    .anyOf(templateIds)
-    .toArray();
-  const templateMap = new Map(templates.map(t => [t.id, t]));
-
-  // 过滤掉没有对应模板的实例，并构建结果
+  // 直接从 instance 中获取 template，过滤掉没有 template 的实例
   const validItems: TaskHistoryItem[] = [];
   for (const instance of instances) {
-    const template = templateMap.get(instance.templateId);
-    if (template) {
-      validItems.push({ instance, template });
+    if (instance.template) {
+      validItems.push({ instance, template: instance.template });
     }
   }
 
@@ -562,7 +531,8 @@ export async function updateTaskProgress(
       throw new Error('Task instance has expired');
     }
 
-    const template = await db.taskTemplates.get(instance.templateId);
+    // 直接从 instance 中获取 template 快照
+    const template = instance.template;
     if (!template?.completeRule) {
       throw new Error('Task does not support progress tracking');
     }
@@ -631,18 +601,20 @@ export function isTaskInstanceExpired(instance: TaskInstance): boolean {
 /**
  * 获取任务的完成进度百分比
  * @param instance 任务实例
- * @param template 任务模板
+ * @param template 任务模板（可选，默认使用 instance.template）
  * @returns 0-100 的百分比
  */
 export function getTaskProgressPercent(
   instance: TaskInstance,
-  template: TaskTemplate
+  template?: TaskTemplate
 ): number {
-  if (!template.completeRule || !template.completeTarget) {
+  // 优先使用传入的 template，否则使用 instance 中存储的 template 快照
+  const tmpl = template ?? instance.template;
+  if (!tmpl?.completeRule || !tmpl.completeTarget) {
     return instance.status === 'completed' ? 100 : 0;
   }
   const progress = instance.completeProgress ?? 0;
-  return Math.min(100, Math.round((progress / template.completeTarget) * 100));
+  return Math.min(100, Math.round((progress / tmpl.completeTarget) * 100));
 }
 
 /**

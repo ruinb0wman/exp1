@@ -169,7 +169,7 @@ export function useTaskInstanceGenerator(options: UseTaskInstanceGeneratorOption
     // 构建 template -> instance 的映射
     const templateInstanceMap = new Map<number, TaskInstance>();
     existingInstancesOnDate.forEach(inst => {
-      templateInstanceMap.set(inst.templateId, inst);
+      templateInstanceMap.set(inst.template.id!, inst);
     });
 
     // 获取应该在该日期生成实例的模板

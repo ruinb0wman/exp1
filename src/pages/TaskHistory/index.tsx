@@ -172,12 +172,12 @@ export function TaskHistory() {
         template={selectedTemplate}
         onComplete={() => {
           if (selectedInstance && selectedTemplate) {
-            handleTaskAction("complete", selectedInstance.id!, selectedTemplate.id!, selectedInstance.rewardPoints);
+            handleTaskAction("complete", selectedInstance.id!, selectedTemplate.id!, selectedTemplate.rewardPoints);
           }
         }}
         onReset={() => {
           if (selectedInstance && selectedTemplate) {
-            handleTaskAction("reset", selectedInstance.id!, selectedTemplate.id!, selectedInstance.rewardPoints);
+            handleTaskAction("reset", selectedInstance.id!, selectedTemplate.id!, selectedTemplate.rewardPoints);
           }
         }}
         isLoading={isActionLoading}

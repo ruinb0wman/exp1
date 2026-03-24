@@ -33,9 +33,9 @@ export interface TaskTemplate {
 export interface TaskInstance {
   id?: number;
   userId: number;
-  templateId: number; // TaskTemplate id
+  templateId: number; // TaskTemplate id（保留作为引用）
+  template: TaskTemplate; // 完整的模板副本（生成时的快照），包含 rewardPoints 等字段
   status: TaskStatus;
-  rewardPoints: number;
   subtasks: string[];
   startAt?: string; // 任务开始时间戳
   createdAt: string; // 任务实例创建时间戳

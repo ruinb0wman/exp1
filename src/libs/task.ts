@@ -354,8 +354,8 @@ export function generateTaskInstance(
   return {
     userId: template.userId,
     templateId: template.id!,
+    template: { ...template }, // 复制完整的模板副本，包含 rewardPoints 等字段
     status: 'pending',
-    rewardPoints: template.rewardPoints,
     subtasks: [...subtasks],
     startAt,
     completeProgress: template.completeRule ? 0 : undefined,

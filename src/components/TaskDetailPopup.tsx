@@ -176,7 +176,7 @@ function TaskDetailContent({
           </p>
         </div>
         <div className="text-right flex flex-col items-end gap-2">
-          <span className="text-lg font-bold text-primary">+{instance.rewardPoints}</span>
+          <span className="text-lg font-bold text-primary">+{template.rewardPoints}</span>
           <p className="text-xs text-text-muted">经验值</p>
         </div>
       </div>

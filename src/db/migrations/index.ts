@@ -160,4 +160,32 @@ export function migration(db: DB) {
 
   // Version 10: 添加同步系统影子表
   migrationV10(db);
+
+  // Version 11: TaskInstance 添加 template 字段，存储完整的模板副本
+  db.version(11).stores({
+    taskTemplates: '++id, userId, repeatMode, enabled, *subtasks, [userId+enabled]',
+    taskInstances: '++id, userId, templateId, startAt, status, createdAt, [templateId+startAt]',
+    rewardTemplates: '++id, userId, replenishmentMode, enabled',
+    rewardInstances: '++id, templateId, userId, status, expiresAt',
+    users: '++id, name',
+    pointsHistory: '++id, userId, type, createdAt, [userId+createdAt]',
+    pomoSessions: '++id, userId, taskId, mode, status, startedAt'
+  }).upgrade(async (tx) => {
+    // 迁移数据：为每个实例填充 template 字段，并将 rewardPoints 移到 template 中
+    const instances = await tx.table('taskInstances').toArray();
+    for (const inst of instances) {
+      if (!inst.template) {
+        const template = await tx.table('taskTemplates').get(inst.templateId);
+        if (template) {
+          // 如果实例有独立的 rewardPoints，同步到 template 中
+          if (inst.rewardPoints !== undefined && inst.rewardPoints !== template.rewardPoints) {
+            template.rewardPoints = inst.rewardPoints;
+          }
+          await tx.table('taskInstances').update(inst.id, {
+            template: template
+          });
+        }
+      }
+    }
+  });
 }
