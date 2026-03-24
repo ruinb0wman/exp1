@@ -219,7 +219,7 @@ export function EditTask() {
   }
 
   return (
-    <div className="min-h-screen bg-background pb-32">
+    <div className="min-h-screen bg-background">
       <Header title={isEditMode ? "Edit Task" : "Create Task"} back />
 
       <main className="flex-1 px-4 py-6 space-y-6">
@@ -666,7 +666,7 @@ export function EditTask() {
       </main>
 
       {/* Bottom CTA Button */}
-      <div className="fixed bottom-0 left-0 right-0 p-4 pb-8 bg-gradient-to-t from-background to-transparent">
+      <div className="px-4 pb-8 pt-4">
         <button
           onClick={handleSubmit}
           disabled={!title.trim() || isSubmitting}
