@@ -20,7 +20,7 @@ export function AllTasks() {
   const navigate = useNavigate();
   const { user } = useUserStore();
   const { templates, isLoading, error, refresh } = useTaskTemplates(user?.id);
-  const { remove, toggleEnabled, isLoading: isActionLoading } = useTaskTemplateActions();
+  const { disable, toggleEnabled, isLoading: isActionLoading } = useTaskTemplateActions();
   const confirm = useConfirm();
   const [filter, setFilter] = useState<Category>("All");
   const [deletingId, setDeletingId] = useState<number | null>(null);
@@ -38,24 +38,24 @@ export function AllTasks() {
     }
   };
 
-  // 删除任务
-  const handleDelete = async (id: number, title: string) => {
+  // 停用任务
+  const handleDisable = async (id: number, title: string) => {
     const confirmed = await confirm({
-      title: "Delete Task",
-      message: `Are you sure you want to delete "${title}"? This will also delete all related task instances.`,
-      confirmLabel: "Delete",
+      title: "Disable Task",
+      message: `Are you sure you want to disable "${title}"? This task will no longer generate new instances.`,
+      confirmLabel: "Disable",
       cancelLabel: "Cancel",
-      variant: "danger",
+      variant: "warning",
     });
 
     if (!confirmed) return;
 
     setDeletingId(id);
     try {
-      await remove(id);
+      await disable(id);
       refresh();
     } catch (error) {
-      console.error("Failed to delete task:", error);
+      console.error("Failed to disable task:", error);
     } finally {
       setDeletingId(null);
     }
@@ -105,7 +105,7 @@ export function AllTasks() {
           onRefresh={refresh}
           onEdit={(id) => navigate(`/tasks/${id}`)}
           onToggleEnabled={handleToggleEnabled}
-          onDelete={handleDelete}
+          onDelete={handleDisable}
         />
       </main>
 

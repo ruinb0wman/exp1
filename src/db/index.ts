@@ -2,6 +2,7 @@ import Dexie from 'dexie';
 import type { DB } from './types';
 import { migration } from './migrations';
 import { createSyncMiddleware } from './sync/middleware';
+import { createTaskTemplateMiddleware } from './middleware/taskTemplateMiddleware';
 import type { DeviceId } from './sync/types';
 
 const state: { 
@@ -56,6 +57,11 @@ const createDB = () => {
   // 注册同步中间件
   const syncMiddleware = createSyncMiddleware(state.deviceId);
   db.use(syncMiddleware);
+
+  // 注册任务模板中间件（需要在数据库创建后，但要在任何操作前注册 hooks）
+  // 注意：这里先注册 hooks，dayEndTime 会在应用初始化后通过 reRegisterHooks 更新
+  const templateMiddleware = createTaskTemplateMiddleware("00:00");
+  templateMiddleware.register(db);
 
   return db;
 };

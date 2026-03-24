@@ -1,9 +1,8 @@
-import { useEffect, useCallback, useState } from "react";
+import { useCallback, useState } from "react";
 import { Plus } from "lucide-react";
 import { useNavigate } from "react-router";
 import { useUserStore } from "@/store";
 import { useTodayTasks, useNoDateTasks, useTaskInstanceActions } from "@/hooks/useTasks";
-import { useTaskInstanceGenerator } from "@/hooks/useTaskInstanceGenerator";
 import { HomeHeader } from "@/components/HomeHeader";
 import { Progress } from "@/components/Progress";
 import { TaskList } from "@/components/TaskList";
@@ -27,28 +26,6 @@ export function Home() {
   const { tasks, isLoading: isTasksLoading, refresh: refreshTasks } = useTodayTasks(user?.id ?? 0, user?.dayEndTime);
   const { tasks: noDateTasks, isLoading: isNoDateTasksLoading, refresh: refreshNoDateTasks } = useNoDateTasks(user?.id ?? 0);
   const { complete, reset } = useTaskInstanceActions();
-
-  const { isGenerating, generateToday } = useTaskInstanceGenerator({
-    userId: user?.id,
-    dayEndTime: user?.dayEndTime,
-    onGenerated: async () => {
-      // 刷新任务列表
-      await refreshTasks();
-      await refreshNoDateTasks();
-    },
-    onError: (error) => {
-      console.error("Failed to generate task instances:", error);
-    },
-  });
-
-  // 自动生成今日任务实例 - 只在用户加载完成且未生成过时执行
-  useEffect(() => {
-    if (!user?.id) return;
-
-    generateToday();
-    // 注意：generateToday 内部有防止重复执行的机制
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user?.id]);
 
   // 处理点击任务卡片
   const handleTaskClick = useCallback((instance: TaskInstance, template: TaskTemplate) => {
@@ -113,7 +90,7 @@ export function Home() {
   // 计算进度（基于原始任务列表）
   const { completedCount, totalCount } = calculateTaskStats(tasks);
 
-  const isLoading = isUserLoading || isTasksLoading || isNoDateTasksLoading || isGenerating;
+  const isLoading = isUserLoading || isTasksLoading || isNoDateTasksLoading;
 
   return (
     <div className="pb-24 bg-background">

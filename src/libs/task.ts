@@ -179,6 +179,16 @@ export function shouldGenerateInstanceOnDate(
 ): boolean {
   const { repeatMode, repeatInterval, repeatDaysOfWeek, repeatDaysOfMonth, startAt } = template;
 
+  // 辅助函数：检查是否已有目标日期的实例（使用"用户日期"比较）
+  const hasInstanceOnDate = (): boolean => {
+    const targetUserDate = toUserDateString(targetDate, dayEndTime);
+    return existingInstances.some((inst) => {
+      if (!inst.startAt) return false;
+      const instUserDate = toUserDateString(inst.startAt, dayEndTime);
+      return instUserDate === targetUserDate;
+    });
+  };
+
   switch (repeatMode) {
     case 'none': {
       // 不重复：只生成一次，检查是否已经有实例
@@ -186,7 +196,10 @@ export function shouldGenerateInstanceOnDate(
     }
 
     case 'daily': {
-      // 每日：检查间隔天数（基于用户日期），使用 startAt 作为基准
+      // 每日：先检查是否已存在该日期的实例
+      if (hasInstanceOnDate()) return false;
+      
+      // 检查间隔天数（基于用户日期），使用 startAt 作为基准
       if (!startAt) return false; // 周期性任务必须有 startAt
       const interval = repeatInterval || 1;
       // 使用"用户日期"计算天数差
@@ -195,7 +208,10 @@ export function shouldGenerateInstanceOnDate(
     }
 
     case 'weekly': {
-      // 每周：检查是否在指定星期几，且满足间隔周数（基于用户日期）
+      // 每周：先检查是否已存在该日期的实例
+      if (hasInstanceOnDate()) return false;
+      
+      // 检查是否在指定星期几，且满足间隔周数（基于用户日期）
       if (!startAt) return false;
       const interval = repeatInterval || 1;
       // 使用"用户日期"获取星期几
@@ -214,7 +230,10 @@ export function shouldGenerateInstanceOnDate(
     }
 
     case 'monthly': {
-      // 每月：检查是否在指定日期，且满足间隔月数（基于用户日期）
+      // 每月：先检查是否已存在该日期的实例
+      if (hasInstanceOnDate()) return false;
+      
+      // 检查是否在指定日期，且满足间隔月数（基于用户日期）
       if (!startAt) return false;
       const interval = repeatInterval || 1;
       // 使用"用户日期"获取日期

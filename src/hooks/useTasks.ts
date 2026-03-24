@@ -5,7 +5,7 @@ import {
   getTaskTemplateById,
   createTaskTemplate,
   updateTaskTemplate,
-  deleteTaskTemplate,
+  disableTaskTemplate,
   toggleTaskTemplateEnabled,
   getTodayTaskInstances,
   getNoDateTaskInstances,
@@ -109,13 +109,13 @@ export function useTaskTemplateActions() {
     }
   }, []);
 
-  const remove = useCallback(async (id: number) => {
+  const disable = useCallback(async (id: number) => {
     setIsLoading(true);
     setError(null);
     try {
-      await deleteTaskTemplate(id);
+      await disableTaskTemplate(id);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to delete task');
+      setError(err instanceof Error ? err.message : 'Failed to disable task');
       throw err;
     } finally {
       setIsLoading(false);
@@ -135,7 +135,7 @@ export function useTaskTemplateActions() {
     }
   }, []);
 
-  return { create, update, remove, toggleEnabled, isLoading, error };
+  return { create, update, disable, toggleEnabled, isLoading, error };
 }
 
 // ==================== TaskInstance Hooks ====================

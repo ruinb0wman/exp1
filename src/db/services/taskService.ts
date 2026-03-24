@@ -93,14 +93,19 @@ export async function updateTaskTemplate(
 }
 
 /**
- * 删除任务模板（同时删除关联的任务实例）
+ * 停用任务模板（模板不能删除，只能停用）
  */
-export async function deleteTaskTemplate(id: number): Promise<void> {
+export async function disableTaskTemplate(id: number): Promise<number> {
   const db = getDB();
 
-  await db.transaction('rw', db.taskTemplates, db.taskInstances, async () => {
-    await db.taskInstances.where('templateId').equals(id).delete();
-    await db.taskTemplates.delete(id);
+  const template = await db.taskTemplates.get(id);
+  if (!template) {
+    throw new Error('Task template not found');
+  }
+
+  return db.taskTemplates.update(id, {
+    enabled: false,
+    updatedAt: new Date().toISOString(),
   });
 }
 
