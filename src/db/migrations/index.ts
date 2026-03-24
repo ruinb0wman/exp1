@@ -188,4 +188,28 @@ export function migration(db: DB) {
       }
     }
   });
+
+  // Version 12: RewardInstance 添加 template 字段，存储完整的模板副本
+  db.version(12).stores({
+    taskTemplates: '++id, userId, repeatMode, enabled, *subtasks, [userId+enabled]',
+    taskInstances: '++id, userId, templateId, startAt, status, createdAt, [templateId+startAt]',
+    rewardTemplates: '++id, userId, replenishmentMode, enabled',
+    rewardInstances: '++id, templateId, userId, status, expiresAt',
+    users: '++id, name',
+    pointsHistory: '++id, userId, type, createdAt, [userId+createdAt]',
+    pomoSessions: '++id, userId, taskId, mode, status, startedAt'
+  }).upgrade(async (tx) => {
+    // 迁移数据：为每个 rewardInstance 填充 template 字段
+    const instances = await tx.table('rewardInstances').toArray();
+    for (const inst of instances) {
+      if (!inst.template) {
+        const template = await tx.table('rewardTemplates').get(inst.templateId);
+        if (template) {
+          await tx.table('rewardInstances').update(inst.id, {
+            template: template
+          });
+        }
+      }
+    }
+  });
 }

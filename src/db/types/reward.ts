@@ -74,7 +74,8 @@ export interface RewardTemplate {
 
 export interface RewardInstance {
   id?: number;
-  templateId: number;
+  templateId: number; // RewardTemplate id（保留作为引用）
+  template: RewardTemplate; // 完整的模板副本（生成时的快照）
   userId: number;
   status: RewardStatus;
   createdAt: string; // 创建(兑换)时间戳

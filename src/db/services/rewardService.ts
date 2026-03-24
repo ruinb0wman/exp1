@@ -204,6 +204,7 @@ export async function redeemRewardsWithStockCheck(
       { length: quantity },
       () => ({
         templateId,
+        template: { ...template }, // 保存完整的模板快照
         userId,
         status: 'available',
         expiresAt,
@@ -381,10 +382,11 @@ export async function deleteRewardInstancesByTemplateId(templateId: number): Pro
 
 /**
  * 获取奖励实例及其模板信息
+ * 使用实例中保存的 template 快照
  */
 export async function getRewardInstanceWithTemplate(
   instanceId: number
-): Promise<{ instance: RewardInstance; template?: RewardTemplate } | undefined> {
+): Promise<{ instance: RewardInstance; template: RewardTemplate } | undefined> {
   const db = getDB();
 
   const instance = await db.rewardInstances.get(instanceId);
@@ -392,12 +394,13 @@ export async function getRewardInstanceWithTemplate(
     return undefined;
   }
 
-  const template = await db.rewardTemplates.get(instance.templateId);
-  return { instance, template };
+  // 使用快照中的模板
+  return { instance, template: instance.template };
 }
 
 /**
  * 获取用户的可用奖励实例（包含模板信息）
+ * 优先使用实例中保存的 template 快照
  */
 export async function getAvailableRewardInstances(
   userId: number
@@ -416,10 +419,8 @@ export async function getAvailableRewardInstances(
   const result: Array<{ instance: RewardInstance; template: RewardTemplate }> = [];
 
   for (const instance of instances) {
-    const template = await db.rewardTemplates.get(instance.templateId);
-    if (template) {
-      result.push({ instance, template });
-    }
+    // 使用快照中的模板
+    result.push({ instance, template: instance.template });
   }
 
   return result;
@@ -427,6 +428,7 @@ export async function getAvailableRewardInstances(
 
 /**
  * 获取用户的背包（所有奖励实例，包含模板信息）
+ * 使用实例中保存的 template 快照
  */
 export async function getUserBackpack(
   userId: number
@@ -444,10 +446,8 @@ export async function getUserBackpack(
   const result: Array<{ instance: RewardInstance; template: RewardTemplate }> = [];
 
   for (const instance of instances) {
-    const template = await db.rewardTemplates.get(instance.templateId);
-    if (template) {
-      result.push({ instance, template });
-    }
+    // 使用快照中的模板
+    result.push({ instance, template: instance.template });
   }
 
   return result;

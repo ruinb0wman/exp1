@@ -82,7 +82,9 @@ export function groupRewardsByTemplate(
     if (instance.status !== "available") continue;
 
     // 创建复合键：模板ID + 实例特征（createdAt + expiresAt）
-    const key = `${template.id}-${instance.createdAt}-${instance.expiresAt ?? 'null'}`;
+    // 使用 instance.template.id 作为模板ID（快照中的模板ID）
+    const templateId = instance.template?.id ?? template.id;
+    const key = `${templateId}-${instance.createdAt}-${instance.expiresAt ?? 'null'}`;
 
     if (!groups.has(key)) {
       groups.set(key, {
