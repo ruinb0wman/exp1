@@ -3,6 +3,7 @@ import type { DB } from './types';
 import { migration } from './migrations';
 import { createSyncMiddleware } from './sync/middleware';
 import { createTaskTemplateMiddleware } from './middleware/taskTemplateMiddleware';
+import { createPointsHistoryMiddleware } from './middleware/pointsHistoryMiddleware';
 import type { DeviceId } from './sync/types';
 
 const state: { 
@@ -62,6 +63,10 @@ const createDB = () => {
   // 注意：这里先注册 hooks，dayEndTime 会在应用初始化后通过 reRegisterHooks 更新
   const templateMiddleware = createTaskTemplateMiddleware("00:00");
   templateMiddleware.register(db);
+
+  // 注册积分历史中间件（Hooks）
+  const pointsHistoryMiddleware = createPointsHistoryMiddleware();
+  pointsHistoryMiddleware.register(db);
 
   return db;
 };

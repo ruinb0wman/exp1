@@ -83,17 +83,16 @@ export function TaskHistory() {
     action: "complete" | "reset",
     instanceId: number,
     _templateId: number,
-    rewardPoints: number
+    _rewardPoints: number
   ) => {
     setIsActionLoading(true);
     try {
       if (action === "complete") {
         await complete(instanceId);
-        await useUserStore.getState().addPoints(rewardPoints, "task_reward", instanceId);
       } else {
         await reset(instanceId);
-        await useUserStore.getState().spendPoints(rewardPoints, "task_reward", instanceId);
       }
+      // 积分变更由中间件自动处理
       // 刷新列表
       await refresh();
       // 关闭弹窗

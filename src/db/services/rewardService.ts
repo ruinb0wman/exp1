@@ -171,7 +171,7 @@ export async function redeemRewardsWithStockCheck(
     throw new Error('Quantity must be greater than 0');
   }
 
-  return db.transaction('rw', db.rewardTemplates, db.rewardInstances, async () => {
+  return db.transaction('rw', db.rewardTemplates, db.rewardInstances, db.pointsHistory, async () => {
     const template = await db.rewardTemplates.get(templateId);
     if (!template) {
       throw new Error('Reward template not found');
@@ -193,6 +193,15 @@ export async function redeemRewardsWithStockCheck(
         currentStock: currentStock - quantity,
         updatedAt: new Date().toISOString(),
       });
+    }
+
+    // 检查积分是否足够
+    const totalCost = template.pointsCost * quantity;
+    const pointsRecords = await db.pointsHistory.where('userId').equals(userId).toArray();
+    const currentPoints = pointsRecords.reduce((sum, record) => sum + record.amount, 0);
+
+    if (currentPoints < totalCost) {
+      throw new Error(`积分不足。需要: ${totalCost}, 当前: ${currentPoints}`);
     }
 
     // 批量创建奖励实例

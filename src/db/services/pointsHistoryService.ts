@@ -149,27 +149,6 @@ export async function getPointsStats(
 }
 
 /**
- * 记录任务撤销（扣除积分）
- */
-export async function recordTaskUndo(
-  userId: number,
-  taskInstanceId: number,
-  pointsToDeduct: number
-): Promise<number> {
-  const db = getDB();
-
-  const history: PointsHistory = {
-    userId,
-    amount: -Math.abs(pointsToDeduct),
-    type: 'task_undo',
-    relatedInstanceId: taskInstanceId,
-    createdAt: new Date().toISOString(),
-  };
-
-  return db.pointsHistory.add(history);
-}
-
-/**
  * 获取某个任务实例的所有积分记录
  */
 export async function getTaskPointsRecords(

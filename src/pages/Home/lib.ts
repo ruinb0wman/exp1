@@ -1,14 +1,14 @@
 import { updateTaskProgress, getTaskInstanceWithTemplate } from "@/db/services";
-import { useUserStore } from "@/store";
 import type { TaskInstance, TaskTemplate } from "@/db/types";
 
 /**
- * 完成任务并发放积分
+ * 完成任务
+ * 积分奖励由中间件自动处理
  */
 export async function completeTask(
   instanceId: number,
   _templateId: number,
-  rewardPoints: number,
+  _rewardPoints: number,
   complete: (instanceId: number) => Promise<void>,
   refreshTasks: () => Promise<void>,
   refreshNoDateTasks: () => Promise<void>
@@ -17,17 +17,17 @@ export async function completeTask(
   // 刷新任务列表以显示完成状态
   await refreshTasks();
   await refreshNoDateTasks();
-  // 添加积分，关联到任务实例
-  await useUserStore.getState().addPoints(rewardPoints, "task_reward", instanceId);
+  // 积分奖励由中间件自动处理
 }
 
 /**
- * 撤回任务并扣除积分
+ * 撤回任务
+ * 积分扣除由中间件自动处理
  */
 export async function resetTask(
   instanceId: number,
   _templateId: number,
-  rewardPoints: number,
+  _rewardPoints: number,
   reset: (instanceId: number) => Promise<void>,
   refreshTasks: () => Promise<void>,
   refreshNoDateTasks: () => Promise<void>
@@ -36,16 +36,16 @@ export async function resetTask(
   // 刷新任务列表以显示待处理状态
   await refreshTasks();
   await refreshNoDateTasks();
-  // 扣除积分，关联到任务实例
-  await useUserStore.getState().spendPoints(rewardPoints, "task_reward", instanceId);
+  // 积分扣除由中间件自动处理
 }
 
 /**
  * 在 Popup 中完成任务
+ * 积分奖励由中间件自动处理
  */
 export async function completeTaskInPopup(
   instance: TaskInstance,
-  template: TaskTemplate,
+  _template: TaskTemplate,
   complete: (instanceId: number) => Promise<void>,
   refreshTasks: () => Promise<void>,
   refreshNoDateTasks: () => Promise<void>,
@@ -54,16 +54,17 @@ export async function completeTaskInPopup(
   await complete(instance.id!);
   await refreshTasks();
   await refreshNoDateTasks();
-  await useUserStore.getState().addPoints(template.rewardPoints, "task_reward", instance.id!);
+  // 积分奖励由中间件自动处理
   onSuccess();
 }
 
 /**
  * 在 Popup 中撤回任务
+ * 积分扣除由中间件自动处理
  */
 export async function resetTaskInPopup(
   instance: TaskInstance,
-  template: TaskTemplate,
+  _template: TaskTemplate,
   reset: (instanceId: number) => Promise<void>,
   refreshTasks: () => Promise<void>,
   refreshNoDateTasks: () => Promise<void>,
@@ -72,7 +73,7 @@ export async function resetTaskInPopup(
   await reset(instance.id!);
   await refreshTasks();
   await refreshNoDateTasks();
-  await useUserStore.getState().spendPoints(template.rewardPoints, "task_reward", instance.id!);
+  // 积分扣除由中间件自动处理
   onSuccess();
 }
 
@@ -82,21 +83,13 @@ export async function resetTaskInPopup(
  */
 export async function incrementTaskCount(
   instance: TaskInstance,
-  template: TaskTemplate,
+  _template: TaskTemplate,
   refreshTasks: () => Promise<void>,
   refreshNoDateTasks: () => Promise<void>
 ): Promise<{ instance: TaskInstance; template: TaskTemplate } | null> {
-  const progressBefore = instance.completeProgress ?? 0;
-  const target = template.completeTarget ?? 0;
-
   // 更新进度（增加1）
+  // 积分奖励由中间件自动处理（当任务状态变为 completed 时）
   await updateTaskProgress(instance.id!, 1);
-
-  // 如果进度达到目标，发放积分
-  const progressAfter = progressBefore + 1;
-  if (progressAfter >= target && progressBefore < target) {
-    await useUserStore.getState().addPoints(template.rewardPoints, "task_reward", instance.id!);
-  }
 
   // 刷新任务列表
   await refreshTasks();
