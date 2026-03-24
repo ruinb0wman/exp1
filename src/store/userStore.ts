@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { liveQuery } from 'dexie';
 import type { User, PointsHistoryType } from '@/db/types';
 import {
   getOrCreateUser,
@@ -6,12 +7,14 @@ import {
   updateUserPoints as updateUserPointsService,
   calculateUserPoints,
 } from '../db/services';
+import { getDB } from '../db';
 
 interface UserState {
   user: User | null;
   currentPoints: number; // 从 pointsHistory 计算得到的当前积分
   isLoading: boolean;
   error: string | null;
+  pointsSubscription: (() => void) | null; // 积分变化订阅的清理函数
 
   // Actions
   initUser: () => Promise<void>;
@@ -21,6 +24,10 @@ interface UserState {
   spendPoints: (amount: number, type: PointsHistoryType, relatedInstanceId?: number) => Promise<void>;
   // 计算当前积分
   calculatePoints: () => Promise<number>;
+  // 订阅积分变化
+  subscribeToPointsChanges: () => void;
+  // 取消订阅积分变化
+  unsubscribeFromPointsChanges: () => void;
 }
 
 export const useUserStore = create<UserState>((set, get) => ({
@@ -28,6 +35,7 @@ export const useUserStore = create<UserState>((set, get) => ({
   currentPoints: 0,
   isLoading: false,
   error: null,
+  pointsSubscription: null,
 
   initUser: async () => {
     set({ isLoading: true, error: null });
@@ -36,6 +44,8 @@ export const useUserStore = create<UserState>((set, get) => ({
       // 计算当前积分
       const points = await calculateUserPoints(user.id);
       set({ user, currentPoints: points, isLoading: false });
+      // 启动积分变化订阅
+      get().subscribeToPointsChanges();
     } catch (error) {
       set({
         error: error instanceof Error ? error.message : 'Failed to initialize user',
@@ -137,5 +147,44 @@ export const useUserStore = create<UserState>((set, get) => ({
     const points = await calculateUserPoints(user.id);
     set({ currentPoints: points });
     return points;
+  },
+
+  subscribeToPointsChanges: () => {
+    const { user, pointsSubscription } = get();
+    if (!user) return;
+
+    // 如果已有订阅，先取消
+    if (pointsSubscription) {
+      pointsSubscription();
+    }
+
+    // 使用 liveQuery 订阅 pointsHistory 表的变化
+    const observable = liveQuery(() => {
+      const db = getDB();
+      return db.pointsHistory.where('userId').equals(user.id).toArray();
+    });
+
+    const subscription = observable.subscribe({
+      next: async () => {
+        // 当 pointsHistory 表变化时，重新计算积分
+        await get().calculatePoints();
+      },
+      error: (error) => {
+        console.error('[UserStore] Points subscription error:', error);
+      },
+    });
+
+    // 保存清理函数
+    set({
+      pointsSubscription: () => subscription.unsubscribe(),
+    });
+  },
+
+  unsubscribeFromPointsChanges: () => {
+    const { pointsSubscription } = get();
+    if (pointsSubscription) {
+      pointsSubscription();
+      set({ pointsSubscription: null });
+    }
   },
 }));

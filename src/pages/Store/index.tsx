@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { useNavigate } from "react-router";
 import { Package, Plus, Pencil } from "lucide-react";
 import { Header } from "@/components/Header";
@@ -13,7 +13,13 @@ import { filterRewardsBySearch, getMaxQuantity } from "./lib";
 
 export function Store() {
   const navigate = useNavigate();
-  const { user, currentPoints } = useUserStore();
+  const { user, currentPoints, calculatePoints } = useUserStore();
+
+  // 进入页面时重新计算积分
+  useEffect(() => {
+    calculatePoints();
+  }, [calculatePoints]);
+
   const { rewards, isLoading, refresh } = useStoreRewards(user?.id ?? 0);
   const { redeem, isLoading: isActionLoading } = useRewardInstanceActions();
 

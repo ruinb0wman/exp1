@@ -1,4 +1,4 @@
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Plus } from "lucide-react";
 import { useNavigate } from "react-router";
 import { useUserStore } from "@/store";
@@ -18,7 +18,12 @@ import {
 
 export function Home() {
   const navigate = useNavigate();
-  const { user, currentPoints, isLoading: isUserLoading } = useUserStore();
+  const { user, currentPoints, isLoading: isUserLoading, calculatePoints } = useUserStore();
+
+  // 进入页面时重新计算积分
+  useEffect(() => {
+    calculatePoints();
+  }, [calculatePoints]);
 
   // 任务详情 popup 状态
   const [selectedTask, setSelectedTask] = useState<{ instance: TaskInstance; template: TaskTemplate } | null>(null);
