@@ -157,7 +157,7 @@ export function Backpack() {
                     {selectedItem.template.pointsCost}
                   </span>
                 </div>
-                <p className="text-text-muted text-xs">兑换积分</p>
+                <p className="text-text-muted text-xs">兑换 exp</p>
               </div>
               <div className="bg-surface rounded-xl p-4 text-center">
                 <div className="flex items-center justify-center gap-1 text-green-400 mb-1">

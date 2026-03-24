@@ -58,7 +58,7 @@ export function RewardsGrid({ rewards, isLoading, onRewardClick }: RewardsGridPr
             <div className="flex items-center gap-2">
               <Sparkles className="w-3 h-3 text-primary" />
               <p className="text-text-secondary text-sm">
-                {template.pointsCost} PTS
+                {template.pointsCost} exp
               </p>
             </div>
             {template.replenishmentMode !== 'none' && availableCount > 0 && (

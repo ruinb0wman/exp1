@@ -53,8 +53,8 @@ export function PointsCard({ currentPoints }: PointsCardProps) {
   return (
     <div className="p-4">
       <div className="rounded-xl bg-primary p-6">
-        <p className="text-white/80 text-sm font-normal">CURRENT BALANCE</p>
-        <p className="text-white text-4xl font-bold mt-1">{currentPoints}</p>
+        <p className="text-white/80 text-sm font-normal">CURRENT EXP</p>
+        <p className="text-white text-4xl font-bold mt-1">{currentPoints} exp</p>
         <p className="text-white/80 text-base mt-1">
           Well done! Keep up the great work.
         </p>

@@ -50,7 +50,7 @@ export function PointsHistory() {
               </p>
             </div>
             <div>
-              <p className="text-text-secondary text-xs mb-1">结余</p>
+              <p className="text-text-secondary text-xs mb-1">exp</p>
               <p className="text-text-primary text-xl font-bold">
                 {currentPoints}
               </p>

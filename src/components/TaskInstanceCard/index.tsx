@@ -125,7 +125,7 @@ export function TaskInstanceCard({
               )}
               {/* 积分 */}
               {instance && instance.template?.rewardPoints > 0 && (
-                <span className="text-green-500">+{instance.template.rewardPoints}积分</span>
+                <span className="text-green-500">+{instance.template.rewardPoints} exp</span>
               )}
             </>
           )}

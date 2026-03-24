@@ -9,10 +9,10 @@ export function PointsCard({ currentPoints }: PointsCardProps) {
     <div className="flex items-center justify-between gap-4 rounded-xl bg-surface p-4 border border-border">
       <div className="flex flex-col gap-1">
         <p className="text-text-secondary text-sm font-bold">
-          Your Points
+          Your EXP
         </p>
         <p className="text-text-primary text-2xl font-bold">
-          {currentPoints.toLocaleString()} PTS
+          {currentPoints.toLocaleString()} exp
         </p>
       </div>
       <div className="w-16 h-16 rounded-full bg-primary text-white flex items-center justify-center">

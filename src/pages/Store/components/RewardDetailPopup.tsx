@@ -65,7 +65,7 @@ export function RewardDetailPopup({
             <Sparkles className="w-4 h-4" />
             <span className="text-lg font-bold">{template.pointsCost}</span>
           </div>
-          <p className="text-text-muted text-xs">需要积分</p>
+          <p className="text-text-muted text-xs">需要 exp</p>
         </div>
         <div className="bg-surface rounded-xl p-4 text-center">
           <div className="flex items-center justify-center gap-1 text-text-secondary mb-1">
@@ -113,7 +113,7 @@ export function RewardDetailPopup({
         <div className="flex items-center justify-between pt-3 border-t border-border">
           <span className="text-text-secondary text-sm">总计</span>
           <span className="text-primary font-bold text-lg">
-            {totalCost.toLocaleString()} PTS
+            {totalCost.toLocaleString()} exp
           </span>
         </div>
       </div>
