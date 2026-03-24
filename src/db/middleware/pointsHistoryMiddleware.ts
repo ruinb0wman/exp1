@@ -63,25 +63,29 @@ export function createPointsHistoryMiddleware() {
       });
 
       // 监听 rewardInstances 的创建（兑换奖励）
-      db.rewardInstances.hook('creating', function (primKey, obj, trans) {
+      db.rewardInstances.hook('creating', function (_primKey, obj, _trans) {
         const instance = obj as RewardInstance;
         const pointsCost = instance.template?.pointsCost || 0;
 
         if (pointsCost > 0) {
-          // 在事务完成后添加积分记录
-          trans.on('complete', async () => {
+          // 使用 this.onsuccess 获取实际的自增主键（primKey 在自增情况下为 undefined）
+          this.onsuccess = async (actualPrimKey) => {
             try {
               await db.pointsHistory.add({
                 userId: instance.userId,
                 amount: -pointsCost,
                 type: 'reward_exchange',
-                relatedInstanceId: primKey as number,
+                relatedInstanceId: actualPrimKey as number,
                 createdAt: new Date().toISOString(),
               });
             } catch (error) {
               console.error('[PointsHistoryMiddleware] Failed to add reward exchange:', error);
             }
-          });
+          };
+
+          this.onerror = (error) => {
+            console.error('[PointsHistoryMiddleware] Failed to create reward instance:', error);
+          };
         }
       });
     },
