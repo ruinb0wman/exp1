@@ -9,6 +9,10 @@ import {
 } from '../db/services';
 import { getDB } from '../db';
 
+// 初始化锁,防止并发创建多个用户
+let isInitializing = false;
+let initPromise: Promise<void> | null = null;
+
 interface UserState {
   user: User | null;
   currentPoints: number; // 从 pointsHistory 计算得到的当前积分
@@ -38,20 +42,39 @@ export const useUserStore = create<UserState>((set, get) => ({
   pointsSubscription: null,
 
   initUser: async () => {
-    set({ isLoading: true, error: null });
-    try {
-      const user = await getOrCreateUser();
-      // 计算当前积分
-      const points = await calculateUserPoints(user.id);
-      set({ user, currentPoints: points, isLoading: false });
-      // 启动积分变化订阅
-      get().subscribeToPointsChanges();
-    } catch (error) {
-      set({
-        error: error instanceof Error ? error.message : 'Failed to initialize user',
-        isLoading: false,
-      });
+    // 如果已经在初始化中,等待初始化完成
+    if (isInitializing && initPromise) {
+      return initPromise;
     }
+
+    // 如果已经有用户,不需要重新初始化
+    if (get().user) {
+      return;
+    }
+
+    isInitializing = true;
+    set({ isLoading: true, error: null });
+
+    initPromise = (async () => {
+      try {
+        const user = await getOrCreateUser();
+        // 计算当前积分
+        const points = await calculateUserPoints(user.id);
+        set({ user, currentPoints: points, isLoading: false });
+        // 启动积分变化订阅
+        get().subscribeToPointsChanges();
+      } catch (error) {
+        set({
+          error: error instanceof Error ? error.message : 'Failed to initialize user',
+          isLoading: false,
+        });
+      } finally {
+        isInitializing = false;
+        initPromise = null;
+      }
+    })();
+
+    return initPromise;
   },
 
   refreshUser: async () => {
