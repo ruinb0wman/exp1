@@ -31,8 +31,6 @@ interface TaskState {
 	refreshNoDateTasks: () => Promise<void>;
 }
 
-const timestamp = () => new Date().toISOString().split("T")[1].split(".")[0];
-
 export const useTaskStore = create<TaskState>((set, get) => ({
 	todayTasks: [],
 	noDateTasks: [],
@@ -42,11 +40,6 @@ export const useTaskStore = create<TaskState>((set, get) => ({
 	noDateTasksSubscription: null,
 
 	subscribeToTodayTasks: (userId, dayEndTime) => {
-		console.log(
-			`[${timestamp()}][TaskStore] subscribeToTodayTasks called, userId:`,
-			userId,
-		);
-
 		// 如果已有订阅，先取消
 		get().unsubscribeFromTodayTasks();
 
@@ -56,18 +49,9 @@ export const useTaskStore = create<TaskState>((set, get) => ({
 
 		const subscription = observable.subscribe({
 			next: (data) => {
-				console.log(
-					`[${timestamp()}][TaskStore] Today tasks updated:`,
-					data.length,
-					"items",
-				);
 				set({ todayTasks: data, isLoading: false, error: null });
 			},
 			error: (err) => {
-				console.error(
-					`[${timestamp()}][TaskStore] Today tasks error:`,
-					err,
-				);
 				set({
 					error:
 						err instanceof Error
@@ -85,29 +69,15 @@ export const useTaskStore = create<TaskState>((set, get) => ({
 	},
 
 	subscribeToNoDateTasks: (userId) => {
-		console.log(
-			`[${timestamp()}][TaskStore] subscribeToNoDateTasks called, userId:`,
-			userId,
-		);
-
 		get().unsubscribeFromNoDateTasks();
 
 		const observable = liveQuery(() => getNoDateTaskInstances(userId));
 
 		const subscription = observable.subscribe({
 			next: (data) => {
-				console.log(
-					`[${timestamp()}][TaskStore] No date tasks updated:`,
-					data.length,
-					"items",
-				);
 				set({ noDateTasks: data, isLoading: false, error: null });
 			},
 			error: (err) => {
-				console.error(
-					`[${timestamp()}][TaskStore] No date tasks error:`,
-					err,
-				);
 				set({
 					error:
 						err instanceof Error
@@ -127,9 +97,6 @@ export const useTaskStore = create<TaskState>((set, get) => ({
 	unsubscribeFromTodayTasks: () => {
 		const { todayTasksSubscription } = get();
 		if (todayTasksSubscription) {
-			console.log(
-				`[${timestamp()}][TaskStore] Unsubscribing from today tasks`,
-			);
 			todayTasksSubscription();
 			set({ todayTasksSubscription: null });
 		}
@@ -138,9 +105,6 @@ export const useTaskStore = create<TaskState>((set, get) => ({
 	unsubscribeFromNoDateTasks: () => {
 		const { noDateTasksSubscription } = get();
 		if (noDateTasksSubscription) {
-			console.log(
-				`[${timestamp()}][TaskStore] Unsubscribing from no date tasks`,
-			);
 			noDateTasksSubscription();
 			set({ noDateTasksSubscription: null });
 		}
@@ -148,14 +112,9 @@ export const useTaskStore = create<TaskState>((set, get) => ({
 
 	refreshTodayTasks: async () => {
 		// liveQuery 会自动更新，这里可以留空
-		console.log(
-			`[${timestamp()}][TaskStore] refreshTodayTasks called (no-op)`,
-		);
 	},
 
 	refreshNoDateTasks: async () => {
-		console.log(
-			`[${timestamp()}][TaskStore] refreshNoDateTasks called (no-op)`,
-		);
+		// liveQuery 会自动更新，这里可以留空
 	},
 }));
