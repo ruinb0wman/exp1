@@ -10,7 +10,7 @@ import {
 const processedTemplateIds = new Set<number>();
 
 /**
- * 检查指定模板在今天是否需要生成实例，如果需要则在同一事务中生成
+ * 检查指定模板在今天是否需要生成实例，如果需要则生成
  * @param db 数据库实例
  * @param template 任务模板
  * @param dayEndTime 一天结束时间
@@ -147,7 +147,7 @@ export function createTaskTemplateMiddleware(dayEndTime: string = "00:00") {
      */
     register(db: DB) {
       // 创建模板时的 hook
-      db.taskTemplates.hook('creating', function (_primKey, obj, _trans) {
+      db.taskTemplates.hook('creating', function (_primKey, obj, trans) {
         const template = obj as TaskTemplate;
 
         // 只处理启用的模板
@@ -156,7 +156,7 @@ export function createTaskTemplateMiddleware(dayEndTime: string = "00:00") {
         }
 
         // 使用 onsuccess 回调，在创建成功后获取生成的 id
-        this.onsuccess = async (generatedId) => {
+        this.onsuccess = (generatedId) => {
           const templateId = generatedId as number;
 
           // 防重检查：如果已经处理过这个模板，直接返回
@@ -167,14 +167,18 @@ export function createTaskTemplateMiddleware(dayEndTime: string = "00:00") {
           // 标记为已处理
           processedTemplateIds.add(templateId);
 
-          try {
-            // 设置生成的 id
-            template.id = templateId;
-            await checkAndGenerateForTemplate(db, template, dayEndTime);
-          } catch (error) {
-            console.error('Failed to generate instance after creating template:', error);
-            throw error;
-          }
+          // 设置生成的 id
+          template.id = templateId;
+
+          // 在事务完成后检查并生成实例
+          trans.on('complete', async () => {
+            try {
+              await checkAndGenerateForTemplate(db, template, dayEndTime);
+            } catch (error) {
+              console.error('Failed to generate instance after creating template:', error);
+              throw error;
+            }
+          });
         };
       });
 
