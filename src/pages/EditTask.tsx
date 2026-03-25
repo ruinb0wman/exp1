@@ -364,7 +364,14 @@ export function EditTask() {
               onClick={() => {
                 const newEnabled = !isScheduleEnabled;
                 setIsScheduleEnabled(newEnabled);
-                if (!newEnabled) {
+                if (newEnabled) {
+                  // 启用时设置 startAt 为今天
+                  const today = new Date();
+                  const year = today.getFullYear();
+                  const month = String(today.getMonth() + 1).padStart(2, '0');
+                  const day = String(today.getDate()).padStart(2, '0');
+                  setStartAt(`${year}-${month}-${day}`);
+                } else {
                   // 禁用时清空 startAt 和 expire, repeat 设为 none
                   setStartAt('');
                   setCompleteExpireDays(0);
