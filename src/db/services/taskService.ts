@@ -3,6 +3,9 @@ import type { TaskTemplate, TaskInstance, TaskStatus, RepeatMode } from '../type
 
 import { getUserStartOfDay, getUserEndOfDay, getUserCurrentDate, isExpired } from '@/libs/time';
 
+// 时间戳辅助函数
+const timestamp = () => new Date().toISOString().split('T')[1].split('.')[0];
+
 // ==================== TaskTemplate CRUD ====================
 
 /**
@@ -368,6 +371,8 @@ export async function getTodayTaskInstances(
   userId: number,
   dayEndTime: string = "00:00"
 ): Promise<Array<{ instance: TaskInstance; template: TaskTemplate }>> {
+  console.log(`[${timestamp()}][TaskService] getTodayTaskInstances called, userId:`, userId, 'dayEndTime:', dayEndTime);
+  
   const db = getDB();
 
   // 使用 getUserCurrentDate 获取"用户眼中的今天"（考虑 dayEndTime 偏移）
@@ -379,12 +384,19 @@ export async function getTodayTaskInstances(
   // 使用 dayEndTime 获取今天的开始和结束
   const startOfDay = getUserStartOfDay(today, dayEndTime);
   const endOfDay = getUserEndOfDay(today, dayEndTime);
+  
+  console.log(`[${timestamp()}][TaskService] Query range:`, startOfDay, 'to', endOfDay);
 
   const instances = await db.taskInstances
     .where('startAt')
     .between(startOfDay, endOfDay, true, true)
     .and((instance) => instance.userId === userId)
     .toArray();
+  
+  console.log(`[${timestamp()}][TaskService] Found instances:`, instances.length);
+  if (instances.length > 0) {
+    console.log(`[${timestamp()}][TaskService] First instance startAt:`, instances[0].startAt);
+  }
 
   // 直接从 instance 中获取 template，无需额外查询
   return instances

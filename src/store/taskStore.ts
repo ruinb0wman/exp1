@@ -1,0 +1,161 @@
+import { create } from "zustand";
+import { liveQuery } from "dexie";
+import type { TaskInstance, TaskTemplate } from "@/db/types";
+import {
+	getTodayTaskInstances,
+	getNoDateTaskInstances,
+} from "@/db/services";
+
+interface TaskWithTemplate {
+	instance: TaskInstance;
+	template: TaskTemplate;
+}
+
+interface TaskState {
+	// 数据
+	todayTasks: TaskWithTemplate[];
+	noDateTasks: TaskWithTemplate[];
+	isLoading: boolean;
+	error: string | null;
+
+	// 订阅管理
+	todayTasksSubscription: (() => void) | null;
+	noDateTasksSubscription: (() => void) | null;
+
+	// 方法
+	subscribeToTodayTasks: (userId: number, dayEndTime?: string) => void;
+	subscribeToNoDateTasks: (userId: number) => void;
+	unsubscribeFromTodayTasks: () => void;
+	unsubscribeFromNoDateTasks: () => void;
+	refreshTodayTasks: () => Promise<void>;
+	refreshNoDateTasks: () => Promise<void>;
+}
+
+const timestamp = () => new Date().toISOString().split("T")[1].split(".")[0];
+
+export const useTaskStore = create<TaskState>((set, get) => ({
+	todayTasks: [],
+	noDateTasks: [],
+	isLoading: false,
+	error: null,
+	todayTasksSubscription: null,
+	noDateTasksSubscription: null,
+
+	subscribeToTodayTasks: (userId, dayEndTime) => {
+		console.log(
+			`[${timestamp()}][TaskStore] subscribeToTodayTasks called, userId:`,
+			userId,
+		);
+
+		// 如果已有订阅，先取消
+		get().unsubscribeFromTodayTasks();
+
+		const observable = liveQuery(() =>
+			getTodayTaskInstances(userId, dayEndTime),
+		);
+
+		const subscription = observable.subscribe({
+			next: (data) => {
+				console.log(
+					`[${timestamp()}][TaskStore] Today tasks updated:`,
+					data.length,
+					"items",
+				);
+				set({ todayTasks: data, isLoading: false, error: null });
+			},
+			error: (err) => {
+				console.error(
+					`[${timestamp()}][TaskStore] Today tasks error:`,
+					err,
+				);
+				set({
+					error:
+						err instanceof Error
+							? err.message
+							: "Failed to load today tasks",
+					isLoading: false,
+				});
+			},
+		});
+
+		set({
+			todayTasksSubscription: () => subscription.unsubscribe(),
+			isLoading: true,
+		});
+	},
+
+	subscribeToNoDateTasks: (userId) => {
+		console.log(
+			`[${timestamp()}][TaskStore] subscribeToNoDateTasks called, userId:`,
+			userId,
+		);
+
+		get().unsubscribeFromNoDateTasks();
+
+		const observable = liveQuery(() => getNoDateTaskInstances(userId));
+
+		const subscription = observable.subscribe({
+			next: (data) => {
+				console.log(
+					`[${timestamp()}][TaskStore] No date tasks updated:`,
+					data.length,
+					"items",
+				);
+				set({ noDateTasks: data, isLoading: false, error: null });
+			},
+			error: (err) => {
+				console.error(
+					`[${timestamp()}][TaskStore] No date tasks error:`,
+					err,
+				);
+				set({
+					error:
+						err instanceof Error
+							? err.message
+							: "Failed to load no date tasks",
+					isLoading: false,
+				});
+			},
+		});
+
+		set({
+			noDateTasksSubscription: () => subscription.unsubscribe(),
+			isLoading: true,
+		});
+	},
+
+	unsubscribeFromTodayTasks: () => {
+		const { todayTasksSubscription } = get();
+		if (todayTasksSubscription) {
+			console.log(
+				`[${timestamp()}][TaskStore] Unsubscribing from today tasks`,
+			);
+			todayTasksSubscription();
+			set({ todayTasksSubscription: null });
+		}
+	},
+
+	unsubscribeFromNoDateTasks: () => {
+		const { noDateTasksSubscription } = get();
+		if (noDateTasksSubscription) {
+			console.log(
+				`[${timestamp()}][TaskStore] Unsubscribing from no date tasks`,
+			);
+			noDateTasksSubscription();
+			set({ noDateTasksSubscription: null });
+		}
+	},
+
+	refreshTodayTasks: async () => {
+		// liveQuery 会自动更新，这里可以留空
+		console.log(
+			`[${timestamp()}][TaskStore] refreshTodayTasks called (no-op)`,
+		);
+	},
+
+	refreshNoDateTasks: async () => {
+		console.log(
+			`[${timestamp()}][TaskStore] refreshNoDateTasks called (no-op)`,
+		);
+	},
+}));

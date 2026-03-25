@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import type { TaskTemplate, TaskInstance } from '@/db/types';
+import { useTaskStore } from '@/store';
 import {
   getAllTaskTemplates,
   getTaskTemplateById,
@@ -7,8 +8,6 @@ import {
   updateTaskTemplate,
   disableTaskTemplate,
   toggleTaskTemplateEnabled,
-  getTodayTaskInstances,
-  getNoDateTaskInstances,
   getTaskInstancesByDate,
   completeTaskInstance,
   skipTaskInstance,
@@ -146,63 +145,33 @@ export interface TaskWithTemplate {
 }
 
 /**
- * 获取今日任务列表（支持 dayEndTime）
+ * 获取今日任务列表（支持 dayEndTime）- 使用全局 Store
  */
 export function useTodayTasks(userId: number, dayEndTime?: string) {
-  const [tasks, setTasks] = useState<TaskWithTemplate[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  const refresh = useCallback(async () => {
-    setIsLoading(true);
-    setError(null);
-    try {
-      const data = await getTodayTaskInstances(userId, dayEndTime);
-      setTasks(data);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load today tasks');
-    } finally {
-      setIsLoading(false);
-    }
-  }, [userId, dayEndTime]);
+  const { todayTasks, isLoading, error, subscribeToTodayTasks, refreshTodayTasks } = useTaskStore();
 
   useEffect(() => {
     if (userId) {
-      refresh();
+      subscribeToTodayTasks(userId, dayEndTime);
     }
-  }, [refresh, userId]);
+  }, [userId, dayEndTime, subscribeToTodayTasks]);
 
-  return { tasks, isLoading, error, refresh };
+  return { tasks: todayTasks, isLoading, error, refresh: refreshTodayTasks };
 }
 
 /**
- * 获取没有日期的任务列表
+ * 获取没有日期的任务列表 - 使用全局 Store
  */
 export function useNoDateTasks(userId: number) {
-  const [tasks, setTasks] = useState<TaskWithTemplate[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  const refresh = useCallback(async () => {
-    setIsLoading(true);
-    setError(null);
-    try {
-      const data = await getNoDateTaskInstances(userId);
-      setTasks(data);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load no date tasks');
-    } finally {
-      setIsLoading(false);
-    }
-  }, [userId]);
+  const { noDateTasks, isLoading, error, subscribeToNoDateTasks, refreshNoDateTasks } = useTaskStore();
 
   useEffect(() => {
     if (userId) {
-      refresh();
+      subscribeToNoDateTasks(userId);
     }
-  }, [refresh, userId]);
+  }, [userId, subscribeToNoDateTasks]);
 
-  return { tasks, isLoading, error, refresh };
+  return { tasks: noDateTasks, isLoading, error, refresh: refreshNoDateTasks };
 }
 
 /**

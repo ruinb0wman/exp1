@@ -16,7 +16,7 @@ import { Backpack } from "./pages/Backpack";
 import { TaskHistory } from "./pages/TaskHistory";
 import { Settings } from "./pages/Settings";
 import { DataImportExport } from "./pages/DataImportExport";
-import { useUserStore } from "./store/userStore";
+import { useUserStore, useTaskStore } from "./store";
 import { useExpiredTaskChecker } from "./hooks/useExpiredTaskChecker";
 import { useGlobalPomoTimer } from "./hooks/useGlobalPomoTimer";
 import { useAppInitializer } from "./hooks/useAppInitializer";
@@ -73,7 +73,16 @@ function Layout({ isMobile, safeAreaTop }: LayoutProps) {
       checkExpiredTasks();
     }
   }, [user?.id, checkExpiredTasks]);
-  
+
+  // 用户初始化完成后启动任务订阅
+  useEffect(() => {
+    if (user?.id) {
+      const { subscribeToTodayTasks, subscribeToNoDateTasks } = useTaskStore.getState();
+      subscribeToTodayTasks(user.id, user.dayEndTime);
+      subscribeToNoDateTasks(user.id);
+    }
+  }, [user?.id]);
+
   // 移动端使用动态计算的 safeAreaTop，桌面端使用固定 32px
   const topPadding = isMobile ? safeAreaTop : 32;
 

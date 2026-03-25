@@ -6,6 +6,9 @@ import {
   toUserDateString,
 } from '@/libs/task';
 
+// 时间戳辅助函数
+const timestamp = () => new Date().toISOString().split('T')[1].split('.')[0];
+
 // 用于防止重复处理的 Set
 const processedTemplateIds = new Set<number>();
 
@@ -21,8 +24,11 @@ export async function checkAndGenerateForTemplate(
   template: TaskTemplate,
   dayEndTime: string = "00:00"
 ): Promise<boolean> {
+  console.log(`[${timestamp()}][Middleware] checkAndGenerateForTemplate called, templateId:`, template.id, 'enabled:', template.enabled);
+  
   // 只处理启用的模板
   if (!template.enabled) {
+    console.log(`[${timestamp()}][Middleware] Template not enabled, skipping`);
     return false;
   }
 
@@ -54,7 +60,11 @@ export async function checkAndGenerateForTemplate(
   }
 
   // 检查是否需要生成实例
-  if (!shouldGenerateInstanceOnDate(template, existingInstances, today, dayEndTime)) {
+  const shouldGenerate = shouldGenerateInstanceOnDate(template, existingInstances, today, dayEndTime);
+  console.log(`[${timestamp()}][Middleware] shouldGenerateInstanceOnDate result:`, shouldGenerate, 'existingInstances:', existingInstances.length);
+  
+  if (!shouldGenerate) {
+    console.log(`[${timestamp()}][Middleware] No need to generate instance`);
     return false;
   }
 
@@ -69,7 +79,7 @@ export async function checkAndGenerateForTemplate(
           .toArray();
 
         if (instancesInTx.length > 0) {
-          console.log('[DEBUG] Transaction check found existing instances, skipping generation');
+          console.log(`[${timestamp()}][Middleware] Transaction check found existing instances, skipping generation`);
           return;
         }
 
@@ -84,18 +94,20 @@ export async function checkAndGenerateForTemplate(
           updatedAt: now,
         });
 
-        console.log('[DEBUG] Instance added in transaction');
+        console.log(`[${timestamp()}][Middleware] Instance added in transaction, instanceId:`, instanceData.templateId);
       });
       return true;
     } catch (error) {
       // 如果事务失败（可能是并发冲突），返回 false
-      console.log('[DEBUG] Transaction failed, possibly due to concurrent creation:', error);
+      console.log(`[${timestamp()}][Middleware] Transaction failed, possibly due to concurrent creation:`, error);
       return false;
     }
   }
 
   // 周期性任务：直接生成实例
+  console.log(`[${timestamp()}][Middleware] Generating instance for recurring task`);
   const instanceData = generateTaskInstance(template, dayEndTime, today);
+  console.log(`[${timestamp()}][Middleware] Instance data generated, startAt:`, instanceData.startAt);
 
   // 添加实例
   const now = new Date().toISOString();
@@ -104,6 +116,7 @@ export async function checkAndGenerateForTemplate(
     createdAt: now,
     updatedAt: now,
   });
+  console.log(`[${timestamp()}][Middleware] Instance added directly, templateId:`, instanceData.templateId);
 
   return true;
 }
@@ -162,10 +175,11 @@ export function createTaskTemplateMiddleware(dayEndTime: string = "00:00") {
         // 使用 onsuccess 回调，在创建成功后获取生成的 id
         this.onsuccess = async (generatedId) => {
           const templateId = generatedId as number;
+          console.log(`[${timestamp()}][Middleware] onsuccess triggered, templateId:`, templateId);
 
           // 防重检查：如果已经处理过这个模板，直接返回
           if (processedTemplateIds.has(templateId)) {
-            console.log('[DEBUG] Template already processed, skipping:', templateId);
+            console.log(`[${timestamp()}][Middleware] Template already processed, skipping:`, templateId);
             return;
           }
 
@@ -175,9 +189,11 @@ export function createTaskTemplateMiddleware(dayEndTime: string = "00:00") {
           try {
             // 设置生成的 id
             template.id = templateId;
-            await checkAndGenerateForTemplate(db, template, dayEndTime);
+            console.log(`[${timestamp()}][Middleware] Calling checkAndGenerateForTemplate`);
+            const result = await checkAndGenerateForTemplate(db, template, dayEndTime);
+            console.log(`[${timestamp()}][Middleware] Instance generation result:`, result);
           } catch (error) {
-            console.error('Failed to generate instance after creating template:', error);
+            console.error(`[${timestamp()}][Middleware] Failed to generate instance after creating template:`, error);
             throw error;
           }
         };
