@@ -1,5 +1,6 @@
 import type { TaskInstance, RewardInstance } from '@/db/types';
 import type { DB } from '@/db/types';
+import { getIsSyncing } from '@/services/sync/syncState';
 
 /**
  * 创建积分历史中间件
@@ -13,6 +14,9 @@ export function createPointsHistoryMiddleware() {
     register(db: DB) {
       // 监听 taskInstances 的更新（完成任务/撤销完成）
       db.taskInstances.hook('updating', function (mods, primKey, obj, trans) {
+        // 同步期间跳过自动创建 pointsHistory
+        if (getIsSyncing()) return;
+        
         const oldInstance = obj as TaskInstance;
         const newInstance = { ...oldInstance, ...mods } as TaskInstance;
 
@@ -68,6 +72,9 @@ export function createPointsHistoryMiddleware() {
 
       // 监听 rewardInstances 的创建（兑换奖励）
       db.rewardInstances.hook('creating', function (_primKey, obj, _trans) {
+        // 同步期间跳过自动创建 pointsHistory
+        if (getIsSyncing()) return;
+        
         const instance = obj as RewardInstance;
         const pointsCost = instance.template?.pointsCost || 0;
 

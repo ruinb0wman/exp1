@@ -13,6 +13,7 @@ import type { SyncData, SyncTableData, SyncProgress } from './types';
 import { SyncError } from './types';
 import { createSyncBackup, restoreFromBackup, cleanupBackup } from './backup';
 import { SyncClient } from './syncClient';
+import { setSyncing } from './syncState';
 
 /**
  * 收集同步数据
@@ -59,6 +60,10 @@ export async function applySyncData(
   onProgress?: (progress: SyncProgress) => void
 ): Promise<void> {
   console.log(`[SyncService] Applying sync data, session: ${data.sessionId}`);
+  
+  // 设置同步标志，禁用自动 Hooks
+  setSyncing(true);
+  
   const db = getDB();
   const totalTables = Object.keys(data.tables).length;
   let processedTables = 0;
@@ -105,6 +110,9 @@ export async function applySyncData(
     progress: 100,
     message: '同步完成'
   });
+  
+  // 清除同步标志，恢复自动 Hooks
+  setSyncing(false);
 }
 
 /**
