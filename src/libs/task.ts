@@ -340,7 +340,7 @@ export function generateTaskInstance(
   template: TaskTemplate,
   dayEndTime: string = "00:00",
   date?: Date
-): Omit<TaskInstance, 'id' | 'createdAt'> {
+): Omit<TaskInstance, 'id'> {
   const targetDate = date || new Date();
 
   // 如果启用随机子任务且存在子任务，随机选择一个
@@ -370,6 +370,7 @@ export function generateTaskInstance(
     expiredAt = calculateExpiredAt(startAt, template.completeExpireDays, dayEndTime);
   }
 
+  const now = new Date().toISOString();
   return {
     userId: template.userId,
     templateId: template.id!,
@@ -377,6 +378,8 @@ export function generateTaskInstance(
     status: 'pending',
     subtasks: [...subtasks],
     startAt,
+    createdAt: now,
+    updatedAt: now,
     completeProgress: template.completeRule ? 0 : undefined,
     expiredAt,
   };

@@ -1,16 +1,14 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { invoke } from '@tauri-apps/api/core';
 import { listen, type UnlistenFn } from '@tauri-apps/api/event';
-import type { SyncProgress, FieldConflict, DeviceId, SyncData } from '@/services/sync';
-import type { SyncTable } from '@/db/sync/types';
-import { performSync, performSyncWithResolutions, collectSyncData } from '@/services/sync';
+import type { SyncProgress, DeviceId, SyncData } from '@/services/sync';
+import { performSync, collectSyncData } from '@/services/sync';
 import { getDB } from '@/db';
 import { getDeviceId } from '@/db/index';
 
 interface SyncState {
   isOpen: boolean;
   progress: SyncProgress;
-  conflicts: FieldConflict[];
   qrCodeContent: string;
   serverUrl: string | null;
   lastSyncAt: string | null;
@@ -24,13 +22,14 @@ interface UseSyncReturn {
   openSync: () => Promise<void>;
   closeSync: () => void;
   startSync: (serverUrl: string) => Promise<void>;
-  resolveConflicts: (resolutions: { table: SyncTable; syncId: string; field: string; choice: 'local' | 'remote' }[]) => Promise<void>;
   retrySync: () => Promise<void>;
   cancelSync: () => Promise<void>;
 }
 
 /**
- * 同步状态管理 Hook
+ * 同步状态管理 Hook（简化版）
+ * 
+ * 移除冲突解决逻辑，使用简单的"后写入获胜"策略
  */
 export function useSync(): UseSyncReturn {
   const deviceId = getDeviceId();
@@ -44,7 +43,6 @@ export function useSync(): UseSyncReturn {
       progress: 0,
       message: '准备同步',
     },
-    conflicts: [],
     qrCodeContent: '',
     serverUrl: null,
     lastSyncAt: null,
@@ -149,7 +147,6 @@ export function useSync(): UseSyncReturn {
       ...prev,
       isOpen: true,
       progress: { phase: 'idle', progress: 0, message: '准备同步' },
-      conflicts: [],
     }));
 
     // PC端：启动服务器并生成 QR 码
@@ -193,7 +190,6 @@ export function useSync(): UseSyncReturn {
       ...prev,
       isOpen: false,
       progress: { phase: 'idle', progress: 0, message: '准备同步' },
-      conflicts: [],
       currentSessionId: null,
     }));
 
@@ -216,11 +212,6 @@ export function useSync(): UseSyncReturn {
           ...prev,
           progress,
         }));
-
-        // 如果有冲突，保存冲突列表
-        if (progress.phase === 'conflict') {
-          // 冲突列表会在 catch 块中处理
-        }
       });
 
       // 同步成功，更新最后同步时间
@@ -228,55 +219,6 @@ export function useSync(): UseSyncReturn {
       setState(prev => ({
         ...prev,
         lastSyncAt: now,
-        isOpen: false,
-      }));
-    } catch (error) {
-      if (error instanceof Error && error.message === 'Conflicts detected') {
-        // 冲突已在服务端保存，需要获取冲突列表
-        // 这里简化处理，实际应该从服务端获取
-        setState(prev => ({
-          ...prev,
-          progress: {
-            phase: 'conflict',
-            progress: 60,
-            message: '发现冲突，请解决',
-          },
-        }));
-      } else {
-        setState(prev => ({
-          ...prev,
-          progress: {
-            phase: 'error',
-            progress: 0,
-            message: error instanceof Error ? error.message : '同步失败',
-          },
-        }));
-      }
-    }
-  }, []);
-
-  // 解决冲突
-  const resolveConflicts = useCallback(async (resolutions: { table: SyncTable; syncId: string; field: string; choice: 'local' | 'remote' }[]) => {
-    if (!state.serverUrl) return;
-
-    try {
-      await performSyncWithResolutions(
-        state.serverUrl,
-        resolutions,
-        (progress) => {
-          setState(prev => ({
-            ...prev,
-            progress,
-          }));
-        }
-      );
-
-      // 同步成功
-      const now = new Date().toISOString();
-      setState(prev => ({
-        ...prev,
-        lastSyncAt: now,
-        conflicts: [],
         isOpen: false,
       }));
     } catch (error) {
@@ -289,7 +231,7 @@ export function useSync(): UseSyncReturn {
         },
       }));
     }
-  }, [state.serverUrl]);
+  }, []);
 
   // 重试同步
   const retrySync = useCallback(async () => {
@@ -324,7 +266,6 @@ export function useSync(): UseSyncReturn {
     openSync,
     closeSync,
     startSync,
-    resolveConflicts,
     retrySync,
     cancelSync,
   };

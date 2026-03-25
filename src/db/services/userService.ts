@@ -8,6 +8,7 @@ import { toUserDateString } from '@/libs/task';
 const DEFAULT_USER: Omit<User, 'id'> = {
   name: 'User',
   createdAt: new Date().toISOString(),
+  updatedAt: new Date().toISOString(),
 };
 
 /**
@@ -78,12 +79,14 @@ export async function updateUserPoints(
     }
 
     // 添加积分历史记录
+    const now = new Date().toISOString();
     const history: PointsHistory = {
       userId,
       amount,
       type,
       relatedInstanceId,
-      createdAt: new Date().toISOString(),
+      createdAt: now,
+      updatedAt: now,
     };
     await db.pointsHistory.add(history);
 

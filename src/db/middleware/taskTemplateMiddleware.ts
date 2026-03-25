@@ -77,9 +77,11 @@ export async function checkAndGenerateForTemplate(
         const instanceData = generateTaskInstance(template, dayEndTime, today);
 
         // 在事务中添加实例
+        const now = new Date().toISOString();
         await db.taskInstances.add({
           ...instanceData,
-          createdAt: new Date().toISOString(),
+          createdAt: now,
+          updatedAt: now,
         });
 
         console.log('[DEBUG] Instance added in transaction');
@@ -96,9 +98,11 @@ export async function checkAndGenerateForTemplate(
   const instanceData = generateTaskInstance(template, dayEndTime, today);
 
   // 添加实例
+  const now = new Date().toISOString();
   await db.taskInstances.add({
     ...instanceData,
-    createdAt: new Date().toISOString(),
+    createdAt: now,
+    updatedAt: now,
   });
 
   return true;

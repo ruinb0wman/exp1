@@ -143,16 +143,7 @@ pub async fn clear_sync_session(
         let removed = merged.remove(&session_id);
         log::info!("[Sync IPC] clear_sync_session: Removed merged data: {}", removed.is_some());
     }
-    {
-        let mut conflicts = app_state.conflicts.write().await;
-        let removed = conflicts.remove(&session_id);
-        log::info!("[Sync IPC] clear_sync_session: Removed conflicts: {}", removed.is_some());
-    }
-    {
-        let mut sync_status = app_state.sync_status.write().await;
-        let removed = sync_status.remove(&session_id);
-        log::info!("[Sync IPC] clear_sync_session: Removed sync status: {}", removed.is_some());
-    }
+
 
     // 发送事件通知前端清理完成
     if let Some(app_handle) = get_app_handle().await {

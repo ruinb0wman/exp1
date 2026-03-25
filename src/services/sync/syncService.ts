@@ -1,15 +1,13 @@
 /**
- * 同步服务 - 核心逻辑
+ * 同步服务 - 核心逻辑（简化版）
  *
  * 提供数据收集、打包、应用等功能
+ * 移除影子表依赖，直接使用业务表的 updatedAt 字段
  */
 
 import { getDB } from '@/db';
 import { getDeviceId } from '@/db/index';
-import type {
-  SyncMetadata,
-  SyncTable
-} from '@/db/sync/types';
+
 import { SYNCABLE_TABLES } from '@/db/sync/types';
 import type { SyncData, SyncTableData, SyncProgress } from './types';
 import { SyncError } from './types';
@@ -27,23 +25,11 @@ export async function collectSyncData(sessionId: string): Promise<SyncData> {
   const tables: Partial<SyncTableData> = {};
 
   for (const tableName of SYNCABLE_TABLES) {
-    // 获取业务表数据
+    // 直接获取业务表数据（不再需要元数据）
     const records = await db.table(tableName).toArray();
     console.log(`[SyncService] Table ${tableName}: ${records.length} records`);
 
-    // 获取对应的元数据
-    const metadata: SyncMetadata[] = [];
-    for (const record of records) {
-      const meta = await db.table('syncMetadata')
-        .where({ table: tableName, localId: record.id })
-        .first() as SyncMetadata | undefined;
-
-      if (meta) {
-        metadata.push(meta);
-      }
-    }
-
-    (tables as any)[tableName] = { metadata, records };
+    (tables as any)[tableName] = records;
   }
 
   const result = {
@@ -81,13 +67,12 @@ export async function applySyncData(
 
   // 获取所有需要操作的表
   const tables = Object.keys(data.tables).map(name => db.table(name));
-  const metadataTable = db.table('syncMetadata');
 
-  await db.transaction('rw', [...tables, metadataTable], async () => {
-    for (const [tableName, tableData] of Object.entries(data.tables)) {
+  await db.transaction('rw', tables, async () => {
+    for (const [tableName, records] of Object.entries(data.tables)) {
       const table = db.table(tableName);
 
-      console.log(`[SyncService] Applying table ${tableName}: ${tableData.records.length} records, ${tableData.metadata.length} metadata`);
+      console.log(`[SyncService] Applying table ${tableName}: ${records.length} records`);
 
       // 更新进度
       onProgress?.({
@@ -96,18 +81,10 @@ export async function applySyncData(
         message: `正在应用 ${tableName}...`
       });
 
-      // 清空表
+      // 清空表并插入新数据
       await table.clear();
-
-      // 插入新数据
-      if (tableData.records.length > 0) {
-        await table.bulkAdd(tableData.records);
-      }
-
-      // 更新元数据
-      await metadataTable.where('table').equals(tableName).delete();
-      if (tableData.metadata.length > 0) {
-        await metadataTable.bulkAdd(tableData.metadata);
+      if (records.length > 0) {
+        await table.bulkAdd(records);
       }
 
       processedTables++;
@@ -135,7 +112,7 @@ export async function applySyncData(
  * 流程：
  * 1. 手机上传数据到 PC
  * 2. 手机下载 PC 的数据
- * 3. 手机端执行三路合并
+ * 3. 手机端执行合并（比较 updatedAt，新的覆盖旧的）
  * 4. 手机上传合并后的数据到 PC
  * 5. PC 端应用数据
  * 6. 手机端应用数据
@@ -224,7 +201,7 @@ export async function performSync(
     const pcData = await client.downloadData(sessionId);
     console.log(`[SyncService] PC data downloaded, tables:`, Object.keys(pcData.tables));
 
-    // 6. 执行三路合并（手机端）
+    // 6. 执行合并（手机端）
     console.log(`[SyncService] Step 6: Merging data...`);
     onProgress?.({
       phase: 'merge',
@@ -232,40 +209,17 @@ export async function performSync(
       message: '正在合并数据...'
     });
 
-    const { threeWayMergeTables } = await import('./merge');
-    console.log(`[SyncService] Starting three-way merge...`);
-    const mergeResult = await threeWayMergeTables(mobileData, pcData);
+    const { mergeTables } = await import('./merge');
+    console.log(`[SyncService] Starting merge...`);
+    const mergeResult = await mergeTables(mobileData, pcData);
     console.log(`[SyncService] Merge result:`, {
       success: mergeResult.success,
-      hasMergedData: !!mergeResult.mergedData,
-      conflictCount: mergeResult.conflicts?.length || 0
+      hasMergedData: !!mergeResult.mergedData
     });
 
-    if (!mergeResult.success && mergeResult.conflicts && mergeResult.conflicts.length > 0) {
-      console.log(`[SyncService] Conflicts detected: ${mergeResult.conflicts.length}`);
-      onProgress?.({
-        phase: 'conflict',
-        progress: 60,
-        message: `发现 ${mergeResult.conflicts.length} 个冲突，等待解决...`
-      });
-
-      // 保存冲突列表供 UI 显示
-      await db.table('syncConfig').put({
-        key: 'currentConflicts',
-        value: mergeResult.conflicts,
-        updatedAt: new Date().toISOString()
-      });
-
-      throw new SyncError(
-        'Conflicts detected',
-        'CONFLICTS_DETECTED',
-        true
-      );
-    }
-
-    if (!mergeResult.mergedData) {
-      console.error(`[SyncService] Merge failed: no merged data`);
-      throw new SyncError('Merge failed: no merged data', 'MERGE_FAILED', false);
+    if (!mergeResult.success || !mergeResult.mergedData) {
+      console.error(`[SyncService] Merge failed`);
+      throw new SyncError('Merge failed', 'MERGE_FAILED', false);
     }
 
     // 7. 上传合并后的数据到 PC
@@ -307,7 +261,6 @@ export async function performSync(
 
     // 清理配置
     await db.table('syncConfig').delete('currentSessionId');
-    await db.table('syncConfig').delete('currentConflicts');
 
     const duration = Date.now() - startTime;
     console.log(`[SyncService] Sync completed successfully in ${duration}ms`);
@@ -336,74 +289,4 @@ export async function performSync(
 
     throw error;
   }
-}
-
-/**
- * 执行带冲突解决的同步
- * @param serverUrl 服务器地址
- * @param resolutions 冲突解决选择
- * @param onProgress 进度回调
- */
-export async function performSyncWithResolutions(
-  serverUrl: string,
-  resolutions: { syncId: string; table: SyncTable; field: string; choice: 'local' | 'remote' }[],
-  onProgress?: (progress: SyncProgress) => void
-): Promise<void> {
-  console.log(`[SyncService] Starting sync with resolutions to server: ${serverUrl}`);
-  const client = new SyncClient(serverUrl);
-
-  // 获取当前会话ID
-  const db = getDB();
-  const sessionConfig = await db.table('syncConfig')
-    .where('key')
-    .equals('currentSessionId')
-    .first() as { value: string } | undefined;
-
-  if (!sessionConfig) {
-    throw new SyncError('No active sync session', 'NO_SESSION', false);
-  }
-
-  const sessionId = sessionConfig.value;
-  console.log(`[SyncService] Resolving conflicts for session: ${sessionId}`);
-
-  // 提交冲突解决
-  onProgress?.({
-    phase: 'merge',
-    progress: 60,
-    message: '正在提交冲突解决...'
-  });
-
-  await client.resolveConflicts({
-    sessionId,
-    resolutions
-  });
-
-  // 下载合并后的数据
-  onProgress?.({
-    phase: 'download',
-    progress: 70,
-    message: '正在下载合并后的数据...'
-  });
-
-  const mergedData = await client.downloadData(sessionId);
-
-  // 应用数据
-  onProgress?.({
-    phase: 'apply',
-    progress: 80,
-    message: '正在应用数据...'
-  });
-
-  await applySyncData(mergedData, onProgress);
-
-  // 清理备份
-  await cleanupBackup(sessionId);
-
-  console.log(`[SyncService] Sync with resolutions completed`);
-
-  onProgress?.({
-    phase: 'complete',
-    progress: 100,
-    message: '同步成功'
-  });
 }

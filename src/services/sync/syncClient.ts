@@ -8,7 +8,6 @@ import type {
   SyncData,
   SyncResponse,
   SyncInitResponse,
-  SyncResolveRequest,
   DeviceId
 } from './types';
 import { SyncError } from './types';
@@ -97,35 +96,7 @@ export class SyncClient {
     return result;
   }
 
-  /**
-   * 提交冲突解决
-   * @param request 冲突解决请求
-   */
-  async resolveConflicts(request: SyncResolveRequest): Promise<{ status: string; message?: string }> {
-    console.log(`[SyncClient] resolveConflicts: sessionId=${request.sessionId}, resolutions=${request.resolutions.length}`);
 
-    const response = await this.fetchWithTimeout('/api/sync/resolve', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(request)
-    });
-
-    console.log(`[SyncClient] resolveConflicts response status: ${response.status}`);
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error(`[SyncClient] resolveConflicts failed: ${response.status} ${response.statusText}`, errorText);
-      throw new SyncError(
-        `Resolve conflicts failed: ${response.statusText}`,
-        'RESOLVE_FAILED',
-        true
-      );
-    }
-
-    const result = await response.json();
-    console.log(`[SyncClient] resolveConflicts response:`, result);
-    return result;
-  }
 
   /**
    * 下载 PC 端的数据

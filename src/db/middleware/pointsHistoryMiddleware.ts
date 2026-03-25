@@ -26,12 +26,14 @@ export function createPointsHistoryMiddleware() {
             // 在事务完成后添加积分记录
             trans.on('complete', async () => {
               try {
+                const now = new Date().toISOString();
                 await db.pointsHistory.add({
                   userId: newInstance.userId,
                   amount: rewardPoints,
                   type: 'task_reward',
                   relatedInstanceId: primKey as number,
-                  createdAt: new Date().toISOString(),
+                  createdAt: now,
+                  updatedAt: now,
                 });
               } catch (error) {
                 console.error('[PointsHistoryMiddleware] Failed to add task reward:', error);
@@ -47,12 +49,14 @@ export function createPointsHistoryMiddleware() {
             // 在事务完成后添加积分记录
             trans.on('complete', async () => {
               try {
+                const now = new Date().toISOString();
                 await db.pointsHistory.add({
                   userId: newInstance.userId,
                   amount: -rewardPoints,
                   type: 'task_undo',
                   relatedInstanceId: primKey as number,
-                  createdAt: new Date().toISOString(),
+                  createdAt: now,
+                  updatedAt: now,
                 });
               } catch (error) {
                 console.error('[PointsHistoryMiddleware] Failed to add task undo:', error);
@@ -71,12 +75,14 @@ export function createPointsHistoryMiddleware() {
           // 使用 this.onsuccess 获取实际的自增主键（primKey 在自增情况下为 undefined）
           this.onsuccess = async (actualPrimKey) => {
             try {
+              const now = new Date().toISOString();
               await db.pointsHistory.add({
                 userId: instance.userId,
                 amount: -pointsCost,
                 type: 'reward_exchange',
                 relatedInstanceId: actualPrimKey as number,
-                createdAt: new Date().toISOString(),
+                createdAt: now,
+                updatedAt: now,
               });
             } catch (error) {
               console.error('[PointsHistoryMiddleware] Failed to add reward exchange:', error);

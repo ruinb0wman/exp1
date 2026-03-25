@@ -79,6 +79,7 @@ export interface RewardInstance {
   userId: number;
   status: RewardStatus;
   createdAt: string; // 创建(兑换)时间戳
+  updatedAt: string; // 更新时间戳（用于同步）
   expiresAt?: string; // 过期时间戳=createdAt+validDuration, 如果没有validDuration则不会过期
   usedAt?: string; // 使用时间戳
 }

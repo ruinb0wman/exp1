@@ -1,4 +1,4 @@
-//! API 处理器
+//! API 处理器（简化版）
 //!
 //! 处理同步相关的 HTTP 请求
 
@@ -7,7 +7,7 @@ use axum::{
     response::Json,
 };
 use std::sync::Arc;
-use tokio::sync::{Mutex, RwLock};
+use tokio::sync::RwLock;
 use uuid::Uuid;
 use tauri::Emitter;
 
@@ -16,66 +16,33 @@ use crate::sync::{
     server::get_app_handle,
 };
 
-/// 应用状态
+/// 应用状态（简化版）
 pub struct AppState {
-    pub sessions: Mutex<Vec<SyncSession>>,
     /// 存储手机上传的数据
     pub mobile_data: RwLock<std::collections::HashMap<String, SyncData>>,
     /// 存储 PC 前端提供的数据（通过 IPC）- 原始压缩数据
     pub pc_data_raw: RwLock<std::collections::HashMap<String, Vec<u8>>>,
     /// 存储合并后的数据（由手机端合并后上传）
     pub merged_data: RwLock<std::collections::HashMap<String, SyncData>>,
-    /// 存储冲突列表
-    pub conflicts: RwLock<std::collections::HashMap<String, Vec<FieldConflict>>>,
-    /// 同步状态
-    pub sync_status: RwLock<std::collections::HashMap<String, SyncStatus>>,
 }
 
 impl AppState {
     pub fn new() -> Self {
         Self {
-            sessions: Mutex::new(Vec::new()),
             mobile_data: RwLock::new(std::collections::HashMap::new()),
             pc_data_raw: RwLock::new(std::collections::HashMap::new()),
             merged_data: RwLock::new(std::collections::HashMap::new()),
-            conflicts: RwLock::new(std::collections::HashMap::new()),
-            sync_status: RwLock::new(std::collections::HashMap::new()),
         }
     }
 }
 
 /// 处理初始化请求
 pub async fn handle_init(
-    State(state): State<Arc<AppState>>,
+    _state: State<Arc<AppState>>,
     Json(req): Json<InitRequest>,
 ) -> Json<InitResponse> {
     let session_id = Uuid::new_v4().to_string();
     log::info!("[Sync] handle_init: Creating new session {}", session_id);
-
-    // 创建新会话
-    let session = SyncSession {
-        id: None,
-        session_id: session_id.clone(),
-        device: req.device_id,
-        direction: SyncDirection::Bidirectional,
-        status: SyncStatus::Pending,
-        started_at: chrono::Utc::now(),
-        completed_at: None,
-        error_message: None,
-        stats: None,
-    };
-
-    {
-        let mut sessions = state.sessions.lock().await;
-        sessions.push(session);
-        log::info!("[Sync] handle_init: Session {} added to sessions list, total sessions: {}", session_id, sessions.len());
-    }
-
-    // 初始化同步状态
-    {
-        let mut sync_status = state.sync_status.write().await;
-        sync_status.insert(session_id.clone(), SyncStatus::Pending);
-    }
 
     // TODO: 获取上次同步时间
     let last_sync_at: Option<chrono::DateTime<chrono::Utc>> = None;
@@ -115,7 +82,6 @@ pub async fn handle_upload(
             return Json(UploadResponse {
                 session_id: String::new(),
                 status: UploadStatus::Error,
-                conflicts: None,
                 message: Some(format!("Failed to decompress: {}", e)),
             });
         }
@@ -133,7 +99,6 @@ pub async fn handle_upload(
             return Json(UploadResponse {
                 session_id: String::new(),
                 status: UploadStatus::Error,
-                conflicts: None,
                 message: Some(format!("Failed to parse JSON: {}", e)),
             });
         }
@@ -148,12 +113,6 @@ pub async fn handle_upload(
         mobile.insert(session_id.clone(), mobile_data);
         log::info!("[Sync] handle_upload: Stored mobile data for session {}, total mobile_data entries: {}",
             session_id, mobile.len());
-    }
-
-    // 更新状态为等待 PC 数据
-    {
-        let mut sync_status = state.sync_status.write().await;
-        sync_status.insert(session_id.clone(), SyncStatus::Pending);
     }
 
     // 发送 IPC 事件通知 PC 前端提供数据
@@ -175,7 +134,6 @@ pub async fn handle_upload(
     Json(UploadResponse {
         session_id: session_id.clone(),
         status: UploadStatus::Success,
-        conflicts: None,
         message: Some("Mobile data received".to_string()),
     })
 }
@@ -237,7 +195,6 @@ pub async fn handle_apply(
             return Json(UploadResponse {
                 session_id: String::new(),
                 status: UploadStatus::Error,
-                conflicts: None,
                 message: Some(format!("Failed to decompress: {}", e)),
             });
         }
@@ -255,7 +212,6 @@ pub async fn handle_apply(
             return Json(UploadResponse {
                 session_id: String::new(),
                 status: UploadStatus::Error,
-                conflicts: None,
                 message: Some(format!("Failed to parse JSON: {}", e)),
             });
         }
@@ -270,12 +226,6 @@ pub async fn handle_apply(
         merged.insert(session_id.clone(), merged_data);
         log::info!("[Sync] handle_apply: Stored merged data for session {}, total merged_data entries: {}",
             session_id, merged.len());
-    }
-
-    // 更新状态为等待应用
-    {
-        let mut sync_status = state.sync_status.write().await;
-        sync_status.insert(session_id.clone(), SyncStatus::Pending);
     }
 
     // 发送 IPC 事件通知 PC 前端应用数据
@@ -297,7 +247,6 @@ pub async fn handle_apply(
     Json(UploadResponse {
         session_id: session_id.clone(),
         status: UploadStatus::Success,
-        conflicts: None,
         message: Some("Merged data received, waiting for PC to apply".to_string()),
     })
 }
@@ -309,15 +258,6 @@ pub async fn handle_complete(
 ) -> Json<CompleteResponse> {
     let session_id = req.session_id.clone();
     log::info!("[Sync] handle_complete: Complete request for session {}", session_id);
-
-    // 清理会话数据
-    {
-        let mut sessions = state.sessions.lock().await;
-        let before_count = sessions.len();
-        sessions.retain(|s| s.session_id != session_id);
-        let after_count = sessions.len();
-        log::info!("[Sync] handle_complete: Removed session from sessions list ({} -> {})", before_count, after_count);
-    }
 
     // 清理数据缓存
     {
@@ -334,16 +274,6 @@ pub async fn handle_complete(
         let mut merged = state.merged_data.write().await;
         merged.remove(&session_id);
         log::info!("[Sync] handle_complete: Removed merged data, remaining: {}", merged.len());
-    }
-    {
-        let mut conflicts = state.conflicts.write().await;
-        conflicts.remove(&session_id);
-        log::info!("[Sync] handle_complete: Removed conflicts, remaining: {}", conflicts.len());
-    }
-    {
-        let mut sync_status = state.sync_status.write().await;
-        sync_status.remove(&session_id);
-        log::info!("[Sync] handle_complete: Removed sync status, remaining: {}", sync_status.len());
     }
 
     // 发送 IPC 事件通知同步完成
@@ -381,5 +311,3 @@ fn decompress_gzip(data: &[u8]) -> Result<Vec<u8>, String> {
         .map_err(|e| format!("Decompression failed: {}", e))?;
     Ok(result)
 }
-
-

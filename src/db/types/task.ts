@@ -39,6 +39,7 @@ export interface TaskInstance {
   subtasks: string[];
   startAt?: string; // 任务开始时间戳
   createdAt: string; // 任务实例创建时间戳
+  updatedAt: string; // 任务实例更新时间戳（用于同步）
   completedAt?: string; // 任务实例完成时间戳
 
   // 进度相关字段

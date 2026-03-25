@@ -1,19 +1,15 @@
 /**
- * 同步服务模块导出
+ * 同步服务模块导出（简化版）
  */
 
-// 类型（避免重复导出 MergeResult）
+// 类型
 export type {
   DeviceId,
   SyncTable,
-  SyncMetadata,
-  FieldConflict,
-  ConflictResolution,
   SyncData,
   SyncTableData,
   SyncResponse,
   SyncInitResponse,
-  SyncResolveRequest,
   SyncProgress,
   SyncConfig,
   SyncError
@@ -28,9 +24,9 @@ export * from './compression';
 // 备份恢复
 export * from './backup';
 
-// 合并算法 - 单独导出 MergeResult 类型
-export type { MergeResult } from './merge';
-export { threeWayMerge, applyConflictResolutions } from './merge';
+// 合并算法
+export type { TableMergeResult } from './merge';
+export { mergeTables } from './merge';
 
 // HTTP 客户端
 export * from './syncClient';

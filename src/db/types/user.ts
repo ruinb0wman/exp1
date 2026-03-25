@@ -5,6 +5,7 @@ export type PointsHistoryType = 'task_reward' | 'task_undo' | 'reward_exchange' 
 export interface User {
   id: number;
   createdAt: string;
+  updatedAt: string; // 更新时间戳（用于同步）
   name: string;
   dayEndTime?: string; // 一天结束时间，"HH:mm" 格式，默认 "00:00"
   pomoSettings?: PomoSettings; // 番茄钟设置
@@ -17,4 +18,5 @@ export interface PointsHistory {
   type: PointsHistoryType;
   relatedInstanceId?: number; // task_instance id, reward_instance id
   createdAt: string; // 创建时间戳
+  updatedAt: string; // 更新时间戳（用于同步，通常与 createdAt 相同）
 }

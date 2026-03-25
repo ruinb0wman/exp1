@@ -19,7 +19,7 @@ const settingsMenu = [
 export function Settings() {
   const navigate = useNavigate();
   const { user, refreshUser } = useUserStore();
-  const { state, isMobile, openSync, closeSync, startSync, resolveConflicts, retrySync, cancelSync } = useSync();
+  const { state, isMobile, openSync, closeSync, startSync, retrySync, cancelSync } = useSync();
   
   const [dayEndTime, setDayEndTime] = useState(user?.dayEndTime || "00:00");
   const [showTimePicker, setShowTimePicker] = useState(false);
@@ -198,9 +198,7 @@ export function Settings() {
         platform={isMobile ? "mobile" : "desktop"}
         qrCodeContent={state.qrCodeContent}
         progress={state.progress}
-        conflicts={state.conflicts}
         onStartSync={startSync}
-        onResolveConflicts={resolveConflicts}
         onRetry={retrySync}
         onCancel={cancelSync}
       />

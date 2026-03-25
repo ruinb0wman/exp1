@@ -11,7 +11,6 @@ const phaseIcons: Record<SyncProgress['phase'], React.ReactNode> = {
   init: <Wifi className="w-6 h-6" />,
   upload: <Upload className="w-6 h-6" />,
   merge: <GitMerge className="w-6 h-6" />,
-  conflict: <AlertCircle className="w-6 h-6" />,
   download: <Download className="w-6 h-6" />,
   apply: <Loader2 className="w-6 h-6 animate-spin" />,
   complete: <Check className="w-6 h-6" />,
@@ -23,7 +22,6 @@ const phaseMessages: Record<SyncProgress['phase'], string> = {
   init: '正在初始化...',
   upload: '正在上传数据...',
   merge: '正在合并数据...',
-  conflict: '发现冲突',
   download: '正在下载数据...',
   apply: '正在应用数据...',
   complete: '同步完成',
@@ -33,7 +31,6 @@ const phaseMessages: Record<SyncProgress['phase'], string> = {
 export function SyncProgressUI({ progress }: SyncProgressProps) {
   const isError = progress.phase === 'error';
   const isComplete = progress.phase === 'complete';
-  const isConflict = progress.phase === 'conflict';
 
   return (
     <div className="flex flex-col items-center py-8">
@@ -44,8 +41,6 @@ export function SyncProgressUI({ progress }: SyncProgressProps) {
             ? 'bg-red-500/20 text-red-400'
             : isComplete
             ? 'bg-green-500/20 text-green-400'
-            : isConflict
-            ? 'bg-orange-500/20 text-orange-400'
             : 'bg-primary/20 text-primary'
         }`}
       >
@@ -59,8 +54,6 @@ export function SyncProgressUI({ progress }: SyncProgressProps) {
             ? 'text-red-400'
             : isComplete
             ? 'text-green-400'
-            : isConflict
-            ? 'text-orange-400'
             : 'text-text-primary'
         }`}
       >

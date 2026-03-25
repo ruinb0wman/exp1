@@ -209,13 +209,16 @@ export async function redeemRewardsWithStockCheck(
       ? new Date(Date.now() + template.validDuration * 1000).toISOString()
       : undefined;
 
-    const newInstances: Omit<RewardInstance, 'id' | 'createdAt'>[] = Array.from(
+    const now = new Date().toISOString();
+    const newInstances: Omit<RewardInstance, 'id'>[] = Array.from(
       { length: quantity },
       () => ({
         templateId,
         template: { ...template }, // 保存完整的模板快照
         userId,
         status: 'available',
+        createdAt: now,
+        updatedAt: now,
         expiresAt,
       })
     );

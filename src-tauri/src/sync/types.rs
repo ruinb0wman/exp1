@@ -1,4 +1,6 @@
-//! 同步系统数据类型
+//! 同步系统数据类型（简化版）
+//!
+//! 移除影子表，直接使用业务表的 updatedAt 字段
 
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
@@ -46,82 +48,14 @@ impl std::fmt::Display for SyncTable {
     }
 }
 
-/// 同步元数据
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct SyncMetadata {
-    pub id: Option<i64>,
-    pub table: SyncTable,
-    pub local_id: i64,
-    pub sync_id: String,
-    pub version: i32,
-    pub modified_at: DateTime<Utc>,
-    pub modified_by: DeviceId,
-    pub checksum: String,
-    pub is_deleted: bool,
-}
-
-/// 同步会话
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct SyncSession {
-    pub id: Option<i64>,
-    pub session_id: String,
-    pub device: DeviceId,
-    pub direction: SyncDirection,
-    pub status: SyncStatus,
-    pub started_at: DateTime<Utc>,
-    pub completed_at: Option<DateTime<Utc>>,
-    pub error_message: Option<String>,
-    pub stats: Option<SyncStats>,
-}
-
-/// 同步方向
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub enum SyncDirection {
-    Upload,
-    Download,
-    Bidirectional,
-}
-
-/// 同步状态
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub enum SyncStatus {
-    Pending,
-    Success,
-    Failed,
-    Conflict,
-    Cancelled,
-}
-
-/// 同步统计
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct SyncStats {
-    pub records_uploaded: i32,
-    pub records_downloaded: i32,
-    pub conflicts_resolved: i32,
-    pub duration_ms: i64,
-}
-
-/// 同步数据包
+/// 同步数据包（简化版）
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct SyncData {
     pub device_id: DeviceId,
     pub session_id: String,
     pub timestamp: DateTime<Utc>,
-    pub tables: HashMap<SyncTable, TableSyncData>,
-}
-
-/// 单个表的同步数据
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct TableSyncData {
-    pub metadata: Vec<SyncMetadata>,
-    pub records: Vec<serde_json::Value>,
+    pub tables: HashMap<SyncTable, Vec<serde_json::Value>>,
 }
 
 /// 初始化同步请求
@@ -142,13 +76,12 @@ pub struct InitResponse {
     pub tables: Vec<SyncTable>,
 }
 
-/// 上传数据响应
+/// 上传数据响应（简化版）
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct UploadResponse {
     pub session_id: String,
     pub status: UploadStatus,
-    pub conflicts: Option<Vec<FieldConflict>>,
     pub message: Option<String>,
 }
 
@@ -157,20 +90,7 @@ pub struct UploadResponse {
 #[serde(rename_all = "camelCase")]
 pub enum UploadStatus {
     Success,
-    Conflict,
     Error,
-}
-
-/// 字段冲突
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct FieldConflict {
-    pub table: SyncTable,
-    pub sync_id: String,
-    pub field: String,
-    pub base_value: Option<serde_json::Value>,
-    pub local_value: Option<serde_json::Value>,
-    pub remote_value: Option<serde_json::Value>,
 }
 
 /// 下载数据请求

@@ -3,9 +3,8 @@ import { RefreshCw, RotateCcw } from 'lucide-react';
 import { Popup } from '@/components/Popup';
 import { QRCodeDisplay } from './QRCodeDisplay';
 import { QRScanner } from './QRScanner';
-import { ConflictResolver } from './ConflictResolver';
 import { SyncProgressUI } from './SyncProgress';
-import type { SyncProgress, FieldConflict, SyncTable } from '@/services/sync';
+import type { SyncProgress } from '@/services/sync';
 
 interface SyncModalProps {
   /** 是否显示 */
@@ -18,12 +17,8 @@ interface SyncModalProps {
   qrCodeContent?: string;
   /** 同步进度 */
   progress: SyncProgress;
-  /** 冲突列表 */
-  conflicts?: FieldConflict[];
   /** 开始同步（手机端扫码后） */
   onStartSync?: (serverUrl: string) => void;
-  /** 解决冲突 */
-  onResolveConflicts?: (resolutions: { table: SyncTable; syncId: string; field: string; choice: 'local' | 'remote' }[]) => void;
   /** 重试 */
   onRetry?: () => void;
   /** 取消同步 */
@@ -36,9 +31,7 @@ export function SyncModal({
   platform,
   qrCodeContent,
   progress,
-  conflicts,
   onStartSync,
-  onResolveConflicts,
   onRetry,
   onCancel,
 }: SyncModalProps) {
@@ -67,17 +60,6 @@ export function SyncModal({
 
   // 渲染内容
   const renderContent = () => {
-    // 冲突解决模式
-    if (conflicts && conflicts.length > 0 && onResolveConflicts) {
-      return (
-        <ConflictResolver
-          conflicts={conflicts}
-          onResolve={onResolveConflicts}
-          onCancel={() => onCancel?.()}
-        />
-      );
-    }
-
     // 错误状态
     if (progress.phase === 'error') {
       return (
@@ -107,7 +89,7 @@ export function SyncModal({
       return (
         <div className="py-4">
           <SyncProgressUI progress={progress} />
-          {progress.phase !== 'complete' && progress.phase !== 'conflict' && (
+          {progress.phase !== 'complete' && (
             <button
               onClick={onCancel}
               className="w-full mt-6 py-2 text-text-secondary hover:text-text-primary transition-colors"

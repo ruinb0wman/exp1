@@ -1,5 +1,5 @@
 /**
- * 同步服务 - 类型定义
+ * 同步服务 - 类型定义（简化版）
  * 
  * 定义同步服务相关的类型和接口
  */
@@ -7,17 +7,11 @@
 import type {
   DeviceId,
   SyncTable,
-  SyncMetadata,
-  FieldConflict,
-  ConflictResolution
 } from '@/db/sync/types';
 
 export type {
   DeviceId,
   SyncTable,
-  SyncMetadata,
-  FieldConflict,
-  ConflictResolution
 };
 
 /**
@@ -31,13 +25,10 @@ export interface SyncData {
 }
 
 /**
- * 各表的同步数据
+ * 各表的同步数据（简化后只包含记录数组）
  */
 export type SyncTableData = {
-  [key in SyncTable]: {
-    metadata: SyncMetadata[];
-    records: any[];
-  }
+  [key in SyncTable]: any[];
 };
 
 /**
@@ -45,8 +36,7 @@ export type SyncTableData = {
  */
 export interface SyncResponse {
   sessionId: string;
-  status: 'success' | 'conflict' | 'error';
-  conflicts?: FieldConflict[];
+  status: 'success' | 'error';
   message?: string;
 }
 
@@ -60,18 +50,10 @@ export interface SyncInitResponse {
 }
 
 /**
- * 冲突解决请求
- */
-export interface SyncResolveRequest {
-  sessionId: string;
-  resolutions: ConflictResolution[];
-}
-
-/**
  * 同步进度状态
  */
 export interface SyncProgress {
-  phase: 'idle' | 'init' | 'upload' | 'merge' | 'conflict' | 'download' | 'apply' | 'complete' | 'error';
+  phase: 'idle' | 'init' | 'upload' | 'merge' | 'download' | 'apply' | 'complete' | 'error';
   progress: number; // 0-100
   message: string;
 }
@@ -91,7 +73,6 @@ export interface SyncConfig {
 export interface MergeResult {
   success: boolean;
   data?: any;
-  conflicts?: FieldConflict[];
 }
 
 /**
