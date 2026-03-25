@@ -2,6 +2,8 @@ import { useEffect, useState } from "react";
 import { BrowserRouter, Routes, Route } from "react-router";
 import { invoke } from "@tauri-apps/api/core";
 import { ConfirmProvider } from "@/hooks/useConfirm";
+import { useAppBootstrap } from "@/hooks/useAppBootstrap";
+import { useEscHideWindow } from "@/hooks/useEscHideWindow";
 import { Home } from "@/pages/Home";
 import { AllTasks } from "@/pages/AllTasks";
 import { EditTask } from "@/pages/EditTask";
@@ -20,6 +22,12 @@ import { setDeviceId } from "@/db";
 
 function App() {
   const [, setIsMobile] = useState(false);
+
+  // 应用启动初始化
+  useAppBootstrap();
+
+  // ESC 隐藏窗口
+  useEscHideWindow();
 
   // 初始化平台检测
   useEffect(() => {
