@@ -30,6 +30,7 @@ pnpmx tsc --noEmit        # TypeScript check only
 # Testing
 pnpmx vitest              # Run all tests
 pnpmx vitest [pattern]    # Run tests matching pattern
+pnpmx vitest src/db/services/taskService.test.ts  # Run single test file
 pnpmx vitest --reporter=verbose  # Verbose output
 
 # Rust (in src-tauri/)
@@ -87,10 +88,17 @@ export function TaskCard({ id, title, onClick }: TaskCardProps) {
 }
 ```
 
+### Formatting
+- **Indentation**: Tabs (observed in existing codebase)
+- **Quotes**: Double quotes for strings
+- **Semicolons**: Required
+- **Line width**: ~100 characters
+
 ### State Management
 - Use Zustand for global state
 - Store files in `src/store/` as `{feature}Store.ts`
 - Local state with `useState` for component-level state
+- Use Dexie `liveQuery` for reactive database subscriptions
 
 ### Error Handling
 - Wrap async operations in try-catch
@@ -156,4 +164,6 @@ src-tauri/
 - **Path alias** - always use `@/` not relative `../`
 - **UTC timestamps** - store as ISO strings, convert for display only
 - **Database** - Dexie.js with transactions for consistency
-- **Tests** - Vitest with jsdom environment, located alongside source files
+- **Tests** - Vitest with jsdom environment, co-located with source files
+- **Comments** - Codebase uses Chinese comments; follow existing patterns
+- **i18n** - UI is in Chinese; use Chinese for user-facing text
