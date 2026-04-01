@@ -4,10 +4,11 @@ import { Header } from "../components/Header";
 import { RadioGroup } from "../components/RadioGroup";
 import { MultiSelectGrid } from "../components/MultiSelectGrid";
 import { DatePicker } from "../components/DatePicker";
-import { Stars, Trash2, Shuffle, Loader2 } from "lucide-react";
+import { Trash2, Shuffle, Loader2, Plus } from "lucide-react";
 import { useUserStore } from "@/store";
 import { useTaskTemplate, useTaskTemplateActions } from "@/hooks/useTasks";
-import type { TaskTemplate, RepeatMode, EndCondition, CompleteRule } from "../db/types/task";
+import type { TaskTemplate, RepeatMode, EndCondition, CompleteRule, Stage, SubtaskConfig, TaskType } from "../db/types/task";
+import { NumberInput } from "@/components/NumberInput";
 
 const repeatOptions = ["None", "Daily", "Weekly", "Monthly"];
 const repeatValues: RepeatMode[] = ["none", "daily", "weekly", "monthly"];
@@ -15,12 +16,8 @@ const repeatValues: RepeatMode[] = ["none", "daily", "weekly", "monthly"];
 const endOptions = ["Manual", "On Date", "After Times"];
 const endValues: EndCondition[] = ["manual", "date", "times"];
 
-const completeRuleOptions = ["Simple", "Time", "Count"];
-const completeRuleValues: (CompleteRule | undefined)[] = [undefined, "time", "count"];
-const completeRuleLabels = {
-  time: "分钟",
-  count: "次",
-};
+const taskTypeOptions = ["Simple", "Time", "Count", "Subtask"];
+const taskTypeValues: (TaskType | undefined)[] = [undefined, "time", "count", "subtask"];
 
 const weekDays = [
   { label: "Sun", value: 0 },
@@ -44,7 +41,6 @@ export function EditTask() {
   const isEditMode = id && id !== "new";
   const templateId = isEditMode ? parseInt(id, 10) : null;
 
-  // 获取现有任务数据（编辑模式）
   const {
     template: existingTemplate,
     isLoading: isLoadingTemplate,
@@ -56,7 +52,6 @@ export function EditTask() {
   // 表单状态
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
-  const [rewardPoints, setRewardPoints] = useState(10);
   const [repeatIndex, setRepeatIndex] = useState(0);
   const [repeatInterval, setRepeatInterval] = useState(1);
   const [repeatDaysOfWeek, setRepeatDaysOfWeek] = useState<number[]>([]);
@@ -68,14 +63,19 @@ export function EditTask() {
   const [isRandomSubtask, setIsRandomSubtask] = useState(false);
   const [newSubtask, setNewSubtask] = useState("");
 
-  // 完成规则相关状态
-  const [completeRule, setCompleteRule] = useState<CompleteRule | undefined>(undefined);
-  const [completeTarget, setCompleteTarget] = useState<number>(1);
+  // 完成规则相关状态（新系统）
+  const [taskType, setTaskType] = useState<TaskType | undefined>(undefined);
+  const [stages, setStages] = useState<Stage[]>([]);
+  const [completionPoints, setCompletionPoints] = useState(0);
   const [completeExpireDays, setCompleteExpireDays] = useState<number>(0);
+  
+  // 子任务配置
+  const [subtaskMode, setSubtaskMode] = useState<SubtaskConfig['mode']>('all');
+  const [requiredCount, setRequiredCount] = useState(1);
+  const [pointsPerSubtask, setPointsPerSubtask] = useState<number[]>([]);
 
   // 开始时间
   const [startAt, setStartAt] = useState<string>("");
-  // Schedule 是否启用
   const [isScheduleEnabled, setIsScheduleEnabled] = useState(false);
 
   // 加载现有数据（编辑模式）
@@ -83,35 +83,77 @@ export function EditTask() {
     if (existingTemplate) {
       setTitle(existingTemplate.title);
       setDescription(existingTemplate.description ?? "");
-      setRewardPoints(existingTemplate.rewardPoints);
       setRepeatIndex(repeatValues.indexOf(existingTemplate.repeatMode));
       setRepeatInterval(existingTemplate.repeatInterval ?? 1);
       setRepeatDaysOfWeek(existingTemplate.repeatDaysOfWeek ?? []);
       setRepeatDaysOfMonth(existingTemplate.repeatDaysOfMonth ?? []);
       setEndIndex(endValues.indexOf(existingTemplate.endCondition));
-      // 将 UTC ISO 时间字符串转换为本地 YYYY-MM-DD 格式用于显示
+      
       const formatToDateStr = (isoStr: string | undefined): string => {
         if (!isoStr) return "";
         const date = new Date(isoStr);
-        // 使用本地时间方法获取年月日（因为用户看到的是本地日期）
         const year = date.getFullYear();
         const month = String(date.getMonth() + 1).padStart(2, '0');
         const day = String(date.getDate()).padStart(2, '0');
         return `${year}-${month}-${day}`;
       };
+      
       setEndValue(formatToDateStr(existingTemplate.endValue));
       setEnabled(existingTemplate.enabled);
       setSubtasks(existingTemplate.subtasks ?? []);
       setIsRandomSubtask(existingTemplate.isRandomSubtask);
-      // 加载完成规则
-      setCompleteRule(existingTemplate.completeRule);
-      setCompleteTarget(existingTemplate.completeTarget ?? 1);
+      
+      // 加载新的完成规则
+      const rule = existingTemplate.completeRule;
+      if (rule) {
+        setTaskType(rule.type);
+        setStages(rule.stages || []);
+        setCompletionPoints(rule.completionPoints || 0);
+        
+        if (rule.type === 'subtask' && rule.subtaskConfig) {
+          setSubtaskMode(rule.subtaskConfig.mode);
+          setRequiredCount(rule.subtaskConfig.requiredCount || 1);
+          setPointsPerSubtask(rule.subtaskConfig.pointsPerSubtask || []);
+        }
+      } else {
+        // 旧数据兼容：如果有 completeTarget 但没有 completeRule
+        const oldType = existingTemplate.completeRule as unknown as 'time' | 'count' | undefined;
+        const oldTarget = existingTemplate.completeTarget;
+        const oldReward = existingTemplate.rewardPoints;
+        
+        if (oldType && oldTarget) {
+          setTaskType(oldType);
+          setStages([{
+            id: `legacy_${Date.now()}`,
+            threshold: oldTarget,
+            points: oldReward
+          }]);
+          setCompletionPoints(0);
+        } else {
+          setTaskType(undefined);
+          setStages([]);
+          setCompletionPoints(0);
+        }
+      }
+      
       setCompleteExpireDays(existingTemplate.completeExpireDays ?? 0);
-      // 加载开始时间和 schedule 启用状态
       setStartAt(formatToDateStr(existingTemplate.startAt));
       setIsScheduleEnabled(!!existingTemplate.startAt);
     }
   }, [existingTemplate]);
+
+  // 当子任务变化时，同步更新 pointsPerSubtask
+  useEffect(() => {
+    setPointsPerSubtask(prev => {
+      const newArray = [...prev];
+      // 确保长度与子任务一致
+      while (newArray.length < subtasks.length) {
+        newArray.push(0);
+      }
+      // 截断多余的部分
+      return newArray.slice(0, subtasks.length);
+    });
+  }, [subtasks.length]);
 
   const handleAddSubtask = () => {
     if (newSubtask.trim()) {
@@ -122,6 +164,7 @@ export function EditTask() {
 
   const handleDeleteSubtask = (index: number) => {
     setSubtasks(subtasks.filter((_, i) => i !== index));
+    setPointsPerSubtask(pointsPerSubtask.filter((_, i) => i !== index));
   };
 
   const handleWeekDayChange = (day: number) => {
@@ -136,27 +179,71 @@ export function EditTask() {
     );
   };
 
+  // 阶段管理
+  const addStage = () => {
+    const lastStage = stages[stages.length - 1];
+    const newThreshold = lastStage 
+      ? lastStage.threshold + (taskType === 'time' ? 5 : 1)
+      : (taskType === 'time' ? 5 : 1);
+    
+    setStages([...stages, {
+      id: `stage_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+      threshold: newThreshold,
+      points: 1
+    }]);
+  };
+
+  const updateStage = (index: number, field: keyof Stage, value: number) => {
+    const newStages = [...stages];
+    newStages[index] = { ...newStages[index], [field]: value };
+    setStages(newStages);
+  };
+
+  const removeStage = (index: number) => {
+    setStages(stages.filter((_, i) => i !== index));
+  };
+
   const handleSubmit = async () => {
     if (!user?.id) {
       alert("User not initialized");
       return;
     }
 
-    // 将本地日期字符串 YYYY-MM-DD 转换为 UTC ISO 时间字符串
-    // 本地日期 00:00:00 对应的 UTC 时间
     const formatToUTCISO = (dateStr: string): string | undefined => {
       if (!dateStr) return undefined;
       const [year, month, day] = dateStr.split('-').map(Number);
-      // 使用本地时间的构造函数创建 Date 对象（本地时区）
-      // 然后 toISOString() 会自动转换为 UTC
       return new Date(year, month - 1, day, 0, 0, 0, 0).toISOString();
     };
+
+    // 构建 CompleteRule
+    let completeRule: CompleteRule | undefined = undefined;
+    
+    if (taskType) {
+      if (taskType === 'subtask') {
+        completeRule = {
+          type: 'subtask',
+          stages: [],
+          completionPoints,
+          subtaskConfig: {
+            mode: subtaskMode,
+            requiredCount: subtaskMode === 'partial' ? requiredCount : undefined,
+            pointsPerSubtask
+          }
+        };
+      } else {
+        completeRule = {
+          type: taskType,
+          stages,
+          completionPoints
+        };
+      }
+    }
 
     const taskData: Omit<TaskTemplate, "id" | "createdAt" | "updatedAt"> = {
       userId: user.id,
       title,
       description: description || undefined,
-      rewardPoints,
+      rewardPoints: 0, // 新系统不再使用，积分由 stages 决定
       repeatMode: repeatValues[repeatIndex],
       repeatInterval: repeatValues[repeatIndex] !== "none" ? repeatInterval : undefined,
       repeatDaysOfWeek: repeatValues[repeatIndex] === "weekly" ? repeatDaysOfWeek : undefined,
@@ -167,7 +254,7 @@ export function EditTask() {
       subtasks,
       isRandomSubtask,
       completeRule,
-      completeTarget: completeRule ? completeTarget : undefined,
+      completeTarget: undefined, // 旧字段，不再使用
       completeExpireDays: completeExpireDays > 0 ? completeExpireDays : undefined,
       startAt: isScheduleEnabled ? formatToUTCISO(startAt) : undefined,
     };
@@ -187,7 +274,7 @@ export function EditTask() {
 
   const repeatMode = repeatValues[repeatIndex];
   const endCondition = endValues[endIndex];
-  const completeRuleIndex = completeRuleValues.indexOf(completeRule);
+  const taskTypeIndex = taskTypeValues.indexOf(taskType);
 
   // 加载中状态
   if (isEditMode && isLoadingTemplate) {
@@ -250,40 +337,6 @@ export function EditTask() {
             />
           </label>
 
-          {/* Reward Points */}
-          <div className="flex items-center gap-4 min-h-14 justify-between pt-2">
-            <div className="flex items-center gap-4">
-              <div className="text-primary flex items-center justify-center rounded-lg bg-primary/20 shrink-0 size-10">
-                <Stars className="w-5 h-5" />
-              </div>
-              <p className="text-text-primary text-base font-normal leading-normal flex-1 truncate">
-                Reward Points
-              </p>
-            </div>
-            <div className="shrink-0">
-              <div className="flex items-center gap-2 text-text-primary">
-                <button
-                  onClick={() => setRewardPoints(Math.max(0, rewardPoints - 5))}
-                  className="text-lg font-medium leading-normal flex h-8 w-8 items-center justify-center rounded-full bg-surface-light hover:bg-surface-light/80 transition-colors"
-                >
-                  -
-                </button>
-                <input
-                  type="number"
-                  value={rewardPoints}
-                  onChange={(e) => setRewardPoints(parseInt(e.target.value) || 0)}
-                  className="text-base font-medium leading-normal w-12 p-0 text-center bg-transparent focus:outline-none focus:ring-0 border-none [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
-                />
-                <button
-                  onClick={() => setRewardPoints(rewardPoints + 5)}
-                  className="text-lg font-medium leading-normal flex h-8 w-8 items-center justify-center rounded-full bg-surface-light hover:bg-surface-light/80 transition-colors"
-                >
-                  +
-                </button>
-              </div>
-            </div>
-          </div>
-
           {/* Enabled Toggle */}
           <div className="flex items-center gap-4 min-h-14 justify-between pt-2">
             <p className="text-text-primary text-base font-normal leading-normal">
@@ -307,49 +360,270 @@ export function EditTask() {
         {/* Complete Rule Section Card */}
         <div>
           <h3 className="text-text-primary text-lg font-bold leading-tight tracking-[-0.015em] px-2 pb-2 pt-4">
-            Complete Rule
+            Task Type
           </h3>
           <div className="rounded-xl bg-surface p-4 space-y-4">
             <RadioGroup
-              list={completeRuleOptions}
-              value={completeRuleIndex}
-              onChange={(index) => setCompleteRule(completeRuleValues[index])}
+              list={taskTypeOptions}
+              value={taskTypeIndex}
+              onChange={(index) => {
+                const newType = taskTypeValues[index];
+                setTaskType(newType);
+                if (newType && newType !== 'subtask' && stages.length === 0) {
+                  // 自动添加一个默认阶段
+                  addStage();
+                }
+              }}
             />
 
-            {/* Time/Count Target Input */}
-            {completeRule && (
-              <div className="pt-2 border-t border-surface-light">
-                {/* Target */}
-                <div className="flex items-center gap-4">
-                  <p className="text-text-secondary text-sm min-w-[60px]">Target</p>
-                  <div className="flex items-center gap-2">
-                    <button
-                      onClick={() => setCompleteTarget(Math.max(1, completeTarget - 1))}
-                      className="text-base font-medium flex h-7 w-7 items-center justify-center rounded-full bg-surface-light hover:bg-surface-light/80 transition-colors"
-                    >
-                      -
-                    </button>
-                    <input
-                      type="number"
-                      min={1}
-                      value={completeTarget}
-                      onChange={(e) => setCompleteTarget(Math.max(1, parseInt(e.target.value) || 1))}
-                      className="text-base font-medium w-14 p-0 text-center bg-transparent focus:outline-none focus:ring-0 border-none [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
-                    />
-                    <button
-                      onClick={() => setCompleteTarget(completeTarget + 1)}
-                      className="text-base font-medium flex h-7 w-7 items-center justify-center rounded-full bg-surface-light hover:bg-surface-light/80 transition-colors"
-                    >
-                      +
-                    </button>
+            {/* Simple 类型积分设置 */}
+            {taskType === undefined && (
+              <div className="pt-4 border-t border-surface-light">
+                <div className="flex items-center justify-between">
+                  <div className="text-text-secondary text-sm">
+                    完成获得积分
                   </div>
-                  <p className="text-text-secondary text-sm">
-                    {completeRuleLabels[completeRule]}
-                  </p>
+                  <NumberInput
+                    value={completionPoints}
+                    onChange={setCompletionPoints}
+                    min={0}
+                    size="md"
+                  />
                 </div>
               </div>
             )}
 
+            {/* Time/Count 阶段配置 */}
+            {(taskType === 'time' || taskType === 'count') && (
+              <div className="pt-4 border-t border-surface-light space-y-4">
+                <div className="flex items-center justify-between">
+                  <p className="text-text-secondary text-sm">
+                    阶段配置（达到目标获得积分）
+                  </p>
+                  <button
+                    onClick={addStage}
+                    className="flex items-center gap-1 text-sm text-primary hover:text-primary-light"
+                  >
+                    <Plus className="w-4 h-4" />
+                    添加阶段
+                  </button>
+                </div>
+
+                {stages.map((stage, index) => (
+                  <div key={stage.id} className="flex items-center gap-3 bg-surface-light p-3 rounded-xl">
+                    <span className="text-text-muted w-6">#{index + 1}</span>
+                    
+                    <div className="flex-1">
+                      <label className="text-xs text-text-muted block mb-1">
+                        达到{taskType === 'time' ? '（分钟）' : '（次数）'}
+                      </label>
+                      <NumberInput
+                        value={stage.threshold}
+                        onChange={(value) => updateStage(index, 'threshold', value)}
+                        min={1}
+                        size="sm"
+                        inputWidth="w-16"
+                      />
+                    </div>
+                    
+                    <div className="flex-1">
+                      <label className="text-xs text-text-muted block mb-1">获得积分</label>
+                      <NumberInput
+                        value={stage.points}
+                        onChange={(value) => updateStage(index, 'points', value)}
+                        min={0}
+                        size="sm"
+                        inputWidth="w-16"
+                      />
+                    </div>
+                    
+                    <button
+                      onClick={() => removeStage(index)}
+                      className="p-2 text-text-muted hover:text-error"
+                      disabled={stages.length <= 1}
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
+                ))}
+
+                {/* 完成额外积分 */}
+                <div className="flex items-center justify-between pt-2 border-t border-surface-light">
+                  <div className="text-text-secondary text-sm">
+                    全部完成额外奖励
+                  </div>
+                  <NumberInput
+                    value={completionPoints}
+                    onChange={setCompletionPoints}
+                    min={0}
+                    size="md"
+                    inputWidth="w-12"
+                  />
+                </div>
+
+                {/* 积分预览 */}
+                <div className="text-sm text-text-muted pt-2">
+                  最高可获得：{stages.reduce((sum, s) => sum + s.points, 0) + completionPoints} 积分
+                </div>
+              </div>
+            )}
+
+            {/* Subtask 配置 */}
+            {taskType === 'subtask' && (
+              <div className="pt-4 border-t border-surface-light space-y-4">
+                {/* Checklist */}
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div className="text-text-secondary text-sm">子任务列表</div>
+                    {subtasks.length > 0 && (
+                      <button
+                        onClick={() => setIsRandomSubtask(!isRandomSubtask)}
+                        className={`flex items-center gap-1.5 text-sm font-medium transition-colors ${
+                          isRandomSubtask ? "text-primary" : "text-text-secondary"
+                        }`}
+                      >
+                        <Shuffle className="w-4 h-4" />
+                        <span>Random</span>
+                      </button>
+                    )}
+                  </div>
+                  {/* 添加新子任务 */}
+                  <div className="flex items-center gap-3 bg-surface-light p-3 rounded-xl">
+                    <span className="text-text-muted text-sm">New</span>
+                    <input
+                      type="text"
+                      value={newSubtask}
+                      onChange={(e) => setNewSubtask(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                          handleAddSubtask();
+                        }
+                      }}
+                      placeholder="Add a subtask"
+                      className="flex-1 bg-transparent text-text-primary focus:outline-none border-b-2 border-transparent focus:border-primary text-base font-normal leading-normal py-1"
+                    />
+                    <NumberInput
+                      value={0}
+                      onChange={() => {}}
+                      min={0}
+                      size="sm"
+                      inputWidth="w-10"
+                      disabled
+                    />
+                    <button
+                      onClick={handleAddSubtask}
+                      disabled={!newSubtask.trim()}
+                      className="text-primary disabled:text-text-muted font-medium text-sm px-2 py-1 rounded-lg hover:bg-primary/10 disabled:hover:bg-transparent transition-colors"
+                    >
+                      Add
+                    </button>
+                  </div>
+
+                  {/* 子任务列表 */}
+                  {subtasks.map((subtask, index) => (
+                    <div
+                      key={index}
+                      className="flex items-center gap-3 bg-surface-light p-3 rounded-xl"
+                    >
+                      <span className="text-text-muted text-sm w-6">{index + 1}.</span>
+                      <input
+                        type="text"
+                        value={subtask}
+                        onChange={(e) => {
+                          const newSubtasks = [...subtasks];
+                          newSubtasks[index] = e.target.value;
+                          setSubtasks(newSubtasks);
+                        }}
+                        className="flex-1 bg-transparent text-text-primary focus:outline-none border-b-2 border-transparent focus:border-primary text-base font-normal leading-normal py-1"
+                      />
+                      <NumberInput
+                        value={pointsPerSubtask[index] || 0}
+                        onChange={(value) => {
+                          const newPoints = [...pointsPerSubtask];
+                          newPoints[index] = value;
+                          setPointsPerSubtask(newPoints);
+                        }}
+                        min={0}
+                        size="sm"
+                        inputWidth="w-10"
+                      />
+                      <button
+                        onClick={() => handleDeleteSubtask(index)}
+                        className="text-text-muted hover:text-primary transition-colors opacity-0 group-hover:opacity-100 p-1"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
+                  ))}
+
+                  {subtasks.length === 0 && (
+                    <p className="text-text-muted text-sm text-center py-4">
+                      No subtasks yet. Add one above.
+                    </p>
+                  )}
+                </div>
+
+                {/* 子任务模式选择 */}
+                <div className="flex gap-4 pt-4 border-t border-surface-light">
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="radio"
+                      checked={subtaskMode === 'all'}
+                      onChange={() => setSubtaskMode('all')}
+                      className="w-4 h-4 accent-primary"
+                    />
+                    <span className="text-text-primary text-sm">完成所有子任务</span>
+                  </label>
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="radio"
+                      checked={subtaskMode === 'partial'}
+                      onChange={() => setSubtaskMode('partial')}
+                      className="w-4 h-4 accent-primary"
+                    />
+                    <span className="text-text-primary text-sm">完成指定数量</span>
+                  </label>
+                </div>
+
+                {/* Partial 模式：设置需要完成的数量 */}
+                {subtaskMode === 'partial' && (
+                  <div className="flex items-center gap-2">
+                    <span className="text-text-secondary text-sm">完成</span>
+                    <NumberInput
+                      value={requiredCount}
+                      onChange={(value) => setRequiredCount(Math.min(subtasks.length, Math.max(1, value)))}
+                      min={1}
+                      max={subtasks.length || 1}
+                      size="sm"
+                      inputWidth="w-14"
+                    />
+                    <span className="text-text-secondary text-sm">项即可</span>
+                  </div>
+                )}
+
+                {/* 完成额外积分 */}
+                <div className="flex items-center justify-between pt-2 border-t border-surface-light">
+                  <div className="text-text-secondary text-sm">
+                    全部完成额外奖励
+                  </div>
+                  <NumberInput
+                    value={completionPoints}
+                    onChange={setCompletionPoints}
+                    min={0}
+                    size="md"
+                    inputWidth="w-12"
+                  />
+                </div>
+
+                {/* 积分预览 */}
+                <div className="text-sm text-text-muted pt-2">
+                  {subtaskMode === 'all' 
+                    ? `最高可获得：${pointsPerSubtask.reduce((sum, p) => sum + (p || 0), 0) + completionPoints} 积分`
+                    : `最高可获得：${[...pointsPerSubtask].sort((a, b) => (b || 0) - (a || 0)).slice(0, requiredCount).reduce((sum, p) => sum + (p || 0), 0) + completionPoints} 积分`
+                  }
+                </div>
+              </div>
+            )}
           </div>
         </div>
 
@@ -359,23 +633,20 @@ export function EditTask() {
             <h3 className="text-text-primary text-lg font-bold leading-tight tracking-[-0.015em]">
               Schedule
             </h3>
-            {/* Schedule 启用开关 */}
             <button
               onClick={() => {
                 const newEnabled = !isScheduleEnabled;
                 setIsScheduleEnabled(newEnabled);
                 if (newEnabled) {
-                  // 启用时设置 startAt 为今天
                   const today = new Date();
                   const year = today.getFullYear();
                   const month = String(today.getMonth() + 1).padStart(2, '0');
                   const day = String(today.getDate()).padStart(2, '0');
                   setStartAt(`${year}-${month}-${day}`);
                 } else {
-                  // 禁用时清空 startAt 和 expire, repeat 设为 none
                   setStartAt('');
                   setCompleteExpireDays(0);
-                  setRepeatIndex(0); // repeat 设为 none
+                  setRepeatIndex(0);
                 }
               }}
               className={`relative inline-flex h-7 w-12 items-center rounded-full transition-colors ${
@@ -390,7 +661,6 @@ export function EditTask() {
             </button>
           </div>
           <div className="rounded-xl bg-surface p-4 space-y-4">
-            {/* Start At - 只有启用 schedule 时才可编辑 */}
             <div className={`flex items-center gap-4 ${!isScheduleEnabled ? 'opacity-50 pointer-events-none' : ''}`}>
               <p className="text-text-secondary text-sm min-w-[80px]">Start from</p>
               <div className="flex-1">
@@ -402,7 +672,6 @@ export function EditTask() {
                   onChange={(date) => {
                     if (!date) {
                       setStartAt('');
-                      // 清空 startAt 时，同时清空 expire
                       setCompleteExpireDays(0);
                       return;
                     }
@@ -417,7 +686,6 @@ export function EditTask() {
               </div>
             </div>
 
-            {/* Expire Days - 只有在启用了 schedule 时才可设置 */}
             <div className={`flex items-center gap-4 pt-4 border-t border-surface-light ${!isScheduleEnabled ? 'opacity-50 pointer-events-none' : ''}`}>
               <p className="text-text-secondary text-sm min-w-[80px]">Expire after</p>
               <div className="flex items-center gap-2">
@@ -468,7 +736,6 @@ export function EditTask() {
               <p className="text-text-muted text-xs">Enable schedule to set repeat mode</p>
             )}
 
-            {/* Repeat Interval */}
             {repeatMode !== "none" && (
               <div className="flex items-center gap-4 pt-2 border-t border-surface-light">
                 <p className="text-text-secondary text-sm">Every</p>
@@ -501,7 +768,6 @@ export function EditTask() {
               </div>
             )}
 
-            {/* Weekly Repeat Days */}
             {repeatMode === "weekly" && (
               <div className="pt-2 border-t border-surface-light">
                 <p className="text-text-secondary text-sm mb-3">On days</p>
@@ -514,7 +780,6 @@ export function EditTask() {
               </div>
             )}
 
-            {/* Monthly Repeat Days */}
             {repeatMode === "monthly" && (
               <div className="pt-2 border-t border-surface-light">
                 <p className="text-text-secondary text-sm mb-3">On days</p>
@@ -527,7 +792,6 @@ export function EditTask() {
               </div>
             )}
 
-            {/* Ends Section - 只有在 repeat 不为 none 时才显示 */}
             {repeatMode !== "none" && (
               <div className="pt-4 border-t border-surface-light space-y-4">
                 <p className="text-text-primary text-sm font-medium">Ends</p>
@@ -537,17 +801,14 @@ export function EditTask() {
                   onChange={setEndIndex}
                 />
 
-                {/* End Value Input */}
                 {endCondition === "date" && (
                   <div className="pt-2 border-t border-surface-light">
                     <DatePicker
                       value={endValue ? (() => {
-                        // 将 YYYY-MM-DD 字符串解析为本地日期（避免时区问题）
                         const [year, month, day] = endValue.split('-').map(Number);
                         return new Date(year, month - 1, day);
                       })() : null}
                       onChange={(date) => {
-                        // 将本地日期转为 YYYY-MM-DD 字符串
                         if (!date) {
                           setEndValue('');
                           return;
@@ -595,81 +856,6 @@ export function EditTask() {
           </div>
         </div>
 
-        {/* Subtasks Section Card */}
-        <div>
-          <div className="flex items-center justify-between px-2 pb-2 pt-4">
-            <h3 className="text-text-primary text-lg font-bold leading-tight tracking-[-0.015em]">
-              Checklist
-            </h3>
-            {subtasks.length > 0 && (
-              <button
-                onClick={() => setIsRandomSubtask(!isRandomSubtask)}
-                className={`flex items-center gap-1.5 text-sm font-medium transition-colors ${
-                  isRandomSubtask ? "text-primary" : "text-text-secondary"
-                }`}
-              >
-                <Shuffle className="w-4 h-4" />
-                <span>Random</span>
-              </button>
-            )}
-          </div>
-          <div className="space-y-3 rounded-xl bg-surface p-4">
-            {/* Add new subtask */}
-            <div className="flex items-center gap-3">
-              <input
-                type="text"
-                value={newSubtask}
-                onChange={(e) => setNewSubtask(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") {
-                    handleAddSubtask();
-                  }
-                }}
-                placeholder="Add a subtask"
-                className="flex w-full min-w-0 flex-1 bg-transparent text-text-primary focus:outline-none border-b-2 border-transparent focus:border-primary text-base font-normal leading-normal py-1"
-              />
-              <button
-                onClick={handleAddSubtask}
-                disabled={!newSubtask.trim()}
-                className="text-primary disabled:text-text-muted font-medium text-sm px-3 py-1 rounded-lg hover:bg-primary/10 disabled:hover:bg-transparent transition-colors"
-              >
-                Add
-              </button>
-            </div>
-
-            {/* Subtask list */}
-            {subtasks.map((subtask, index) => (
-              <div
-                key={index}
-                className="flex items-center gap-3 group"
-              >
-                <span className="text-text-secondary text-sm w-6">{index + 1}.</span>
-                <input
-                  type="text"
-                  value={subtask}
-                  onChange={(e) => {
-                    const newSubtasks = [...subtasks];
-                    newSubtasks[index] = e.target.value;
-                    setSubtasks(newSubtasks);
-                  }}
-                  className="flex w-full min-w-0 flex-1 bg-transparent text-text-primary focus:outline-none border-b-2 border-transparent focus:border-primary text-base font-normal leading-normal py-1"
-                />
-                <button
-                  onClick={() => handleDeleteSubtask(index)}
-                  className="text-text-muted hover:text-primary transition-colors opacity-0 group-hover:opacity-100"
-                >
-                  <Trash2 className="w-5 h-5" />
-                </button>
-              </div>
-            ))}
-
-            {subtasks.length === 0 && (
-              <p className="text-text-muted text-sm text-center py-4">
-                No subtasks yet. Add one above.
-              </p>
-            )}
-          </div>
-        </div>
       </main>
 
       {/* Bottom CTA Button */}

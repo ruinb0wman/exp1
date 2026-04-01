@@ -371,16 +371,28 @@ export function generateTaskInstance(
   }
 
   const now = new Date().toISOString();
+  const rule = template.completeRule;
+  
   return {
     userId: template.userId,
     templateId: template.id!,
-    template: { ...template }, // 复制完整的模板副本，包含 rewardPoints 等字段
+    template: { ...template },
     status: 'pending',
     subtasks: [...subtasks],
     startAt,
     createdAt: now,
     updatedAt: now,
-    completeProgress: template.completeRule ? 0 : undefined,
+    
+    // 进度相关字段
+    completeProgress: rule && rule.type !== 'subtask' ? 0 : undefined,
+    
+    // 分阶段系统新字段
+    completedStages: [],
+    stagePointsEarned: 0,
+    completionPointsEarned: 0,
+    completedSubtasks: subtasks.map(() => false),
+    isFullyCompleted: false,
+    
     expiredAt,
   };
 }

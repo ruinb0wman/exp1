@@ -1,12 +1,20 @@
 import type { PomoSettings } from "./pomo";
 
-export type PointsHistoryType = 'task_reward' | 'task_undo' | 'reward_exchange' | 'admin_adjustment';
+export type PointsHistoryType = 
+  | 'task_reward'     // 任务完成奖励
+  | 'task_undo'       // 任务撤销
+  | 'task_stage'      // 任务阶段完成
+  | 'task_completion' // 任务全部完成额外奖励
+  | 'task_deduction'  // 任务进度回退扣除
+  | 'reward_exchange' // 奖励兑换
+  | 'admin_adjustment'; // 管理员调整
 
 export interface User {
   id: number;
   createdAt: string;
   updatedAt: string; // 更新时间戳（用于同步）
   name: string;
+  totalPoints: number; // 总积分
   dayEndTime?: string; // 一天结束时间，"HH:mm" 格式，默认 "00:00"
   pomoSettings?: PomoSettings; // 番茄钟设置
 }
@@ -14,9 +22,10 @@ export interface User {
 export interface PointsHistory {
   id?: number;
   userId: number;
-  amount: number; // 积分数量完成任务时为正数, 撤销完成兑换奖励时为负数
+  amount: number; // 积分数量（正数=获得，负数=扣除）
   type: PointsHistoryType;
   relatedInstanceId?: number; // task_instance id, reward_instance id
+  description?: string; // 积分变动说明
   createdAt: string; // 创建时间戳
   updatedAt: string; // 更新时间戳（用于同步，通常与 createdAt 相同）
 }

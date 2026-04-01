@@ -1,25 +1,21 @@
 import { useNavigate } from "react-router";
-import { CheckCircle2, XCircle, Clock, RefreshCw, Calendar, AlignLeft, Pencil } from "lucide-react";
+import { CheckCircle2, XCircle, Clock, RefreshCw, Calendar, AlignLeft, Pencil, CheckSquare, Square } from "lucide-react";
 import { Popup } from "./Popup";
 import { TaskContributionGraph } from "./TaskContributionGraph";
 import type { TaskInstance, TaskTemplate } from "@/db/types";
 import { isExpired, getExpireTimeText } from "@/libs/time";
-import { getTaskProgressPercent } from "@/db/services";
+import { getTaskProgressPercent, getNextStage, getTotalPointsEarned } from "@/db/services";
 
 export interface TaskDetailPopupProps {
   isOpen: boolean;
   onClose: () => void;
   instance: TaskInstance | null;
   template: TaskTemplate | null;
-  /** 完成按钮回调 */
   onComplete?: () => void;
-  /** 重置按钮回调 */
   onReset?: () => void;
-  /** 增加计数回调（用于count类型任务） */
   onIncrementCount?: () => void;
-  /** 是否处于加载状态 */
+  onToggleSubtask?: (index: number) => void;
   isLoading?: boolean;
-  /** 是否禁用操作 */
   disabled?: boolean;
 }
 
@@ -31,12 +27,12 @@ export function TaskDetailPopup({
   onComplete,
   onReset,
   onIncrementCount,
+  onToggleSubtask,
   isLoading = false,
   disabled = false,
 }: TaskDetailPopupProps) {
   const navigate = useNavigate();
 
-  // 处理编辑按钮点击
   const handleEdit = () => {
     onClose();
     if (template?.id) {
@@ -70,6 +66,7 @@ export function TaskDetailPopup({
           onComplete={onComplete}
           onReset={onReset}
           onIncrementCount={onIncrementCount}
+          onToggleSubtask={onToggleSubtask}
           onClose={onClose}
           isLoading={isLoading}
           disabled={disabled}
@@ -81,13 +78,13 @@ export function TaskDetailPopup({
   );
 }
 
-// 内部内容组件
 interface TaskDetailContentProps {
   instance: TaskInstance;
   template: TaskTemplate;
   onComplete?: () => void;
   onReset?: () => void;
   onIncrementCount?: () => void;
+  onToggleSubtask?: (index: number) => void;
   onClose: () => void;
   isLoading: boolean;
   disabled: boolean;
@@ -99,27 +96,56 @@ function TaskDetailContent({
   onComplete,
   onReset,
   onIncrementCount,
+  onToggleSubtask,
   onClose,
   isLoading,
   disabled,
 }: TaskDetailContentProps) {
   const isCompleted = instance.status === "completed";
   const expired = isExpired(instance.expiredAt);
-  const hasCompleteRule = !!template.completeRule;
-  const isCountRule = template.completeRule === "count";
-  const isTimeRule = template.completeRule === "time";
-  const progressPercent = getTaskProgressPercent(instance, template);
+  const rule = template.completeRule;
+  const hasCompleteRule = !!rule;
+  const progressPercent = getTaskProgressPercent(instance);
+  const earnedPoints = getTotalPointsEarned(instance);
+
+  // 判断任务类型
+  const isCountRule = rule?.type === "count";
+  const isTimeRule = rule?.type === "time";
+  const isSubtaskRule = rule?.type === "subtask";
 
   // 获取进度文本
   const getProgressText = () => {
     if (!hasCompleteRule) return null;
+    
+    if (isSubtaskRule) {
+      const completedCount = (instance.completedSubtasks || []).filter(Boolean).length;
+      const config = rule?.subtaskConfig;
+      const targetCount = config?.mode === 'all' 
+        ? instance.subtasks.length 
+        : (config?.requiredCount || 1);
+      return `${completedCount}/${targetCount} 项`;
+    }
+
     const progress = instance.completeProgress ?? 0;
-    const target = template.completeTarget ?? 0;
-    const unit = template.completeRule === "time" ? "分钟" : "次";
-    return `${progress} / ${target} ${unit}`;
+    const maxThreshold = rule?.stages.length ? Math.max(...rule.stages.map(s => s.threshold)) : 0;
+    const unit = rule?.type === "time" ? "分钟" : "次";
+    return `${progress}/${maxThreshold} ${unit}`;
   };
 
-  // 获取重复模式文本
+  // 获取下一阶段提示
+  const getNextStageHint = () => {
+    if (!rule || isSubtaskRule || !instance) return null;
+    
+    const nextStage = getNextStage(instance);
+    if (!nextStage) return null;
+
+    const progress = instance.completeProgress ?? 0;
+    const remaining = nextStage.threshold - progress;
+    const unit = rule.type === 'time' ? '分钟' : '次';
+    
+    return `再${remaining}${unit}可获得+${nextStage.points}积分`;
+  };
+
   const getRepeatText = () => {
     switch (template.repeatMode) {
       case "daily":
@@ -146,6 +172,51 @@ function TaskDetailContent({
       default:
         return "一次性任务";
     }
+  };
+
+  // 渲染子任务列表
+  const renderSubtasks = () => {
+    if (!isSubtaskRule || instance.subtasks.length === 0) return null;
+
+    const completedSubtasks = instance.completedSubtasks || [];
+    const pointsPerSubtask = rule?.subtaskConfig?.pointsPerSubtask || [];
+
+    return (
+      <div className="bg-surface rounded-lg p-3 space-y-2">
+        <p className="text-xs text-text-muted mb-2">子任务</p>
+        {instance.subtasks.map((subtask, index) => {
+          const isCompleted = completedSubtasks[index];
+          const points = pointsPerSubtask[index] || 0;
+
+          return (
+            <button
+              key={index}
+              onClick={() => !expired && !disabled && onToggleSubtask?.(index)}
+              disabled={expired || disabled || isLoading}
+              className={`w-full flex items-center gap-3 p-2 rounded-lg transition-colors
+                ${isCompleted 
+                  ? 'bg-green-500/10' 
+                  : 'bg-surface-light hover:bg-surface-light/80'
+                } ${(expired || disabled) ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
+            >
+              {isCompleted ? (
+                <CheckSquare className="w-5 h-5 text-green-500 shrink-0" />
+              ) : (
+                <Square className="w-5 h-5 text-text-muted shrink-0" />
+              )}
+              <span className={`flex-1 text-sm text-left ${isCompleted ? 'line-through text-text-muted' : 'text-text-primary'}`}>
+                {subtask}
+              </span>
+              {points > 0 && (
+                <span className={`text-xs ${isCompleted ? 'text-green-500' : 'text-text-muted'}`}>
+                  +{points}
+                </span>
+              )}
+            </button>
+          );
+        })}
+      </div>
+    );
   };
 
   return (
@@ -176,17 +247,15 @@ function TaskDetailContent({
           </p>
         </div>
         <div className="text-right flex flex-col items-end gap-2">
-          <span className="text-lg font-bold text-primary">+{template.rewardPoints}</span>
+          <span className="text-lg font-bold text-primary">+{earnedPoints}</span>
           <p className="text-xs text-text-muted">exp</p>
         </div>
       </div>
 
-      {/* 分隔线 */}
       <div className="h-px bg-border" />
 
       {/* 任务信息 */}
       <div className="space-y-3">
-        {/* 描述 */}
         {template.description && (
           <div className="flex items-start gap-3">
             <AlignLeft className="w-4 h-4 text-text-muted mt-0.5 shrink-0" />
@@ -197,7 +266,6 @@ function TaskDetailContent({
           </div>
         )}
 
-        {/* 重复模式 */}
         <div className="flex items-center gap-3">
           <RefreshCw className="w-4 h-4 text-text-muted shrink-0" />
           <div>
@@ -206,7 +274,6 @@ function TaskDetailContent({
           </div>
         </div>
 
-        {/* 时间信息 */}
         {instance.startAt && (
           <div className="flex items-center gap-3">
             <Calendar className="w-4 h-4 text-text-muted shrink-0" />
@@ -220,7 +287,7 @@ function TaskDetailContent({
         )}
       </div>
 
-      {/* 进度条（如果有完成规则） */}
+      {/* 进度条 */}
       {hasCompleteRule && (
         <div className="bg-surface rounded-xl p-3">
           <div className="flex items-center justify-between mb-2">
@@ -234,10 +301,14 @@ function TaskDetailContent({
               style={{ width: `${Math.min(progressPercent, 100)}%` }}
             />
           </div>
+          {/* 下一阶段提示 */}
+          {!isCompleted && !expired && getNextStageHint() && (
+            <p className="text-xs text-text-muted mt-2">{getNextStageHint()}</p>
+          )}
         </div>
       )}
 
-      {/* 任务完成统计图 - 仅对重复任务显示 */}
+      {/* 任务完成统计图 */}
       {template.repeatMode !== "none" && (
         <TaskContributionGraph template={template} userId={instance.userId} weeks={20} />
       )}
@@ -257,22 +328,8 @@ function TaskDetailContent({
         </div>
       )}
 
-      {/* 子任务 */}
-      {instance.subtasks.length > 0 && (
-        <div className="bg-surface rounded-lg p-3">
-          <p className="text-xs text-text-muted mb-2">子任务</p>
-          <div className="flex flex-wrap gap-2">
-            {instance.subtasks.map((subtask, index) => (
-              <span
-                key={index}
-                className="px-2 py-1 bg-surface-light rounded text-xs text-text-secondary"
-              >
-                {subtask}
-              </span>
-            ))}
-          </div>
-        </div>
-      )}
+      {/* 子任务列表（如果是 subtask 类型） */}
+      {renderSubtasks()}
 
       {/* 操作按钮 */}
       <div className="flex gap-3 pt-2">
@@ -285,13 +342,11 @@ function TaskDetailContent({
             {isLoading ? "处理中..." : "标记为未完成"}
           </button>
         ) : isTimeRule ? (
-          // time 类型任务：不显示完成任务按钮，显示提示
           <div className="flex-1 py-3 px-4 bg-surface rounded-xl text-center">
             <p className="text-sm text-text-secondary">使用番茄钟记录时间</p>
             <p className="text-xs text-text-muted mt-1">达到目标时长后自动完成</p>
           </div>
         ) : isCountRule && onIncrementCount ? (
-          // count 类型任务：显示"完成一次"按钮
           <button
             onClick={onIncrementCount}
             disabled={expired || disabled || isLoading}
@@ -299,8 +354,12 @@ function TaskDetailContent({
           >
             {isLoading ? "处理中..." : expired ? "已过期" : "完成一次"}
           </button>
+        ) : isSubtaskRule ? (
+          // subtask 类型：通过点击子任务完成，不需要额外按钮
+          <div className="flex-1 py-3 px-4 bg-surface rounded-xl text-center">
+            <p className="text-sm text-text-secondary">点击上方子任务完成</p>
+          </div>
         ) : (
-          // 普通任务：显示"完成任务"按钮
           <button
             onClick={onComplete}
             disabled={expired || disabled || isLoading}

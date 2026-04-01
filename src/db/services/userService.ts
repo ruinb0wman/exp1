@@ -7,6 +7,7 @@ import { toUserDateString } from '@/libs/task';
 
 const DEFAULT_USER: Omit<User, 'id'> = {
   name: 'User',
+  totalPoints: 0,
   createdAt: new Date().toISOString(),
   updatedAt: new Date().toISOString(),
 };

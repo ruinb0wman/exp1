@@ -5,6 +5,7 @@ import {
   generateTaskInstance,
   toUserDateString,
 } from '@/libs/task';
+import { getIsSyncing } from '@/services/sync/syncState';
 
 // 用于防止重复处理的 Set
 const processedTemplateIds = new Set<number>();
@@ -148,6 +149,9 @@ export function createTaskTemplateMiddleware(dayEndTime: string = "00:00") {
     register(db: DB) {
       // 创建模板时的 hook
       db.taskTemplates.hook('creating', function (_primKey, obj, trans) {
+        // 同步期间跳过自动生成实例
+        if (getIsSyncing()) return;
+        
         const template = obj as TaskTemplate;
 
         // 只处理启用的模板
@@ -184,6 +188,9 @@ export function createTaskTemplateMiddleware(dayEndTime: string = "00:00") {
 
       // 更新模板时的 hook
       db.taskTemplates.hook('updating', function (mods, _primKey, obj, trans) {
+        // 同步期间跳过自动生成实例
+        if (getIsSyncing()) return;
+        
         // 合并更新后的字段得到完整模板对象
         const updatedTemplate = { ...obj, ...mods } as TaskTemplate;
         
