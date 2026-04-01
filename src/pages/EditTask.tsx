@@ -17,7 +17,7 @@ const endOptions = ["Manual", "On Date", "After Times"];
 const endValues: EndCondition[] = ["manual", "date", "times"];
 
 const taskTypeOptions = ["Simple", "Time", "Count", "Subtask"];
-const taskTypeValues: (TaskType | undefined)[] = [undefined, "time", "count", "subtask"];
+const taskTypeValues: TaskType[] = ["simple", "time", "count", "subtask"];
 
 const weekDays = [
   { label: "Sun", value: 0 },
@@ -64,7 +64,7 @@ export function EditTask() {
   const [newSubtask, setNewSubtask] = useState("");
 
   // 完成规则相关状态（新系统）
-  const [taskType, setTaskType] = useState<TaskType | undefined>(undefined);
+  const [taskType, setTaskType] = useState<TaskType>("simple");
   const [stages, setStages] = useState<Stage[]>([]);
   const [completionPoints, setCompletionPoints] = useState(0);
   const [completeExpireDays, setCompleteExpireDays] = useState<number>(0);
@@ -117,7 +117,7 @@ export function EditTask() {
         }
       } else {
         // 旧数据兼容：没有 completeRule 的视为 simple 任务
-        setTaskType(undefined);
+        setTaskType("simple");
         setStages([]);
         setCompletionPoints(0);
       }
@@ -203,28 +203,28 @@ export function EditTask() {
 
     // 构建 CompleteRule
     // simple 任务也需要 completeRule，type 为 'simple'
-    const completeRule: CompleteRule = taskType
-      ? taskType === 'subtask'
+    const completeRule: CompleteRule = taskType === 'subtask'
+      ? {
+          type: 'subtask',
+          stages: [],
+          completionPoints,
+          subtaskConfig: {
+            mode: subtaskMode,
+            requiredCount: subtaskMode === 'partial' ? requiredCount : undefined,
+            pointsPerSubtask
+          }
+        }
+      : taskType === 'simple'
         ? {
-            type: 'subtask',
+            type: 'simple',
             stages: [],
-            completionPoints,
-            subtaskConfig: {
-              mode: subtaskMode,
-              requiredCount: subtaskMode === 'partial' ? requiredCount : undefined,
-              pointsPerSubtask
-            }
+            completionPoints
           }
         : {
             type: taskType,
             stages,
             completionPoints
-          }
-      : {
-          type: 'simple',
-          stages: [],
-          completionPoints
-        };
+          };
 
     const taskData: Omit<TaskTemplate, "id" | "createdAt" | "updatedAt"> = {
       userId: user.id,
@@ -356,7 +356,7 @@ export function EditTask() {
               onChange={(index) => {
                 const newType = taskTypeValues[index];
                 setTaskType(newType);
-                if (newType && newType !== 'subtask' && stages.length === 0) {
+                if (newType !== 'simple' && newType !== 'subtask' && stages.length === 0) {
                   // 自动添加一个默认阶段
                   addStage();
                 }
@@ -364,7 +364,7 @@ export function EditTask() {
             />
 
             {/* Simple 类型积分设置 */}
-            {taskType === undefined && (
+            {taskType === "simple" && (
               <div className="pt-4 border-t border-surface-light">
                 <div className="flex items-center justify-between">
                   <div className="text-text-secondary text-sm">
