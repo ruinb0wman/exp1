@@ -5,6 +5,7 @@ import { TaskContributionGraph } from "./TaskContributionGraph";
 import type { TaskInstance, TaskTemplate } from "@/db/types";
 import { isExpired, getExpireTimeText } from "@/libs/time";
 import { getTaskProgressPercent, getNextStage, getTotalPointsEarned } from "@/db/services";
+import { calculateMaxPoints } from "@/db/types";
 import { usePomoStore } from "@/store/pomoStore";
 
 export interface TaskDetailPopupProps {
@@ -112,10 +113,7 @@ function TaskDetailContent({
   const earnedPoints = getTotalPointsEarned(instance);
   
   // 计算预计总积分
-  const expectedPoints = hasCompleteRule
-    ? (rule.stages?.reduce((sum, stage) => sum + stage.points, 0) || 0) + 
-      (rule.completionPoints || 0)
-    : 0;
+  const expectedPoints = hasCompleteRule ? calculateMaxPoints(rule) : 0;
 
   // 判断任务类型
   const isCountRule = rule?.type === "count";
