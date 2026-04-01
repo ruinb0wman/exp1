@@ -12,6 +12,7 @@ import {
   completeTaskInPopup,
   resetTaskInPopup,
   incrementTaskCount,
+  toggleSubtaskCompletion,
   calculateTaskStats,
   filterPendingTasks,
 } from "./lib";
@@ -89,6 +90,31 @@ export function Home() {
     }
   }, [selectedTask, refreshTasks, refreshNoDateTasks]);
 
+  // 在 popup 中切换子任务完成状态（用于 subtask 类型任务）
+  const handleToggleSubtask = useCallback(async (index: number) => {
+    if (!selectedTask) return;
+    const { instance } = selectedTask;
+    try {
+      const completedSubtasks = instance.completedSubtasks || [];
+      const newCompleted = !completedSubtasks[index];
+      
+      const updated = await toggleSubtaskCompletion(
+        instance,
+        index,
+        newCompleted,
+        refreshTasks,
+        refreshNoDateTasks
+      );
+
+      // 刷新选中的任务状态
+      if (updated) {
+        setSelectedTask({ instance: updated.instance, template: updated.template! });
+      }
+    } catch (error) {
+      console.error("Failed to toggle subtask:", error);
+    }
+  }, [selectedTask, refreshTasks, refreshNoDateTasks]);
+
   // 首页只显示待完成的任务，过滤掉已完成和已跳过的
   const pendingTasks = filterPendingTasks(tasks);
 
@@ -148,6 +174,7 @@ export function Home() {
         onComplete={handleCompleteInPopup}
         onReset={handleResetInPopup}
         onIncrementCount={handleIncrementCount}
+        onToggleSubtask={handleToggleSubtask}
       />
     </div>
   );

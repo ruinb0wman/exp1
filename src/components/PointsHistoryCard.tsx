@@ -28,6 +28,12 @@ export function getPointsHistoryLabel(type: PointsHistoryType): string {
       return "任务奖励";
     case "task_undo":
       return "撤销扣除";
+    case "task_stage":
+      return "阶段奖励";
+    case "task_completion":
+      return "完成奖励";
+    case "task_deduction":
+      return "进度回退";
     case "reward_exchange":
       return "兑换奖励";
     case "admin_adjustment":
@@ -96,13 +102,12 @@ export function PointsHistoryCard({ item }: PointsHistoryCardProps) {
       </div>
       <div className="flex-1 min-w-0">
         <p className="text-text-primary font-medium">
-          {label}
+          {entityName || label}
         </p>
-        {entityName && (
-          <p className="text-text-secondary text-sm truncate">
-            {entityName}
-          </p>
-        )}
+        <p className="text-text-secondary text-sm truncate">
+          {entityName ? label : ''}
+          {item.description ? `${entityName ? ' · ' : ''}${item.description}` : ''}
+        </p>
         <p className="text-text-muted text-xs">
           {formatRelativeDate(item.createdAt)}
         </p>

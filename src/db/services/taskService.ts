@@ -267,31 +267,95 @@ export async function skipTaskInstance(id: number): Promise<number> {
 
 export async function resetTaskInstance(id: number): Promise<number> {
   const db = getDB();
-  const instance = await db.taskInstances.get(id);
-  if (!instance) {
-    throw new Error('Task instance not found');
-  }
 
-  const template = instance.template;
-  const rule = template.completeRule;
+  return db.transaction('rw',
+    [db.taskInstances, db.pointsHistory, db.users],
+    async () => {
+      const instance = await db.taskInstances.get(id);
+      if (!instance) {
+        throw new Error('Task instance not found');
+      }
 
-  // 重置所有进度相关字段
-  const updates: Partial<TaskInstance> = {
-    status: 'pending',
-    completedAt: undefined,
-    completeProgress: 0,
-    completedStages: [],
-    stagePointsEarned: 0,
-    completionPointsEarned: 0,
-    isFullyCompleted: false,
-  };
+      const template = instance.template;
+      const rule = template.completeRule;
 
-  // 如果是 subtask 类型，重置子任务完成状态
-  if (rule?.type === 'subtask') {
-    updates.completedSubtasks = instance.subtasks.map(() => false);
-  }
+      // 计算需要扣除的总积分
+      let totalPointsToDeduct = 0;
 
-  return db.taskInstances.update(id, updates);
+      if (rule?.type === 'subtask' && rule.subtaskConfig) {
+        // subtask 类型：计算已完成子任务的积分
+        const completedSubtasks = instance.completedSubtasks || [];
+        const pointsPerSubtask = rule.subtaskConfig.pointsPerSubtask || [];
+
+        completedSubtasks.forEach((isCompleted, index) => {
+          if (isCompleted) {
+            totalPointsToDeduct += pointsPerSubtask[index] || 0;
+          }
+        });
+
+        // 如果任务已完成，还要扣除完成奖励积分
+        if (instance.isFullyCompleted) {
+          totalPointsToDeduct += rule.completionPoints || 0;
+        }
+
+        // 创建积分扣除记录（撤销子任务）
+        if (totalPointsToDeduct > 0) {
+          await createPointsRecord(
+            db,
+            instance.userId,
+            id,
+            -totalPointsToDeduct,
+            'task_undo',
+            `撤销任务：${template.title}`
+          );
+        }
+      } else if (rule) {
+        // time/count 类型：使用已记录的积分
+        totalPointsToDeduct = (instance.stagePointsEarned || 0) + (instance.completionPointsEarned || 0);
+
+        if (totalPointsToDeduct > 0) {
+          await createPointsRecord(
+            db,
+            instance.userId,
+            id,
+            -totalPointsToDeduct,
+            'task_undo',
+            `撤销任务：${template.title}`
+          );
+        }
+      } else {
+        // 简单任务（没有 completeRule）
+        if (instance.status === 'completed') {
+          await createPointsRecord(
+            db,
+            instance.userId,
+            id,
+            -(template.rewardPoints || 0),
+            'task_undo',
+            `撤销任务：${template.title}`
+          );
+        }
+      }
+
+      // 重置所有进度相关字段
+      const updates: Partial<TaskInstance> = {
+        status: 'pending',
+        completedAt: undefined,
+        completeProgress: 0,
+        completedStages: [],
+        stagePointsEarned: 0,
+        completionPointsEarned: 0,
+        isFullyCompleted: false,
+      };
+
+      // 如果是 subtask 类型，重置子任务完成状态
+      if (rule?.type === 'subtask') {
+        updates.completedSubtasks = instance.subtasks.map(() => false);
+      }
+
+      return db.taskInstances.update(id, updates);
+    }
+  );
 }
 
 export async function deleteTaskInstance(id: number): Promise<void> {

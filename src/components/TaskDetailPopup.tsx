@@ -1,10 +1,11 @@
 import { useNavigate } from "react-router";
-import { CheckCircle2, XCircle, Clock, RefreshCw, Calendar, AlignLeft, Pencil, CheckSquare, Square } from "lucide-react";
+import { CheckCircle2, XCircle, Clock, RefreshCw, Calendar, AlignLeft, Pencil, CheckSquare, Square, Timer, ChevronRight } from "lucide-react";
 import { Popup } from "./Popup";
 import { TaskContributionGraph } from "./TaskContributionGraph";
 import type { TaskInstance, TaskTemplate } from "@/db/types";
 import { isExpired, getExpireTimeText } from "@/libs/time";
 import { getTaskProgressPercent, getNextStage, getTotalPointsEarned } from "@/db/services";
+import { usePomoStore } from "@/store/pomoStore";
 
 export interface TaskDetailPopupProps {
   isOpen: boolean;
@@ -47,6 +48,7 @@ export function TaskDetailPopup({
       position="bottom"
       title="任务详情"
       maskClosable={true}
+      maxHeight="80vh"
       headerRight={(
         <button
           onClick={handleEdit}
@@ -101,12 +103,19 @@ function TaskDetailContent({
   isLoading,
   disabled,
 }: TaskDetailContentProps) {
+  const navigate = useNavigate();
   const isCompleted = instance.status === "completed";
   const expired = isExpired(instance.expiredAt);
   const rule = template.completeRule;
   const hasCompleteRule = !!rule;
   const progressPercent = getTaskProgressPercent(instance);
   const earnedPoints = getTotalPointsEarned(instance);
+  
+  // 计算预计总积分
+  const expectedPoints = hasCompleteRule
+    ? (rule.stages?.reduce((sum, stage) => sum + stage.points, 0) || 0) + 
+      (rule.completionPoints || 0)
+    : 0;
 
   // 判断任务类型
   const isCountRule = rule?.type === "count";
@@ -247,7 +256,9 @@ function TaskDetailContent({
           </p>
         </div>
         <div className="text-right flex flex-col items-end gap-2">
-          <span className="text-lg font-bold text-primary">+{earnedPoints}</span>
+          <span className="text-lg font-bold text-primary">
+            +{earnedPoints}{expectedPoints > 0 && <span className="text-sm text-text-muted font-normal">/{expectedPoints}</span>}
+          </span>
           <p className="text-xs text-text-muted">exp</p>
         </div>
       </div>
@@ -342,10 +353,18 @@ function TaskDetailContent({
             {isLoading ? "处理中..." : "标记为未完成"}
           </button>
         ) : isTimeRule ? (
-          <div className="flex-1 py-3 px-4 bg-surface rounded-xl text-center">
-            <p className="text-sm text-text-secondary">使用番茄钟记录时间</p>
-            <p className="text-xs text-text-muted mt-1">达到目标时长后自动完成</p>
-          </div>
+          <button
+            onClick={() => {
+              usePomoStore.getState().setSelectedTask(instance.id!);
+              navigate('/pomo');
+            }}
+            disabled={expired || disabled || isLoading}
+            className="flex-1 py-3 px-4 bg-surface hover:bg-surface-light disabled:opacity-50 disabled:cursor-not-allowed text-text-primary rounded-xl font-medium transition-colors flex items-center justify-center gap-2"
+          >
+            <Timer className="w-4 h-4" />
+            <span>{isLoading ? "处理中..." : expired ? "已过期" : "使用番茄钟"}</span>
+            <ChevronRight className="w-4 h-4" />
+          </button>
         ) : isCountRule && onIncrementCount ? (
           <button
             onClick={onIncrementCount}
