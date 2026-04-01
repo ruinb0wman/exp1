@@ -5,7 +5,7 @@ export type TaskStatus = 'pending' | 'completed' | 'skipped';
 // ===== 新的完成规则系统 =====
 
 /** 任务类型 */
-export type TaskType = 'time' | 'count' | 'subtask';
+export type TaskType = 'simple' | 'time' | 'count' | 'subtask';
 
 /** 子任务完成模式 */
 export type SubtaskMode = 'all' | 'partial';
@@ -45,7 +45,6 @@ export interface TaskTemplate {
   userId: number;
   title: string;                  // 标题
   description?: string;           // 任务描述
-  rewardPoints: number;           // 【已废弃】保留兼容性，实际积分由 stages 决定
   repeatMode: RepeatMode;         // 重复模式
   repeatInterval?: number;        // 重复周期
   repeatDaysOfWeek?: number[];    // 周重复，0-6
@@ -98,6 +97,11 @@ export interface TaskInstance {
 
 /** 计算任务可获得的最大积分 */
 export function calculateMaxPoints(rule: CompleteRule): number {
+  // simple 类型：直接返回完成积分
+  if (rule.type === 'simple') {
+    return rule.completionPoints;
+  }
+
   if (rule.type === 'subtask' && rule.subtaskConfig) {
     const config = rule.subtaskConfig;
     if (config.mode === 'all') {
@@ -110,7 +114,7 @@ export function calculateMaxPoints(rule: CompleteRule): number {
       return topN.reduce((sum, p) => sum + p, 0) + rule.completionPoints;
     }
   }
-  
+
   // time/count 类型：所有阶段积分 + 完成额外积分
   const stagesPoints = rule.stages.reduce((sum, stage) => sum + stage.points, 0);
   return stagesPoints + rule.completionPoints;

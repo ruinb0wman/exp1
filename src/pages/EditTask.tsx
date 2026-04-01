@@ -116,24 +116,10 @@ export function EditTask() {
           setPointsPerSubtask(rule.subtaskConfig.pointsPerSubtask || []);
         }
       } else {
-        // 旧数据兼容：如果有 completeTarget 但没有 completeRule
-        const oldType = existingTemplate.completeRule as unknown as 'time' | 'count' | undefined;
-        const oldTarget = existingTemplate.completeTarget;
-        const oldReward = existingTemplate.rewardPoints;
-        
-        if (oldType && oldTarget) {
-          setTaskType(oldType);
-          setStages([{
-            id: `legacy_${Date.now()}`,
-            threshold: oldTarget,
-            points: oldReward
-          }]);
-          setCompletionPoints(0);
-        } else {
-          setTaskType(undefined);
-          setStages([]);
-          setCompletionPoints(0);
-        }
+        // 旧数据兼容：没有 completeRule 的视为 simple 任务
+        setTaskType(undefined);
+        setStages([]);
+        setCompletionPoints(0);
       }
       
       setCompleteExpireDays(existingTemplate.completeExpireDays ?? 0);
@@ -216,34 +202,35 @@ export function EditTask() {
     };
 
     // 构建 CompleteRule
-    let completeRule: CompleteRule | undefined = undefined;
-    
-    if (taskType) {
-      if (taskType === 'subtask') {
-        completeRule = {
-          type: 'subtask',
-          stages: [],
-          completionPoints,
-          subtaskConfig: {
-            mode: subtaskMode,
-            requiredCount: subtaskMode === 'partial' ? requiredCount : undefined,
-            pointsPerSubtask
+    // simple 任务也需要 completeRule，type 为 'simple'
+    const completeRule: CompleteRule = taskType
+      ? taskType === 'subtask'
+        ? {
+            type: 'subtask',
+            stages: [],
+            completionPoints,
+            subtaskConfig: {
+              mode: subtaskMode,
+              requiredCount: subtaskMode === 'partial' ? requiredCount : undefined,
+              pointsPerSubtask
+            }
           }
-        };
-      } else {
-        completeRule = {
-          type: taskType,
-          stages,
+        : {
+            type: taskType,
+            stages,
+            completionPoints
+          }
+      : {
+          type: 'simple',
+          stages: [],
           completionPoints
         };
-      }
-    }
 
     const taskData: Omit<TaskTemplate, "id" | "createdAt" | "updatedAt"> = {
       userId: user.id,
       title,
       description: description || undefined,
-      rewardPoints: 0, // 新系统不再使用，积分由 stages 决定
+
       repeatMode: repeatValues[repeatIndex],
       repeatInterval: repeatValues[repeatIndex] !== "none" ? repeatInterval : undefined,
       repeatDaysOfWeek: repeatValues[repeatIndex] === "weekly" ? repeatDaysOfWeek : undefined,

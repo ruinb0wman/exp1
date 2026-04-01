@@ -309,6 +309,18 @@ export async function resetTaskInstance(id: number): Promise<number> {
             `撤销任务：${template.title}`
           );
         }
+      } else if (rule?.type === 'simple') {
+        // simple 类型：使用 completeRule.completionPoints
+        if (instance.status === 'completed') {
+          await createPointsRecord(
+            db,
+            instance.userId,
+            id,
+            -(rule.completionPoints || 0),
+            'task_undo',
+            `撤销任务：${template.title}`
+          );
+        }
       } else if (rule) {
         // time/count 类型：使用已记录的积分
         totalPointsToDeduct = (instance.stagePointsEarned || 0) + (instance.completionPointsEarned || 0);
@@ -319,18 +331,6 @@ export async function resetTaskInstance(id: number): Promise<number> {
             instance.userId,
             id,
             -totalPointsToDeduct,
-            'task_undo',
-            `撤销任务：${template.title}`
-          );
-        }
-      } else {
-        // 简单任务（没有 completeRule）
-        if (instance.status === 'completed') {
-          await createPointsRecord(
-            db,
-            instance.userId,
-            id,
-            -(template.rewardPoints || 0),
             'task_undo',
             `撤销任务：${template.title}`
           );

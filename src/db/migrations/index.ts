@@ -28,27 +28,33 @@ export function migration(db: DB) {
         (instance.status === 'completed');
     });
 
-    // 迁移 TaskTemplate 表，转换旧的 completeRule 格式
+    // 迁移 TaskTemplate 表，转换旧格式
     await tx.table('taskTemplates').toCollection().modify((template) => {
       // 如果存在旧的 completeRule（string类型），转换为新格式
       if (template.completeRule && typeof template.completeRule === 'string') {
         const oldType = template.completeRule as 'time' | 'count';
         const oldTarget = template.completeTarget || (oldType === 'time' ? 25 : 1);
-        const oldReward = template.rewardPoints || 0;
-        
+        const oldReward = (template as Record<string, unknown>).rewardPoints || 0;
+
         // 转换为新格式：单阶段规则
         template.completeRule = {
           type: oldType,
           stages: oldTarget > 0 ? [{
             id: `legacy_${Date.now()}`,
             threshold: oldTarget,
-            points: oldReward
+            points: oldReward as number
           }] : [],
           completionPoints: 0  // 旧逻辑已包含在阶段中
         };
+      } else if (!template.completeRule) {
+        // 如果没有 completeRule，转换为 simple 类型
+        const oldReward = (template as Record<string, unknown>).rewardPoints || 0;
+        template.completeRule = {
+          type: 'simple',
+          stages: [],
+          completionPoints: oldReward as number
+        };
       }
-      
-      // 如果没有 completeRule，保持 undefined（简单任务）
     });
 
     // 迁移 Users 表，初始化 totalPoints 字段

@@ -81,9 +81,7 @@ export function TaskHistory() {
   // 处理任务操作（完成/重置）
   const handleTaskAction = async (
     action: "complete" | "reset",
-    instanceId: number,
-    _templateId: number,
-    _rewardPoints: number
+    instanceId: number
   ) => {
     setIsActionLoading(true);
     try {
@@ -170,13 +168,13 @@ export function TaskHistory() {
         instance={selectedInstance}
         template={selectedTemplate}
         onComplete={() => {
-          if (selectedInstance && selectedTemplate) {
-            handleTaskAction("complete", selectedInstance.id!, selectedTemplate.id!, selectedTemplate.rewardPoints);
+          if (selectedInstance) {
+            handleTaskAction("complete", selectedInstance.id!);
           }
         }}
         onReset={() => {
-          if (selectedInstance && selectedTemplate) {
-            handleTaskAction("reset", selectedInstance.id!, selectedTemplate.id!, selectedTemplate.rewardPoints);
+          if (selectedInstance) {
+            handleTaskAction("reset", selectedInstance.id!);
           }
         }}
         isLoading={isActionLoading}

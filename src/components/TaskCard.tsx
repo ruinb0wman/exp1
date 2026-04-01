@@ -1,5 +1,6 @@
 import { ChevronRight, Power, Trash2 } from "lucide-react";
-import type { RepeatMode } from "@/db/types";
+import type { RepeatMode, CompleteRule } from "@/db/types";
+import { calculateMaxPoints } from "@/db/types/task";
 import { repeatModeMap, repeatModeColorMap } from "@/pages/AllTasks/lib";
 
 interface TaskCardProps {
@@ -8,7 +9,7 @@ interface TaskCardProps {
   description?: string;
   repeatMode: RepeatMode;
   enabled: boolean;
-  rewardPoints: number;
+  completeRule?: CompleteRule;
   subtasks: string[];
   isRandomSubtask: boolean;
   isDeleting: boolean;
@@ -23,7 +24,7 @@ export function TaskCard({
   description,
   repeatMode,
   enabled,
-  rewardPoints,
+  completeRule,
   subtasks,
   isRandomSubtask,
   isDeleting,
@@ -32,6 +33,8 @@ export function TaskCard({
   onToggleEnabled,
   onDelete,
 }: TaskCardProps) {
+  // 计算任务可获得的最大积分
+  const maxPoints = completeRule ? calculateMaxPoints(completeRule) : 0;
   return (
     <div
       className={`flex items-center gap-4 bg-surface rounded-xl p-4 min-h-[72px] justify-between border transition-colors ${
@@ -62,7 +65,7 @@ export function TaskCard({
               enabled ? "text-text-secondary" : "text-text-muted"
             }`}
           >
-            {description || `+${rewardPoints} exp`}
+            {description || (maxPoints > 0 ? `+${maxPoints} exp` : "简单任务")}
           </p>
           {subtasks.length > 0 && (
             <p className="text-xs text-text-muted mt-1">

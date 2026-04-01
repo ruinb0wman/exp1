@@ -64,7 +64,7 @@ export function TaskList({
           description={template.description}
           repeatMode={template.repeatMode}
           enabled={template.enabled}
-          rewardPoints={template.rewardPoints}
+          completeRule={template.completeRule}
           subtasks={template.subtasks}
           isRandomSubtask={template.isRandomSubtask}
           isDeleting={deletingId === template.id}

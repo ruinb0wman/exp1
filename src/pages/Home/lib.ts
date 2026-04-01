@@ -7,8 +7,6 @@ import type { TaskInstance, TaskTemplate } from "@/db/types";
  */
 export async function completeTask(
   instanceId: number,
-  _templateId: number,
-  _rewardPoints: number,
   complete: (instanceId: number) => Promise<void>,
   refreshTasks: () => Promise<void>,
   refreshNoDateTasks: () => Promise<void>
@@ -23,8 +21,6 @@ export async function completeTask(
  */
 export async function resetTask(
   instanceId: number,
-  _templateId: number,
-  _rewardPoints: number,
   reset: (instanceId: number) => Promise<void>,
   refreshTasks: () => Promise<void>,
   refreshNoDateTasks: () => Promise<void>

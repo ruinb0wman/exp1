@@ -23,9 +23,10 @@ export function createPointsHistoryMiddleware() {
         const oldInstance = obj as TaskInstance;
         const newInstance = { ...oldInstance, ...mods } as TaskInstance;
 
-        // 只处理没有 completeRule 的简单任务
-        // 有 completeRule 的任务积分由 taskService 直接管理
-        if (newInstance.template?.completeRule) {
+        // 只处理 simple 类型的任务（通过 completeRule.type 判断）
+        // time/count/subtask 类型由 taskService 直接管理积分
+        const rule = newInstance.template?.completeRule;
+        if (rule && rule.type !== 'simple') {
           return;
         }
 
@@ -34,7 +35,7 @@ export function createPointsHistoryMiddleware() {
 
         // 场景1: 完成任务 → 发放积分
         if (oldStatus !== 'completed' && newStatus === 'completed') {
-          const rewardPoints = newInstance.template?.rewardPoints || 0;
+          const rewardPoints = newInstance.template?.completeRule?.completionPoints || 0;
           if (rewardPoints > 0) {
             trans.on('complete', async () => {
               try {
@@ -66,7 +67,7 @@ export function createPointsHistoryMiddleware() {
 
         // 场景2: 撤销完成 → 扣除积分
         if (oldStatus === 'completed' && newStatus !== 'completed') {
-          const rewardPoints = oldInstance.template?.rewardPoints || 0;
+          const rewardPoints = oldInstance.template?.completeRule?.completionPoints || 0;
           if (rewardPoints > 0) {
             trans.on('complete', async () => {
               try {
