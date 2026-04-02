@@ -1,5 +1,32 @@
 import { updateTaskProgress, completeSubtask, getTaskInstanceWithTemplate } from "@/db/services";
 import type { TaskInstance, TaskTemplate } from "@/db/types";
+import { calculateMaxPoints } from "@/db/types";
+
+/**
+ * 计算今日预估可获得的总积分
+ * 基于每个任务的 completeRule 计算最大积分
+ */
+export function calculateEstimatedTotalPoints(
+  tasks: { instance: TaskInstance; template: TaskTemplate }[]
+): number {
+  return tasks.reduce((total, { template }) => {
+    const rule = template.completeRule;
+    if (!rule) return total;
+    return total + calculateMaxPoints(rule);
+  }, 0);
+}
+
+/**
+ * 计算今日已获得的积分
+ * 累加每个任务的 stagePointsEarned 和 completionPointsEarned
+ */
+export function calculateTodayEarnedPoints(
+  tasks: { instance: TaskInstance; template: TaskTemplate }[]
+): number {
+  return tasks.reduce((total, { instance }) => {
+    return total + (instance.stagePointsEarned || 0) + (instance.completionPointsEarned || 0);
+  }, 0);
+}
 
 /**
  * 完成任务（简单任务）

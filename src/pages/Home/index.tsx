@@ -9,12 +9,14 @@ import { TaskList } from "@/components/TaskList";
 import { TaskDetailPopup } from "@/components/TaskDetailPopup";
 import type { TaskInstance, TaskTemplate } from "@/db/types";
 import {
-  completeTaskInPopup,
-  resetTaskInPopup,
-  incrementTaskCount,
-  toggleSubtaskCompletion,
-  calculateTaskStats,
-  filterPendingTasks,
+	completeTaskInPopup,
+	resetTaskInPopup,
+	incrementTaskCount,
+	toggleSubtaskCompletion,
+	calculateTaskStats,
+	filterPendingTasks,
+	calculateEstimatedTotalPoints,
+	calculateTodayEarnedPoints,
 } from "./lib";
 
 export function Home() {
@@ -121,6 +123,10 @@ export function Home() {
   // 计算进度（基于原始任务列表）
   const { completedCount, totalCount } = calculateTaskStats(tasks);
 
+  // 计算预估总积分和已获积分
+  const earnedPoints = calculateTodayEarnedPoints(tasks);
+  const estimatedTotalPoints = calculateEstimatedTotalPoints(tasks);
+
   const isLoading = isUserLoading || isTasksLoading || isNoDateTasksLoading;
 
   return (
@@ -128,7 +134,7 @@ export function Home() {
       {/* Header */}
       <header className="px-4 pb-4">
         <HomeHeader user={user} currentPoints={currentPoints} />
-        <Progress completedCount={completedCount} totalCount={totalCount} />
+        <Progress completedCount={completedCount} totalCount={totalCount} earnedPoints={earnedPoints} estimatedTotalPoints={estimatedTotalPoints} />
       </header>
 
       {/* Tasks List */}
