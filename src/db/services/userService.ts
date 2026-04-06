@@ -5,7 +5,8 @@ import { DEFAULT_POMO_SETTINGS } from '../types/pomo';
 import { calculateExpiredAt, getUserStartOfDay } from '@/libs/time';
 import { toUserDateString } from '@/libs/task';
 
-const DEFAULT_USER: Omit<User, 'id'> = {
+const DEFAULT_USER: User = {
+  id: 1,
   name: 'User',
   totalPoints: 0,
   createdAt: new Date().toISOString(),
