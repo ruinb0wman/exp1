@@ -105,8 +105,7 @@ export function PointsHistoryCard({ item }: PointsHistoryCardProps) {
           {entityName || label}
         </p>
         <p className="text-text-secondary text-sm truncate">
-          {entityName ? label : ''}
-          {item.description ? `${entityName ? ' · ' : ''}${item.description}` : ''}
+          {item.description || label}
         </p>
         <p className="text-text-muted text-xs">
           {formatRelativeDate(item.createdAt)}
