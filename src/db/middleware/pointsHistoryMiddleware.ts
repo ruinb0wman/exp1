@@ -43,9 +43,9 @@ export function createPointsHistoryMiddleware() {
                 await db.pointsHistory.add({
                   userId: newInstance.userId,
                   amount: rewardPoints,
-                  type: 'task_reward',
+                  type: 'task_completion',
                   relatedInstanceId: primKey as string,
-                  description: '完成简单任务',
+                  description: '任务完成',
                   createdAt: now,
                   updatedAt: now,
                 } as unknown as PointsHistory);

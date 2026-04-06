@@ -1,10 +1,10 @@
 import type { PomoSettings } from "./pomo";
 
 export type PointsHistoryType = 
-  | 'task_reward'     // 任务完成奖励
   | 'task_undo'       // 任务撤销
   | 'task_stage'      // 任务阶段完成
-  | 'task_completion' // 任务全部完成额外奖励
+  | 'task_reward'     // 任务完成奖励（旧类型，兼容历史数据）
+  | 'task_completion' // 任务完成奖励（新类型）
   | 'task_deduction'  // 任务进度回退扣除
   | 'reward_exchange' // 奖励兑换
   | 'admin_adjustment'; // 管理员调整

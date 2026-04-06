@@ -121,6 +121,7 @@ export async function getPointsStats(
     // 按类型统计
     switch (record.type) {
       case 'task_reward':
+      case 'task_completion':
         stats.taskReward += amount;
         stats.income += amount;
         break;
