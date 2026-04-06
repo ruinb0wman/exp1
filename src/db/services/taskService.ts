@@ -518,7 +518,8 @@ async function createPointsRecord(
   instanceId: string,
   amount: number,
   type: PointsHistory['type'],
-  description: string
+  description: string,
+  stageId?: string
 ): Promise<void> {
   const now = new Date().toISOString();
   
@@ -528,6 +529,7 @@ async function createPointsRecord(
     type,
     relatedInstanceId: instanceId,
     description,
+    stageId,
     createdAt: now,
     updatedAt: now,
   } as unknown as PointsHistory);
@@ -664,7 +666,8 @@ export async function updateTaskProgress(
               instanceId,
               stage.points,
               'task_stage',
-              `完成阶段：${stage.threshold}${rule.type === 'time' ? '分钟' : '次'}`
+              `完成阶段：${stage.threshold}${rule.type === 'time' ? '分钟' : '次'}`,
+              stage.id
             );
 
             completedStages.push({
@@ -828,7 +831,8 @@ export async function completeSubtask(
           instanceId,
           subtaskPoints,
           'task_stage',
-          `完成子任务：${instance.subtasks[subtaskIndex]}`
+          `完成子任务：${instance.subtasks[subtaskIndex]}`,
+          String(subtaskIndex)
         );
 
         result.pointsEarned = subtaskPoints;

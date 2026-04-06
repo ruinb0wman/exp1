@@ -106,7 +106,7 @@ const createDB = () => {
   db.pointsHistory.hook('creating', function (_primKey, obj, _trans) {
     const item = obj as PointsHistory;
     if (!item.id && item.relatedInstanceId && item.type) {
-      item.id = hashPointsHistory(item.relatedInstanceId, item.type);
+      item.id = hashPointsHistory(item.relatedInstanceId, item.type, item.stageId);
     } else if (!item.id) {
       item.id = generateUUID();
     }

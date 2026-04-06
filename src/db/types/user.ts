@@ -25,6 +25,7 @@ export interface PointsHistory {
   amount: number;
   type: PointsHistoryType;
   relatedInstanceId?: string;
+  stageId?: string;
   description?: string;
   createdAt: string;
   updatedAt: string;

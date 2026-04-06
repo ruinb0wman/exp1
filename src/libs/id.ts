@@ -28,8 +28,9 @@ export function hashTaskInstance(templateId: string, date: string): string {
   return hashString(`${templateId}-${date}`);
 }
 
-export function hashPointsHistory(instanceId: string, type: string): string {
-  return hashString(`${instanceId}-${type}`);
+export function hashPointsHistory(instanceId: string, type: string, stageId?: string): string {
+  const base = `${instanceId}-${type}`;
+  return hashString(stageId ? `${base}-${stageId}` : base);
 }
 
 export function hashRewardInstance(
