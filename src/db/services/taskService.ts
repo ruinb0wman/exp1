@@ -32,17 +32,18 @@ export interface SubtaskUpdateResult {
 
 export async function createTaskTemplate(
   template: Omit<TaskTemplate, 'id' | 'createdAt' | 'updatedAt'>
-): Promise<number> {
+): Promise<string> {
   const db = getDB();
 
   const now = new Date().toISOString();
   const newTemplate: TaskTemplate = {
     ...template,
+    id: '' as string, // Dexie auto-generates
     createdAt: now,
     updatedAt: now,
   };
 
-  return db.taskTemplates.add(newTemplate);
+  return db.taskTemplates.add(newTemplate as unknown as TaskTemplate);
 }
 
 export async function getAllTaskTemplates(userId?: number): Promise<TaskTemplate[]> {
@@ -64,7 +65,7 @@ export async function getEnabledTaskTemplates(userId?: number): Promise<TaskTemp
   return db.taskTemplates.filter(t => t.enabled).toArray();
 }
 
-export async function getTaskTemplateById(id: number): Promise<TaskTemplate | undefined> {
+export async function getTaskTemplateById(id: string): Promise<TaskTemplate | undefined> {
   const db = getDB();
   return db.taskTemplates.get(id);
 }
@@ -83,7 +84,7 @@ export async function getTaskTemplatesByRepeatMode(
 }
 
 export async function updateTaskTemplate(
-  id: number,
+  id: string,
   updates: Partial<Omit<TaskTemplate, 'id' | 'createdAt'>>
 ): Promise<number> {
   const db = getDB();
@@ -96,7 +97,7 @@ export async function updateTaskTemplate(
   return db.taskTemplates.update(id, updateData);
 }
 
-export async function disableTaskTemplate(id: number): Promise<number> {
+export async function disableTaskTemplate(id: string): Promise<number> {
   const db = getDB();
 
   const template = await db.taskTemplates.get(id);
@@ -111,7 +112,7 @@ export async function disableTaskTemplate(id: number): Promise<number> {
 }
 
 export async function toggleTaskTemplateEnabled(
-  id: number,
+  id: string,
   enabled?: boolean
 ): Promise<number> {
   const db = getDB();
@@ -133,29 +134,31 @@ export async function toggleTaskTemplateEnabled(
 
 export async function createTaskInstance(
   instance: Omit<TaskInstance, 'id' | 'createdAt'>
-): Promise<number> {
+): Promise<string> {
   const db = getDB();
 
   const newInstance: TaskInstance = {
     ...instance,
+    id: '' as string, // Dexie auto-generates
     createdAt: new Date().toISOString(),
   };
 
-  return db.taskInstances.add(newInstance);
+  return db.taskInstances.add(newInstance as unknown as TaskInstance);
 }
 
 export async function createTaskInstances(
   instances: Omit<TaskInstance, 'id' | 'createdAt'>[]
-): Promise<number[]> {
+): Promise<string[]> {
   const db = getDB();
 
   const now = new Date().toISOString();
   const newInstances: TaskInstance[] = instances.map((instance) => ({
     ...instance,
+    id: '' as string, // Dexie auto-generates
     createdAt: now,
   }));
 
-  return db.taskInstances.bulkAdd(newInstances, { allKeys: true });
+  return db.taskInstances.bulkAdd(newInstances as unknown as TaskInstance[], { allKeys: true });
 }
 
 export async function getAllTaskInstances(userId?: number): Promise<TaskInstance[]> {
@@ -167,12 +170,12 @@ export async function getAllTaskInstances(userId?: number): Promise<TaskInstance
   return db.taskInstances.toArray();
 }
 
-export async function getTaskInstanceById(id: number): Promise<TaskInstance | undefined> {
+export async function getTaskInstanceById(id: string): Promise<TaskInstance | undefined> {
   const db = getDB();
   return db.taskInstances.get(id);
 }
 
-export async function getTaskInstancesByTemplateId(templateId: number): Promise<TaskInstance[]> {
+export async function getTaskInstancesByTemplateId(templateId: string): Promise<TaskInstance[]> {
   const db = getDB();
   return db.taskInstances.where('templateId').equals(templateId).toArray();
 }
@@ -223,14 +226,14 @@ export async function getTaskInstancesByDate(
 }
 
 export async function updateTaskInstance(
-  id: number,
+  id: string,
   updates: Partial<Omit<TaskInstance, 'id'>>
 ): Promise<number> {
   const db = getDB();
   return db.taskInstances.update(id, updates);
 }
 
-export async function completeTaskInstance(id: number): Promise<number> {
+export async function completeTaskInstance(id: string): Promise<number> {
   const db = getDB();
 
   const instance = await db.taskInstances.get(id);
@@ -248,7 +251,7 @@ export async function completeTaskInstance(id: number): Promise<number> {
   });
 }
 
-export async function skipTaskInstance(id: number): Promise<number> {
+export async function skipTaskInstance(id: string): Promise<number> {
   const db = getDB();
 
   const instance = await db.taskInstances.get(id);
@@ -265,7 +268,7 @@ export async function skipTaskInstance(id: number): Promise<number> {
   });
 }
 
-export async function resetTaskInstance(id: number): Promise<number> {
+export async function resetTaskInstance(id: string): Promise<number> {
   const db = getDB();
 
   return db.transaction('rw',
@@ -358,17 +361,17 @@ export async function resetTaskInstance(id: number): Promise<number> {
   );
 }
 
-export async function deleteTaskInstance(id: number): Promise<void> {
+export async function deleteTaskInstance(id: string): Promise<void> {
   const db = getDB();
   return db.taskInstances.delete(id);
 }
 
-export async function deleteTaskInstances(ids: number[]): Promise<void> {
+export async function deleteTaskInstances(ids: string[]): Promise<void> {
   const db = getDB();
   return db.taskInstances.bulkDelete(ids);
 }
 
-export async function deleteTaskInstancesByTemplateId(templateId: number): Promise<number> {
+export async function deleteTaskInstancesByTemplateId(templateId: string): Promise<number> {
   const db = getDB();
   return db.taskInstances.where('templateId').equals(templateId).delete();
 }
@@ -376,7 +379,7 @@ export async function deleteTaskInstancesByTemplateId(templateId: number): Promi
 // ==================== 复合查询 ====================
 
 export async function getTaskInstanceWithTemplate(
-  instanceId: number
+  instanceId: string
 ): Promise<{ instance: TaskInstance; template?: TaskTemplate } | undefined> {
   const db = getDB();
 
@@ -512,7 +515,7 @@ export async function getTaskInstancesWithFilter(
 async function createPointsRecord(
   db: ReturnType<typeof getDB>,
   userId: number,
-  instanceId: number,
+  instanceId: string,
   amount: number,
   type: PointsHistory['type'],
   description: string
@@ -527,7 +530,7 @@ async function createPointsRecord(
     description,
     createdAt: now,
     updatedAt: now,
-  });
+  } as unknown as PointsHistory);
 
   // 更新用户总积分
   const user = await db.users.get(userId);
@@ -543,7 +546,7 @@ async function createPointsRecord(
 async function deductPoints(
   db: ReturnType<typeof getDB>,
   userId: number,
-  instanceId: number,
+  instanceId: string,
   amount: number,
   description: string
 ): Promise<void> {
@@ -559,7 +562,7 @@ async function deductPoints(
  * @returns 更新结果
  */
 export async function updateTaskProgress(
-  instanceId: number,
+  instanceId: string,
   newProgress: number
 ): Promise<ProgressUpdateResult> {
   const db = getDB();
@@ -720,7 +723,7 @@ export async function updateTaskProgress(
  * @returns 更新结果
  */
 export async function addPomoToTaskProgress(
-  instanceId: number,
+  instanceId: string,
   durationSeconds: number
 ): Promise<ProgressUpdateResult> {
   const db = getDB();
@@ -754,7 +757,7 @@ export async function addPomoToTaskProgress(
  * @returns 更新结果
  */
 export async function completeSubtask(
-  instanceId: number,
+  instanceId: string,
   subtaskIndex: number,
   completed: boolean
 ): Promise<SubtaskUpdateResult> {
@@ -959,7 +962,7 @@ export function isTaskInstanceExpired(instance: TaskInstance): boolean {
 /**
  * 批量检查并更新过期的 pending 任务实例
  */
-export async function checkAndUpdateExpiredTasks(userId: number): Promise<number[]> {
+export async function checkAndUpdateExpiredTasks(userId: number): Promise<string[]> {
   const db = getDB();
   const now = new Date().toISOString();
   

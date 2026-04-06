@@ -63,7 +63,7 @@ export async function resetTask(
 export async function completeTaskInPopup(
   instance: TaskInstance,
   _template: TaskTemplate,
-  complete: (instanceId: number) => Promise<void>,
+  complete: (instanceId: string) => Promise<void>,
   refreshTasks: () => Promise<void>,
   refreshNoDateTasks: () => Promise<void>,
   onSuccess: () => void
@@ -80,7 +80,7 @@ export async function completeTaskInPopup(
 export async function resetTaskInPopup(
   instance: TaskInstance,
   _template: TaskTemplate,
-  reset: (instanceId: number) => Promise<void>,
+  reset: (instanceId: string) => Promise<void>,
   refreshTasks: () => Promise<void>,
   refreshNoDateTasks: () => Promise<void>,
   onSuccess: () => void

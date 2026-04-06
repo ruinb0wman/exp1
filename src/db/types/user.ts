@@ -20,12 +20,12 @@ export interface User {
 }
 
 export interface PointsHistory {
-  id?: number;
+  id: string;
   userId: number;
-  amount: number; // 积分数量（正数=获得，负数=扣除）
+  amount: number;
   type: PointsHistoryType;
-  relatedInstanceId?: number; // task_instance id, reward_instance id
-  description?: string; // 积分变动说明
-  createdAt: string; // 创建时间戳
-  updatedAt: string; // 更新时间戳（用于同步，通常与 createdAt 相同）
+  relatedInstanceId?: string;
+  description?: string;
+  createdAt: string;
+  updatedAt: string;
 }

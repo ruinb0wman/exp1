@@ -59,7 +59,7 @@ export async function updateUserPoints(
   userId: number,
   amount: number,
   type: PointsHistoryType,
-  relatedInstanceId?: number
+  relatedInstanceId?: string
 ): Promise<number> {
   const db = getDB();
 
@@ -88,7 +88,7 @@ export async function updateUserPoints(
       relatedInstanceId,
       createdAt: now,
       updatedAt: now,
-    };
+    } as unknown as PointsHistory;
     await db.pointsHistory.add(history);
 
     // 返回计算后的新积分（包含刚添加的记录）
@@ -143,7 +143,7 @@ export async function updateUserDayEndTime(
     const templateMap = new Map(templates.map(t => [t.id!, t]));
 
     // 5. 重新计算每个实例的 startAt 和 expiredAt
-    const updates: { id: number; startAt: string; expiredAt?: string }[] = [];
+    const updates: { id: string; startAt: string; expiredAt?: string }[] = [];
     
     for (const instance of pendingInstances) {
       const template = templateMap.get(instance.templateId);
@@ -169,8 +169,8 @@ export async function updateUserDayEndTime(
       if (hasStartAtChanged || hasExpiredAtChanged) {
         updates.push({ 
           id: instance.id!, 
-          startAt: newStartAt, 
-          expiredAt: newExpiredAt 
+          startAt: newStartAt,
+          expiredAt: newExpiredAt
         });
       }
     }

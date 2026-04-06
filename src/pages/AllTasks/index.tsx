@@ -23,13 +23,13 @@ export function AllTasks() {
   const { disable, toggleEnabled, isLoading: isActionLoading } = useTaskTemplateActions();
   const confirm = useConfirm();
   const [filter, setFilter] = useState<Category>("All");
-  const [deletingId, setDeletingId] = useState<number | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   // 筛选任务
   const filteredTemplates = filterTemplatesByCategory(templates, filter);
 
   // 启用/禁用任务
-  const handleToggleEnabled = async (id: number, currentEnabled: boolean) => {
+  const handleToggleEnabled = async (id: string, currentEnabled: boolean) => {
     try {
       await toggleEnabled(id, !currentEnabled);
       refresh();
@@ -39,7 +39,7 @@ export function AllTasks() {
   };
 
   // 停用任务
-  const handleDisable = async (id: number, title: string) => {
+  const handleDisable = async (id: string, title: string) => {
     const confirmed = await confirm({
       title: "Disable Task",
       message: `Are you sure you want to disable "${title}"? This task will no longer generate new instances.`,

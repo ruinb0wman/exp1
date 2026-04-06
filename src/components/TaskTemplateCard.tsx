@@ -4,14 +4,13 @@ import { calculateMaxPoints } from "@/db/types/task";
 import { repeatModeMap, repeatModeColorMap } from "@/pages/AllTasks/lib";
 
 interface TaskTemplateCardProps {
-  id: number;
+  id: string;
   title: string;
   description?: string;
   repeatMode: RepeatMode;
   enabled: boolean;
   completeRule?: CompleteRule;
   subtasks: string[];
-  isRandomSubtask: boolean;
   isDeleting: boolean;
   isActionLoading: boolean;
   onClick: () => void;
@@ -26,7 +25,6 @@ export function TaskTemplateCard({
   enabled,
   completeRule,
   subtasks,
-  isRandomSubtask,
   isDeleting,
   isActionLoading,
   onClick,
@@ -71,7 +69,6 @@ export function TaskTemplateCard({
             <p className="text-xs text-text-muted mt-1">
               {subtasks.length} checklist item
               {subtasks.length > 1 ? "s" : ""}
-              {isRandomSubtask && " (random)"}
             </p>
           )}
         </div>

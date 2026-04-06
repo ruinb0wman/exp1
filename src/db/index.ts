@@ -3,6 +3,17 @@ import type { DB } from './types';
 import { migration } from './migrations';
 import { createTaskTemplateMiddleware } from './middleware/taskTemplateMiddleware';
 import { createPointsHistoryMiddleware } from './middleware/pointsHistoryMiddleware';
+import {
+  generateUUID,
+  hashTaskInstance,
+  hashPointsHistory,
+  hashRewardInstance,
+} from '@/libs/id';
+import type { TaskTemplate } from './types';
+import type { TaskInstance } from './types';
+import type { RewardTemplate } from './types';
+import type { RewardInstance } from './types';
+import type { PointsHistory } from './types';
 
 export type DeviceId = 'pc' | 'mobile';
 
@@ -48,15 +59,65 @@ function getDB() {
 export { getDB };
 
 const createDB = () => {
-  const db = new Dexie('exp-v5') as DB;
+  const db = new Dexie('exp-v6') as DB;
   migration(db);
 
-  // 注册任务模板中间件（需要在数据库创建后，但要在任何操作前注册 hooks）
-  // 注意：这里先注册 hooks，dayEndTime 会在应用初始化后通过 reRegisterHooks 更新
+  db.taskTemplates.hook('creating', function (_primKey, obj, _trans) {
+    const item = obj as TaskTemplate;
+    if (!item.id) {
+      item.id = generateUUID();
+    }
+    const now = new Date().toISOString();
+    if (!item.createdAt) item.createdAt = now;
+    if (!item.updatedAt) item.updatedAt = now;
+  });
+
+  db.taskInstances.hook('creating', function (_primKey, obj, _trans) {
+    const item = obj as TaskInstance;
+    const date = item.instanceDate || item.startAt?.split('T')[0] || new Date().toISOString().split('T')[0];
+    if (!item.id) {
+      item.id = hashTaskInstance(item.templateId, date);
+    }
+    const now = new Date().toISOString();
+    if (!item.createdAt) item.createdAt = now;
+    if (!item.updatedAt) item.updatedAt = now;
+  });
+
+  db.rewardTemplates.hook('creating', function (_primKey, obj, _trans) {
+    const item = obj as RewardTemplate;
+    if (!item.id) {
+      item.id = generateUUID();
+    }
+    const now = new Date().toISOString();
+    if (!item.createdAt) item.createdAt = now;
+    if (!item.updatedAt) item.updatedAt = now;
+  });
+
+  db.rewardInstances.hook('creating', function (_primKey, obj, _trans) {
+    const item = obj as RewardInstance;
+    if (!item.id) {
+      item.id = hashRewardInstance(item.templateId, item.userId, item.createdAt || new Date().toISOString());
+    }
+    const now = new Date().toISOString();
+    if (!item.createdAt) item.createdAt = now;
+    if (!item.updatedAt) item.updatedAt = now;
+  });
+
+  db.pointsHistory.hook('creating', function (_primKey, obj, _trans) {
+    const item = obj as PointsHistory;
+    if (!item.id && item.relatedInstanceId && item.type) {
+      item.id = hashPointsHistory(item.relatedInstanceId, item.type);
+    } else if (!item.id) {
+      item.id = generateUUID();
+    }
+    const now = new Date().toISOString();
+    if (!item.createdAt) item.createdAt = now;
+    if (!item.updatedAt) item.updatedAt = now;
+  });
+
   const templateMiddleware = createTaskTemplateMiddleware("00:00");
   templateMiddleware.register(db);
 
-  // 注册积分历史中间件（Hooks）
   const pointsHistoryMiddleware = createPointsHistoryMiddleware();
   pointsHistoryMiddleware.register(db);
 

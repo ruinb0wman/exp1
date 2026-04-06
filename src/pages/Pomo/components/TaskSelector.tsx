@@ -10,9 +10,9 @@ interface TaskSelectorProps {
   /** 任务列表 */
   tasks: TaskWithTemplate[];
   /** 当前选中的任务ID */
-  selectedTaskId: number | null;
+  selectedTaskId: string | null;
   /** 选择任务回调 */
-  onSelectTask: (taskId: number | null) => void;
+  onSelectTask: (taskId: string | null) => void;
 }
 
 /**
@@ -26,7 +26,7 @@ export function TaskSelector({
   selectedTaskId,
   onSelectTask,
 }: TaskSelectorProps) {
-  const handleSelectTask = (taskId: number | null) => {
+  const handleSelectTask = (taskId: string | null) => {
     onSelectTask(taskId);
     onClose();
   };

@@ -19,7 +19,7 @@ interface PomoState {
   totalTime: number; // 当前模式总秒数
   isRunning: boolean;
   isPaused: boolean;
-  selectedTaskId: number | null;
+  selectedTaskId: string | null;
   todayCount: number;
   currentSessionId: number | null;
   settings: PomoSettings;
@@ -27,7 +27,7 @@ interface PomoState {
   
   // 动作
   setMode: (mode: PomoMode) => void;
-  setSelectedTask: (taskId: number | null) => void;
+  setSelectedTask: (taskId: string | null) => void;
   updateSettings: (settings: Partial<PomoSettings>) => Promise<void>;
   startTimer: () => Promise<void>;
   pauseTimer: () => void;
@@ -106,7 +106,7 @@ export const usePomoStore = create<PomoState>((set, get) => ({
   },
 
   // 选择任务
-  setSelectedTask: (taskId: number | null) => {
+  setSelectedTask: (taskId: string | null) => {
     set({ selectedTaskId: taskId });
   },
 

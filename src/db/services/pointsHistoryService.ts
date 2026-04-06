@@ -153,7 +153,7 @@ export async function getPointsStats(
  */
 export async function getTaskPointsRecords(
   userId: number,
-  taskInstanceId: number
+  taskInstanceId: string
 ): Promise<PointsHistory[]> {
   const db = getDB();
 
@@ -169,7 +169,7 @@ export async function getTaskPointsRecords(
  */
 export async function getTaskNetPoints(
   userId: number,
-  taskInstanceId: number
+  taskInstanceId: string
 ): Promise<number> {
   const records = await getTaskPointsRecords(userId, taskInstanceId);
   return records.reduce((sum, record) => sum + record.amount, 0);

@@ -1,14 +1,13 @@
 import type { DB } from "../types";
 
 export function migration(db: DB) {
-  // Version 1: 初始版本
   db.version(1).stores({
-    taskTemplates: '++id, userId, repeatMode, enabled, *subtasks, [userId+enabled]',
-    taskInstances: '++id, userId, templateId, startAt, status, createdAt, updatedAt, [templateId+startAt]',
-    rewardTemplates: '++id, userId, replenishmentMode, enabled',
-    rewardInstances: '++id, templateId, userId, status, expiresAt, updatedAt',
-    users: '++id, name, updatedAt',
-    pointsHistory: '++id, userId, type, createdAt, updatedAt, [userId+createdAt]',
+    taskTemplates: 'id, userId, repeatMode, enabled, *subtasks, [userId+enabled]',
+    taskInstances: 'id, userId, templateId, startAt, status, createdAt, updatedAt, [templateId+startAt]',
+    rewardTemplates: 'id, userId, replenishmentMode, enabled',
+    rewardInstances: 'id, templateId, userId, status, expiresAt, updatedAt',
+    users: 'id, name, updatedAt',
+    pointsHistory: 'id, userId, type, createdAt, updatedAt, [userId+createdAt]',
     pomoSessions: '++id, userId, taskId, mode, status, startedAt',
     syncBackups: '++id, sessionId, table',
     syncConfig: 'key'

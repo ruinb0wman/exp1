@@ -51,7 +51,7 @@ export function useRewardTemplates(userId?: number) {
 /**
  * 获取单个奖励模板
  */
-export function useRewardTemplate(id: number | null) {
+export function useRewardTemplate(id: string | null) {
   const [template, setTemplate] = useState<RewardTemplate | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -98,7 +98,7 @@ export function useRewardTemplateActions() {
     }
   }, []);
 
-  const update = useCallback(async (id: number, updates: Partial<Omit<RewardTemplate, 'id' | 'createdAt'>>) => {
+  const update = useCallback(async (id: string, updates: Partial<Omit<RewardTemplate, 'id' | 'createdAt'>>) => {
     setIsLoading(true);
     setError(null);
     try {
@@ -111,7 +111,7 @@ export function useRewardTemplateActions() {
     }
   }, []);
 
-  const remove = useCallback(async (id: number) => {
+  const remove = useCallback(async (id: string) => {
     setIsLoading(true);
     setError(null);
     try {
@@ -124,7 +124,7 @@ export function useRewardTemplateActions() {
     }
   }, []);
 
-  const toggleEnabled = useCallback(async (id: number, enabled?: boolean) => {
+  const toggleEnabled = useCallback(async (id: string, enabled?: boolean) => {
     setIsLoading(true);
     setError(null);
     try {
@@ -261,7 +261,7 @@ export function useRewardInstanceActions() {
    * @returns 创建的奖励实例ID数组
    */
   const redeem = useCallback(async (
-    templateId: number,
+    templateId: string,
     userId: number,
     _validDuration: number, // 保留参数以保持兼容性，实际从模板读取
     quantity: number = 1
@@ -279,7 +279,7 @@ export function useRewardInstanceActions() {
     }
   }, [])
 
-  const useReward = useCallback(async (instanceId: number) => {
+  const useReward = useCallback(async (instanceId: string) => {
     setIsLoading(true);
     setError(null);
     try {
@@ -298,7 +298,7 @@ export function useRewardInstanceActions() {
    * @param quantity 要使用数量，不传则使用全部
    * @returns 实际使用的数量
    */
-  const useRewardsBatch = useCallback(async (instanceIds: number[], quantity?: number) => {
+  const useRewardsBatch = useCallback(async (instanceIds: string[], quantity?: number) => {
     setIsLoading(true);
     setError(null);
     try {
@@ -326,7 +326,7 @@ export function useRewardInstanceActions() {
     }
   }, []);
 
-  const replenish = useCallback(async (templateId: number) => {
+  const replenish = useCallback(async (templateId: string) => {
     setIsLoading(true);
     setError(null);
     try {

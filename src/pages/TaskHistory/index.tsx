@@ -81,7 +81,7 @@ export function TaskHistory() {
   // 处理任务操作（完成/重置）
   const handleTaskAction = async (
     action: "complete" | "reset",
-    instanceId: number
+    instanceId: string
   ) => {
     setIsActionLoading(true);
     try {

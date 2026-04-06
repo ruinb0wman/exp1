@@ -8,13 +8,13 @@ interface TaskListProps {
   templates: TaskTemplate[];
   isLoading: boolean;
   error: string | null;
-  deletingId: number | null;
+  deletingId: string | null;
   isActionLoading: boolean;
   filter: string;
   onRefresh: () => void;
-  onEdit: (id: number) => void;
-  onToggleEnabled: (id: number, currentEnabled: boolean) => void;
-  onDelete: (id: number, title: string) => void;
+  onEdit: (id: string) => void;
+  onToggleEnabled: (id: string, currentEnabled: boolean) => void;
+  onDelete: (id: string, title: string) => void;
 }
 
 export function TaskList({
@@ -66,7 +66,6 @@ export function TaskList({
           enabled={template.enabled}
           completeRule={template.completeRule}
           subtasks={template.subtasks}
-          isRandomSubtask={template.isRandomSubtask}
           isDeleting={deletingId === template.id}
           isActionLoading={isActionLoading}
           onClick={() => onEdit(template.id!)}

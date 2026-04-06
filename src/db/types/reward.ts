@@ -52,34 +52,34 @@ export const REWARD_ICON_COLORS = [
 export type RewardIconColor = (typeof REWARD_ICON_COLORS)[number];
 
 export interface RewardTemplate {
-  id?: number;
+  id: string;
   userId: number;
-  title: string; // 奖品标题
-  description?: string; //奖品描述
-  pointsCost: number; // 奖品消耗的积分
-  validDuration: number; // 奖品保质期, 过期后奖励实例不可用, 如果没有validDuration则不会过期
-  enabled: boolean; // 模板是否启用
-  replenishmentMode: ReplenishmentMode; // 补货模式
-  repeatInterval?: number; // 补货周期,repeatMode为daily时. 表示每n天, repeatMode为weekly时表示每n周. repeatMode为monthly是为每n月
-  repeatDaysOfWeek?: number[]; // 周, 0-6, 例如[1,5]表示周1和周5补货
-  repeatDaysOfMonth?: number[]; // 月, 1-31, 例如[6,10]表示6号和10号补货
-  replenishmentNum?: number; // 每次补货的数量
-  replenishmentLimit?: number; // 最大库存限制, 补货不能超过最大库存
-  currentStock?: number; // 当前库存数量（可兑换的数量）
-  icon: RewardIconName; // 图标名称
-  iconColor?: RewardIconColor; // 图标颜色
-  createdAt?: string; // 模板创建时间
-  updatedAt?: string; // 模板更新时间
+  title: string;
+  description?: string;
+  pointsCost: number;
+  validDuration: number;
+  enabled: boolean;
+  replenishmentMode: ReplenishmentMode;
+  repeatInterval?: number;
+  repeatDaysOfWeek?: number[];
+  repeatDaysOfMonth?: number[];
+  replenishmentNum?: number;
+  replenishmentLimit?: number;
+  currentStock?: number;
+  icon: RewardIconName;
+  iconColor?: RewardIconColor;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface RewardInstance {
-  id?: number;
-  templateId: number; // RewardTemplate id（保留作为引用）
-  template: RewardTemplate; // 完整的模板副本（生成时的快照）
+  id: string;
+  templateId: string;
+  template: RewardTemplate;
   userId: number;
   status: RewardStatus;
-  createdAt: string; // 创建(兑换)时间戳
-  updatedAt: string; // 更新时间戳（用于同步）
-  expiresAt?: string; // 过期时间戳=createdAt+validDuration, 如果没有validDuration则不会过期
-  usedAt?: string; // 使用时间戳
+  createdAt: string;
+  updatedAt: string;
+  expiresAt?: string;
+  usedAt?: string;
 }

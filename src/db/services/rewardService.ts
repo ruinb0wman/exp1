@@ -8,17 +8,18 @@ import type { RewardTemplate, RewardInstance, RewardStatus, ReplenishmentMode } 
  */
 export async function createRewardTemplate(
   template: Omit<RewardTemplate, 'id' | 'createdAt' | 'updatedAt'>
-): Promise<number> {
+): Promise<string> {
   const db = getDB();
 
   const now = new Date().toISOString();
   const newTemplate: RewardTemplate = {
     ...template,
+    id: '' as string, // Dexie auto-generates
     createdAt: now,
     updatedAt: now,
   };
 
-  return db.rewardTemplates.add(newTemplate);
+  return db.rewardTemplates.add(newTemplate as unknown as RewardTemplate);
 }
 
 /**
@@ -49,7 +50,7 @@ export async function getEnabledRewardTemplates(userId?: number): Promise<Reward
 /**
  * 根据ID获取奖励模板
  */
-export async function getRewardTemplateById(id: number): Promise<RewardTemplate | undefined> {
+export async function getRewardTemplateById(id: string): Promise<RewardTemplate | undefined> {
   const db = getDB();
   return db.rewardTemplates.get(id);
 }
@@ -74,7 +75,7 @@ export async function getRewardTemplatesByReplenishmentMode(
  * 更新奖励模板
  */
 export async function updateRewardTemplate(
-  id: number,
+  id: string,
   updates: Partial<Omit<RewardTemplate, 'id' | 'createdAt'>>
 ): Promise<number> {
   const db = getDB();
@@ -90,7 +91,7 @@ export async function updateRewardTemplate(
 /**
  * 删除奖励模板（同时删除关联的奖励实例）
  */
-export async function deleteRewardTemplate(id: number): Promise<void> {
+export async function deleteRewardTemplate(id: string): Promise<void> {
   const db = getDB();
 
   await db.transaction('rw', db.rewardTemplates, db.rewardInstances, async () => {
@@ -103,7 +104,7 @@ export async function deleteRewardTemplate(id: number): Promise<void> {
  * 切换奖励模板启用状态
  */
 export async function toggleRewardTemplateEnabled(
-  id: number,
+  id: string,
   enabled?: boolean
 ): Promise<number> {
   const db = getDB();
@@ -129,15 +130,16 @@ export async function toggleRewardTemplateEnabled(
  */
 export async function createRewardInstance(
   instance: Omit<RewardInstance, 'id' | 'createdAt'>
-): Promise<number> {
+): Promise<string> {
   const db = getDB();
 
   const newInstance: RewardInstance = {
     ...instance,
+    id: '' as string, // Dexie auto-generates
     createdAt: new Date().toISOString(),
   };
 
-  return db.rewardInstances.add(newInstance);
+  return db.rewardInstances.add(newInstance as unknown as RewardInstance);
 }
 
 /**
@@ -145,26 +147,18 @@ export async function createRewardInstance(
  * 检查库存、扣除库存，然后创建奖励实例
  */
 export async function redeemRewardWithStockCheck(
-  templateId: number,
+  templateId: string,
   userId: number
-): Promise<number> {
+): Promise<string> {
   const ids = await redeemRewardsWithStockCheck(templateId, userId, 1);
   return ids[0];
 }
 
-/**
- * 批量兑换奖励（带库存检查）
- * 检查库存、扣除库存，然后批量创建奖励实例
- * @param templateId 奖励模板ID
- * @param userId 用户ID
- * @param quantity 兑换数量
- * @returns 创建的奖励实例ID数组
- */
 export async function redeemRewardsWithStockCheck(
-  templateId: number,
+  templateId: string,
   userId: number,
   quantity: number
-): Promise<number[]> {
+): Promise<string[]> {
   const db = getDB();
 
   if (quantity <= 0) {
@@ -233,16 +227,18 @@ export async function redeemRewardsWithStockCheck(
  */
 export async function createRewardInstances(
   instances: Omit<RewardInstance, 'id' | 'createdAt'>[]
-): Promise<number[]> {
+): Promise<string[]> {
   const db = getDB();
 
   const now = new Date().toISOString();
   const newInstances: RewardInstance[] = instances.map((instance) => ({
     ...instance,
+    id: '' as string, // Dexie auto-generates
     createdAt: now,
+    updatedAt: now,
   }));
 
-  return db.rewardInstances.bulkAdd(newInstances, { allKeys: true });
+  return db.rewardInstances.bulkAdd(newInstances as unknown as RewardInstance[], { allKeys: true });
 }
 
 /**
@@ -260,15 +256,12 @@ export async function getAllRewardInstances(userId?: number): Promise<RewardInst
 /**
  * 根据ID获取奖励实例
  */
-export async function getRewardInstanceById(id: number): Promise<RewardInstance | undefined> {
+export async function getRewardInstanceById(id: string): Promise<RewardInstance | undefined> {
   const db = getDB();
   return db.rewardInstances.get(id);
 }
 
-/**
- * 根据模板ID获取奖励实例
- */
-export async function getRewardInstancesByTemplateId(templateId: number): Promise<RewardInstance[]> {
+export async function getRewardInstancesByTemplateId(templateId: string): Promise<RewardInstance[]> {
   const db = getDB();
   return db.rewardInstances.where('templateId').equals(templateId).toArray();
 }
@@ -293,17 +286,14 @@ export async function getRewardInstancesByStatus(
  * 更新奖励实例
  */
 export async function updateRewardInstance(
-  id: number,
+  id: string,
   updates: Partial<Omit<RewardInstance, 'id'>>
 ): Promise<number> {
   const db = getDB();
   return db.rewardInstances.update(id, updates);
 }
 
-/**
- * 使用奖励实例
- */
-export async function useRewardInstance(id: number): Promise<number> {
+export async function useRewardInstance(id: string): Promise<number> {
   const db = getDB();
 
   const instance = await db.rewardInstances.get(id);
@@ -339,7 +329,7 @@ export async function useRewardInstance(id: number): Promise<number> {
  * @returns 实际使用的数量
  */
 export async function useRewardInstances(
-  ids: number[],
+  ids: string[],
   quantity?: number
 ): Promise<number> {
   const db = getDB();
@@ -425,23 +415,17 @@ export async function checkAndUpdateExpiredRewards(userId?: number): Promise<num
 /**
  * 删除奖励实例
  */
-export async function deleteRewardInstance(id: number): Promise<void> {
+export async function deleteRewardInstance(id: string): Promise<void> {
   const db = getDB();
   return db.rewardInstances.delete(id);
 }
 
-/**
- * 批量删除奖励实例
- */
-export async function deleteRewardInstances(ids: number[]): Promise<void> {
+export async function deleteRewardInstances(ids: string[]): Promise<void> {
   const db = getDB();
   return db.rewardInstances.bulkDelete(ids);
 }
 
-/**
- * 删除指定模板的所有奖励实例
- */
-export async function deleteRewardInstancesByTemplateId(templateId: number): Promise<number> {
+export async function deleteRewardInstancesByTemplateId(templateId: string): Promise<number> {
   const db = getDB();
   return db.rewardInstances.where('templateId').equals(templateId).delete();
 }
@@ -453,7 +437,7 @@ export async function deleteRewardInstancesByTemplateId(templateId: number): Pro
  * 使用实例中保存的 template 快照
  */
 export async function getRewardInstanceWithTemplate(
-  instanceId: number
+  instanceId: string
 ): Promise<{ instance: RewardInstance; template: RewardTemplate } | undefined> {
   const db = getDB();
 
@@ -630,7 +614,7 @@ export async function getTemplatesNeedingReplenishment(
  * 为模板补货
  * 修改：增加 currentStock 而不是直接创建实例
  */
-export async function replenishRewardTemplate(templateId: number): Promise<number> {
+export async function replenishRewardTemplate(templateId: string): Promise<number> {
   const db = getDB();
 
   const template = await db.rewardTemplates.get(templateId);

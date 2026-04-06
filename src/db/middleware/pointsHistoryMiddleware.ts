@@ -1,4 +1,4 @@
-import type { TaskInstance, RewardInstance } from '@/db/types';
+import type { TaskInstance, RewardInstance, PointsHistory } from '@/db/types';
 import type { DB } from '@/db/types';
 import { getIsSyncing } from '@/services/sync/syncState';
 
@@ -44,11 +44,11 @@ export function createPointsHistoryMiddleware() {
                   userId: newInstance.userId,
                   amount: rewardPoints,
                   type: 'task_reward',
-                  relatedInstanceId: primKey as number,
+                  relatedInstanceId: primKey as string,
                   description: '完成简单任务',
                   createdAt: now,
                   updatedAt: now,
-                });
+                } as unknown as PointsHistory);
 
                 // 更新用户总积分
                 const user = await db.users.get(newInstance.userId);
@@ -76,11 +76,11 @@ export function createPointsHistoryMiddleware() {
                   userId: newInstance.userId,
                   amount: -rewardPoints,
                   type: 'task_undo',
-                  relatedInstanceId: primKey as number,
+                  relatedInstanceId: primKey as string,
                   description: '撤销简单任务',
                   createdAt: now,
                   updatedAt: now,
-                });
+                } as unknown as PointsHistory);
 
                 // 更新用户总积分
                 const user = await db.users.get(newInstance.userId);
@@ -114,11 +114,11 @@ export function createPointsHistoryMiddleware() {
                 userId: instance.userId,
                 amount: -pointsCost,
                 type: 'reward_exchange',
-                relatedInstanceId: actualPrimKey as number,
+                relatedInstanceId: actualPrimKey as string,
                 description: '兑换奖励',
                 createdAt: now,
                 updatedAt: now,
-              });
+              } as unknown as PointsHistory);
 
               // 更新用户总积分
               const user = await db.users.get(instance.userId);

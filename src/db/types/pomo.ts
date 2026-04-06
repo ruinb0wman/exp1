@@ -5,7 +5,7 @@ export type PomoStatus = 'running' | 'paused' | 'completed' | 'aborted';
 export interface PomoSession {
   id?: number;
   userId: number;
-  taskId?: number; // 关联的任务实例ID
+  taskId?: string; // 关联的任务实例ID
   mode: PomoMode;
   duration: number; // 设定时长(秒)
   actualDuration: number; // 实际专注时长(秒)

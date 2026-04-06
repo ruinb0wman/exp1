@@ -4,7 +4,7 @@ import { Header } from "../components/Header";
 import { RadioGroup } from "../components/RadioGroup";
 import { MultiSelectGrid } from "../components/MultiSelectGrid";
 import { DatePicker } from "../components/DatePicker";
-import { Trash2, Shuffle, Loader2, Plus } from "lucide-react";
+import { Trash2, Loader2, Plus } from "lucide-react";
 import { useUserStore } from "@/store";
 import { useTaskTemplate, useTaskTemplateActions } from "@/hooks/useTasks";
 import type { TaskTemplate, RepeatMode, EndCondition, CompleteRule, Stage, SubtaskConfig, TaskType } from "../db/types/task";
@@ -39,7 +39,7 @@ export function EditTask() {
   const { id } = useParams<{ id: string }>();
   const { user } = useUserStore();
   const isEditMode = id && id !== "new";
-  const templateId = isEditMode ? parseInt(id, 10) : null;
+  const templateId = isEditMode ? id : null;
 
   const {
     template: existingTemplate,
@@ -60,7 +60,6 @@ export function EditTask() {
   const [endValue, setEndValue] = useState("");
   const [enabled, setEnabled] = useState(true);
   const [subtasks, setSubtasks] = useState<string[]>([]);
-  const [isRandomSubtask, setIsRandomSubtask] = useState(false);
   const [newSubtask, setNewSubtask] = useState("");
 
   // 完成规则相关状态（新系统）
@@ -101,7 +100,6 @@ export function EditTask() {
       setEndValue(formatToDateStr(existingTemplate.endValue));
       setEnabled(existingTemplate.enabled);
       setSubtasks(existingTemplate.subtasks ?? []);
-      setIsRandomSubtask(existingTemplate.isRandomSubtask);
       
       // 加载新的完成规则
       const rule = existingTemplate.completeRule;
@@ -239,7 +237,6 @@ export function EditTask() {
       endValue: endValues[endIndex] !== "manual" ? formatToUTCISO(endValue) : undefined,
       enabled,
       subtasks,
-      isRandomSubtask,
       completeRule,
       completeTarget: undefined, // 旧字段，不再使用
       completeExpireDays: completeExpireDays > 0 ? completeExpireDays : undefined,
@@ -462,17 +459,6 @@ export function EditTask() {
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
                     <div className="text-text-secondary text-sm">子任务列表</div>
-                    {subtasks.length > 0 && (
-                      <button
-                        onClick={() => setIsRandomSubtask(!isRandomSubtask)}
-                        className={`flex items-center gap-1.5 text-sm font-medium transition-colors ${
-                          isRandomSubtask ? "text-primary" : "text-text-secondary"
-                        }`}
-                      >
-                        <Shuffle className="w-4 h-4" />
-                        <span>Random</span>
-                      </button>
-                    )}
                   </div>
                   {/* 添加新子任务 */}
                   <div className="flex items-center gap-3 bg-surface-light p-3 rounded-xl">

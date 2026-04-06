@@ -8,7 +8,7 @@ import {
 import { getIsSyncing } from '@/services/sync/syncState';
 
 // 用于防止重复处理的 Set
-const processedTemplateIds = new Set<number>();
+const processedTemplateIds = new Set<string>();
 
 /**
  * 检查指定模板在今天是否需要生成实例，如果需要则生成
@@ -82,7 +82,7 @@ export async function checkAndGenerateForTemplate(
           ...instanceData,
           createdAt: now,
           updatedAt: now,
-        });
+        } as TaskInstance);
       });
       return true;
     } catch (error) {
@@ -100,7 +100,7 @@ export async function checkAndGenerateForTemplate(
     ...instanceData,
     createdAt: now,
     updatedAt: now,
-  });
+  } as TaskInstance);
 
   return true;
 }
@@ -161,7 +161,7 @@ export function createTaskTemplateMiddleware(dayEndTime: string = "00:00") {
 
         // 使用 onsuccess 回调，在创建成功后获取生成的 id
         this.onsuccess = (generatedId) => {
-          const templateId = generatedId as number;
+          const templateId = generatedId as string;
 
           // 防重检查：如果已经处理过这个模板，直接返回
           if (processedTemplateIds.has(templateId)) {
@@ -172,7 +172,7 @@ export function createTaskTemplateMiddleware(dayEndTime: string = "00:00") {
           processedTemplateIds.add(templateId);
 
           // 设置生成的 id
-          template.id = templateId;
+          template.id = templateId as string;
 
           // 在事务完成后检查并生成实例
           trans.on('complete', async () => {

@@ -5,7 +5,7 @@ interface UseExpiredTaskCheckerOptions {
   /** 用户ID */
   userId: number | undefined;
   /** 检查完成后回调 */
-  onChecked?: (expiredIds: number[]) => void;
+  onChecked?: (expiredIds: string[]) => void;
   /** 检查失败回调 */
   onError?: (error: Error) => void;
 }
@@ -49,7 +49,7 @@ export function useExpiredTaskChecker(options: UseExpiredTaskCheckerOptions) {
    */
   const checkExpiredTasks = useCallback(async (
     options: { skipIfAlreadyChecked?: boolean } = {}
-  ): Promise<number[]> => {
+  ): Promise<string[]> => {
     const { skipIfAlreadyChecked = true } = options;
     
     if (!userId) {

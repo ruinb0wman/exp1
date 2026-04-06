@@ -24,8 +24,8 @@ interface UserState {
   initUser: () => Promise<void>;
   refreshUser: () => Promise<void>;
   updateUser: (updates: Partial<Omit<User, 'id' | 'createdAt'>>) => Promise<void>;
-  addPoints: (amount: number, type: PointsHistoryType, relatedInstanceId?: number) => Promise<void>;
-  spendPoints: (amount: number, type: PointsHistoryType, relatedInstanceId?: number) => Promise<void>;
+  addPoints: (amount: number, type: PointsHistoryType, relatedInstanceId?: string) => Promise<void>;
+  spendPoints: (amount: number, type: PointsHistoryType, relatedInstanceId?: string) => Promise<void>;
   // 计算当前积分
   calculatePoints: () => Promise<number>;
   // 订阅积分变化
@@ -120,7 +120,7 @@ export const useUserStore = create<UserState>((set, get) => ({
     }
   },
 
-  addPoints: async (amount: number, type: PointsHistoryType, relatedInstanceId?: number) => {
+  addPoints: async (amount: number, type: PointsHistoryType, relatedInstanceId?: string) => {
     const { user } = get();
     if (!user) {
       throw new Error('User not initialized');
@@ -141,7 +141,7 @@ export const useUserStore = create<UserState>((set, get) => ({
     }
   },
 
-  spendPoints: async (amount: number, type: PointsHistoryType, relatedInstanceId?: number) => {
+  spendPoints: async (amount: number, type: PointsHistoryType, relatedInstanceId?: string) => {
     const { user } = get();
     if (!user) {
       throw new Error('User not initialized');

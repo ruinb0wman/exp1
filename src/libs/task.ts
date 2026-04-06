@@ -343,28 +343,23 @@ export function generateTaskInstance(
 ): Omit<TaskInstance, 'id'> {
   const targetDate = date || new Date();
 
-  // 如果启用随机子任务且存在子任务，随机选择一个
-  let subtasks = template.subtasks || [];
-  if (template.isRandomSubtask && subtasks.length > 0) {
-    const randomIndex = Math.floor(Math.random() * subtasks.length);
-    subtasks = [subtasks[randomIndex]];
-  }
+  const subtasks = template.subtasks || [];
 
-  // 根据 repeatMode 和 template.startAt 决定 instance.startAt
   let startAt: string | undefined;
+  let instanceDate: string;
 
   if (template.repeatMode === 'none') {
-    // 一次性任务：直接使用 template.startAt（已是UTC时间）
-    // 注意：不需要 getUserStartOfDay 转换，因为 template.startAt 已经是UTC格式
     if (template.startAt) {
       startAt = template.startAt;
+      instanceDate = template.startAt.split('T')[0];
+    } else {
+      instanceDate = new Date().toISOString().split('T')[0];
     }
   } else {
-    // 周期性任务：基于目标日期生成 startAt（UTC格式）
     startAt = getUserStartOfDay(targetDate, dayEndTime);
+    instanceDate = startAt.split('T')[0];
   }
 
-  // 计算过期时间（UTC，基于dayEndTime）
   let expiredAt: string | undefined;
   if (startAt && template.completeExpireDays && template.completeExpireDays > 0) {
     expiredAt = calculateExpiredAt(startAt, template.completeExpireDays, dayEndTime);
@@ -372,27 +367,26 @@ export function generateTaskInstance(
 
   const now = new Date().toISOString();
   const rule = template.completeRule;
-  
+
   return {
     userId: template.userId,
-    templateId: template.id!,
+    templateId: template.id,
     template: { ...template },
     status: 'pending',
     subtasks: [...subtasks],
     startAt,
+    instanceDate,
     createdAt: now,
     updatedAt: now,
-    
-    // 进度相关字段
+
     completeProgress: rule && rule.type !== 'subtask' ? 0 : undefined,
-    
-    // 分阶段系统新字段
+
     completedStages: [],
     stagePointsEarned: 0,
     completionPointsEarned: 0,
     completedSubtasks: subtasks.map(() => false),
     isFullyCompleted: false,
-    
+
     expiredAt,
   };
 }

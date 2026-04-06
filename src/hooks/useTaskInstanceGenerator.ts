@@ -167,7 +167,7 @@ export function useTaskInstanceGenerator(options: UseTaskInstanceGeneratorOption
     });
 
     // 构建 template -> instance 的映射
-    const templateInstanceMap = new Map<number, TaskInstance>();
+    const templateInstanceMap = new Map<string, TaskInstance>();
     existingInstancesOnDate.forEach(inst => {
       templateInstanceMap.set(inst.template.id!, inst);
     });

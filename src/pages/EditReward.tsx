@@ -34,7 +34,7 @@ export function EditReward() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { user } = useUserStore();
-  const rewardId = id ? parseInt(id) : null;
+  const rewardId = id && id !== "new" ? id : null;
   
   // 使用 hook 获取奖励模板数据
   const { template, isLoading: isLoadingTemplate } = useRewardTemplate(rewardId);

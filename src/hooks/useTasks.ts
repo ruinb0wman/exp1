@@ -48,7 +48,7 @@ export function useTaskTemplates(userId?: number) {
 /**
  * 获取单个任务模板
  */
-export function useTaskTemplate(id: number | null) {
+export function useTaskTemplate(id: string | null) {
   const [template, setTemplate] = useState<TaskTemplate | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -95,7 +95,7 @@ export function useTaskTemplateActions() {
     }
   }, []);
 
-  const update = useCallback(async (id: number, updates: Partial<Omit<TaskTemplate, 'id' | 'createdAt'>>) => {
+  const update = useCallback(async (id: string, updates: Partial<Omit<TaskTemplate, 'id' | 'createdAt'>>) => {
     setIsLoading(true);
     setError(null);
     try {
@@ -108,7 +108,7 @@ export function useTaskTemplateActions() {
     }
   }, []);
 
-  const disable = useCallback(async (id: number) => {
+  const disable = useCallback(async (id: string) => {
     setIsLoading(true);
     setError(null);
     try {
@@ -121,7 +121,7 @@ export function useTaskTemplateActions() {
     }
   }, []);
 
-  const toggleEnabled = useCallback(async (id: number, enabled?: boolean) => {
+  const toggleEnabled = useCallback(async (id: string, enabled?: boolean) => {
     setIsLoading(true);
     setError(null);
     try {
@@ -209,7 +209,7 @@ export function useTaskInstanceActions() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const complete = useCallback(async (instanceId: number) => {
+  const complete = useCallback(async (instanceId: string) => {
     setIsLoading(true);
     setError(null);
     try {
@@ -222,7 +222,7 @@ export function useTaskInstanceActions() {
     }
   }, []);
 
-  const skip = useCallback(async (instanceId: number) => {
+  const skip = useCallback(async (instanceId: string) => {
     setIsLoading(true);
     setError(null);
     try {
@@ -235,7 +235,7 @@ export function useTaskInstanceActions() {
     }
   }, []);
 
-  const reset = useCallback(async (instanceId: number) => {
+  const reset = useCallback(async (instanceId: string) => {
     setIsLoading(true);
     setError(null);
     try {
