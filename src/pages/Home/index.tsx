@@ -3,6 +3,7 @@ import { Plus } from "lucide-react";
 import { useNavigate } from "react-router";
 import { useUserStore } from "@/store";
 import { useTodayTasks, useNoDateTasks, useTaskInstanceActions } from "@/hooks/useTasks";
+import { usePageInitializer } from "@/hooks/usePageInitializer";
 import { HomeHeader } from "@/components/HomeHeader";
 import { Progress } from "@/components/Progress";
 import { TaskList } from "@/components/TaskList";
@@ -22,6 +23,20 @@ import {
 export function Home() {
   const navigate = useNavigate();
   const { user, currentPoints, isLoading: isUserLoading, calculatePoints } = useUserStore();
+
+  const { initialize: initializePage } = usePageInitializer({
+    userId: user?.id,
+    dayEndTime: user?.dayEndTime,
+    onError: (error) => {
+      console.error("Failed to initialize page:", error);
+    },
+  });
+
+  useEffect(() => {
+    if (user?.id) {
+      initializePage();
+    }
+  }, [user?.id, initializePage]);
 
   // 任务详情 popup 状态
   const [selectedTask, setSelectedTask] = useState<{ instance: TaskInstance; template: TaskTemplate } | null>(null);

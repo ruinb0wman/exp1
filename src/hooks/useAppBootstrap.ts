@@ -2,7 +2,6 @@ import { useEffect } from "react";
 import { useUserStore, useTaskStore } from "@/store";
 import { useExpiredTaskChecker } from "@/hooks/useExpiredTaskChecker";
 import { useGlobalPomoTimer } from "@/hooks/useGlobalPomoTimer";
-import { useAppInitializer } from "@/hooks/useAppInitializer";
 
 /**
  * 应用启动初始化 hook
@@ -17,15 +16,6 @@ export function useAppBootstrap() {
     userId: user?.id,
   });
 
-  // 全局应用初始化（检查并生成任务实例）
-  const { initialize: initializeApp } = useAppInitializer({
-    userId: user?.id,
-    dayEndTime: user?.dayEndTime,
-    onError: (error) => {
-      console.error("Failed to initialize app:", error);
-    },
-  });
-
   // 全局番茄钟计时器（确保后台也能计时）
   useGlobalPomoTimer();
 
@@ -35,13 +25,6 @@ export function useAppBootstrap() {
       initUser();
     }
   }, [user, initUser]);
-
-  // 用户初始化完成后执行应用初始化
-  useEffect(() => {
-    if (user?.id) {
-      initializeApp();
-    }
-  }, [user?.id, initializeApp]);
 
   // 用户初始化完成后检查过期任务
   useEffect(() => {
