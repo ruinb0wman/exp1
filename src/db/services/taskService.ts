@@ -523,7 +523,7 @@ async function createPointsRecord(
 ): Promise<void> {
   const now = new Date().toISOString();
   
-  await db.pointsHistory.add({
+  await db.pointsHistory.put({
     userId,
     amount,
     type,

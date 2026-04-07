@@ -40,7 +40,7 @@ export function createPointsHistoryMiddleware() {
             trans.on('complete', async () => {
               try {
                 const now = new Date().toISOString();
-                await db.pointsHistory.add({
+                await db.pointsHistory.put({
                   userId: newInstance.userId,
                   amount: rewardPoints,
                   type: 'task_completion',
@@ -72,7 +72,7 @@ export function createPointsHistoryMiddleware() {
             trans.on('complete', async () => {
               try {
                 const now = new Date().toISOString();
-                await db.pointsHistory.add({
+                await db.pointsHistory.put({
                   userId: newInstance.userId,
                   amount: -rewardPoints,
                   type: 'task_undo',
@@ -110,7 +110,7 @@ export function createPointsHistoryMiddleware() {
           this.onsuccess = async (actualPrimKey) => {
             try {
               const now = new Date().toISOString();
-              await db.pointsHistory.add({
+              await db.pointsHistory.put({
                 userId: instance.userId,
                 amount: -pointsCost,
                 type: 'reward_exchange',
