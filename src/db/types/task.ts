@@ -163,3 +163,21 @@ export function shouldAwardCompletion(
     completedStages.some(cs => cs.stageId === stage.id)
   );
 }
+
+// ==================== taskService 相关类型 ====================
+
+export interface ProgressUpdateResult {
+  stagesCompleted: string[];
+  stagesReverted: string[];
+  pointsEarned: number;
+  pointsDeducted: number;
+  isFullyCompleted: boolean;
+  currentProgress: number;
+}
+
+export interface SubtaskUpdateResult {
+  completedCount: number;
+  pointsEarned: number;
+  pointsDeducted: number;
+  isFullyCompleted: boolean;
+}

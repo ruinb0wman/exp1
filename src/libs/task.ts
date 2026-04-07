@@ -6,6 +6,7 @@ import {
   daysBetweenUTC,
   weeksBetweenUTC,
   monthsBetweenUTC,
+  isExpired,
 } from './time';
 
 /**
@@ -399,4 +400,69 @@ export function generateTaskInstances(
   date?: Date
 ): Omit<TaskInstance, 'id' | 'createdAt'>[] {
   return templates.map((template) => generateTaskInstance(template, dayEndTime, date));
+}
+
+// ==================== taskService 相关工具函数 ====================
+
+/**
+ * 获取任务的完成进度百分比
+ * @param instance 任务实例
+ * @returns 0-100 的百分比
+ */
+export function getTaskProgressPercent(instance: TaskInstance): number {
+  const template = instance.template;
+  if (!template?.completeRule) {
+    return instance.status === 'completed' ? 100 : 0;
+  }
+
+  const rule = template.completeRule;
+
+  if (rule.type === 'subtask') {
+    const completedCount = (instance.completedSubtasks || []).filter(Boolean).length;
+    const config = rule.subtaskConfig;
+    const targetCount = config?.mode === 'all' 
+      ? instance.subtasks.length 
+      : (config?.requiredCount || 1);
+    return Math.min(100, Math.round((completedCount / targetCount) * 100));
+  }
+
+  // time/count 类型
+  if (rule.stages.length === 0) {
+    return instance.status === 'completed' ? 100 : 0;
+  }
+
+  const progress = instance.completeProgress ?? 0;
+  const maxThreshold = Math.max(...rule.stages.map(s => s.threshold));
+  return Math.min(100, Math.round((progress / maxThreshold) * 100));
+}
+
+/**
+ * 获取下一个待完成的阶段
+ */
+export function getNextStage(instance: TaskInstance): import('@/db/types').Stage | undefined {
+  const template = instance.template;
+  if (!template?.completeRule || template.completeRule.type === 'subtask') {
+    return undefined;
+  }
+
+  const rule = template.completeRule;
+  const completedStages = instance.completedStages || [];
+
+  return rule.stages.find(stage => 
+    !completedStages.some(cs => cs.stageId === stage.id)
+  );
+}
+
+/**
+ * 获取已获得的总积分
+ */
+export function getTotalPointsEarned(instance: TaskInstance): number {
+  return (instance.stagePointsEarned || 0) + (instance.completionPointsEarned || 0);
+}
+
+/**
+ * 检查任务实例是否过期
+ */
+export function isTaskInstanceExpired(instance: TaskInstance): boolean {
+  return isExpired(instance.expiredAt);
 }
