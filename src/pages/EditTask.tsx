@@ -475,14 +475,6 @@ export function EditTask() {
                       placeholder="Add a subtask"
                       className="flex-1 bg-transparent text-text-primary focus:outline-none border-b-2 border-transparent focus:border-primary text-base font-normal leading-normal py-1"
                     />
-                    <NumberInput
-                      value={0}
-                      onChange={() => {}}
-                      min={0}
-                      size="sm"
-                      inputWidth="w-10"
-                      disabled
-                    />
                     <button
                       onClick={handleAddSubtask}
                       disabled={!newSubtask.trim()}
@@ -522,7 +514,7 @@ export function EditTask() {
                       />
                       <button
                         onClick={() => handleDeleteSubtask(index)}
-                        className="text-text-muted hover:text-primary transition-colors opacity-0 group-hover:opacity-100 p-1"
+                        className="text-text-muted hover:text-primary transition-colors p-1"
                       >
                         <Trash2 className="w-4 h-4" />
                       </button>
