@@ -37,7 +37,7 @@ export interface PomoSettingsRecord {
   autoStartBreaks: boolean;
   autoStartPomos: boolean;
   soundEnabled: boolean;
-  updatedAt: string; // ISO 格式 UTC 时间
+  updatedAt?: string;
 }
 
 // 默认设置

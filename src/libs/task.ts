@@ -377,7 +377,6 @@ export function generateTaskInstance(
     startAt,
     instanceDate,
     createdAt: now,
-    updatedAt: now,
 
     completeProgress: rule && rule.type !== 'subtask' ? 0 : undefined,
 

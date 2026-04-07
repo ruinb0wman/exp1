@@ -69,7 +69,7 @@ export interface RewardTemplate {
   icon: RewardIconName;
   iconColor?: RewardIconColor;
   createdAt: string;
-  updatedAt: string;
+  updatedAt?: string;
 }
 
 export interface RewardInstance {
@@ -79,7 +79,7 @@ export interface RewardInstance {
   userId: number;
   status: RewardStatus;
   createdAt: string;
-  updatedAt: string;
+  updatedAt?: string;
   expiresAt?: string;
   usedAt?: string;
 }

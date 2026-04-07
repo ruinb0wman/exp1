@@ -54,7 +54,7 @@ export interface TaskTemplate {
   enabled: boolean;
   subtasks: string[];
   createdAt: string;
-  updatedAt: string;
+  updatedAt?: string;
 
   completeRule?: CompleteRule;
 
@@ -75,7 +75,7 @@ export interface TaskInstance {
   startAt?: string;
   instanceDate: string;
   createdAt: string;
-  updatedAt: string;
+  updatedAt?: string;
   completedAt?: string;
 
   completedStages?: CompletedStage[];

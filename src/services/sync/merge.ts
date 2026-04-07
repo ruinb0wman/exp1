@@ -58,15 +58,36 @@ export async function mergeTables(
         // 只有手机有记录
         mergedRecords.push(mobileRecord);
       } else if (mobileRecord && pcRecord) {
-        // 双方都有记录，比较 createdAt
-        const mobileTime = new Date(mobileRecord.createdAt || 0).getTime();
-        const pcTime = new Date(pcRecord.createdAt || 0).getTime();
+        // 双方都有记录，按 updatedAt 比较
+        const mobileUpdated = mobileRecord.updatedAt;
+        const pcUpdated = pcRecord.updatedAt;
 
-        // 最早的覆盖新的（先写入获胜）
-        if (mobileTime <= pcTime) {
+        // 都没有 updatedAt → createdAt 大的获胜
+        if (!mobileUpdated && !pcUpdated) {
+          const mobileCreated = new Date(mobileRecord.createdAt || 0).getTime();
+          const pcCreated = new Date(pcRecord.createdAt || 0).getTime();
+          if (mobileCreated >= pcCreated) {
+            mergedRecords.push(mobileRecord);
+          } else {
+            mergedRecords.push(pcRecord);
+          }
+        }
+        // 只有一个有 updatedAt → 有 updatedAt 的获胜
+        else if (mobileUpdated && !pcUpdated) {
           mergedRecords.push(mobileRecord);
-        } else {
+        }
+        else if (!mobileUpdated && pcUpdated) {
           mergedRecords.push(pcRecord);
+        }
+        // 两者都有 updatedAt → updatedAt 大的获胜
+        else {
+          const mobileTime = new Date(mobileUpdated).getTime();
+          const pcTime = new Date(pcUpdated!).getTime();
+          if (mobileTime >= pcTime) {
+            mergedRecords.push(mobileRecord);
+          } else {
+            mergedRecords.push(pcRecord);
+          }
         }
       }
     }

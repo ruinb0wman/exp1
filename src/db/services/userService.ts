@@ -88,7 +88,6 @@ export async function updateUserPoints(
       type,
       relatedInstanceId,
       createdAt: now,
-      updatedAt: now,
     } as unknown as PointsHistory;
     await db.pointsHistory.add(history);
 

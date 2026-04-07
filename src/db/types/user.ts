@@ -12,7 +12,7 @@ export type PointsHistoryType =
 export interface User {
   id: number;
   createdAt: string;
-  updatedAt: string; // 更新时间戳（用于同步）
+  updatedAt?: string;
   name: string;
   totalPoints: number; // 总积分
   dayEndTime?: string; // 一天结束时间，"HH:mm" 格式，默认 "00:00"
@@ -28,5 +28,5 @@ export interface PointsHistory {
   stageId?: string;
   description?: string;
   createdAt: string;
-  updatedAt: string;
+  updatedAt?: string;
 }

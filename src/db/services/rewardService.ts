@@ -16,7 +16,6 @@ export async function createRewardTemplate(
     ...template,
     id: '' as string, // Dexie auto-generates
     createdAt: now,
-    updatedAt: now,
   };
 
   return db.rewardTemplates.add(newTemplate as unknown as RewardTemplate);
@@ -212,7 +211,6 @@ export async function redeemRewardsWithStockCheck(
         userId,
         status: 'available',
         createdAt: now,
-        updatedAt: now,
         expiresAt,
       })
     );
@@ -235,7 +233,6 @@ export async function createRewardInstances(
     ...instance,
     id: '' as string, // Dexie auto-generates
     createdAt: now,
-    updatedAt: now,
   }));
 
   return db.rewardInstances.bulkAdd(newInstances as unknown as RewardInstance[], { allKeys: true });

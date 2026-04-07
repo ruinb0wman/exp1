@@ -69,7 +69,12 @@ const createDB = () => {
     }
     const now = new Date().toISOString();
     if (!item.createdAt) item.createdAt = now;
-    if (!item.updatedAt) item.updatedAt = now;
+    item.updatedAt = undefined as any;
+  });
+
+  db.taskTemplates.hook('updating', function (_mods, _primKey, obj, _trans) {
+    const now = new Date().toISOString();
+    obj.updatedAt = now;
   });
 
   db.taskInstances.hook('creating', function (_primKey, obj, _trans) {
@@ -80,7 +85,12 @@ const createDB = () => {
     }
     const now = new Date().toISOString();
     if (!item.createdAt) item.createdAt = now;
-    if (!item.updatedAt) item.updatedAt = now;
+    item.updatedAt = undefined as any;
+  });
+
+  db.taskInstances.hook('updating', function (_mods, _primKey, obj, _trans) {
+    const now = new Date().toISOString();
+    obj.updatedAt = now;
   });
 
   db.rewardTemplates.hook('creating', function (_primKey, obj, _trans) {
@@ -90,7 +100,12 @@ const createDB = () => {
     }
     const now = new Date().toISOString();
     if (!item.createdAt) item.createdAt = now;
-    if (!item.updatedAt) item.updatedAt = now;
+    item.updatedAt = undefined as any;
+  });
+
+  db.rewardTemplates.hook('updating', function (_mods, _primKey, obj, _trans) {
+    const now = new Date().toISOString();
+    obj.updatedAt = now;
   });
 
   db.rewardInstances.hook('creating', function (_primKey, obj, _trans) {
@@ -100,7 +115,12 @@ const createDB = () => {
     }
     const now = new Date().toISOString();
     if (!item.createdAt) item.createdAt = now;
-    if (!item.updatedAt) item.updatedAt = now;
+    item.updatedAt = undefined as any;
+  });
+
+  db.rewardInstances.hook('updating', function (_mods, _primKey, obj, _trans) {
+    const now = new Date().toISOString();
+    obj.updatedAt = now;
   });
 
   db.pointsHistory.hook('creating', function (_primKey, obj, _trans) {
@@ -112,7 +132,12 @@ const createDB = () => {
     }
     const now = new Date().toISOString();
     if (!item.createdAt) item.createdAt = now;
-    if (!item.updatedAt) item.updatedAt = now;
+    item.updatedAt = undefined as any;
+  });
+
+  db.pointsHistory.hook('updating', function (_mods, _primKey, obj, _trans) {
+    const now = new Date().toISOString();
+    obj.updatedAt = now;
   });
 
   const templateMiddleware = createTaskTemplateMiddleware("00:00");

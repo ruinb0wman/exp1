@@ -40,7 +40,6 @@ export async function createTaskTemplate(
     ...template,
     id: '' as string, // Dexie auto-generates
     createdAt: now,
-    updatedAt: now,
   };
 
   return db.taskTemplates.add(newTemplate as unknown as TaskTemplate);
@@ -531,7 +530,6 @@ async function createPointsRecord(
     description,
     stageId,
     createdAt: now,
-    updatedAt: now,
   } as unknown as PointsHistory);
 
   // 更新用户总积分
@@ -540,7 +538,6 @@ async function createPointsRecord(
     const newTotal = Math.max(0, user.totalPoints + amount);
     await db.users.update(userId, {
       totalPoints: newTotal,
-      updatedAt: now
     });
   }
 }

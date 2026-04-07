@@ -81,7 +81,6 @@ export async function checkAndGenerateForTemplate(
         await db.taskInstances.add({
           ...instanceData,
           createdAt: now,
-          updatedAt: now,
         } as TaskInstance);
       });
       return true;
@@ -99,7 +98,6 @@ export async function checkAndGenerateForTemplate(
   await db.taskInstances.add({
     ...instanceData,
     createdAt: now,
-    updatedAt: now,
   } as TaskInstance);
 
   return true;

@@ -47,7 +47,6 @@ export function createPointsHistoryMiddleware() {
                   relatedInstanceId: primKey as string,
                   description: '任务完成',
                   createdAt: now,
-                  updatedAt: now,
                 } as unknown as PointsHistory);
 
                 // 更新用户总积分
@@ -55,7 +54,6 @@ export function createPointsHistoryMiddleware() {
                 if (user) {
                   await db.users.update(newInstance.userId, {
                     totalPoints: (user.totalPoints || 0) + rewardPoints,
-                    updatedAt: now
                   });
                 }
               } catch (error) {
@@ -79,7 +77,6 @@ export function createPointsHistoryMiddleware() {
                   relatedInstanceId: primKey as string,
                   description: '撤销简单任务',
                   createdAt: now,
-                  updatedAt: now,
                 } as unknown as PointsHistory);
 
                 // 更新用户总积分
@@ -87,7 +84,6 @@ export function createPointsHistoryMiddleware() {
                 if (user) {
                   await db.users.update(newInstance.userId, {
                     totalPoints: Math.max(0, (user.totalPoints || 0) - rewardPoints),
-                    updatedAt: now
                   });
                 }
               } catch (error) {
@@ -117,7 +113,6 @@ export function createPointsHistoryMiddleware() {
                 relatedInstanceId: actualPrimKey as string,
                 description: '兑换奖励',
                 createdAt: now,
-                updatedAt: now,
               } as unknown as PointsHistory);
 
               // 更新用户总积分
@@ -125,7 +120,6 @@ export function createPointsHistoryMiddleware() {
               if (user) {
                 await db.users.update(instance.userId, {
                   totalPoints: Math.max(0, (user.totalPoints || 0) - pointsCost),
-                  updatedAt: now
                 });
               }
             } catch (error) {
