@@ -14,7 +14,7 @@ import {
 	incrementTaskCount,
 	toggleSubtaskCompletion,
 	calculateTaskStats,
-	filterPendingTasks,
+	filterTodayTasks,
 	calculateEstimatedTotalPoints,
 	calculateTodayEarnedPoints,
 } from "./lib";
@@ -117,8 +117,8 @@ export function Home() {
     }
   }, [selectedTask, refreshTasks, refreshNoDateTasks]);
 
-  // 首页只显示待完成的任务，过滤掉已完成和已跳过的
-  const pendingTasks = filterPendingTasks(tasks);
+  // 今天的已完成任务也显示，无日期任务的已完成隐藏
+  const pendingTasks = filterTodayTasks(tasks);
 
   // 计算进度（基于原始任务列表）
   const { completedCount, totalCount } = calculateTaskStats(tasks);
@@ -153,7 +153,7 @@ export function Home() {
         {noDateTasks.length > 0 && (
           <div className="mt-6">
             <TaskList
-              tasks={filterPendingTasks(noDateTasks)}
+              tasks={filterTodayTasks(noDateTasks)}
               isLoading={isLoading}
               onTaskClick={handleTaskClick}
               title="No Date"

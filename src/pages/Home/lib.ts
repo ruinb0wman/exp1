@@ -165,3 +165,19 @@ export function calculateTaskStats(tasks: { instance: TaskInstance; template: Ta
 export function filterPendingTasks<T extends { instance: TaskInstance }>(tasks: T[]): T[] {
   return tasks.filter(({ instance }) => instance.status === "pending");
 }
+
+/**
+ * 过滤今日任务
+ * - 有 startAt 的任务：显示 pending 和 completed
+ * - 无 startAt 的任务（noDateTasks）：只显示 pending
+ */
+export function filterTodayTasks<T extends { instance: TaskInstance }>(
+  tasks: T[]
+): T[] {
+  return tasks.filter(({ instance }) => {
+    if (!instance.startAt) {
+      return instance.status === "pending";
+    }
+    return instance.status === "pending" || instance.status === "completed";
+  });
+}
