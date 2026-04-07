@@ -1,5 +1,6 @@
 import { getDB } from '../index';
 import type { RewardTemplate, RewardInstance, RewardStatus, ReplenishmentMode } from '../types';
+import { getUserCurrentDate } from '@/libs/time';
 
 // ==================== RewardTemplate CRUD ====================
 
@@ -12,10 +13,15 @@ export async function createRewardTemplate(
   const db = getDB();
 
   const now = new Date().toISOString();
+  const today = now.split('T')[0];
+  const shouldReplenish = template.replenishmentMode !== 'none';
+
   const newTemplate: RewardTemplate = {
     ...template,
-    id: '' as string, // Dexie auto-generates
+    id: '' as string,
     createdAt: now,
+    currentStock: shouldReplenish ? 0 : undefined,
+    lastReplenishedDate: shouldReplenish ? today : undefined,
   };
 
   return db.rewardTemplates.add(newTemplate as unknown as RewardTemplate);
@@ -563,9 +569,12 @@ export async function getRewardStatistics(
  * 根据 replenishmentMode 和上次补货时间判断是否需要补货
  */
 export async function getTemplatesNeedingReplenishment(
-  userId: number
+  userId: number,
+  dayEndTime: string = "00:00"
 ): Promise<RewardTemplate[]> {
   const db = getDB();
+
+  const userCurrentDate = getUserCurrentDate(dayEndTime);
 
   const now = new Date();
   const currentDayOfWeek = now.getDay();
@@ -578,11 +587,9 @@ export async function getTemplatesNeedingReplenishment(
     .toArray();
 
   return templates.filter(template => {
-    const { replenishmentMode, repeatDaysOfWeek, repeatDaysOfMonth, lastReplenishedAt } = template;
+    const { replenishmentMode, repeatDaysOfWeek, repeatDaysOfMonth, lastReplenishedDate } = template;
 
-    const today = new Date().toISOString().split('T')[0];
-    const lastReplenished = lastReplenishedAt?.split('T')[0];
-    if (lastReplenished === today) return false;
+    if (lastReplenishedDate === userCurrentDate) return false;
 
     switch (replenishmentMode) {
       case 'daily': {
@@ -644,9 +651,10 @@ export async function replenishRewardTemplate(templateId: string): Promise<numbe
   // 更新库存数量
   const newStock = currentStock + replenishCount;
   const now = new Date().toISOString();
+  const today = now.split('T')[0];
   await db.rewardTemplates.update(templateId, {
     currentStock: newStock,
-    lastReplenishedAt: now,
+    lastReplenishedDate: today,
     updatedAt: now,
   });
 

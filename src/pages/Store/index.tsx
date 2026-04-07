@@ -29,7 +29,10 @@ export function Store() {
 
     const checkAndReplenish = async () => {
       try {
-        const templates = await getTemplatesNeedingReplenishment(user.id);
+        const templates = await getTemplatesNeedingReplenishment(
+          user.id,
+          user.dayEndTime ?? "00:00"
+        );
         for (const template of templates) {
           await replenishRewardTemplate(template.id!);
         }
@@ -42,7 +45,7 @@ export function Store() {
     };
 
     checkAndReplenish();
-  }, [user?.id, refresh]);
+  }, [user?.id, user?.dayEndTime, refresh]);
   const { redeem, isLoading: isActionLoading } = useRewardInstanceActions();
 
   const [searchQuery, setSearchQuery] = useState("");
