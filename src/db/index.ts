@@ -72,9 +72,8 @@ const createDB = () => {
     item.updatedAt = undefined as any;
   });
 
-  db.taskTemplates.hook('updating', function (_mods, _primKey, obj, _trans) {
-    const now = new Date().toISOString();
-    obj.updatedAt = now;
+  db.taskTemplates.hook('updating', function () {
+    return { updatedAt: new Date().toISOString() };
   });
 
   db.taskInstances.hook('creating', function (_primKey, obj, _trans) {
@@ -88,9 +87,8 @@ const createDB = () => {
     item.updatedAt = undefined as any;
   });
 
-  db.taskInstances.hook('updating', function (_mods, _primKey, obj, _trans) {
-    const now = new Date().toISOString();
-    obj.updatedAt = now;
+  db.taskInstances.hook('updating', function () {
+    return { updatedAt: new Date().toISOString() };
   });
 
   db.rewardTemplates.hook('creating', function (_primKey, obj, _trans) {
@@ -103,9 +101,8 @@ const createDB = () => {
     item.updatedAt = undefined as any;
   });
 
-  db.rewardTemplates.hook('updating', function (_mods, _primKey, obj, _trans) {
-    const now = new Date().toISOString();
-    obj.updatedAt = now;
+  db.rewardTemplates.hook('updating', function () {
+    return { updatedAt: new Date().toISOString() };
   });
 
   db.rewardInstances.hook('creating', function (_primKey, obj, _trans) {
@@ -118,9 +115,8 @@ const createDB = () => {
     item.updatedAt = undefined as any;
   });
 
-  db.rewardInstances.hook('updating', function (_mods, _primKey, obj, _trans) {
-    const now = new Date().toISOString();
-    obj.updatedAt = now;
+  db.rewardInstances.hook('updating', function () {
+    return { updatedAt: new Date().toISOString() };
   });
 
   db.pointsHistory.hook('creating', function (_primKey, obj, _trans) {
@@ -135,9 +131,8 @@ const createDB = () => {
     item.updatedAt = undefined as any;
   });
 
-  db.pointsHistory.hook('updating', function (_mods, _primKey, obj, _trans) {
-    const now = new Date().toISOString();
-    obj.updatedAt = now;
+  db.pointsHistory.hook('updating', function () {
+    return { updatedAt: new Date().toISOString() };
   });
 
   const templateMiddleware = createTaskTemplateMiddleware("00:00");
