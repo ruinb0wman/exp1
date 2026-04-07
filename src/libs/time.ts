@@ -101,12 +101,12 @@ export function createUTCEndOfDay(year: number, month: number, day: number): Dat
  * 获取指定本地日期的开始时间（考虑 dayEndTime）
  * @param localDate 本地日期
  * @param dayEndTime "HH:mm" 格式，默认 "00:00"
- * @returns 本地 ISO 格式时间字符串
+ * @returns UTC ISO 格式时间字符串
  */
 export function getUserStartOfDay(localDate: Date, dayEndTime: string = "00:00"): string {
   const [endHour, endMinute] = dayEndTime.split(':').map(Number);
   
-  const startOfDay = new Date(
+  const localDateTime = new Date(
     localDate.getFullYear(),
     localDate.getMonth(),
     localDate.getDate(),
@@ -116,14 +116,7 @@ export function getUserStartOfDay(localDate: Date, dayEndTime: string = "00:00")
     0
   );
   
-  const year = startOfDay.getFullYear();
-  const month = String(startOfDay.getMonth() + 1).padStart(2, '0');
-  const day = String(startOfDay.getDate()).padStart(2, '0');
-  const hour = String(startOfDay.getHours()).padStart(2, '0');
-  const minute = String(startOfDay.getMinutes()).padStart(2, '0');
-  const second = String(startOfDay.getSeconds()).padStart(2, '0');
-  
-  return `${year}-${month}-${day}T${hour}:${minute}:${second}.000Z`;
+  return localDateTime.toISOString();
 }
 
 /**

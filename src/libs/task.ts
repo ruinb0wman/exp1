@@ -1,12 +1,10 @@
 import type { TaskTemplate, TaskInstance } from '@/db/types';
 import { 
   getUserStartOfDay, 
-  calculateExpiredAt, 
   formatLocalDate,
   daysBetweenUTC,
   weeksBetweenUTC,
   monthsBetweenUTC,
-  isExpired,
 } from './time';
 
 /**
@@ -354,16 +352,11 @@ export function generateTaskInstance(
       startAt = template.startAt;
       instanceDate = template.startAt.split('T')[0];
     } else {
-      instanceDate = new Date().toISOString().split('T')[0];
+      instanceDate = formatLocalDate(new Date());
     }
   } else {
     startAt = getUserStartOfDay(targetDate, dayEndTime);
-    instanceDate = startAt.split('T')[0];
-  }
-
-  let expiredAt: string | undefined;
-  if (startAt && template.completeExpireDays && template.completeExpireDays > 0) {
-    expiredAt = calculateExpiredAt(startAt, template.completeExpireDays, dayEndTime);
+    instanceDate = formatLocalDate(targetDate);
   }
 
   const now = new Date().toISOString();
@@ -386,8 +379,6 @@ export function generateTaskInstance(
     completionPointsEarned: 0,
     completedSubtasks: subtasks.map(() => false),
     isFullyCompleted: false,
-
-    expiredAt,
   };
 }
 
@@ -458,11 +449,4 @@ export function getNextStage(instance: TaskInstance): import('@/db/types').Stage
  */
 export function getTotalPointsEarned(instance: TaskInstance): number {
   return (instance.stagePointsEarned || 0) + (instance.completionPointsEarned || 0);
-}
-
-/**
- * 检查任务实例是否过期
- */
-export function isTaskInstanceExpired(instance: TaskInstance): boolean {
-  return isExpired(instance.expiredAt);
 }
