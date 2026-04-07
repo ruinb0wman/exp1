@@ -17,7 +17,7 @@ export const repeatModeColorMap: Record<RepeatMode, string> = {
 };
 
 // 分类类型
-export const categories = ["All", "Daily", "Weekly", "Monthly"] as const;
+export const categories = ["All", "Daily", "Weekly", "Monthly", "One-time"] as const;
 export type Category = (typeof categories)[number];
 
 // 分类到重复模式的映射
@@ -25,6 +25,7 @@ const categoryToRepeatMode: Record<string, RepeatMode> = {
   Daily: "daily",
   Weekly: "weekly",
   Monthly: "monthly",
+  "One-time": "none",
 };
 
 /**
