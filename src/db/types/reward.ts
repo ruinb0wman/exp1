@@ -66,6 +66,7 @@ export interface RewardTemplate {
   replenishmentNum?: number;
   replenishmentLimit?: number;
   currentStock?: number;
+  lastReplenishedAt?: string;
   icon: RewardIconName;
   iconColor?: RewardIconColor;
   createdAt: string;

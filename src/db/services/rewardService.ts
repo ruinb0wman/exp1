@@ -578,28 +578,27 @@ export async function getTemplatesNeedingReplenishment(
     .toArray();
 
   return templates.filter(template => {
-    const { replenishmentMode, repeatDaysOfWeek, repeatDaysOfMonth, repeatInterval } = template;
+    const { replenishmentMode, repeatDaysOfWeek, repeatDaysOfMonth, lastReplenishedAt } = template;
+
+    const today = new Date().toISOString().split('T')[0];
+    const lastReplenished = lastReplenishedAt?.split('T')[0];
+    if (lastReplenished === today) return false;
 
     switch (replenishmentMode) {
       case 'daily': {
-        // 每天或每N天
-        if (!repeatInterval || repeatInterval === 1) return true;
-        // 这里简化处理，实际应该记录上次补货时间
         return true;
       }
       case 'weekly': {
-        // 检查今天是否在指定的星期几列表中
         if (repeatDaysOfWeek && repeatDaysOfWeek.length > 0) {
           return repeatDaysOfWeek.includes(currentDayOfWeek);
         }
-        return currentDayOfWeek === 1; // 默认周一
+        return currentDayOfWeek === 1;
       }
       case 'monthly': {
-        // 检查今天是否在指定的日期列表中
         if (repeatDaysOfMonth && repeatDaysOfMonth.length > 0) {
           return repeatDaysOfMonth.includes(currentDayOfMonth);
         }
-        return currentDayOfMonth === 1; // 默认每月1号
+        return currentDayOfMonth === 1;
       }
       default:
         return false;
@@ -644,9 +643,11 @@ export async function replenishRewardTemplate(templateId: string): Promise<numbe
 
   // 更新库存数量
   const newStock = currentStock + replenishCount;
+  const now = new Date().toISOString();
   await db.rewardTemplates.update(templateId, {
     currentStock: newStock,
-    updatedAt: new Date().toISOString(),
+    lastReplenishedAt: now,
+    updatedAt: now,
   });
 
   return replenishCount;
