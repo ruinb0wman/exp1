@@ -18,12 +18,21 @@ export function calculateEstimatedTotalPoints(
 
 /**
  * 计算今日已获得的积分
- * 累加每个任务的 stagePointsEarned 和 completionPointsEarned
+ * simple 类型任务：已完成时返回 completionPoints
+ * 其他类型：累加 stagePointsEarned 和 completionPointsEarned
  */
 export function calculateTodayEarnedPoints(
   tasks: { instance: TaskInstance; template: TaskTemplate }[]
 ): number {
-  return tasks.reduce((total, { instance }) => {
+  return tasks.reduce((total, { instance, template }) => {
+    const rule = template.completeRule;
+    
+    // simple 类型：已完成时返回 completionPoints
+    if (rule?.type === 'simple' && instance.status === 'completed') {
+      return total + (rule.completionPoints || 0);
+    }
+    
+    // 其他类型：使用已有的字段
     return total + (instance.stagePointsEarned || 0) + (instance.completionPointsEarned || 0);
   }, 0);
 }

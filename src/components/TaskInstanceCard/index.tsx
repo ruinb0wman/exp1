@@ -40,12 +40,21 @@ export function TaskInstanceCard({
     ? { color: "text-text-muted", bg: "bg-text-muted/20" } 
     : getStatusStyle(instance?.status ?? "pending");
 
-  const hasCompleteRule = !isPreview && !!template.completeRule;
+  const hasCompleteRule = !isPreview && !!template.completeRule && template.completeRule.type !== 'simple';
   const progressPercent = instance ? getTaskProgressPercent(instance) : 0;
   const progressColor = getProgressColor(progressPercent);
   
   // 获取已获得积分
-  const earnedPoints = instance ? getTotalPointsEarned(instance) : 0;
+  // simple 类型：已完成时返回 completionPoints
+  const earnedPoints = instance 
+    ? (() => {
+        const rule = template?.completeRule;
+        if (rule?.type === 'simple' && instance.status === 'completed') {
+          return rule.completionPoints || 0;
+        }
+        return getTotalPointsEarned(instance);
+      })()
+    : 0;
 
   // 进度文本
   const getProgressText = () => {

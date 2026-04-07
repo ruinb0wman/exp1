@@ -108,12 +108,20 @@ function TaskDetailContent({
   const isCompleted = instance.status === "completed";
   const expired = isExpired(instance.expiredAt);
   const rule = template.completeRule;
-  const hasCompleteRule = !!rule;
+  const isSimpleRule = rule?.type === 'simple';
+  const hasCompleteRule = !!rule && !isSimpleRule;
   const progressPercent = getTaskProgressPercent(instance);
-  const earnedPoints = getTotalPointsEarned(instance);
+  
+  // simple 类型特殊处理：已完成时返回 completionPoints，未完成时返回 0
+  // 其他类型使用 getTotalPointsEarned
+  const earnedPoints = isSimpleRule
+    ? (isCompleted ? rule.completionPoints : 0)
+    : getTotalPointsEarned(instance);
   
   // 计算预计总积分
-  const expectedPoints = hasCompleteRule ? calculateMaxPoints(rule) : 0;
+  const expectedPoints = isSimpleRule
+    ? (isCompleted ? rule.completionPoints : 0)
+    : (hasCompleteRule ? calculateMaxPoints(rule) : 0);
 
   // 判断任务类型
   const isCountRule = rule?.type === "count";
