@@ -5,6 +5,7 @@ import { Header } from "@/components/Header";
 import { Popup } from "@/components/Popup";
 import { useUserStore } from "@/store";
 import { useStoreRewards, useRewardInstanceActions } from "@/hooks/useRewards";
+import { getTemplatesNeedingReplenishment, replenishRewardTemplate } from "@/db/services/rewardService";
 import { PointsCard } from "./components/PointsCard";
 import { SearchBar } from "./components/SearchBar";
 import { RewardsGrid, type StoreReward } from "./components/RewardsGrid";
@@ -21,6 +22,27 @@ export function Store() {
   }, [calculatePoints]);
 
   const { rewards, isLoading, refresh } = useStoreRewards(user?.id ?? 0);
+
+  // 进入页面时检查并补货
+  useEffect(() => {
+    if (!user?.id) return;
+
+    const checkAndReplenish = async () => {
+      try {
+        const templates = await getTemplatesNeedingReplenishment(user.id);
+        for (const template of templates) {
+          await replenishRewardTemplate(template.id!);
+        }
+        if (templates.length > 0) {
+          await refresh();
+        }
+      } catch (err) {
+        console.error("Replenishment failed:", err);
+      }
+    };
+
+    checkAndReplenish();
+  }, [user?.id, refresh]);
   const { redeem, isLoading: isActionLoading } = useRewardInstanceActions();
 
   const [searchQuery, setSearchQuery] = useState("");
