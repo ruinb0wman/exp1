@@ -20,8 +20,14 @@ const processedTemplateIds = new Set<string>();
 export async function checkAndGenerateForTemplate(
   db: DB,
   template: TaskTemplate,
-  dayEndTime: string = "00:00"
+  dayEndTime?: string
 ): Promise<boolean> {
+  // dayEndTime 未指定或为默认值时，从用户设置中获取
+  if (!dayEndTime || dayEndTime === "00:00") {
+    const user = await db.users.get(template.userId);
+    dayEndTime = user?.dayEndTime || "00:00";
+  }
+
   // 只处理启用的模板
   if (!template.enabled) {
     return false;

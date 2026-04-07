@@ -59,7 +59,7 @@ function getDB() {
 export { getDB };
 
 const createDB = () => {
-  const db = new Dexie('exp-v6') as DB;
+  const db = new Dexie('exp-v7') as DB;
   migration(db);
 
   db.taskTemplates.hook('creating', function (_primKey, obj, _trans) {
@@ -135,7 +135,7 @@ const createDB = () => {
     return { updatedAt: new Date().toISOString() };
   });
 
-  const templateMiddleware = createTaskTemplateMiddleware("00:00");
+  const templateMiddleware = createTaskTemplateMiddleware();
   templateMiddleware.register(db);
 
   const pointsHistoryMiddleware = createPointsHistoryMiddleware();

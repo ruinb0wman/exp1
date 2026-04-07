@@ -1,6 +1,6 @@
 /**
  * 时间工具函数
- * 所有存储和计算使用UTC时间，只有渲染时转换为本地时间
+ * 所有时间使用本地时间，不使用 UTC
  */
 
 /**
@@ -98,16 +98,14 @@ export function createUTCEndOfDay(year: number, month: number, day: number): Dat
 }
 
 /**
- * 获取指定本地日期的UTC开始时间（考虑 dayEndTime）
+ * 获取指定本地日期的开始时间（考虑 dayEndTime）
  * @param localDate 本地日期
  * @param dayEndTime "HH:mm" 格式，默认 "00:00"
- * @returns UTC ISO 格式时间字符串
+ * @returns 本地 ISO 格式时间字符串
  */
 export function getUserStartOfDay(localDate: Date, dayEndTime: string = "00:00"): string {
   const [endHour, endMinute] = dayEndTime.split(':').map(Number);
   
-  // 创建本地时间的 Date 对象（localDate的年月日 + dayEndTime的时分）
-  // 然后 toISOString() 会自动转换为 UTC
   const startOfDay = new Date(
     localDate.getFullYear(),
     localDate.getMonth(),
@@ -118,20 +116,25 @@ export function getUserStartOfDay(localDate: Date, dayEndTime: string = "00:00")
     0
   );
   
-  return startOfDay.toISOString();
+  const year = startOfDay.getFullYear();
+  const month = String(startOfDay.getMonth() + 1).padStart(2, '0');
+  const day = String(startOfDay.getDate()).padStart(2, '0');
+  const hour = String(startOfDay.getHours()).padStart(2, '0');
+  const minute = String(startOfDay.getMinutes()).padStart(2, '0');
+  const second = String(startOfDay.getSeconds()).padStart(2, '0');
+  
+  return `${year}-${month}-${day}T${hour}:${minute}:${second}.000Z`;
 }
 
 /**
- * 获取指定本地日期的UTC结束时间（考虑 dayEndTime）
+ * 获取指定本地日期的结束时间（考虑 dayEndTime）
  * @param localDate 本地日期
  * @param dayEndTime "HH:mm" 格式，默认 "00:00"
- * @returns UTC ISO 格式时间字符串
+ * @returns 本地 ISO 格式时间字符串
  */
 export function getUserEndOfDay(localDate: Date, dayEndTime: string = "00:00"): string {
   const [endHour, endMinute] = dayEndTime.split(':').map(Number);
   
-  // 创建本地时间的 Date 对象（localDate的下一天 + dayEndTime的时分 - 1ms）
-  // 然后 toISOString() 会自动转换为 UTC
   const endOfDay = new Date(
     localDate.getFullYear(),
     localDate.getMonth(),
@@ -141,8 +144,15 @@ export function getUserEndOfDay(localDate: Date, dayEndTime: string = "00:00"): 
     0,
     -1
   );
+
+  const year = endOfDay.getFullYear();
+  const month = String(endOfDay.getMonth() + 1).padStart(2, '0');
+  const day = String(endOfDay.getDate()).padStart(2, '0');
+  const hour = String(endOfDay.getHours()).padStart(2, '0');
+  const minute = String(endOfDay.getMinutes()).padStart(2, '0');
+  const second = String(endOfDay.getSeconds()).padStart(2, '0');
   
-  return endOfDay.toISOString();
+  return `${year}-${month}-${day}T${hour}:${minute}:${second}.000`;
 }
 
 /**
@@ -187,7 +197,97 @@ export function generateTimeOptions(interval: number = 15): string[] {
 }
 
 /**
+ * 基于 instanceDate 计算过期时间（动态计算，不存储）
+ * @param instanceDate 实例日期（YYYY-MM-DD）
+ * @param expireDays 过期天数（1表示当天结束后过期，2表示第二天结束后过期）
+ * @param dayEndTime 本地时间的"一天结束"，格式 "HH:mm"
+ * @returns 过期时间（本地 ISO 格式）
+ */
+export function calculateExpiredAtByInstanceDate(
+  instanceDate: string,
+  expireDays: number,
+  dayEndTime: string
+): string {
+  const [year, month, day] = instanceDate.split('-').map(Number);
+  const [endHour, endMinute] = dayEndTime.split(':').map(Number);
+
+  const expireLocalDate = new Date(year, month - 1, day + expireDays);
+  expireLocalDate.setHours(endHour, endMinute, 0, 0);
+
+  const yearStr = expireLocalDate.getFullYear();
+  const monthStr = String(expireLocalDate.getMonth() + 1).padStart(2, '0');
+  const dayStr = String(expireLocalDate.getDate()).padStart(2, '0');
+  const hourStr = String(expireLocalDate.getHours()).padStart(2, '0');
+  const minuteStr = String(expireLocalDate.getMinutes()).padStart(2, '0');
+  const secondStr = String(expireLocalDate.getSeconds()).padStart(2, '0');
+
+  return `${yearStr}-${monthStr}-${dayStr}T${hourStr}:${minuteStr}:${secondStr}.000`;
+}
+
+/**
+ * 基于 instanceDate 检查是否过期（动态计算）
+ * @param instanceDate 实例日期（YYYY-MM-DD）
+ * @param expireDays 过期天数
+ * @param dayEndTime 本地时间的"一天结束"，格式 "HH:mm"
+ */
+export function isExpiredByInstanceDate(
+  instanceDate: string,
+  expireDays: number,
+  dayEndTime: string
+): boolean {
+  if (!instanceDate || !expireDays || expireDays <= 0) {
+    return false;
+  }
+
+  const [year, month, day] = instanceDate.split('-').map(Number);
+  const [endHour, endMinute] = dayEndTime.split(':').map(Number);
+
+  const expireLocalDate = new Date(year, month - 1, day + expireDays);
+  expireLocalDate.setHours(endHour, endMinute, 0, 0);
+
+  const now = new Date();
+  
+  return now.getTime() > expireLocalDate.getTime();
+}
+
+/**
+ * 获取过期剩余时间文本（基于 instanceDate 动态计算）
+ * @param instanceDate 实例日期（YYYY-MM-DD）
+ * @param expireDays 过期天数
+ * @param dayEndTime 本地时间的"一天结束"，格式 "HH:mm"
+ */
+export function getExpireTimeTextByInstanceDate(
+  instanceDate: string,
+  expireDays: number,
+  dayEndTime: string
+): string {
+  if (!instanceDate || !expireDays || expireDays <= 0) {
+    return '';
+  }
+
+  const expiredAt = calculateExpiredAtByInstanceDate(instanceDate, expireDays, dayEndTime);
+  const now = new Date();
+  const expire = new Date(expiredAt);
+  const diff = expire.getTime() - now.getTime();
+
+  if (diff <= 0) return '已过期';
+
+  const hours = Math.floor(diff / (1000 * 60 * 60));
+  const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+
+  if (hours > 24) {
+    const days = Math.floor(hours / 24);
+    return `${days}天后过期`;
+  }
+  if (hours > 0) {
+    return `${hours}小时${minutes > 0 ? `${minutes}分钟` : ''}后过期`;
+  }
+  return `${minutes}分钟后过期`;
+}
+
+/**
  * 计算过期时间（基于dayEndTime）
+ * @deprecated 使用 calculateExpiredAtByInstanceDate 代替
  * @param startAtUTC 开始时间（UTC ISO格式）
  * @param expireDays 过期天数（按用户定义的"天"计算，1表示当天）
  * @param dayEndTime 本地时间的"一天结束"，格式 "HH:mm"，默认 "00:00"
@@ -200,45 +300,36 @@ export function calculateExpiredAt(
 ): string {
   const startDate = new Date(startAtUTC);
 
-  // 解析 dayEndTime
   const [endHour, endMinute] = dayEndTime.split(':').map(Number);
 
-  // 获取 startAt 的本地日期
   const startLocalYear = startDate.getFullYear();
   const startLocalMonth = startDate.getMonth();
   const startLocalDate = startDate.getDate();
   const startLocalHour = startDate.getHours();
   const startLocalMinute = startDate.getMinutes();
 
-  // 判断 startAt 是否已经过了当天的 dayEndTime
   const startTimeMinutes = startLocalHour * 60 + startLocalMinute;
   const endTimeMinutes = endHour * 60 + endMinute;
   const hasPassedDayEnd = startTimeMinutes >= endTimeMinutes;
 
-  // 计算"第1天"（任务开始的第一天）
-  // 如果 startAt 已经过了当天的 dayEndTime，则"第1天"是明天；否则是今天
   const day1Date = hasPassedDayEnd
     ? new Date(startLocalYear, startLocalMonth, startLocalDate + 1)
     : new Date(startLocalYear, startLocalMonth, startLocalDate);
 
-  // 过期日期 = 第1天 + (expireDays - 1)
-  // expireDays = 1 表示在第1天的 dayEndTime 过期（当天）
-  // expireDays = 2 表示在第2天的 dayEndTime 过期（明天）
   const expireLocalDate = new Date(
     day1Date.getFullYear(),
     day1Date.getMonth(),
     day1Date.getDate() + expireDays - 1
   );
 
-  // 设置过期时间为该日期的 dayEndTime
   expireLocalDate.setHours(endHour, endMinute, 0, 0);
 
-  // 转换为 UTC ISO 字符串
   return expireLocalDate.toISOString();
 }
 
 /**
  * 检查实例是否过期（基于UTC时间比较）
+ * @deprecated 使用 isExpiredByInstanceDate 代替
  * @param expiredAtUTC 过期时间（UTC ISO格式）
  */
 export function isExpired(expiredAtUTC?: string): boolean {
@@ -250,6 +341,7 @@ export function isExpired(expiredAtUTC?: string): boolean {
 
 /**
  * 获取过期剩余时间文本（基于UTC时间）
+ * @deprecated 使用 getExpireTimeTextByInstanceDate 代替
  * @param expiredAtUTC 过期时间（UTC ISO格式）
  */
 export function getExpireTimeText(expiredAtUTC?: string): string {
