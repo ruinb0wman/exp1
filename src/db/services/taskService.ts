@@ -791,6 +791,10 @@ export async function completeSubtask(
       const completedSubtasks = instance.completedSubtasks || 
         instance.subtasks.map(() => false);
 
+      // 记录当前积分状态，用于更新
+      let currentStagePoints = instance.stagePointsEarned || 0;
+      let currentCompletionPoints = instance.completionPointsEarned || 0;
+
       const result: SubtaskUpdateResult = {
         completedCount: 0,
         pointsEarned: 0,
@@ -809,12 +813,12 @@ export async function completeSubtask(
 
       const subtaskPoints = config.pointsPerSubtask[subtaskIndex] || 0;
 
-      if (completed) {
+if (completed) {
         // 检查是否已达成完成条件（partial模式下不能超量完成）
         const currentCompletedCount = completedSubtasks.filter(Boolean).length;
         const targetCount = config.mode === 'all' 
           ? instance.subtasks.length 
-          : (config.requiredCount || 1);
+          : (config?.requiredCount || 1);
 
         // 如果已经达到完成条件，不能再完成更多
         if (currentCompletedCount >= targetCount) {
@@ -832,6 +836,8 @@ export async function completeSubtask(
           String(subtaskIndex)
         );
 
+        // 更新已获得的子任务积分
+        currentStagePoints += subtaskPoints;
         result.pointsEarned = subtaskPoints;
       } else {
         // 取消完成：扣除该子任务积分
@@ -843,6 +849,8 @@ export async function completeSubtask(
           `取消子任务：${instance.subtasks[subtaskIndex]}`
         );
 
+        // 扣除已获得的子任务积分
+        currentStagePoints = Math.max(0, currentStagePoints - subtaskPoints);
         result.pointsDeducted = subtaskPoints;
       }
 
@@ -866,6 +874,8 @@ export async function completeSubtask(
           '子任务全部完成'
         );
 
+        // 更新完成积分
+        currentCompletionPoints += rule.completionPoints;
         result.pointsEarned += rule.completionPoints;
         result.isFullyCompleted = true;
       } else if (!shouldBeFullyCompleted && instance.isFullyCompleted) {
@@ -878,6 +888,8 @@ export async function completeSubtask(
           '子任务完成度不足'
         );
 
+        // 扣除完成积分
+        currentCompletionPoints = Math.max(0, currentCompletionPoints - rule.completionPoints);
         result.pointsDeducted += rule.completionPoints;
         result.isFullyCompleted = false;
       }
@@ -890,6 +902,8 @@ export async function completeSubtask(
         isFullyCompleted: result.isFullyCompleted,
         status: result.isFullyCompleted ? 'completed' : 'pending',
         completedAt: result.isFullyCompleted ? new Date().toISOString() : undefined,
+        stagePointsEarned: currentStagePoints,
+        completionPointsEarned: currentCompletionPoints,
       });
 
       return result;
