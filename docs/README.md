@@ -1,4 +1,18 @@
-## id机制
+
+## 每日结束时间
+
+通过`dayEndTime`来确定每天的结束时间
+
+dayEndTime不应该与其他状态耦合, 而是在需要时计算
+
+关联的操作
+- 首页显示的今日任务
+- 检查是否该生成实例
+- 检查过期实例
+
+## 同步
+
+### id机制
 
 template采用uuid, 并通过dexiejs在创建template时自动生成, 生成方法为`crypto.randomUUID()`
 
@@ -6,8 +20,6 @@ instance采用确定id方式, 结合hash生成id, 避免不同设备之间数据
 - taskInstance: `hash(tempalteId, 'yyyy-MM-dd')`
 - rewardInstance: `hash(templateId, timestamp)`
 - pointHistory: `hash(instanceId, type, [subtaskid])`
-
-## 同步
 
 ### 同步流程步骤
 

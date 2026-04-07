@@ -4,6 +4,8 @@ import { checkAndUpdateExpiredTasks } from '@/db/services';
 interface UseExpiredTaskCheckerOptions {
   /** 用户ID */
   userId: number | undefined;
+  /** 一天结束时间 */
+  dayEndTime?: string;
   /** 检查完成后回调 */
   onChecked?: (expiredIds: string[]) => void;
   /** 检查失败回调 */
@@ -21,6 +23,7 @@ interface UseExpiredTaskCheckerOptions {
  * function App() {
  *   const { checkExpiredTasks, isChecking } = useExpiredTaskChecker({
  *     userId: user?.id,
+ *     dayEndTime: user?.dayEndTime,
  *     onChecked: (expiredIds) => {
  *       if (expiredIds.length > 0) {
  *         toast.info(`${expiredIds.length} 个任务已过期`);
@@ -37,7 +40,7 @@ interface UseExpiredTaskCheckerOptions {
  * ```
  */
 export function useExpiredTaskChecker(options: UseExpiredTaskCheckerOptions) {
-  const { userId, onChecked, onError } = options;
+  const { userId, dayEndTime, onChecked, onError } = options;
   
   const [isChecking, setIsChecking] = useState(false);
   const hasCheckedRef = useRef(false);
@@ -52,7 +55,7 @@ export function useExpiredTaskChecker(options: UseExpiredTaskCheckerOptions) {
   ): Promise<string[]> => {
     const { skipIfAlreadyChecked = true } = options;
     
-    if (!userId) {
+    if (!userId || !dayEndTime) {
       return [];
     }
 
@@ -69,7 +72,7 @@ export function useExpiredTaskChecker(options: UseExpiredTaskCheckerOptions) {
     }
 
     try {
-      const expiredIds = await checkAndUpdateExpiredTasks(userId);
+      const expiredIds = await checkAndUpdateExpiredTasks(userId, dayEndTime);
       
       onChecked?.(expiredIds);
       return expiredIds;
@@ -85,7 +88,7 @@ export function useExpiredTaskChecker(options: UseExpiredTaskCheckerOptions) {
     } finally {
       setIsChecking(false);
     }
-  }, [userId, onChecked, onError]);
+  }, [userId, dayEndTime, onChecked, onError]);
 
   /**
    * 重置检查标记，允许再次检查

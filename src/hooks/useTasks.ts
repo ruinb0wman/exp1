@@ -177,7 +177,7 @@ export function useNoDateTasks(userId: number) {
 /**
  * 获取指定日期的任务（支持 dayEndTime）
  */
-export function useTasksByDate(date: string, userId?: number, dayEndTime?: string) {
+export function useTasksByDate(date: string, userId?: number) {
   const [instances, setInstances] = useState<TaskInstance[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -186,14 +186,14 @@ export function useTasksByDate(date: string, userId?: number, dayEndTime?: strin
     setIsLoading(true);
     setError(null);
     try {
-      const data = await getTaskInstancesByDate(date, userId, dayEndTime);
+      const data = await getTaskInstancesByDate(date, userId);
       setInstances(data);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load tasks');
     } finally {
       setIsLoading(false);
     }
-  }, [date, userId, dayEndTime]);
+  }, [date, userId]);
 
   useEffect(() => {
     refresh();

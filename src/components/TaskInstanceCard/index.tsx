@@ -2,13 +2,14 @@ import { Play, AlertCircle, Flag, Eye } from "lucide-react";
 import type { TaskHistoryItem } from "@/db/services";
 import type { TaskTemplate, TaskInstance } from "@/db/types";
 import { getTaskProgressPercent, getTotalPointsEarned } from "@/db/services";
+import { useUserStore } from "@/store";
+import { isExpiredByInstanceDate, getExpireTimeTextByInstanceDate } from "@/libs/time";
 import { repeatModeMap, repeatModeColorMap } from "@/pages/AllTasks/lib";
 import {
   getStatusIcon,
   getStatusStyle,
   getStatusLabel,
   formatDateTime,
-  formatShortDate,
 } from "./lib";
 
 interface TaskInstanceCardProps {
@@ -32,8 +33,10 @@ export function TaskInstanceCard({
   isPreview = false,
   onClick 
 }: TaskInstanceCardProps) {
+  const { user } = useUserStore();
   const template = item?.template ?? propTemplate!;
   const instance = item?.instance ?? propInstance;
+  const dayEndTime = user?.dayEndTime ?? "00:00";
   
   const ItemStatusIcon = isPreview ? Eye : getStatusIcon(instance?.status ?? "pending");
   const itemStatusStyle = isPreview 
@@ -44,8 +47,6 @@ export function TaskInstanceCard({
   const progressPercent = instance ? getTaskProgressPercent(instance) : 0;
   const progressColor = getProgressColor(progressPercent);
   
-  // 获取已获得积分
-  // simple 类型：已完成时返回 completionPoints
   const earnedPoints = instance 
     ? (() => {
         const rule = template?.completeRule;
@@ -56,7 +57,14 @@ export function TaskInstanceCard({
       })()
     : 0;
 
-  // 进度文本
+  const expireDays = template?.completeExpireDays;
+  const expired = !isPreview && expireDays && expireDays > 0 
+    ? isExpiredByInstanceDate(instance?.instanceDate ?? '', expireDays, dayEndTime)
+    : false;
+  const expireText = !isPreview && expireDays && expireDays > 0
+    ? getExpireTimeTextByInstanceDate(instance?.instanceDate ?? '', expireDays, dayEndTime)
+    : '';
+
   const getProgressText = () => {
     if (!hasCompleteRule) return null;
     
@@ -123,10 +131,10 @@ export function TaskInstanceCard({
                   {formatDateTime(instance.startAt)}
                 </span>
               )}
-              {instance?.expiredAt && (
+              {expireText && (
                 <span className="flex items-center gap-1">
-                  <AlertCircle className="w-3 h-3 text-orange-500" />
-                  截止 {formatShortDate(instance.expiredAt)}
+                  <AlertCircle className={`w-3 h-3 ${expired ? "text-red-500" : "text-orange-500"}`} />
+                  {expired ? "已过期" : `截止 ${expireText}`}
                 </span>
               )}
               {instance?.completedAt && (
@@ -135,7 +143,6 @@ export function TaskInstanceCard({
                   完成 {formatDateTime(instance.completedAt)}
                 </span>
               )}
-              {/* 新系统：显示已获得积分 */}
               {earnedPoints > 0 && (
                 <span className="text-green-500">+{earnedPoints} exp</span>
               )}

@@ -9,7 +9,6 @@ export {
   getTaskProgressPercent,
   getNextStage,
   getTotalPointsEarned,
-  isTaskInstanceExpired,
 } from '@/libs/task';
 
 export type { TaskHistoryItem, TaskHistoryFilterStatus } from './query';

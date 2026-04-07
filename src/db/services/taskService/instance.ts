@@ -1,6 +1,5 @@
 import { getDB } from '../../index';
 import type { TaskInstance, TaskStatus } from '../../types';
-import { getUserStartOfDay, getUserEndOfDay } from '@/libs/time';
 
 import { createPointsRecord } from './points';
 
@@ -85,16 +84,17 @@ export async function getTaskInstancesByDateRange(
 
 export async function getTaskInstancesByDate(
   date: string,
-  userId?: number,
-  dayEndTime: string = "00:00"
+  userId?: number
 ): Promise<TaskInstance[]> {
-  const [year, month, day] = date.split('-').map(Number);
-  const localDate = new Date(year, month - 1, day);
-  
-  const startOfDay = getUserStartOfDay(localDate, dayEndTime);
-  const endOfDay = getUserEndOfDay(localDate, dayEndTime);
+  const db = getDB();
 
-  return getTaskInstancesByDateRange(startOfDay, endOfDay, userId);
+  let collection = db.taskInstances.where('instanceDate').equals(date);
+
+  if (userId !== undefined) {
+    collection = collection.and((instance) => instance.userId === userId);
+  }
+
+  return collection.toArray();
 }
 
 export async function updateTaskInstance(

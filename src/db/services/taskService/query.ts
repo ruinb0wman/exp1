@@ -1,6 +1,6 @@
 import { getDB } from '../../index';
 import type { TaskInstance, TaskTemplate } from '../../types';
-import { getUserStartOfDay, getUserEndOfDay, getUserCurrentDate } from '@/libs/time';
+import { getUserCurrentDate } from '@/libs/time';
 
 export type TaskHistoryFilterStatus = 'all' | 'pending' | 'completed' | 'skipped';
 
@@ -29,16 +29,10 @@ export async function getTodayTaskInstances(
   const db = getDB();
 
   const todayStr = getUserCurrentDate(dayEndTime);
-  const [year, month, day] = todayStr.split('-').map(Number);
-  const today = new Date(year, month - 1, day);
-
-  const startOfDay = getUserStartOfDay(today, dayEndTime);
-  const endOfDay = getUserEndOfDay(today, dayEndTime);
 
   const instances = await db.taskInstances
-    .where('startAt')
-    .between(startOfDay, endOfDay, true, true)
-    .and((instance) => instance.userId === userId)
+    .where('[instanceDate+userId+status]')
+    .equals([todayStr, userId, 'pending'])
     .toArray();
 
   return instances

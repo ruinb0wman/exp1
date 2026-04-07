@@ -1,6 +1,6 @@
 import { getDB } from '../../index';
 import type { ProgressUpdateResult, SubtaskUpdateResult } from '../../types';
-import { isExpired } from '@/libs/time';
+import { isExpiredByInstanceDate } from '@/libs/time';
 
 import { createPointsRecord, deductPoints } from './points';
 
@@ -16,10 +16,6 @@ export async function updateTaskProgress(
       const instance = await db.taskInstances.get(instanceId);
       if (!instance) {
         throw new Error('Task instance not found');
-      }
-
-      if (isExpired(instance.expiredAt)) {
-        throw new Error('Task instance has expired');
       }
 
       const template = instance.template;
@@ -191,10 +187,6 @@ export async function completeSubtask(
         throw new Error('Task instance not found');
       }
 
-      if (isExpired(instance.expiredAt)) {
-        throw new Error('Task instance has expired');
-      }
-
       const template = instance.template;
       const rule = template.completeRule;
 
@@ -314,17 +306,27 @@ export async function completeSubtask(
   );
 }
 
-export async function checkAndUpdateExpiredTasks(userId: number): Promise<string[]> {
+export async function checkAndUpdateExpiredTasks(
+  userId: number,
+  dayEndTime: string
+): Promise<string[]> {
   const db = getDB();
   const now = new Date().toISOString();
   
   const pendingInstances = await db.taskInstances
     .where('userId')
     .equals(userId)
-    .and(instance => instance.status === 'pending' && !!instance.expiredAt)
+    .and(instance => instance.status === 'pending')
     .toArray();
   
-  const expiredInstances = pendingInstances.filter(instance => isExpired(instance.expiredAt));
+  const expiredInstances = pendingInstances.filter(instance => {
+    const template = instance.template;
+    const expireDays = template.completeExpireDays;
+    if (!expireDays || expireDays <= 0) {
+      return false;
+    }
+    return isExpiredByInstanceDate(instance.instanceDate, expireDays, dayEndTime);
+  });
   
   if (expiredInstances.length === 0) {
     return [];

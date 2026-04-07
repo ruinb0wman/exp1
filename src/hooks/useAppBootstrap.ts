@@ -14,6 +14,7 @@ export function useAppBootstrap() {
   // 全局检查过期任务
   const { checkExpiredTasks } = useExpiredTaskChecker({
     userId: user?.id,
+    dayEndTime: user?.dayEndTime,
   });
 
   // 全局番茄钟计时器（确保后台也能计时）
@@ -28,10 +29,10 @@ export function useAppBootstrap() {
 
   // 用户初始化完成后检查过期任务
   useEffect(() => {
-    if (user?.id) {
+    if (user?.id && user?.dayEndTime) {
       checkExpiredTasks();
     }
-  }, [user?.id, checkExpiredTasks]);
+  }, [user?.id, user?.dayEndTime, checkExpiredTasks]);
 
   // 用户初始化完成后启动任务订阅
   useEffect(() => {
@@ -40,5 +41,5 @@ export function useAppBootstrap() {
       subscribeToTodayTasks(user.id, user.dayEndTime);
       subscribeToNoDateTasks(user.id);
     }
-  }, [user?.id]);
+  }, [user?.id, user?.dayEndTime]);
 }

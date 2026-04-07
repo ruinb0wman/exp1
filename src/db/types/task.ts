@@ -85,7 +85,6 @@ export interface TaskInstance {
   isFullyCompleted?: boolean;
 
   completeProgress?: number;
-  expiredAt?: string;
 }
 
 // ===== 工具函数 =====

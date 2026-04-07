@@ -3,9 +3,10 @@ import { CheckCircle2, XCircle, Clock, RefreshCw, Calendar, AlignLeft, Pencil, C
 import { Popup } from "./Popup";
 import { TaskContributionGraph } from "./TaskContributionGraph";
 import type { TaskInstance, TaskTemplate } from "@/db/types";
-import { isExpired, getExpireTimeText } from "@/libs/time";
+import { isExpiredByInstanceDate, getExpireTimeTextByInstanceDate } from "@/libs/time";
 import { getTaskProgressPercent, getNextStage, getTotalPointsEarned } from "@/db/services";
 import { calculateMaxPoints } from "@/db/types";
+import { useUserStore } from "@/store";
 import { usePomoStore } from "@/store/pomoStore";
 
 export interface TaskDetailPopupProps {
@@ -105,30 +106,34 @@ function TaskDetailContent({
   disabled,
 }: TaskDetailContentProps) {
   const navigate = useNavigate();
+  const { user } = useUserStore();
+  const dayEndTime = user?.dayEndTime ?? "00:00";
+  const expireDays = template?.completeExpireDays;
+  const isExpired = expireDays && expireDays > 0
+    ? isExpiredByInstanceDate(instance.instanceDate, expireDays, dayEndTime)
+    : false;
+  const expireText = expireDays && expireDays > 0
+    ? getExpireTimeTextByInstanceDate(instance.instanceDate, expireDays, dayEndTime)
+    : '';
+
   const isCompleted = instance.status === "completed";
-  const expired = isExpired(instance.expiredAt);
   const rule = template.completeRule;
   const isSimpleRule = rule?.type === 'simple';
   const hasCompleteRule = !!rule && !isSimpleRule;
   const progressPercent = getTaskProgressPercent(instance);
   
-  // simple 类型特殊处理：已完成时返回 completionPoints，未完成时返回 0
-  // 其他类型使用 getTotalPointsEarned
   const earnedPoints = isSimpleRule
     ? (isCompleted ? rule.completionPoints : 0)
     : getTotalPointsEarned(instance);
   
-  // 计算预计总积分
   const expectedPoints = isSimpleRule
     ? (isCompleted ? rule.completionPoints : 0)
     : (hasCompleteRule ? calculateMaxPoints(rule) : 0);
 
-  // 判断任务类型
   const isCountRule = rule?.type === "count";
   const isTimeRule = rule?.type === "time";
   const isSubtaskRule = rule?.type === "subtask";
 
-  // 获取进度文本
   const getProgressText = () => {
     if (!hasCompleteRule) return null;
     
@@ -147,7 +152,6 @@ function TaskDetailContent({
     return `${progress}/${maxThreshold} ${unit}`;
   };
 
-  // 获取下一阶段提示
   const getNextStageHint = () => {
     if (!rule || isSubtaskRule || !instance) return null;
     
@@ -189,7 +193,6 @@ function TaskDetailContent({
     }
   };
 
-  // 渲染子任务列表
   const renderSubtasks = () => {
     if (!isSubtaskRule || instance.subtasks.length === 0) return null;
 
@@ -206,13 +209,13 @@ function TaskDetailContent({
           return (
             <button
               key={index}
-              onClick={() => !expired && !disabled && onToggleSubtask?.(index)}
-              disabled={expired || disabled || isLoading}
+              onClick={() => !isExpired && !disabled && onToggleSubtask?.(index)}
+              disabled={isExpired || disabled || isLoading}
               className={`w-full flex items-center gap-3 p-2 rounded-lg transition-colors
                 ${isCompleted 
                   ? 'bg-green-500/10' 
                   : 'bg-surface-light hover:bg-surface-light/80'
-                } ${(expired || disabled) ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
+                } ${(isExpired || disabled) ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
             >
               {isCompleted ? (
                 <CheckSquare className="w-5 h-5 text-green-500 shrink-0" />
@@ -236,15 +239,14 @@ function TaskDetailContent({
 
   return (
     <div className="space-y-4 py-2">
-      {/* 任务标题 */}
       <div className="flex items-start gap-3">
         <div
-          className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${isCompleted ? "bg-green-500/20" : expired ? "bg-red-500/20" : "bg-primary/20"
+          className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${isCompleted ? "bg-green-500/20" : isExpired ? "bg-red-500/20" : "bg-primary/20"
             }`}
         >
           {isCompleted ? (
             <CheckCircle2 className="w-5 h-5 text-green-500" />
-          ) : expired ? (
+          ) : isExpired ? (
             <XCircle className="w-5 h-5 text-red-500" />
           ) : (
             <Clock className="w-5 h-5 text-primary" />
@@ -258,7 +260,7 @@ function TaskDetailContent({
             {template.title}
           </h3>
           <p className="text-sm text-text-secondary mt-1">
-            {isCompleted ? "已完成" : expired ? "已过期" : "进行中"}
+            {isCompleted ? "已完成" : isExpired ? "已过期" : "进行中"}
           </p>
         </div>
         <div className="text-right flex flex-col items-end gap-2">
@@ -271,7 +273,6 @@ function TaskDetailContent({
 
       <div className="h-px bg-border" />
 
-      {/* 任务信息 */}
       <div className="space-y-3">
         {template.description && (
           <div className="flex items-start gap-3">
@@ -304,7 +305,6 @@ function TaskDetailContent({
         )}
       </div>
 
-      {/* 进度条 */}
       {hasCompleteRule && (
         <div className="bg-surface rounded-xl p-3">
           <div className="flex items-center justify-between mb-2">
@@ -318,20 +318,17 @@ function TaskDetailContent({
               style={{ width: `${Math.min(progressPercent, 100)}%` }}
             />
           </div>
-          {/* 下一阶段提示 */}
-          {!isCompleted && !expired && getNextStageHint() && (
+          {!isCompleted && !isExpired && getNextStageHint() && (
             <p className="text-xs text-text-muted mt-2">{getNextStageHint()}</p>
           )}
         </div>
       )}
 
-      {/* 任务完成统计图 */}
       {template.repeatMode !== "none" && (
         <TaskContributionGraph template={template} userId={instance.userId} weeks={20} />
       )}
 
-      {/* 过期提示 */}
-      {expired && (
+      {isExpired && (
         <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-3">
           <p className="text-sm text-red-500 flex items-center gap-2">
             <XCircle className="w-4 h-4" />
@@ -339,16 +336,14 @@ function TaskDetailContent({
           </p>
         </div>
       )}
-      {!expired && instance.expiredAt && (
+      {!isExpired && expireText && (
         <div className="bg-surface rounded-lg p-3">
-          <p className="text-xs text-text-muted">{getExpireTimeText(instance.expiredAt)}</p>
+          <p className="text-xs text-text-muted">{expireText}</p>
         </div>
       )}
 
-      {/* 子任务列表（如果是 subtask 类型） */}
       {renderSubtasks()}
 
-      {/* 操作按钮 */}
       <div className="flex gap-3 pt-2">
         {isCompleted ? (
           <button
@@ -364,33 +359,32 @@ function TaskDetailContent({
               usePomoStore.getState().setSelectedTask(instance.id!);
               navigate('/pomo');
             }}
-            disabled={expired || disabled || isLoading}
+            disabled={isExpired || disabled || isLoading}
             className="flex-1 py-3 px-4 bg-surface hover:bg-surface-light disabled:opacity-50 disabled:cursor-not-allowed text-text-primary rounded-xl font-medium transition-colors flex items-center justify-center gap-2"
           >
             <Timer className="w-4 h-4" />
-            <span>{isLoading ? "处理中..." : expired ? "已过期" : "使用番茄钟"}</span>
+            <span>{isLoading ? "处理中..." : isExpired ? "已过期" : "使用番茄钟"}</span>
             <ChevronRight className="w-4 h-4" />
           </button>
         ) : isCountRule && onIncrementCount ? (
           <button
             onClick={onIncrementCount}
-            disabled={expired || disabled || isLoading}
+            disabled={isExpired || disabled || isLoading}
             className="flex-1 py-3 px-4 bg-primary hover:bg-primary-light disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-xl font-medium transition-colors"
           >
-            {isLoading ? "处理中..." : expired ? "已过期" : "完成一次"}
+            {isLoading ? "处理中..." : isExpired ? "已过期" : "完成一次"}
           </button>
         ) : isSubtaskRule ? (
-          // subtask 类型：通过点击子任务完成，不需要额外按钮
           <div className="flex-1 py-3 px-4 bg-surface rounded-xl text-center">
             <p className="text-sm text-text-secondary">点击上方子任务完成</p>
           </div>
         ) : (
           <button
             onClick={onComplete}
-            disabled={expired || disabled || isLoading}
+            disabled={isExpired || disabled || isLoading}
             className="flex-1 py-3 px-4 bg-primary hover:bg-primary-light disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-xl font-medium transition-colors"
           >
-            {isLoading ? "处理中..." : expired ? "已过期" : "完成任务"}
+            {isLoading ? "处理中..." : isExpired ? "已过期" : "完成任务"}
           </button>
         )}
         <button
