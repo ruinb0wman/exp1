@@ -117,9 +117,9 @@ export async function applySyncData(
 
 /**
  * 执行同步（手机端）
- * 流程：
- * 1. 手机上传数据到 PC
- * 2. 手机下载 PC 的数据
+ * 流程（优化后）：
+ * 1. 初始化同步
+ * 2. 下载 PC 的数据
  * 3. 手机端执行合并（比较 updatedAt，新的覆盖旧的）
  * 4. 手机上传合并后的数据到 PC
  * 5. PC 端应用数据
@@ -152,6 +152,10 @@ export async function performSync(
     sessionId = initResponse.sessionId;
     console.log(`[SyncService] Sync initialized, sessionId: ${sessionId}`);
 
+    // 等待 PC 准备数据
+    console.log(`[SyncService] Waiting for PC to prepare data...`);
+    await new Promise(resolve => setTimeout(resolve, 500));
+
     // 保存 sessionId 到配置
     const db = getDB();
     await db.table('syncConfig').put({
@@ -171,7 +175,7 @@ export async function performSync(
     await createSyncBackup(sessionId);
     console.log(`[SyncService] Backup created successfully`);
 
-    // 3. 收集手机数据
+    // 3. 收集手机数据（用于合并）
     console.log(`[SyncService] Step 3: Collecting mobile data...`);
     onProgress?.({
       phase: 'upload',
@@ -182,35 +186,20 @@ export async function performSync(
     const mobileData = await collectSyncData(sessionId);
     console.log(`[SyncService] Mobile data collected, tables:`, Object.keys(mobileData.tables));
 
-    // 4. 上传手机数据到 PC
-    console.log(`[SyncService] Step 4: Uploading mobile data to PC...`);
-    onProgress?.({
-      phase: 'upload',
-      progress: 40,
-      message: '正在上传数据到 PC...'
-    });
-
-    const uploadResponse = await client.uploadData(mobileData);
-    console.log(`[SyncService] Mobile data uploaded, response:`, uploadResponse);
-
-    // 5. 等待 PC 前端提供数据（通过 IPC），然后下载 PC 数据
-    console.log(`[SyncService] Step 5: Downloading PC data...`);
+    // 4. 下载 PC 数据
+    console.log(`[SyncService] Step 4: Downloading PC data...`);
     onProgress?.({
       phase: 'download',
-      progress: 50,
+      progress: 40,
       message: '正在获取 PC 数据...'
     });
-
-    // 等待一段时间让 PC 前端响应
-    console.log(`[SyncService] Waiting 500ms for PC to provide data...`);
-    await new Promise(resolve => setTimeout(resolve, 500));
 
     console.log(`[SyncService] Downloading PC data for session: ${sessionId}`);
     const pcData = await client.downloadData(sessionId);
     console.log(`[SyncService] PC data downloaded, tables:`, Object.keys(pcData.tables));
 
-    // 6. 执行合并（手机端）
-    console.log(`[SyncService] Step 6: Merging data...`);
+    // 5. 执行合并（手机端）
+    console.log(`[SyncService] Step 5: Merging data...`);
     onProgress?.({
       phase: 'merge',
       progress: 60,
@@ -230,8 +219,8 @@ export async function performSync(
       throw new SyncError('Merge failed', 'MERGE_FAILED', false);
     }
 
-    // 7. 上传合并后的数据到 PC
-    console.log(`[SyncService] Step 7: Uploading merged data to PC...`);
+    // 6. 上传合并后的数据到 PC
+    console.log(`[SyncService] Step 6: Uploading merged data to PC...`);
     onProgress?.({
       phase: 'upload',
       progress: 70,
@@ -241,8 +230,8 @@ export async function performSync(
     const applyResponse = await client.applyData(mergeResult.mergedData);
     console.log(`[SyncService] Merged data uploaded, response:`, applyResponse);
 
-    // 8. 手机端应用合并后的数据
-    console.log(`[SyncService] Step 8: Applying merged data on mobile...`);
+    // 7. 手机端应用合并后的数据
+    console.log(`[SyncService] Step 7: Applying merged data on mobile...`);
     onProgress?.({
       phase: 'apply',
       progress: 80,
@@ -252,8 +241,8 @@ export async function performSync(
     await applySyncData(mergeResult.mergedData, onProgress);
     console.log(`[SyncService] Merged data applied on mobile`);
 
-    // 9. 完成同步
-    console.log(`[SyncService] Step 9: Completing sync...`);
+    // 8. 完成同步
+    console.log(`[SyncService] Step 8: Completing sync...`);
     onProgress?.({
       phase: 'complete',
       progress: 90,
@@ -263,8 +252,8 @@ export async function performSync(
     const completeResponse = await client.completeSync(sessionId);
     console.log(`[SyncService] Sync completed, response:`, completeResponse);
 
-    // 10. 清理备份
-    console.log(`[SyncService] Step 10: Cleaning up backup...`);
+    // 9. 清理备份
+    console.log(`[SyncService] Step 9: Cleaning up backup...`);
     await cleanupBackup(sessionId);
 
     // 清理配置

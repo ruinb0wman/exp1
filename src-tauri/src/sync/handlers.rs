@@ -39,13 +39,26 @@ impl AppState {
 /// 处理初始化请求
 pub async fn handle_init(
     _state: State<Arc<AppState>>,
-    Json(req): Json<InitRequest>,
+    Json(_req): Json<InitRequest>,
 ) -> Json<InitResponse> {
     let session_id = Uuid::new_v4().to_string();
     log::info!("[Sync] handle_init: Creating new session {}", session_id);
 
     // TODO: 获取上次同步时间
     let last_sync_at: Option<chrono::DateTime<chrono::Utc>> = None;
+
+    // 发送 IPC 事件通知 PC 前端准备数据
+    log::info!("[Sync] handle_init: Emitting sync:request-pc-data event for session {}", session_id);
+    if let Some(app_handle) = get_app_handle().await {
+        match app_handle.emit("sync:request-pc-data", serde_json::json!({
+            "sessionId": session_id
+        })) {
+            Ok(_) => log::info!("[Sync] handle_init: Successfully emitted sync:request-pc-data event"),
+            Err(e) => log::error!("[Sync] handle_init: Failed to emit event: {}", e),
+        }
+    } else {
+        log::error!("[Sync] handle_init: AppHandle not available, cannot emit event");
+    }
 
     log::info!("[Sync] handle_init: Session {} initialized successfully", session_id);
 
