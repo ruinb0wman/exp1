@@ -1,7 +1,7 @@
 /**
  * 同步服务 - 简化后的合并算法
- * 
- * 使用 updatedAt 时间戳比较，新的覆盖旧的
+ *
+ * 使用 createdAt 时间戳比较，最早的写入保留
  */
 
 import type { SyncTable, SyncData } from './types';
@@ -16,8 +16,8 @@ export interface TableMergeResult {
 
 /**
  * 合并两个 SyncData（手机端执行）
- * 规则：比较 updatedAt 时间戳，新的覆盖旧的
- * 
+ * 规则：比较 createdAt 时间戳，最早的写入保留
+ *
  * @param mobileData 手机端数据
  * @param pcData PC 端数据
  * @returns 合并结果
@@ -58,12 +58,12 @@ export async function mergeTables(
         // 只有手机有记录
         mergedRecords.push(mobileRecord);
       } else if (mobileRecord && pcRecord) {
-        // 双方都有记录，比较 updatedAt
-        const mobileTime = new Date(mobileRecord.updatedAt || 0).getTime();
-        const pcTime = new Date(pcRecord.updatedAt || 0).getTime();
-        
-        // 新的覆盖旧的（后写入获胜）
-        if (mobileTime >= pcTime) {
+        // 双方都有记录，比较 createdAt
+        const mobileTime = new Date(mobileRecord.createdAt || 0).getTime();
+        const pcTime = new Date(pcRecord.createdAt || 0).getTime();
+
+        // 最早的覆盖新的（先写入获胜）
+        if (mobileTime <= pcTime) {
           mergedRecords.push(mobileRecord);
         } else {
           mergedRecords.push(pcRecord);
