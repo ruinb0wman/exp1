@@ -9,14 +9,14 @@ import { TaskList } from "@/components/TaskList";
 import { TaskDetailPopup } from "@/components/TaskDetailPopup";
 import type { TaskInstance, TaskTemplate } from "@/db/types";
 import {
-	completeTaskInPopup,
-	resetTaskInPopup,
-	incrementTaskCount,
-	toggleSubtaskCompletion,
-	calculateTaskStats,
-	filterTodayTasks,
-	calculateEstimatedTotalPoints,
-	calculateTodayEarnedPoints,
+  completeTaskInPopup,
+  resetTaskInPopup,
+  incrementTaskCount,
+  toggleSubtaskCompletion,
+  calculateTaskStats,
+  filterTodayTasks,
+  calculateEstimatedTotalPoints,
+  calculateTodayEarnedPoints,
 } from "./lib";
 
 export function Home() {
@@ -99,7 +99,7 @@ export function Home() {
     try {
       const completedSubtasks = instance.completedSubtasks || [];
       const newCompleted = !completedSubtasks[index];
-      
+
       const updated = await toggleSubtaskCompletion(
         instance,
         index,
@@ -119,6 +119,7 @@ export function Home() {
 
   // 今天的已完成任务也显示，无日期任务的已完成隐藏
   const pendingTasks = filterTodayTasks(tasks);
+  const pendingNoDateTasks = filterTodayTasks(noDateTasks);
 
   // 计算进度（基于原始任务列表）
   const { completedCount, totalCount } = calculateTaskStats(tasks);
@@ -150,10 +151,10 @@ export function Home() {
         />
 
         {/* No Date Tasks Section */}
-        {noDateTasks.length > 0 && (
+        {pendingNoDateTasks.length > 0 && (
           <div className="mt-6">
             <TaskList
-              tasks={filterTodayTasks(noDateTasks)}
+              tasks={pendingNoDateTasks}
               isLoading={isLoading}
               onTaskClick={handleTaskClick}
               title="No Date"
