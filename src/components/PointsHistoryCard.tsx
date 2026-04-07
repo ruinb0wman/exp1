@@ -52,7 +52,10 @@ export async function getRelatedEntityName(
   try {
     switch (item.type) {
       case "task_reward":
-      case "task_undo": {
+      case "task_undo":
+      case "task_completion":
+      case "task_stage":
+      case "task_deduction": {
         const instance = await getTaskInstanceById(item.relatedInstanceId);
         return instance?.template?.title ?? null;
       }
