@@ -44,3 +44,6 @@ pointHistory, instance和template采用以下合并规则
 - 有一端有udpatedAt, 有updatedAt的获胜
 - 两端都有updatedAt, updatedAt大的获胜
 
+## pointHistory
+
+pointHistory在创建时使用put, 这样可以避免撤销后重新执行导致的id重复, 并用新的数据覆盖旧的
