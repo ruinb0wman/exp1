@@ -33,8 +33,8 @@ export function Store() {
           user.id,
           user.dayEndTime ?? "00:00"
         );
-        for (const template of templates) {
-          await replenishRewardTemplate(template.id!);
+        for (const { template, missedDays } of templates) {
+          await replenishRewardTemplate(template.id!, missedDays);
         }
         if (templates.length > 0) {
           await refresh();

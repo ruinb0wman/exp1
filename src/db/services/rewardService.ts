@@ -564,21 +564,82 @@ export async function getRewardStatistics(
 
 // ==================== 补货相关 ====================
 
+export interface TemplateNeedingReplenishment {
+  template: RewardTemplate;
+  missedDays: number;
+}
+
+/**
+ * 计算漏掉的天数
+ */
+function calculateMissedDays(
+  replenishmentMode: ReplenishmentMode,
+  lastReplenishedDate: string | undefined,
+  userCurrentDate: string,
+  repeatDaysOfWeek?: number[],
+  repeatDaysOfMonth?: number[]
+): number {
+  if (lastReplenishedDate === userCurrentDate) return 0;
+
+  if (!lastReplenishedDate) return 1;
+
+  const lastDateObj = new Date(lastReplenishedDate);
+  const userCurrentDateObj = new Date(userCurrentDate);
+
+  switch (replenishmentMode) {
+    case 'daily': {
+      const daysDiff = Math.floor(
+        (userCurrentDateObj.getTime() - lastDateObj.getTime()) / (1000 * 60 * 60 * 24)
+      );
+      return daysDiff;
+    }
+    case 'weekly': {
+      const targetDays = repeatDaysOfWeek?.length ? repeatDaysOfWeek : [1];
+      let missedCount = 0;
+      const checkDate = new Date(lastDateObj);
+      checkDate.setDate(checkDate.getDate() + 1);
+      
+      while (checkDate <= userCurrentDateObj) {
+        const dayOfWeek = checkDate.getDay();
+        if (targetDays.includes(dayOfWeek)) {
+          missedCount++;
+        }
+        checkDate.setDate(checkDate.getDate() + 1);
+      }
+      return missedCount;
+    }
+    case 'monthly': {
+      const targetDays = repeatDaysOfMonth?.length ? repeatDaysOfMonth : [1];
+      let missedCount = 0;
+      const checkDate = new Date(lastDateObj);
+      checkDate.setDate(checkDate.getDate() + 1);
+      
+      while (checkDate <= userCurrentDateObj) {
+        const dayOfMonth = checkDate.getDate();
+        if (targetDays.includes(dayOfMonth)) {
+          missedCount++;
+        }
+        checkDate.setDate(checkDate.getDate() + 1);
+      }
+      return missedCount;
+    }
+    default:
+      return 0;
+  }
+}
+
 /**
  * 获取需要补货的奖励模板
  * 根据 replenishmentMode 和上次补货时间判断是否需要补货
+ * 返回需要补货的模板及其漏掉天数
  */
 export async function getTemplatesNeedingReplenishment(
   userId: number,
   dayEndTime: string = "00:00"
-): Promise<RewardTemplate[]> {
+): Promise<TemplateNeedingReplenishment[]> {
   const db = getDB();
 
   const userCurrentDate = getUserCurrentDate(dayEndTime);
-
-  const now = new Date();
-  const currentDayOfWeek = now.getDay();
-  const currentDayOfMonth = now.getDate();
 
   const templates = await db.rewardTemplates
     .where('userId')
@@ -586,38 +647,32 @@ export async function getTemplatesNeedingReplenishment(
     .and(t => t.enabled && t.replenishmentMode !== 'none')
     .toArray();
 
-  return templates.filter(template => {
-    const { replenishmentMode, repeatDaysOfWeek, repeatDaysOfMonth, lastReplenishedDate } = template;
+  return templates
+    .map(template => {
+      const { replenishmentMode, repeatDaysOfWeek, repeatDaysOfMonth, lastReplenishedDate } = template;
 
-    if (lastReplenishedDate === userCurrentDate) return false;
+      const missedDays = calculateMissedDays(
+        replenishmentMode,
+        lastReplenishedDate,
+        userCurrentDate,
+        repeatDaysOfWeek,
+        repeatDaysOfMonth
+      );
 
-    switch (replenishmentMode) {
-      case 'daily': {
-        return true;
-      }
-      case 'weekly': {
-        if (repeatDaysOfWeek && repeatDaysOfWeek.length > 0) {
-          return repeatDaysOfWeek.includes(currentDayOfWeek);
-        }
-        return currentDayOfWeek === 1;
-      }
-      case 'monthly': {
-        if (repeatDaysOfMonth && repeatDaysOfMonth.length > 0) {
-          return repeatDaysOfMonth.includes(currentDayOfMonth);
-        }
-        return currentDayOfMonth === 1;
-      }
-      default:
-        return false;
-    }
-  });
+      return { template, missedDays };
+    })
+    .filter(t => t.missedDays > 0);
 }
 
 /**
  * 为模板补货
- * 修改：增加 currentStock 而不是直接创建实例
+ * @param templateId 模板ID
+ * @param missedDays 漏掉的天数，默认为1
  */
-export async function replenishRewardTemplate(templateId: string): Promise<number> {
+export async function replenishRewardTemplate(
+  templateId: string,
+  missedDays: number = 1
+): Promise<number> {
   const db = getDB();
 
   const template = await db.rewardTemplates.get(templateId);
@@ -629,16 +684,15 @@ export async function replenishRewardTemplate(templateId: string): Promise<numbe
     throw new Error('Reward template is disabled');
   }
 
-  // 使用 currentStock 作为当前库存（如果没有则默认为0）
   const currentStock = template.currentStock ?? 0;
 
-  // 检查库存限制
   if (template.replenishmentLimit !== undefined && currentStock >= template.replenishmentLimit) {
-    return 0; // 已达到库存上限，无需补货
+    return 0;
   }
 
-  // 计算补货数量
-  let replenishCount = template.replenishmentNum || 1;
+  // 计算补货数量 = 每次补货数量 × 漏掉天数
+  let replenishCount = (template.replenishmentNum || 1) * missedDays;
+
   if (template.replenishmentLimit !== undefined) {
     const availableSpace = template.replenishmentLimit - currentStock;
     replenishCount = Math.min(replenishCount, availableSpace);
@@ -648,7 +702,6 @@ export async function replenishRewardTemplate(templateId: string): Promise<numbe
     return 0;
   }
 
-  // 更新库存数量
   const newStock = currentStock + replenishCount;
   const now = new Date().toISOString();
   const today = now.split('T')[0];
