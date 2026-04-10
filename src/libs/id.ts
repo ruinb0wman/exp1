@@ -38,5 +38,6 @@ export function hashRewardInstance(
   userId: number,
   timestamp: string
 ): string {
-  return hashString(`${templateId}-${userId}-${timestamp}`);
+  const randomSuffix = Math.random().toString(36).substring(2, 8);
+  return hashString(`${templateId}-${userId}-${timestamp}-${randomSuffix}`);
 }
