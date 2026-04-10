@@ -21,8 +21,8 @@ export interface ExportData {
   };
 }
 
-// 导入策略
-export type ImportStrategy = 'overwrite' | 'merge';
+// 导入策略（仅支持全量覆盖）
+export type ImportStrategy = 'overwrite';
 
 // 导入结果
 export interface ImportResult {
@@ -239,162 +239,8 @@ async function importWithOverwrite(data: ExportData['data']): Promise<ImportResu
 }
 
 /**
- * 智能合并导入
+ * 导入数据（仅支持全量覆盖）
  */
-async function importWithMerge(data: ExportData['data']): Promise<ImportResult> {
-  const db = getDB();
-
-  try {
-    let importedCount = {
-      taskTemplates: 0,
-      taskInstances: 0,
-      rewardTemplates: 0,
-      rewardInstances: 0,
-      users: 0,
-      pointsHistory: 0,
-    };
-
-    await db.transaction(
-      'rw',
-      [
-        db.taskTemplates,
-        db.taskInstances,
-        db.rewardTemplates,
-        db.rewardInstances,
-        db.users,
-        db.pointsHistory,
-      ],
-      async () => {
-        // 任务模板：按 title + userId 去重
-        const existingTaskTemplates = await db.taskTemplates.toArray();
-        const taskTemplateKeys = new Set(
-          existingTaskTemplates.map((t) => `${t.userId}-${t.title}`)
-        );
-        const newTaskTemplates = data.taskTemplates.filter((t) => {
-          const key = `${t.userId}-${t.title}`;
-          if (taskTemplateKeys.has(key)) return false;
-          taskTemplateKeys.add(key);
-          return true;
-        });
-        if (newTaskTemplates.length > 0) {
-          // 保留原始 ID 使用 bulkPut
-          await db.taskTemplates.bulkPut(newTaskTemplates as TaskTemplate[]);
-          importedCount.taskTemplates = newTaskTemplates.length;
-        }
-
-        // 任务实例：按 templateId + instanceDate 去重
-        const existingInstances = await db.taskInstances.toArray();
-        const instanceKeys = new Set(
-          existingInstances.map((i) => `${i.templateId}-${i.instanceDate}`)
-        );
-        const newInstances = data.taskInstances.filter((i) => {
-          const key = `${i.templateId}-${i.instanceDate}`;
-          if (instanceKeys.has(key)) return false;
-          instanceKeys.add(key);
-          return true;
-        });
-        if (newInstances.length > 0) {
-          // 保留原始 ID 使用 bulkPut
-          await db.taskInstances.bulkPut(newInstances as TaskInstance[]);
-          importedCount.taskInstances = newInstances.length;
-        }
-
-        // 奖励模板：按 title + userId 去重
-        const existingRewardTemplates = await db.rewardTemplates.toArray();
-        const rewardTemplateKeys = new Set(
-          existingRewardTemplates.map((r) => `${r.userId}-${r.title}`)
-        );
-        const newRewardTemplates = data.rewardTemplates.filter((r) => {
-          const key = `${r.userId}-${r.title}`;
-          if (rewardTemplateKeys.has(key)) return false;
-          rewardTemplateKeys.add(key);
-          return true;
-        });
-        if (newRewardTemplates.length > 0) {
-          // 保留原始 ID 使用 bulkPut
-          await db.rewardTemplates.bulkPut(newRewardTemplates as RewardTemplate[]);
-          importedCount.rewardTemplates = newRewardTemplates.length;
-        }
-
-        // 奖励实例：按 templateId + createdAt 去重
-        const existingRewardInstances = await db.rewardInstances.toArray();
-        const rewardInstanceKeys = new Set(
-          existingRewardInstances.map((r) => `${r.templateId}-${r.createdAt}`)
-        );
-        const newRewardInstances = data.rewardInstances.filter((r) => {
-          const key = `${r.templateId}-${r.createdAt}`;
-          if (rewardInstanceKeys.has(key)) return false;
-          rewardInstanceKeys.add(key);
-          return true;
-        });
-        if (newRewardInstances.length > 0) {
-          // 保留原始 ID 使用 bulkPut
-          await db.rewardInstances.bulkPut(newRewardInstances as RewardInstance[]);
-          importedCount.rewardInstances = newRewardInstances.length;
-        }
-
-        // 用户：合并策略特殊处理，保留现有用户
-        // 如果没有现有用户，才导入备份中的第一个用户
-        const existingUsers = await db.users.toArray();
-        if (existingUsers.length === 0 && data.users.length > 0) {
-          await db.users.bulkAdd(
-            data.users.slice(0, 1).map(({ id, ...rest }) => ({ ...rest, id: 1 } as User))
-          );
-          importedCount.users = 1;
-        }
-
-        // 积分历史：按 createdAt + type + amount 去重
-        const existingHistory = await db.pointsHistory.toArray();
-        const historyKeys = new Set(
-          existingHistory.map((h) => `${h.createdAt}-${h.type}-${h.amount}`)
-        );
-        const newHistory = data.pointsHistory.filter((h) => {
-          const key = `${h.createdAt}-${h.type}-${h.amount}`;
-          if (historyKeys.has(key)) return false;
-          historyKeys.add(key);
-          return true;
-        });
-        if (newHistory.length > 0) {
-          // 保留原始 ID 使用 bulkPut
-          await db.pointsHistory.bulkPut(newHistory as PointsHistory[]);
-          importedCount.pointsHistory = newHistory.length;
-        }
-      }
-    );
-
-    const totalImported = Object.values(importedCount).reduce((a, b) => a + b, 0);
-
-    // 获取当前用户ID（合并模式下，用户ID为1或现有用户的ID）
-    const existingUsers = await db.users.toArray();
-    const userId = existingUsers.length > 0 ? existingUsers[0].id : 1;
-
-    return {
-      success: true,
-      message:
-        totalImported > 0
-          ? `成功合并 ${totalImported} 条数据`
-          : '没有需要导入的新数据（所有数据已存在）',
-      userId,
-      stats: importedCount,
-    };
-  } catch (error) {
-    return {
-      success: false,
-      message: `导入失败: ${error instanceof Error ? error.message : '未知错误'}`,
-    };
-  }
-}
-
-/**
- * 导入数据
- */
-export async function importData(
-  data: ExportData,
-  strategy: ImportStrategy
-): Promise<ImportResult> {
-  if (strategy === 'overwrite') {
-    return importWithOverwrite(data.data);
-  } else {
-    return importWithMerge(data.data);
-  }
+export async function importData(data: ExportData): Promise<ImportResult> {
+  return importWithOverwrite(data.data);
 }

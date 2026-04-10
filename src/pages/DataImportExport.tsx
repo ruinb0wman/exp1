@@ -17,7 +17,6 @@ import {
   validateImportData,
   importData,
   type ExportData,
-  type ImportStrategy,
   type ImportPreview,
   type ImportResult,
 } from "@/db/services";
@@ -105,15 +104,14 @@ export function DataImportExport() {
   }, []);
 
   // 执行导入
-  const executeImport = useCallback(
-    async (strategy: ImportStrategy) => {
-      if (!pendingImportData) return;
+  const executeImport = useCallback(async () => {
+    if (!pendingImportData) return;
 
-      setShowStrategyDialog(false);
-      setIsImporting(true);
+    setShowStrategyDialog(false);
+    setIsImporting(true);
 
-      try {
-        const result = await importData(pendingImportData, strategy);
+    try {
+      const result = await importData(pendingImportData);
         setImportResult(result);
         setShowResultDialog(true);
 
@@ -272,31 +270,19 @@ export function DataImportExport() {
           )}
 
           <p className="text-text-secondary text-sm mb-4">
-            请选择如何处理导入的数据：
+            导入将覆盖所有现有数据，请确认后再操作。
           </p>
 
           <div className="flex flex-col gap-3">
             <button
-              onClick={() => executeImport("overwrite")}
+              onClick={executeImport}
               className="flex flex-col items-start p-4 rounded-xl bg-surface border border-border hover:border-primary transition-colors text-left"
             >
               <span className="text-text-primary font-medium mb-1">
-                全量覆盖
+                确认导入
               </span>
               <span className="text-text-secondary text-sm">
                 删除所有现有数据，完全使用备份文件中的数据
-              </span>
-            </button>
-
-            <button
-              onClick={() => executeImport("merge")}
-              className="flex flex-col items-start p-4 rounded-xl bg-surface border border-border hover:border-primary transition-colors text-left"
-            >
-              <span className="text-text-primary font-medium mb-1">
-                智能合并
-              </span>
-              <span className="text-text-secondary text-sm">
-                保留现有数据，仅添加备份文件中的新记录
               </span>
             </button>
           </div>
