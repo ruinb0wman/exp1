@@ -31,16 +31,20 @@ export async function getTodayTaskInstances(
   const todayStr = getUserCurrentDate(dayEndTime);
 
   const instances = await db.taskInstances
-    .where('[instanceDate+userId+status]')
-    .equals([todayStr, userId, 'pending'])
+    .where('instanceDate')
+    .equals(todayStr)
+    .and(
+      (instance) =>
+        instance.userId === userId &&
+        (instance.status === 'pending' || instance.status === 'completed') &&
+        !!instance.template
+    )
     .toArray();
 
-  return instances
-    .filter((instance) => instance.template)
-    .map((instance) => ({
-      instance,
-      template: instance.template,
-    }));
+  return instances.map((instance) => ({
+    instance,
+    template: instance.template!,
+  }));
 }
 
 export async function getNoDateTaskInstances(
