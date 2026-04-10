@@ -72,7 +72,7 @@ export async function getTaskInstancesByDateRange(
   const db = getDB();
 
   let collection = db.taskInstances
-    .where('startAt')
+    .where('instanceDate')
     .between(startDate, endDate, true, true);
 
   if (userId !== undefined) {

@@ -292,13 +292,13 @@ function TaskDetailContent({
           </div>
         </div>
 
-        {instance.startAt && (
+        {instance.instanceDate && (
           <div className="flex items-center gap-3">
             <Calendar className="w-4 h-4 text-text-muted shrink-0" />
             <div>
               <p className="text-xs text-text-muted">日期</p>
               <p className="text-sm text-text-primary mt-0.5">
-                {new Date(instance.startAt).toLocaleDateString("zh-CN")}
+                {new Date(instance.instanceDate).toLocaleDateString("zh-CN")}
               </p>
             </div>
           </div>

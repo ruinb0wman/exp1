@@ -102,7 +102,7 @@ export function useTaskInstanceGenerator(options: UseTaskInstanceGeneratorOption
       // 生成并保存新的任务实例
       let generatedInstances: Omit<TaskInstance, 'id' | 'createdAt'>[] = [];
       if (templatesNeedingInstances.length > 0) {
-        generatedInstances = generateTaskInstances(templatesNeedingInstances, dayEndTime, date);
+        generatedInstances = generateTaskInstances(templatesNeedingInstances, date);
         await createTaskInstances(generatedInstances);
       }
 
@@ -161,8 +161,8 @@ export function useTaskInstanceGenerator(options: UseTaskInstanceGeneratorOption
     
     // 获取该"用户日期"已有的实例
     const existingInstancesOnDate = allInstances.filter(inst => {
-      if (!inst.startAt) return false;
-      const instUserDate = toUserDateString(inst.startAt, dayEndTime ?? "00:00");
+      if (!inst.instanceDate) return false;
+      const instUserDate = inst.instanceDate;
       return instUserDate === userDateStr;
     });
 

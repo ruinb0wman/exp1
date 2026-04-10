@@ -1,4 +1,4 @@
-import { Play, AlertCircle, Flag, Eye } from "lucide-react";
+import { AlertCircle, Flag, Eye } from "lucide-react";
 import type { TaskHistoryItem } from "@/db/services";
 import type { TaskTemplate, TaskInstance } from "@/db/types";
 import { getTaskProgressPercent, getTotalPointsEarned } from "@/db/services";
@@ -125,12 +125,6 @@ export function TaskInstanceCard({
             <span className="text-xs text-text-muted">预览模式</span>
           ) : (
             <>
-              {instance?.startAt && (
-                <span className="flex items-center gap-1">
-                  <Play className="w-3 h-3 text-primary" />
-                  {formatDateTime(instance.startAt)}
-                </span>
-              )}
               {expireText && (
                 <span className="flex items-center gap-1">
                   <AlertCircle className={`w-3 h-3 ${expired ? "text-red-500" : "text-orange-500"}`} />

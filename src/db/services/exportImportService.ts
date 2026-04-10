@@ -282,13 +282,13 @@ async function importWithMerge(data: ExportData['data']): Promise<ImportResult> 
           importedCount.taskTemplates = newTaskTemplates.length;
         }
 
-        // 任务实例：按 templateId + startAt 去重
+        // 任务实例：按 templateId + instanceDate 去重
         const existingInstances = await db.taskInstances.toArray();
         const instanceKeys = new Set(
-          existingInstances.map((i) => `${i.templateId}-${i.startAt}`)
+          existingInstances.map((i) => `${i.templateId}-${i.instanceDate}`)
         );
         const newInstances = data.taskInstances.filter((i) => {
-          const key = `${i.templateId}-${i.startAt}`;
+          const key = `${i.templateId}-${i.instanceDate}`;
           if (instanceKeys.has(key)) return false;
           instanceKeys.add(key);
           return true;

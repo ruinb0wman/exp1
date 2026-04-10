@@ -51,9 +51,9 @@ export async function checkAndGenerateForTemplate(
       .where('templateId')
       .equals(template.id!)
       .and((inst) => {
-        if (!inst.startAt) return false;
+        if (!inst.instanceDate) return false;
         // 使用"用户日期"比较是否是今天
-        const instUserDate = toUserDateString(inst.startAt, dayEndTime);
+        const instUserDate = inst.instanceDate;
         const todayUserDate = toUserDateString(today, dayEndTime);
         return instUserDate === todayUserDate;
       })
@@ -80,7 +80,7 @@ export async function checkAndGenerateForTemplate(
         }
 
         // 生成新实例
-        const instanceData = generateTaskInstance(template, dayEndTime, today);
+        const instanceData = generateTaskInstance(template, today);
 
         // 在事务中添加实例
         const now = new Date().toISOString();
@@ -97,7 +97,7 @@ export async function checkAndGenerateForTemplate(
   }
 
   // 周期性任务：直接生成实例
-  const instanceData = generateTaskInstance(template, dayEndTime, today);
+  const instanceData = generateTaskInstance(template, today);
 
   // 添加实例
   const now = new Date().toISOString();

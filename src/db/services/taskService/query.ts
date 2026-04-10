@@ -57,7 +57,7 @@ export async function getNoDateTaskInstances(
     .equals(userId)
     .toArray();
 
-  const noDateInstances = instances.filter((instance) => !instance.startAt);
+  const noDateInstances = instances.filter((instance) => !instance.instanceDate);
 
   return noDateInstances
     .filter((instance) => instance.template)

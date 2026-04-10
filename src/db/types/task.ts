@@ -72,7 +72,6 @@ export interface TaskInstance {
   template: TaskTemplate;
   status: TaskStatus;
   subtasks: string[];
-  startAt?: string;
   instanceDate: string;
   createdAt: string;
   updatedAt?: string;

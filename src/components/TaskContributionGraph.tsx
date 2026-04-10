@@ -54,9 +54,8 @@ export function TaskContributionGraph({
       // 按日期建立映射（使用本地日期）
       const instanceMap = new Map<string, TaskInstance>();
       instances.forEach((instance) => {
-        if (instance.startAt) {
-          // 将 UTC 时间戳转换为本地日期字符串 YYYY-MM-DD
-          const dateKey = formatLocalDateToYYYYMMDD(instance.startAt);
+        if (instance.instanceDate) {
+          const dateKey = instance.instanceDate;
           // 如果同一天有多个实例，优先保留已完成的
           const existing = instanceMap.get(dateKey);
           if (!existing || (existing.status !== "completed" && instance.status === "completed")) {

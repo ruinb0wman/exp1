@@ -1,6 +1,5 @@
 import type { TaskTemplate, TaskInstance } from '@/db/types';
 import { 
-  getUserStartOfDay, 
   formatLocalDate,
   daysBetweenUTC,
   weeksBetweenUTC,
@@ -182,8 +181,8 @@ export function shouldGenerateInstanceOnDate(
   const hasInstanceOnDate = (): boolean => {
     const targetUserDate = toUserDateString(targetDate, dayEndTime);
     return existingInstances.some((inst) => {
-      if (!inst.startAt) return false;
-      const instUserDate = toUserDateString(inst.startAt, dayEndTime);
+      if (!inst.instanceDate) return false;
+      const instUserDate = inst.instanceDate;
       return instUserDate === targetUserDate;
     });
   };
@@ -306,9 +305,9 @@ export function filterTemplatesNeedingInstancesOnDate(
     // 对于其他 repeatMode，检查目标日期的"用户日期"是否已经生成过实例
     const targetUserDate = toUserDateString(targetDate, dayEndTime);
     const hasInstanceOnDate = templateInstances.some((inst) => {
-      if (!inst.startAt) return false;
+      if (!inst.instanceDate) return false;
       // 使用"用户日期"比较是否是同一天
-      const instUserDate = toUserDateString(inst.startAt, dayEndTime);
+      const instUserDate = inst.instanceDate;
       return instUserDate === targetUserDate;
     });
     if (hasInstanceOnDate) {
@@ -337,25 +336,21 @@ export function filterTemplatesNeedingInstances(
  */
 export function generateTaskInstance(
   template: TaskTemplate,
-  dayEndTime: string = "00:00",
   date?: Date
 ): Omit<TaskInstance, 'id'> {
   const targetDate = date || new Date();
 
   const subtasks = template.subtasks || [];
 
-  let startAt: string | undefined;
   let instanceDate: string;
 
   if (template.repeatMode === 'none') {
     if (template.startAt) {
-      startAt = template.startAt;
       instanceDate = template.startAt.split('T')[0];
     } else {
       instanceDate = formatLocalDate(new Date());
     }
   } else {
-    startAt = getUserStartOfDay(targetDate, dayEndTime);
     instanceDate = formatLocalDate(targetDate);
   }
 
@@ -368,7 +363,6 @@ export function generateTaskInstance(
     template: { ...template },
     status: 'pending',
     subtasks: [...subtasks],
-    startAt,
     instanceDate,
     createdAt: now,
 
@@ -387,10 +381,9 @@ export function generateTaskInstance(
  */
 export function generateTaskInstances(
   templates: TaskTemplate[],
-  dayEndTime?: string,
   date?: Date
 ): Omit<TaskInstance, 'id' | 'createdAt'>[] {
-  return templates.map((template) => generateTaskInstance(template, dayEndTime, date));
+  return templates.map((template) => generateTaskInstance(template, date));
 }
 
 // ==================== taskService 相关工具函数 ====================

@@ -78,7 +78,7 @@ const createDB = () => {
 
   db.taskInstances.hook('creating', function (_primKey, obj, _trans) {
     const item = obj as TaskInstance;
-    const date = item.instanceDate || item.startAt?.split('T')[0] || new Date().toISOString().split('T')[0];
+    const date = item.instanceDate || new Date().toISOString().split('T')[0];
     if (!item.id) {
       item.id = hashTaskInstance(item.templateId, date);
     }
