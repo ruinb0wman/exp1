@@ -1,9 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router";
-import { ChevronLeft, Download, Info, Clock, RefreshCw, Smartphone } from "lucide-react";
+import { ChevronLeft, Download, Info, Clock } from "lucide-react";
 import { TimePicker } from "@/components/TimePicker";
-import { SyncModal } from "@/components/SyncUI";
-import { useSync } from "@/hooks/useSync";
 import { useUserStore } from "@/store";
 import { updateUserDayEndTime } from "@/db/services";
 
@@ -19,7 +17,6 @@ const settingsMenu = [
 export function Settings() {
   const navigate = useNavigate();
   const { user, refreshUser } = useUserStore();
-  const { state, isMobile, openSync, closeSync, startSync, retrySync, cancelSync } = useSync();
   
   const [dayEndTime, setDayEndTime] = useState(user?.dayEndTime || "00:00");
   const [showTimePicker, setShowTimePicker] = useState(false);
@@ -56,29 +53,6 @@ export function Settings() {
     return `晚上 ${time}`;
   };
 
-  const formatLastSync = (dateStr: string | null) => {
-    if (!dateStr) return "从未同步";
-    const date = new Date(dateStr);
-    const now = new Date();
-    const diff = now.getTime() - date.getTime();
-    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-    
-    if (days === 0) {
-      const hours = Math.floor(diff / (1000 * 60 * 60));
-      if (hours === 0) {
-        const minutes = Math.floor(diff / (1000 * 60));
-        return minutes === 0 ? "刚刚" : `${minutes} 分钟前`;
-      }
-      return `${hours} 小时前`;
-    } else if (days === 1) {
-      return "昨天";
-    } else if (days < 7) {
-      return `${days} 天前`;
-    } else {
-      return date.toLocaleDateString('zh-CN');
-    }
-  };
-
   return (
     <div className="bg-background">
       <header className="flex items-center p-4 pb-2 sticky top-0 bg-background z-10">
@@ -113,33 +87,6 @@ export function Settings() {
               </p>
             </div>
             <span className="text-primary font-medium">{dayEndTime}</span>
-          </button>
-        </div>
-
-        <div className="mb-6">
-          <h2 className="text-text-secondary text-sm font-medium px-2 mb-3">
-            数据同步
-          </h2>
-          <button
-            onClick={openSync}
-            className="w-full flex items-center gap-4 rounded-xl bg-surface p-4 border border-border hover:bg-surface-light transition-colors text-left"
-          >
-            <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
-              {isMobile ? (
-                <Smartphone className="w-5 h-5 text-primary" />
-              ) : (
-                <RefreshCw className="w-5 h-5 text-primary" />
-              )}
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-text-primary font-medium">
-                {isMobile ? "与 PC 端同步" : "与手机端同步"}
-              </p>
-              <p className="text-text-secondary text-sm truncate">
-                最后同步: {formatLastSync(state.lastSyncAt)}
-              </p>
-            </div>
-            <ChevronLeft className="w-5 h-5 text-text-secondary rotate-180 shrink-0" />
           </button>
         </div>
 
@@ -190,17 +137,6 @@ export function Settings() {
         onClose={() => setShowTimePicker(false)}
         title="选择一天结束时间"
         minuteInterval={15}
-      />
-
-      <SyncModal
-        isOpen={state.isOpen}
-        onClose={closeSync}
-        platform={isMobile ? "mobile" : "desktop"}
-        qrCodeContent={state.qrCodeContent}
-        progress={state.progress}
-        onStartSync={startSync}
-        onRetry={retrySync}
-        onCancel={cancelSync}
       />
     </div>
   );

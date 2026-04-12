@@ -2,6 +2,8 @@ import { useEffect } from "react";
 import { useNavigate } from "react-router";
 import { useUserStore } from "@/store";
 import { useProfileStats } from "@/hooks/useProfileStats";
+import { useSync } from "@/hooks/useSync";
+import { getDeviceId } from "@/db";
 import { quickActions } from "./lib";
 import {
   ProfileHeader,
@@ -15,6 +17,8 @@ import { RecentHistoryList } from "./components/RecentHistoryList";
 export function Profile() {
   const navigate = useNavigate();
   const { user, currentPoints, isLoading: userLoading, calculatePoints } = useUserStore();
+  const { state: syncState } = useSync();
+  const isMobile = getDeviceId() === "mobile";
 
   // 进入页面时重新计算积分
   useEffect(() => {
@@ -30,7 +34,11 @@ export function Profile() {
   return (
     <div className="min-h-screen pb-24 bg-background">
       <ProfileHeader onSettingsClick={() => navigate("/settings")} />
-      <UserInfoSection user={user} />
+      <UserInfoSection
+        user={user}
+        onSyncClick={isMobile ? () => navigate("/sync") : undefined}
+        lastSyncAt={isMobile ? syncState.lastSyncAt : undefined}
+      />
       <PointsCard currentPoints={currentPoints} />
       <QuickActions
         actions={quickActions}

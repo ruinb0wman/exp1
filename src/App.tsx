@@ -17,6 +17,7 @@ import { Backpack } from "@/pages/Backpack";
 import { TaskHistory } from "@/pages/TaskHistory";
 import { Settings } from "@/pages/Settings";
 import { DataImportExport } from "@/pages/DataImportExport";
+import { Sync } from "@/pages/Sync";
 import { MainLayout, SimpleLayout } from "@/components/layouts";
 import { setDeviceId } from "@/db";
 
@@ -58,6 +59,7 @@ function App() {
             <Route path="/store" element={<Store />} />
             <Route path="/stats" element={<Stats />} />
             <Route path="/profile" element={<Profile />} />
+            <Route path="/sync" element={<Sync />} />
           </Route>
 
           {/* Simple layout without bottom navigation */}
