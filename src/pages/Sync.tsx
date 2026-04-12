@@ -63,7 +63,7 @@ export function Sync() {
               onClick={openSync}
               className="w-full py-3 bg-primary text-white rounded-xl font-medium hover:bg-primary-light transition-colors"
             >
-              {state.lastSyncAt ? "重新同步" : "开始同步"}
+              显示二维码
             </button>
           )}
 
