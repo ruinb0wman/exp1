@@ -1,9 +1,11 @@
 import { useEffect, useState } from "react";
 import { BrowserRouter, Routes, Route } from "react-router";
 import { invoke } from "@tauri-apps/api/core";
+import { useTranslation } from "react-i18next";
 import { ConfirmProvider } from "@/hooks/useConfirm";
 import { useAppBootstrap } from "@/hooks/useAppBootstrap";
 import { useEscHideWindow } from "@/hooks/useEscHideWindow";
+import { useUserStore } from "@/store";
 import { Home } from "@/pages/Home";
 import { AllTasks } from "@/pages/AllTasks";
 import { EditTask } from "@/pages/EditTask";
@@ -20,9 +22,19 @@ import { DataImportExport } from "@/pages/DataImportExport";
 import { Sync } from "@/pages/Sync";
 import { MainLayout, SimpleLayout } from "@/components/layouts";
 import { setDeviceId } from "@/db";
+import "@/libs/i18n";
 
 function App() {
   const [, setIsMobile] = useState(false);
+  const { user } = useUserStore();
+  const { i18n } = useTranslation();
+
+  // 同步用户语言设置到 i18n
+  useEffect(() => {
+    if (user?.language) {
+      i18n.changeLanguage(user.language);
+    }
+  }, [user?.language, i18n]);
 
   // 应用启动初始化
   useAppBootstrap();

@@ -1,22 +1,17 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router";
-import { ChevronLeft, Download, Info, Clock } from "lucide-react";
+import { useTranslation } from "react-i18next";
+import { ChevronLeft, Download, Info, Clock, Globe } from "lucide-react";
 import { TimePicker } from "@/components/TimePicker";
 import { useUserStore } from "@/store";
 import { updateUserDayEndTime } from "@/db/services";
-
-const settingsMenu = [
-  {
-    icon: Download,
-    label: "数据导入导出",
-    description: "备份或恢复您的任务和奖励数据",
-    path: "/data-import-export",
-  },
-];
+import { SUPPORTED_LANGUAGES } from "@/libs/i18n";
+import type { SupportedLanguage } from "@/db/types";
 
 export function Settings() {
   const navigate = useNavigate();
-  const { user, refreshUser } = useUserStore();
+  const { t, i18n } = useTranslation();
+  const { user, refreshUser, updateUser } = useUserStore();
   
   const [dayEndTime, setDayEndTime] = useState(user?.dayEndTime || "00:00");
   const [showTimePicker, setShowTimePicker] = useState(false);
@@ -43,14 +38,23 @@ export function Settings() {
     }
   };
 
+  const handleLanguageChange = async (lang: SupportedLanguage) => {
+    try {
+      await updateUser({ language: lang });
+      i18n.changeLanguage(lang);
+    } catch (error) {
+      console.error("Failed to update language:", error);
+    }
+  };
+
   const getTimeDescription = (time: string) => {
-    if (time === "00:00") return "自然日（午夜12点）";
+    if (time === "00:00") return t("settings.timeDescriptions.naturalDay");
     const [hour] = time.split(':').map(Number);
-    if (hour < 6) return `凌晨 ${time}`;
-    if (hour < 12) return `上午 ${time}`;
-    if (hour === 12) return `中午 ${time}`;
-    if (hour < 18) return `下午 ${time}`;
-    return `晚上 ${time}`;
+    if (hour < 6) return `${t("settings.timeDescriptions.dawn")} ${time}`;
+    if (hour < 12) return `${t("settings.timeDescriptions.morning")} ${time}`;
+    if (hour === 12) return `${t("settings.timeDescriptions.noon")} ${time}`;
+    if (hour < 18) return `${t("settings.timeDescriptions.afternoon")} ${time}`;
+    return `${t("settings.timeDescriptions.evening")} ${time}`;
   };
 
   return (
@@ -63,14 +67,52 @@ export function Settings() {
           <ChevronLeft className="w-6 h-6" />
         </button>
         <h1 className="text-lg font-bold text-text-primary flex-1 text-center mr-8">
-          设置
+          {t("settings.title")}
         </h1>
       </header>
 
       <div className="p-4">
         <div className="mb-6">
           <h2 className="text-text-secondary text-sm font-medium px-2 mb-3">
-            时间设置
+            {t("settings.general")}
+          </h2>
+          <button
+            onClick={() => {}}
+            className="w-full flex items-center gap-4 rounded-xl bg-surface p-4 border border-border hover:bg-surface-light transition-colors text-left"
+          >
+            <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+              <Globe className="w-5 h-5 text-primary" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-text-primary font-medium">{t("settings.language")}</p>
+              <p className="text-text-secondary text-sm truncate">
+                {t("settings.languageDescription")}
+              </p>
+            </div>
+            <div className="flex gap-1">
+              {SUPPORTED_LANGUAGES.map((lang) => (
+                <button
+                  key={lang.code}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleLanguageChange(lang.code);
+                  }}
+                  className={`px-3 py-1 rounded-lg text-sm font-medium transition-colors ${
+                    (user?.language || "zh") === lang.code
+                      ? "bg-primary text-white"
+                      : "bg-surface-light text-text-secondary hover:bg-border"
+                  }`}
+                >
+                  {lang.name}
+                </button>
+              ))}
+            </div>
+          </button>
+        </div>
+
+        <div className="mb-6">
+          <h2 className="text-text-secondary text-sm font-medium px-2 mb-3">
+            {t("settings.timeSettings")}
           </h2>
           <button
             onClick={() => setShowTimePicker(true)}
@@ -81,9 +123,9 @@ export function Settings() {
               <Clock className="w-5 h-5 text-primary" />
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-text-primary font-medium">一天结束时间</p>
+              <p className="text-text-primary font-medium">{t("settings.dayEndTime")}</p>
               <p className="text-text-secondary text-sm truncate">
-                {getTimeDescription(dayEndTime)} · 此时间前任务不会过期
+                {getTimeDescription(dayEndTime)} · {t("settings.dayEndTimeDescription")}
               </p>
             </div>
             <span className="text-primary font-medium">{dayEndTime}</span>
@@ -92,38 +134,35 @@ export function Settings() {
 
         <div className="flex flex-col gap-3 mb-6">
           <h2 className="text-text-secondary text-sm font-medium px-2">
-            数据管理
+            {t("settings.dataManagement")}
           </h2>
-          {settingsMenu.map((item) => (
-            <button
-              key={item.label}
-              onClick={() => navigate(item.path)}
-              className="flex items-center gap-4 rounded-xl bg-surface p-4 border border-border hover:bg-surface-light transition-colors text-left"
-            >
-              <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
-                <item.icon className="w-5 h-5 text-primary" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-text-primary font-medium">{item.label}</p>
-                <p className="text-text-secondary text-sm truncate">
-                  {item.description}
-                </p>
-              </div>
-              <ChevronLeft className="w-5 h-5 text-text-secondary rotate-180 shrink-0" />
-            </button>
-          ))}
+          <button
+            onClick={() => navigate("/data-import-export")}
+            className="flex items-center gap-4 rounded-xl bg-surface p-4 border border-border hover:bg-surface-light transition-colors text-left"
+          >
+            <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+              <Download className="w-5 h-5 text-primary" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-text-primary font-medium">{t("settings.dataImportExport")}</p>
+              <p className="text-text-secondary text-sm truncate">
+                {t("settings.dataImportExportDescription")}
+              </p>
+            </div>
+            <ChevronLeft className="w-5 h-5 text-text-secondary rotate-180 shrink-0" />
+          </button>
         </div>
 
         <div>
           <h2 className="text-text-secondary text-sm font-medium px-2 mb-3">
-            关于
+            {t("settings.about")}
           </h2>
           <div className="flex items-center gap-4 rounded-xl bg-surface p-4 border border-border">
             <div className="w-10 h-10 rounded-lg bg-surface-light flex items-center justify-center shrink-0">
               <Info className="w-5 h-5 text-text-secondary" />
             </div>
             <div className="flex-1">
-              <p className="text-text-primary font-medium">版本信息</p>
+              <p className="text-text-primary font-medium">{t("settings.version")}</p>
               <p className="text-text-secondary text-sm">v0.1.0</p>
             </div>
           </div>
@@ -135,7 +174,7 @@ export function Settings() {
         value={dayEndTime}
         onChange={handleTimeChange}
         onClose={() => setShowTimePicker(false)}
-        title="选择一天结束时间"
+        title={t("settings.dayEndTime")}
         minuteInterval={15}
       />
     </div>

@@ -1,0 +1,24 @@
+{
+  "settings": {
+    "title": "Settings",
+    "general": "General",
+    "language": "Language",
+    "languageDescription": "Choose display language",
+    "timeSettings": "Time Settings",
+    "dayEndTime": "Day End Time",
+    "dayEndTimeDescription": "Tasks won't expire before this time",
+    "dataManagement": "Data Management",
+    "dataImportExport": "Import & Export",
+    "dataImportExportDescription": "Backup or restore your tasks and rewards",
+    "about": "About",
+    "version": "Version",
+    "timeDescriptions": {
+      "naturalDay": "Natural day (midnight)",
+      "dawn": "Dawn",
+      "morning": "Morning",
+      "noon": "Noon",
+      "afternoon": "Afternoon",
+      "evening": "Evening"
+    }
+  }
+}

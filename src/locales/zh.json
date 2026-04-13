@@ -1,0 +1,24 @@
+{
+  "settings": {
+    "title": "设置",
+    "general": "通用设置",
+    "language": "语言",
+    "languageDescription": "选择应用显示语言",
+    "timeSettings": "时间设置",
+    "dayEndTime": "一天结束时间",
+    "dayEndTimeDescription": "此时间前任务不会过期",
+    "dataManagement": "数据管理",
+    "dataImportExport": "数据导入导出",
+    "dataImportExportDescription": "备份或恢复您的任务和奖励数据",
+    "about": "关于",
+    "version": "版本信息",
+    "timeDescriptions": {
+      "naturalDay": "自然日（午夜12点）",
+      "dawn": "凌晨",
+      "morning": "上午",
+      "noon": "中午",
+      "afternoon": "下午",
+      "evening": "晚上"
+    }
+  }
+}
