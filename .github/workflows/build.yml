@@ -20,10 +20,9 @@ jobs:
         uses: oven-sh/setup-bun@v2
 
       - name: Setup Rust
-        uses: dtolnay/rust-action@stable
+        uses: dtolnay/rust-toolchain@stable
         with:
           targets: x86_64-unknown-linux-gnu
-          toolchain: stable
 
       - name: Setup tauri CLI
         run: bun add -g @tauri-apps/cli@2
@@ -67,10 +66,9 @@ jobs:
         uses: oven-sh/setup-bun@v2
 
       - name: Setup Rust
-        uses: dtolnay/rust-action@stable
+        uses: dtolnay/rust-toolchain@stable
         with:
           targets: x86_64-pc-windows-msvc
-          toolchain: stable
 
       - name: Setup tauri CLI
         run: bun add -g @tauri-apps/cli@2
@@ -107,15 +105,18 @@ jobs:
 
   android:
     runs-on: ubuntu-24.04
-    container:
-      image: ghcr.io/nicehero/tauri-android-container:v2
-      options: --privileged
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
       - name: Setup Bun
         uses: oven-sh/setup-bun@v2
+
+      - name: Setup Java
+        uses: baursma/android-setup-action@v4
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
 
       - name: Setup tauri CLI
         run: bun add -g @tauri-apps/cli@2
@@ -135,12 +136,6 @@ jobs:
         run: bun tauri android build
         env:
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
-
-      - name: Find APK
-        id: find_apk
-        run: |
-          APK=$(find src-tauri/target -name "*.apk" | head -1)
-          echo "apk_path=$APK" >> $GITHUB_OUTPUT
 
       - name: Upload Android artifacts
         uses: actions/upload-artifact@v4
