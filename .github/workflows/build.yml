@@ -193,9 +193,9 @@ jobs:
           prerelease: false
           generate_release_notes: true
           files: |
-            linux/*.AppImage
-            windows/*.msi
-            windows/*.exe
-            android/*.apk
+            linux/**/*.AppImage
+            windows/**/*.msi
+            windows/**/*.exe
+            android/**/*.apk
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
