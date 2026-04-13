@@ -153,12 +153,14 @@ jobs:
         env:
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
 
+      - name: Find APK files
+        run: find src-tauri/target -name "*.apk" -type f
+
       - name: Upload Android artifacts
         uses: actions/upload-artifact@v4
         with:
           name: android-build
-          path: |
-            src-tauri/target/**/*.apk
+          path: src-tauri/target/release/bundle/apk/*.apk
           retention-days: 5
 
   release:
