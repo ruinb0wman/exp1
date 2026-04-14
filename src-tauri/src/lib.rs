@@ -4,6 +4,9 @@ use std::sync::Arc;
 mod pomo_timer;
 mod sync;
 use pomo_timer::{PomoTimerManager, PomoMode, PomoTimerData};
+
+#[cfg(mobile)]
+use tauri::App;
 use sync::{start_sync_server, stop_sync_server, get_server_status, set_pc_sync_data, get_merged_sync_data, clear_sync_session};
 
 // Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
@@ -121,6 +124,16 @@ pub fn run() {
             // 初始化番茄钟计时器管理器
             let manager = Arc::new(PomoTimerManager::new());
             app.manage(manager);
+            
+            // 移动端：监听应用恢复事件，同步计时器状态
+            #[cfg(mobile)]
+            {
+                let app_handle = app.handle().clone();
+                app.listen("AppEvent::Resumed", move |_event| {
+                    // 应用恢复时，发送事件让前端重新检查后端状态
+                    let _ = app_handle.emit("app:resumed", ());
+                });
+            }
             
             #[cfg(desktop)]
             {

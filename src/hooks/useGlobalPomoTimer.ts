@@ -196,6 +196,7 @@ export function useGlobalPomoTimer() {
   }, [handleTimerComplete]);
 
   // 同步前端状态到后端（当用户在前端操作时）
+  // 注意：不依赖 timeLeft，避免后台 tick 事件触发频繁同步
   useEffect(() => {
     // 如果正在自动切换模式，跳过同步
     if (isAutoSwitchingRef.current) {
@@ -238,7 +239,7 @@ export function useGlobalPomoTimer() {
     };
 
     syncToBackend();
-  }, [isRunning, isPaused, mode, timeLeft, currentSessionId]);
+  }, [isRunning, isPaused, mode, currentSessionId]);
 
   // 组件挂载时检查后端状态（用于页面刷新恢复）
   useEffect(() => {
@@ -263,4 +264,57 @@ export function useGlobalPomoTimer() {
 
     checkBackendState();
   }, []);
+
+  // 监听应用恢复事件（移动端从后台恢复时）
+  useEffect(() => {
+    let unlistenAppResumed: UnlistenFn | null = null;
+
+    const setupAppResumedListener = async () => {
+      try {
+        unlistenAppResumed = await listen('app:resumed', async () => {
+          console.log('应用恢复，重新检查后端状态');
+          
+          // 标记正在自动切换，防止同步 effect 干扰
+          isAutoSwitchingRef.current = true;
+          
+          try {
+            const backendState = await invoke<BackendTimerData>('get_pomo_timer_state');
+            
+            // 根据后端实际状态更新前端
+            if (backendState.state === 'running' || backendState.state === 'paused') {
+              console.log('应用恢复 - 同步后端计时器状态:', backendState);
+              usePomoStore.setState({
+                isRunning: true,
+                isPaused: backendState.state === 'paused',
+                timeLeft: backendState.timeLeft,
+                mode: backendState.mode,
+              });
+            } else if (backendState.state === 'idle') {
+              // 后端计时器已停止，可能是时间到了或被取消了
+              const { isRunning } = stateRef.current;
+              if (isRunning) {
+                console.log('应用恢复 - 后端计时器已停止，前端同步停止');
+                // 通知前端停止计时器（更新数据库等）
+                stopTimer(false);
+              }
+            }
+          } catch (err) {
+            console.error('应用恢复 - 检查后端状态失败:', err);
+          } finally {
+            isAutoSwitchingRef.current = false;
+          }
+        });
+      } catch (err) {
+        console.error('监听 app:resumed 事件失败:', err);
+      }
+    };
+
+    setupAppResumedListener();
+
+    return () => {
+      if (unlistenAppResumed) {
+        unlistenAppResumed();
+      }
+    };
+  }, [stopTimer]);
 }
