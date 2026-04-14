@@ -29,7 +29,12 @@ export function getMaxQuantity(
 ): number {
   if (!reward) return 1;
   const { template, availableCount } = reward;
-  const maxByPoints = Math.floor(currentPoints / template.pointsCost);
+
+  const maxByPoints = template.pointsCost > 0
+    ? Math.floor(currentPoints / template.pointsCost)
+    : Infinity;
+
   const maxByStock = template.replenishmentMode === 'none' ? Infinity : availableCount;
-  return Math.min(maxByPoints, maxByStock, 99); // 最大限制99个
+
+  return Math.max(1, Math.min(maxByPoints, maxByStock, 99));
 }
