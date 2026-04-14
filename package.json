@@ -8,7 +8,7 @@
     "dev:pc": "tauri dev --no-dev-server",
     "dev:android": "tauri android dev --host 192.168.1.5 --no-dev-server",
     "build": "tsc && vite build",
-    "build:pc": "tauri build",
+    "build:pc": "tauri build --no-bundle",
     "build:android": "tauri android build",
     "preview": "vite preview",
     "tauri": "tauri"
