@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import { Play, Pause, Square, RotateCcw } from 'lucide-react';
 
 interface ControlButtonsProps {
@@ -77,6 +78,7 @@ export function ControlButtons({
   onStop,
   onComplete,
 }: ControlButtonsProps) {
+  const { t } = useTranslation();
   return (
     <div>
       <div className="flex items-center justify-center gap-6">
@@ -114,7 +116,7 @@ export function ControlButtons({
           onClick={onComplete}
           className="w-full mt-4 py-3 text-sm text-text-secondary hover:text-primary transition-colors"
         >
-          提前完成
+{t('pomo.earlyComplete')}
         </button>
       )}
     </div>

@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import { usePomoStore } from '@/store/pomoStore';
 import { POMO_MODE_CONFIG, type PomoMode } from '@/db/types/pomo';
 
@@ -7,6 +8,7 @@ import { POMO_MODE_CONFIG, type PomoMode } from '@/db/types/pomo';
  * 注意：计时逻辑已移至 useGlobalPomoTimer hook，此组件只负责显示
  */
 export function PomoTimer() {
+  const { t } = useTranslation();
   const { timeLeft, totalTime, mode, isRunning, isPaused } = usePomoStore();
 
   // 格式化时间显示为 MM:SS
@@ -75,7 +77,7 @@ export function PomoTimer() {
             color: config.color
           }}
         >
-          {isRunning ? (isPaused ? '已暂停' : config.label + '中') : config.label}
+          {isRunning ? (isPaused ? t('pomo.paused') : t(`pomo.mode.${mode}Running`)) : t(`pomo.mode.${mode}`)}
         </div>
       </div>
 

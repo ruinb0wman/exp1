@@ -1,7 +1,6 @@
 import { CheckCircle2, Circle, XCircle, type LucideIcon } from "lucide-react";
 import type { TaskHistoryItem } from "@/db/services";
 
-// 获取状态图标
 export function getStatusIcon(status: TaskHistoryItem["instance"]["status"]): LucideIcon {
   switch (status) {
     case "completed":
@@ -13,7 +12,6 @@ export function getStatusIcon(status: TaskHistoryItem["instance"]["status"]): Lu
   }
 }
 
-// 获取状态样式
 export function getStatusStyle(status: TaskHistoryItem["instance"]["status"]) {
   switch (status) {
     case "completed":
@@ -25,21 +23,26 @@ export function getStatusStyle(status: TaskHistoryItem["instance"]["status"]) {
   }
 }
 
-// 获取状态标签
-export function getStatusLabel(status: TaskHistoryItem["instance"]["status"]): string {
+export type StatusLabelKey = "completed" | "skipped" | "pending";
+export function getStatusLabel(status: TaskHistoryItem["instance"]["status"]): StatusLabelKey {
   switch (status) {
     case "completed":
-      return "已完成";
+      return "completed";
     case "skipped":
-      return "已跳过";
+      return "skipped";
     default:
-      return "待完成";
+      return "pending";
   }
 }
 
-// 格式化日期时间
-export function formatDateTime(dateStr: string | undefined): string {
-  if (!dateStr) return "";
+export type DateTimeResult = 
+  | { type: "today"; time: string }
+  | { type: "yesterday"; time: string }
+  | { type: "daysAgo"; value: number; time: string }
+  | { type: "monthDay"; month: number; day: number; time: string };
+
+export function formatDateTime(dateStr: string | undefined): DateTimeResult | null {
+  if (!dateStr) return null;
   const date = new Date(dateStr);
   const now = new Date();
   const diffDays = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60 * 24));
@@ -47,30 +50,35 @@ export function formatDateTime(dateStr: string | undefined): string {
   const timeStr = `${date.getHours().toString().padStart(2, "0")}:${date.getMinutes().toString().padStart(2, "0")}`;
 
   if (diffDays === 0) {
-    return `今天 ${timeStr}`;
+    return { type: "today", time: timeStr };
   } else if (diffDays === 1) {
-    return `昨天 ${timeStr}`;
+    return { type: "yesterday", time: timeStr };
   } else if (diffDays < 7) {
-    return `${diffDays}天前 ${timeStr}`;
+    return { type: "daysAgo", value: diffDays, time: timeStr };
   } else {
-    return `${date.getMonth() + 1}/${date.getDate()} ${timeStr}`;
+    return { type: "monthDay", month: date.getMonth() + 1, day: date.getDate(), time: timeStr };
   }
 }
 
-// 格式化日期（仅日期部分，用于显示）
-export function formatShortDate(dateStr: string | undefined): string {
-  if (!dateStr) return "";
+export type ShortDateResult = 
+  | { type: "today" }
+  | { type: "yesterday" }
+  | { type: "daysAgo"; value: number }
+  | { type: "monthDay"; month: number; day: number };
+
+export function formatShortDate(dateStr: string | undefined): ShortDateResult | null {
+  if (!dateStr) return null;
   const date = new Date(dateStr);
   const now = new Date();
   const diffDays = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60 * 24));
 
   if (diffDays === 0) {
-    return "今天";
+    return { type: "today" };
   } else if (diffDays === 1) {
-    return "昨天";
+    return { type: "yesterday" };
   } else if (diffDays < 7) {
-    return `${diffDays}天前`;
+    return { type: "daysAgo", value: diffDays };
   } else {
-    return `${date.getMonth() + 1}/${date.getDate()}`;
+    return { type: "monthDay", month: date.getMonth() + 1, day: date.getDate() };
   }
 }

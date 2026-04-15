@@ -1,12 +1,15 @@
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { RefreshCw, ScanLine } from "lucide-react";
 import { useSync } from "@/hooks/useSync";
 import { SyncModal } from "@/components/SyncUI";
 import { QRScanner } from "@/components/SyncUI/QRScanner";
 import { SyncProgressUI } from "@/components/SyncUI/SyncProgress";
 import { getDeviceId } from "@/db";
+import { formatLastSync, formatLastSyncI18n } from "@/libs/time";
 
 export function Sync() {
+  const { t } = useTranslation();
   const isMobile = getDeviceId() === "mobile";
   const { state, openSync, closeSync, startSync, retrySync, cancelSync } = useSync();
   const [showScanner, setShowScanner] = useState(false);
@@ -24,11 +27,13 @@ export function Sync() {
     }
   };
 
+  const lastSyncResult = formatLastSync(state.lastSyncAt);
+
   return (
     <div className="min-h-screen pb-24 bg-background">
       <header className="flex items-center p-4 pb-2 sticky top-0 bg-background z-10">
         <h1 className="text-lg font-bold text-text-primary flex-1 text-center">
-          数据同步
+          {t("sync.title")}
         </h1>
       </header>
 
@@ -40,12 +45,12 @@ export function Sync() {
             </div>
             <div className="flex-1">
               <h2 className="text-text-primary text-lg font-bold">
-                {isMobile ? "与 PC 端同步" : "与手机端同步"}
+                {isMobile ? t("sync.syncWith.mobile") : t("sync.syncWith.pc")}
               </h2>
               <p className="text-text-secondary text-sm">
-                {state.lastSyncAt
-                  ? `最后同步: ${formatLastSync(state.lastSyncAt)}`
-                  : "从未同步"}
+                {lastSyncResult.type === "never"
+                  ? t("sync.lastSync.never")
+                  : t("sync.lastSync.lastTime", { time: formatLastSyncI18n(lastSyncResult, t) })}
               </p>
             </div>
           </div>
@@ -56,14 +61,14 @@ export function Sync() {
               className="w-full py-3 bg-primary text-white rounded-xl font-medium hover:bg-primary-light transition-colors flex items-center justify-center gap-2"
             >
               <ScanLine className="w-5 h-5" />
-              扫描二维码
+              {t("sync.scanQR")}
             </button>
           ) : (
             <button
               onClick={openSync}
               className="w-full py-3 bg-primary text-white rounded-xl font-medium hover:bg-primary-light transition-colors"
             >
-              显示二维码
+              {t("sync.showQR")}
             </button>
           )}
 
@@ -77,20 +82,20 @@ export function Sync() {
         {!isMobile && (
           <div className="mt-6 p-4">
             <h3 className="text-text-secondary text-sm font-medium mb-3">
-              同步说明
+              {t("sync.syncInstructions")}
             </h3>
             <div className="space-y-3 text-text-secondary text-sm">
               <div className="flex gap-3">
                 <span className="text-primary font-bold">1</span>
-                <p>PC 端显示二维码后，使用手机扫描</p>
+                <p>{t("sync.instruction1")}</p>
               </div>
               <div className="flex gap-3">
                 <span className="text-primary font-bold">2</span>
-                <p>手机将自动与 PC 端交换数据</p>
+                <p>{t("sync.instruction2")}</p>
               </div>
               <div className="flex gap-3">
                 <span className="text-primary font-bold">3</span>
-                <p>同步完成后，两端数据保持一致</p>
+                <p>{t("sync.instruction3")}</p>
               </div>
             </div>
           </div>
@@ -105,7 +110,7 @@ export function Sync() {
               onClick={cancelSync}
               className="w-full mt-4 py-2 text-text-secondary hover:text-text-primary transition-colors"
             >
-              取消同步
+              {t("sync.cancelSync")}
             </button>
           </div>
         </div>
@@ -133,27 +138,4 @@ export function Sync() {
       )}
     </div>
   );
-}
-
-function formatLastSync(dateStr: string | null): string {
-  if (!dateStr) return "从未同步";
-  const date = new Date(dateStr);
-  const now = new Date();
-  const diff = now.getTime() - date.getTime();
-  const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-
-  if (days === 0) {
-    const hours = Math.floor(diff / (1000 * 60 * 60));
-    if (hours === 0) {
-      const minutes = Math.floor(diff / (1000 * 60));
-      return minutes === 0 ? "刚刚" : `${minutes} 分钟前`;
-    }
-    return `${hours} 小时前`;
-  } else if (days === 1) {
-    return "昨天";
-  } else if (days < 7) {
-    return `${days} 天前`;
-  } else {
-    return date.toLocaleDateString("zh-CN");
-  }
 }

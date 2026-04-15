@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import type { TaskHistoryFilterStatus } from "@/hooks/useTaskHistory";
 import { filterTabs } from "../lib";
 
@@ -8,6 +9,8 @@ interface FilterBarProps {
 }
 
 export function FilterBar({ filterStatus, total, onFilterChange }: FilterBarProps) {
+  const { t } = useTranslation();
+
   return (
     <div className="px-4 py-2 flex items-center justify-between sticky top-[60px] bg-background z-10 shrink-0">
       {/* Filter Tabs */}
@@ -22,13 +25,13 @@ export function FilterBar({ filterStatus, total, onFilterChange }: FilterBarProp
                 : "text-text-secondary hover:text-text-primary"
             }`}
           >
-            {tab.label}
+            {t(tab.labelKey)}
           </button>
         ))}
       </div>
 
       {/* Total Count */}
-      <span className="text-text-muted text-sm">共 {total} 条</span>
+      <span className="text-text-muted text-sm">{total} records</span>
     </div>
   );
 }

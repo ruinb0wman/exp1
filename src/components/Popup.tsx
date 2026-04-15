@@ -1,4 +1,5 @@
 import { useEffect, useCallback, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { X } from 'lucide-react';
 
 export interface PopupProps {
@@ -48,7 +49,7 @@ export function Popup({
   maxHeight,
   width,
 }: PopupProps) {
-  // 动画状态: 'entering' | 'entered' | 'exiting' | 'exited'
+  const { t } = useTranslation();
   const [animationState, setAnimationState] = useState<'entering' | 'entered' | 'exiting' | 'exited'>(
     isOpen ? 'entered' : 'exited'
   );
@@ -181,7 +182,7 @@ export function Popup({
                 <button
                   onClick={onClose}
                   className="p-2 rounded-full hover:bg-zinc-700 transition-colors"
-                  aria-label="关闭"
+                  aria-label={t("popup.close")}
                 >
                   <X className="w-5 h-5 text-zinc-400" />
                 </button>

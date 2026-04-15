@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react";
+import { useTranslation } from "react-i18next";
 import { Loader2 } from "lucide-react";
 import { Header } from "@/components/Header";
 import { TaskDetailPopup } from "@/components/TaskDetailPopup";
@@ -15,6 +16,7 @@ import {
 } from "./components";
 
 export function TaskHistory() {
+  const { t } = useTranslation();
   const { user } = useUserStore();
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const loadingTriggerRef = useRef<HTMLDivElement>(null);
@@ -109,7 +111,7 @@ export function TaskHistory() {
   return (
     <div className="bg-background flex flex-col">
       {/* Header */}
-      <Header title="任务历史" back />
+      <Header title={t("taskHistory.title")} back />
 
       {/* Stats Summary */}
       <StatsSummary stats={stats} isLoading={isLoading} />

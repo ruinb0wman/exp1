@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useTranslation } from "react-i18next";
 import { useParams, useNavigate } from "react-router";
 import { Header } from "@/components/Header";
 import { RadioGroup } from "@/components/RadioGroup";
@@ -31,6 +32,7 @@ const monthDays = Array.from({ length: 31 }, (_, i) => ({
 }));
 
 export function EditReward() {
+  const { t } = useTranslation();
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { user } = useUserStore();
@@ -152,7 +154,7 @@ export function EditReward() {
       navigate(-1);
     } catch (err) {
       console.error("Failed to save reward:", err);
-      alert(err instanceof Error ? err.message : "保存失败");
+      alert(err instanceof Error ? err.message : t("editReward.saveFailed"));
     }
   };
 

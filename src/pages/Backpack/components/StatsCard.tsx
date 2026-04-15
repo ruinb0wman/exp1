@@ -1,4 +1,5 @@
 import { Package } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import type { RewardWithTemplate } from "../lib";
 
 interface StatsCardProps {
@@ -6,6 +7,7 @@ interface StatsCardProps {
 }
 
 export function StatsCard({ items }: StatsCardProps) {
+  const { t } = useTranslation();
   return (
     <div className="px-4 pb-4">
       <div className="rounded-xl bg-surface p-4 border border-border">
@@ -14,12 +16,12 @@ export function StatsCard({ items }: StatsCardProps) {
             <Package className="w-7 h-7 text-primary" />
           </div>
           <div className="flex-1">
-            <p className="text-text-secondary text-sm">背包物品总数</p>
+            <p className="text-text-secondary text-sm">{t("backpack.stats.total")}</p>
             <p className="text-text-primary text-2xl font-bold">{items.length}</p>
           </div>
           <div className="text-right">
             <p className="text-green-400 text-sm font-medium">
-              {items.filter((i) => i.instance.status === "available").length} 可用
+              {items.filter((i) => i.instance.status === "available").length} {t("backpack.stats.available")}
             </p>
           </div>
         </div>

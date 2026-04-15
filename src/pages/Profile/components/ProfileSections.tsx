@@ -1,4 +1,6 @@
+import { useTranslation } from "react-i18next";
 import { Settings, RefreshCw } from "lucide-react";
+import { formatLastSync, formatLastSyncI18n } from "@/libs/time";
 
 interface ProfileHeaderProps {
   onSettingsClick: () => void;
@@ -28,6 +30,12 @@ interface UserInfoSectionProps {
 }
 
 export function UserInfoSection({ user, onSyncClick, lastSyncAt }: UserInfoSectionProps) {
+  const { t } = useTranslation();
+  const lastSyncResult = formatLastSync(lastSyncAt ?? null);
+  const lastSyncText = lastSyncResult.type === "never" 
+    ? "" 
+    : t("profile.lastSync", { time: formatLastSyncI18n(lastSyncResult, t) });
+
   return (
     <div className="p-4">
       <div className="flex gap-4 items-center">
@@ -51,9 +59,9 @@ export function UserInfoSection({ user, onSyncClick, lastSyncAt }: UserInfoSecti
           </button>
         )}
       </div>
-      {onSyncClick && lastSyncAt && (
+      {onSyncClick && lastSyncText && (
         <p className="text-text-secondary text-xs mt-2 ml-24">
-          最后同步: {formatLastSync(lastSyncAt)}
+          {lastSyncText}
         </p>
       )}
     </div>
@@ -65,13 +73,14 @@ interface PointsCardProps {
 }
 
 export function PointsCard({ currentPoints }: PointsCardProps) {
+  const { t } = useTranslation();
   return (
     <div className="p-4">
       <div className="rounded-xl bg-primary p-6">
-        <p className="text-white/80 text-sm font-normal">CURRENT EXP</p>
-        <p className="text-white text-4xl font-bold mt-1">{currentPoints} exp</p>
+        <p className="text-white/80 text-sm font-normal">{t("profile.currentExp")}</p>
+        <p className="text-white text-4xl font-bold mt-1">{currentPoints} {t("common.exp")}</p>
         <p className="text-white/80 text-base mt-1">
-          Well done! Keep up the great work.
+          {t("profile.greatWork")}
         </p>
       </div>
     </div>
@@ -102,26 +111,4 @@ export function QuickActions({ actions, onActionClick }: QuickActionsProps) {
       ))}
     </div>
   );
-}
-
-function formatLastSync(dateStr: string): string {
-  const date = new Date(dateStr);
-  const now = new Date();
-  const diff = now.getTime() - date.getTime();
-  const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-
-  if (days === 0) {
-    const hours = Math.floor(diff / (1000 * 60 * 60));
-    if (hours === 0) {
-      const minutes = Math.floor(diff / (1000 * 60));
-      return minutes === 0 ? "刚刚" : `${minutes} 分钟前`;
-    }
-    return `${hours} 小时前`;
-  } else if (days === 1) {
-    return "昨天";
-  } else if (days < 7) {
-    return `${days} 天前`;
-  } else {
-    return date.toLocaleDateString("zh-CN");
-  }
 }

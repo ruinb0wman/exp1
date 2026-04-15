@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import type { TaskStats } from "@/hooks/useTaskHistory";
 
 interface StatsSummaryProps {
@@ -6,11 +7,13 @@ interface StatsSummaryProps {
 }
 
 export function StatsSummary({ stats, isLoading }: StatsSummaryProps) {
+  const { t } = useTranslation();
+
   const items = [
-    { label: "全部", value: stats?.total ?? 0, colorClass: "text-text-primary" },
-    { label: "待完成", value: stats?.pending ?? 0, colorClass: "text-primary" },
-    { label: "已完成", value: stats?.completed ?? 0, colorClass: "text-green-500" },
-    { label: "已跳过", value: stats?.skipped ?? 0, colorClass: "text-text-muted" },
+    { label: t("stats.all"), value: stats?.total ?? 0, colorClass: "text-text-primary" },
+    { label: t("stats.pending"), value: stats?.pending ?? 0, colorClass: "text-primary" },
+    { label: t("stats.completed"), value: stats?.completed ?? 0, colorClass: "text-green-500" },
+    { label: t("stats.skipped"), value: stats?.skipped ?? 0, colorClass: "text-text-muted" },
   ];
 
   return (

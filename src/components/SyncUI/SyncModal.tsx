@@ -1,4 +1,5 @@
 import { useState, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import { RefreshCw, RotateCcw } from 'lucide-react';
 import { Popup } from '@/components/Popup';
 import { QRCodeDisplay } from './QRCodeDisplay';
@@ -7,21 +8,13 @@ import { SyncProgressUI } from './SyncProgress';
 import type { SyncProgress } from '@/services/sync';
 
 interface SyncModalProps {
-  /** 是否显示 */
   isOpen: boolean;
-  /** 关闭回调 */
   onClose: () => void;
-  /** 平台类型 */
   platform: 'desktop' | 'mobile';
-  /** QR码内容（PC端） */
   qrCodeContent?: string;
-  /** 同步进度 */
   progress: SyncProgress;
-  /** 开始同步（手机端扫码后） */
   onStartSync?: (serverUrl: string) => void;
-  /** 重试 */
   onRetry?: () => void;
-  /** 取消同步 */
   onCancel?: () => void;
 }
 
@@ -35,14 +28,13 @@ export function SyncModal({
   onRetry,
   onCancel,
 }: SyncModalProps) {
+  const { t } = useTranslation();
   const [showScanner, setShowScanner] = useState(false);
 
-  // 处理扫码结果
   const handleScan = useCallback((content: string) => {
     console.log('QR Scanner - Raw content:', content);
     setShowScanner(false);
     try {
-      // 解析 QR 码内容
       const data = JSON.parse(content);
       console.log('QR Scanner - Parsed data:', data);
       if (data.ip && data.port) {
@@ -58,9 +50,7 @@ export function SyncModal({
     }
   }, [onStartSync]);
 
-  // 渲染内容
   const renderContent = () => {
-    // 错误状态
     if (progress.phase === 'error') {
       return (
         <div className="flex flex-col items-center py-8">
@@ -71,20 +61,19 @@ export function SyncModal({
               className="flex items-center gap-2 px-6 py-2 bg-primary text-white rounded-lg hover:bg-primary-light transition-colors"
             >
               <RotateCcw className="w-4 h-4" />
-              重试
+              {t("sync.retry")}
             </button>
             <button
               onClick={onCancel}
               className="px-6 py-2 text-text-secondary hover:text-text-primary transition-colors"
             >
-              取消
+              {t("common.cancel")}
             </button>
           </div>
         </div>
       );
     }
 
-    // 同步中或完成
     if (progress.phase !== 'idle') {
       return (
         <div className="py-4">
@@ -94,21 +83,19 @@ export function SyncModal({
               onClick={onCancel}
               className="w-full mt-6 py-2 text-text-secondary hover:text-text-primary transition-colors"
             >
-              取消同步
+              {t("sync.cancelSync")}
             </button>
           )}
         </div>
       );
     }
 
-    // 初始状态
     return (
       <div className="flex flex-col items-center py-6">
         {platform === 'desktop' ? (
-          // PC端：显示 QR 码
           <>
             <p className="text-text-secondary text-center mb-6">
-              请在手机端打开应用，扫描下方二维码进行同步
+              {t("sync.pcInstructions")}
             </p>
             <QRCodeDisplay
               content={qrCodeContent || ''}
@@ -117,22 +104,21 @@ export function SyncModal({
             />
             <div className="mt-6 text-center">
               <p className="text-sm text-text-muted">
-                等待手机端连接...
+                {t("sync.waitingForConnection")}
               </p>
             </div>
           </>
         ) : (
-          // 手机端：显示扫码按钮
           <>
             <p className="text-text-secondary text-center mb-6">
-              点击下方按钮扫描 PC 端显示的二维码
+              {t("sync.mobileInstructions")}
             </p>
             <button
               onClick={() => setShowScanner(true)}
               className="flex items-center gap-2 px-8 py-4 bg-primary text-white rounded-xl hover:bg-primary-light transition-colors"
             >
               <RefreshCw className="w-5 h-5" />
-              扫描二维码
+              {t("sync.scanQR")}
             </button>
           </>
         )}
@@ -146,13 +132,12 @@ export function SyncModal({
         isOpen={isOpen && !showScanner}
         onClose={onClose}
         position="center"
-        title="数据同步"
+        title={t("sync.title")}
         width="400px"
       >
         {renderContent()}
       </Popup>
 
-      {/* 扫码界面 */}
       {platform === 'mobile' && (
         <QRScanner
           isOpen={showScanner}

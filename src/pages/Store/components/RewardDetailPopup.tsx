@@ -1,7 +1,9 @@
+import { useTranslation } from "react-i18next";
+import i18n from "i18next";
 import { Sparkles, Clock } from "lucide-react";
 import { NumberInput } from "@/components/NumberInput";
 import { DynamicIcon } from "@/components/DynamicIcon";
-import { formatDuration } from "@/libs/time";
+import { formatDuration, formatDurationToString } from "@/libs/time";
 import type { StoreReward } from "./RewardsGrid";
 
 interface RewardDetailPopupProps {
@@ -25,6 +27,7 @@ export function RewardDetailPopup({
   redeemError,
   onRedeem,
 }: RewardDetailPopupProps) {
+  const { t } = useTranslation();
   const { template, availableCount } = reward;
   const totalCost = template.pointsCost * redeemQuantity;
   const canRedeem = 
@@ -32,9 +35,13 @@ export function RewardDetailPopup({
     currentPoints >= totalCost &&
     (template.replenishmentMode === 'none' || availableCount >= redeemQuantity);
 
+  const durationResult = formatDuration(template.validDuration);
+  const durationText = durationResult.type === "permanent" 
+    ? t("store.forever") 
+    : formatDurationToString(durationResult);
+
   return (
     <div className="space-y-6 py-2">
-      {/* Icon & Title */}
       <div className="flex flex-col items-center gap-4">
         <div
           className="w-24 h-24 rounded-2xl flex items-center justify-center"
@@ -58,50 +65,47 @@ export function RewardDetailPopup({
         </div>
       </div>
 
-      {/* Info Cards */}
       <div className="grid grid-cols-2 gap-3">
         <div className="bg-surface rounded-xl p-4 text-center">
           <div className="flex items-center justify-center gap-1 text-primary mb-1">
             <Sparkles className="w-4 h-4" />
             <span className="text-lg font-bold">{template.pointsCost}</span>
           </div>
-          <p className="text-text-muted text-xs">需要 exp</p>
+          <p className="text-text-muted text-xs">{i18n.language === 'zh' ? `需要 ${t("common.exp")} 积分` : `Costs ${t("common.exp")} exp`}</p>
         </div>
         <div className="bg-surface rounded-xl p-4 text-center">
           <div className="flex items-center justify-center gap-1 text-text-secondary mb-1">
             <Clock className="w-4 h-4" />
             <span className="text-lg font-bold">
-              {formatDuration(template.validDuration)}
+              {durationText}
             </span>
           </div>
-          <p className="text-text-muted text-xs">有效期</p>
+          <p className="text-text-muted text-xs">{t("store.validDuration")}</p>
         </div>
       </div>
 
-      {/* Stock Info */}
       {template.replenishmentMode !== 'none' && (
         <div className="bg-surface rounded-xl p-4">
           <div className="flex items-center justify-between">
-            <span className="text-text-secondary text-sm">当前库存</span>
+            <span className="text-text-secondary text-sm">{t("store.currentStock")}</span>
             <span className="text-text-primary font-medium">
-              {availableCount} 个
+              {availableCount} {t("common.items")}
             </span>
           </div>
           {template.replenishmentLimit !== undefined && (
             <div className="flex items-center justify-between mt-2">
-              <span className="text-text-secondary text-sm">库存上限</span>
+              <span className="text-text-secondary text-sm">{t("store.stockLimit")}</span>
               <span className="text-text-primary font-medium">
-                {template.replenishmentLimit} 个
+                {template.replenishmentLimit} {t("common.items")}
               </span>
             </div>
           )}
         </div>
       )}
 
-      {/* Quantity Selector */}
       <div className="bg-surface rounded-xl p-4">
         <div className="flex items-center justify-between mb-3">
-          <span className="text-text-secondary text-sm">兑换数量</span>
+          <span className="text-text-secondary text-sm">{t("store.redeemQuantity")}</span>
           <NumberInput
             value={redeemQuantity}
             onChange={onQuantityChange}
@@ -111,19 +115,17 @@ export function RewardDetailPopup({
           />
         </div>
         <div className="flex items-center justify-between pt-3 border-t border-border">
-          <span className="text-text-secondary text-sm">总计</span>
+          <span className="text-text-secondary text-sm">{t("store.total")}</span>
           <span className="text-primary font-bold text-lg">
-            {totalCost.toLocaleString()} exp
+            {totalCost.toLocaleString()} {t("common.exp")}
           </span>
         </div>
       </div>
 
-      {/* Error Message */}
       {redeemError && (
         <p className="text-primary text-sm text-center">{redeemError}</p>
       )}
 
-      {/* Action Button */}
       <button
         onClick={onRedeem}
         disabled={!canRedeem}
@@ -132,11 +134,11 @@ export function RewardDetailPopup({
         {isActionLoading ? (
           <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin" />
         ) : template.replenishmentMode !== 'none' && availableCount < redeemQuantity ? (
-          "库存不足"
+          t("store.stockShortage")
         ) : currentPoints < totalCost ? (
-          "积分不足"
+          t("store.pointsShortage")
         ) : (
-          `兑换 ${redeemQuantity} 个`
+          i18n.language === 'zh' ? `兑换 ${redeemQuantity} 个` : `Redeem ${redeemQuantity}`
         )}
       </button>
     </div>

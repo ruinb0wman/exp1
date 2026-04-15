@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router";
+import { useTranslation } from "react-i18next";
 import { Header } from "../components/Header";
 import { RadioGroup } from "../components/RadioGroup";
 import { MultiSelectGrid } from "../components/MultiSelectGrid";
@@ -35,6 +36,7 @@ const monthDays = Array.from({ length: 31 }, (_, i) => ({
 }));
 
 export function EditTask() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
   const { user } = useUserStore();
@@ -365,7 +367,7 @@ export function EditTask() {
               <div className="pt-4 border-t border-surface-light">
                 <div className="flex items-center justify-between">
                   <div className="text-text-secondary text-sm">
-                    完成获得积分
+                    {t("editTask.completionPoints")}
                   </div>
                   <NumberInput
                     value={completionPoints}
@@ -382,14 +384,14 @@ export function EditTask() {
               <div className="pt-4 border-t border-surface-light space-y-4">
                 <div className="flex items-center justify-between">
                   <p className="text-text-secondary text-sm">
-                    阶段配置（达到目标获得积分）
+                    {t("editTask.stageConfig")}
                   </p>
                   <button
                     onClick={addStage}
                     className="flex items-center gap-1 text-sm text-primary hover:text-primary-light"
                   >
                     <Plus className="w-4 h-4" />
-                    添加阶段
+                    {t("editTask.addStage")}
                   </button>
                 </div>
 
@@ -399,7 +401,7 @@ export function EditTask() {
                     
                     <div className="flex-1">
                       <label className="text-xs text-text-muted block mb-1">
-                        达到{taskType === 'time' ? '（分钟）' : '（次数）'}
+                        {t("editTask.reachTarget")}{taskType === 'time' ? t("editTask.minutesUnit") : t("editTask.timesUnit")}
                       </label>
                       <NumberInput
                         value={stage.threshold}
@@ -411,7 +413,7 @@ export function EditTask() {
                     </div>
                     
                     <div className="flex-1">
-                      <label className="text-xs text-text-muted block mb-1">获得积分</label>
+                      <label className="text-xs text-text-muted block mb-1">{t("editTask.earnPoints")}</label>
                       <NumberInput
                         value={stage.points}
                         onChange={(value) => updateStage(index, 'points', value)}
@@ -434,7 +436,7 @@ export function EditTask() {
                 {/* 完成额外积分 */}
                 <div className="flex items-center justify-between pt-2 border-t border-surface-light">
                   <div className="text-text-secondary text-sm">
-                    全部完成额外奖励
+                    {t("editTask.completionBonus")}
                   </div>
                   <NumberInput
                     value={completionPoints}
@@ -447,7 +449,7 @@ export function EditTask() {
 
                 {/* 积分预览 */}
                 <div className="text-sm text-text-muted pt-2">
-                  最高可获得：{stages.reduce((sum, s) => sum + s.points, 0) + completionPoints} 积分
+                  {t("editTask.maxPoints", { points: stages.reduce((sum, s) => sum + s.points, 0) + completionPoints })}
                 </div>
               </div>
             )}
@@ -458,7 +460,7 @@ export function EditTask() {
                 {/* Checklist */}
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
-                    <div className="text-text-secondary text-sm">子任务列表</div>
+                    <div className="text-text-secondary text-sm">{t("editTask.subtaskList")}</div>
                   </div>
                   {/* 添加新子任务 */}
                   <div className="flex items-center gap-3 bg-surface-light p-3 rounded-xl">
@@ -537,7 +539,7 @@ export function EditTask() {
                       onChange={() => setSubtaskMode('all')}
                       className="w-4 h-4 accent-primary"
                     />
-                    <span className="text-text-primary text-sm">完成所有子任务</span>
+                    <span className="text-text-primary text-sm">{t("editTask.completeAllSubtasks")}</span>
                   </label>
                   <label className="flex items-center gap-2 cursor-pointer">
                     <input
@@ -546,14 +548,14 @@ export function EditTask() {
                       onChange={() => setSubtaskMode('partial')}
                       className="w-4 h-4 accent-primary"
                     />
-                    <span className="text-text-primary text-sm">完成指定数量</span>
+                    <span className="text-text-primary text-sm">{t("editTask.completeCount")}</span>
                   </label>
                 </div>
 
                 {/* Partial 模式：设置需要完成的数量 */}
                 {subtaskMode === 'partial' && (
                   <div className="flex items-center gap-2">
-                    <span className="text-text-secondary text-sm">完成</span>
+                    <span className="text-text-secondary text-sm">{t("editTask.complete")}</span>
                     <NumberInput
                       value={requiredCount}
                       onChange={(value) => setRequiredCount(Math.min(subtasks.length, Math.max(1, value)))}
@@ -562,14 +564,14 @@ export function EditTask() {
                       size="sm"
                       inputWidth="w-14"
                     />
-                    <span className="text-text-secondary text-sm">项即可</span>
+                    <span className="text-text-secondary text-sm">{t("editTask.itemsSufficient")}</span>
                   </div>
                 )}
 
                 {/* 完成额外积分 */}
                 <div className="flex items-center justify-between pt-2 border-t border-surface-light">
                   <div className="text-text-secondary text-sm">
-                    全部完成额外奖励
+                    {t("editTask.completionBonus")}
                   </div>
                   <NumberInput
                     value={completionPoints}
@@ -583,8 +585,8 @@ export function EditTask() {
                 {/* 积分预览 */}
                 <div className="text-sm text-text-muted pt-2">
                   {subtaskMode === 'all' 
-                    ? `最高可获得：${pointsPerSubtask.reduce((sum, p) => sum + (p || 0), 0) + completionPoints} 积分`
-                    : `最高可获得：${[...pointsPerSubtask].sort((a, b) => (b || 0) - (a || 0)).slice(0, requiredCount).reduce((sum, p) => sum + (p || 0), 0) + completionPoints} 积分`
+                    ? t("editTask.maxPoints", { points: pointsPerSubtask.reduce((sum, p) => sum + (p || 0), 0) + completionPoints })
+                    : t("editTask.maxPoints", { points: [...pointsPerSubtask].sort((a, b) => (b || 0) - (a || 0)).slice(0, requiredCount).reduce((sum, p) => sum + (p || 0), 0) + completionPoints })
                   }
                 </div>
               </div>

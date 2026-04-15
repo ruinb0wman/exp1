@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router";
+import { useTranslation } from "react-i18next";
 import { ArrowLeft, Sparkles, CheckCircle2, Minus, Plus, Package } from "lucide-react";
 import { Header } from "@/components/Header";
 import { Popup } from "@/components/Popup";
@@ -15,6 +16,7 @@ import { BackpackItemList } from "./components/BackpackItemList";
 import { formatDate, getTimeLeft, getTabs, type GroupedReward, type TabKey } from "./lib";
 
 export function Backpack() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { user } = useUserStore();
   const { items, isLoading, refresh } = useUserBackpack(user?.id ?? 0);
@@ -77,7 +79,7 @@ export function Backpack() {
       setSelectedGroup(null);
       // 可以在这里添加成功提示
     } catch (err) {
-      setUseError(err instanceof Error ? err.message : "使用失败");
+      setUseError(err instanceof Error ? err.message : t("backpack.useFailed"));
     }
   };
 
@@ -168,35 +170,35 @@ export function Backpack() {
                     {selectedGroup.template.pointsCost}
                   </span>
                 </div>
-                <p className="text-text-muted text-xs">兑换 exp</p>
+                <p className="text-text-muted text-xs">{t("common.exp")}</p>
               </div>
               <div className="bg-surface rounded-xl p-4 text-center">
                 <div className="flex items-center justify-center gap-1 text-green-400 mb-1">
                   <CheckCircle2 className="w-4 h-4" />
-                  <span className="text-lg font-bold">可用</span>
+                  <span className="text-lg font-bold">{t("backpack.status.available")}</span>
                 </div>
-                <p className="text-text-muted text-xs">状态</p>
+                <p className="text-text-muted text-xs">{t("backpack.detail.status")}</p>
               </div>
               <div className="bg-surface rounded-xl p-4 text-center">
                 <div className="flex items-center justify-center gap-1 text-primary mb-1">
                   <Package className="w-4 h-4" />
                   <span className="text-lg font-bold">{selectedGroup.count}</span>
                 </div>
-                <p className="text-text-muted text-xs">拥有数量</p>
+                <p className="text-text-muted text-xs">{t("backpack.detail.owned")}</p>
               </div>
             </div>
 
             {/* Time Info */}
             <div className="bg-surface rounded-xl p-4 space-y-2">
               <div className="flex items-center justify-between">
-                <span className="text-text-secondary text-sm">最早兑换</span>
+                <span className="text-text-secondary text-sm">{t("backpack.detail.firstRedeemed")}</span>
                 <span className="text-text-primary text-sm">
                   {formatDate(selectedGroup.instances[0]?.createdAt)}
                 </span>
               </div>
               {selectedGroup.instances[0]?.expiresAt && (
                 <div className="flex items-center justify-between">
-                  <span className="text-text-secondary text-sm">过期时间</span>
+                  <span className="text-text-secondary text-sm">{t("backpack.detail.expireTime")}</span>
                   <span className="text-amber-400 text-sm">
                     {formatDate(selectedGroup.instances[0].expiresAt)}
                   </span>
@@ -204,9 +206,17 @@ export function Backpack() {
               )}
               {selectedGroup.instances[0]?.expiresAt && (
                 <div className="flex items-center justify-between pt-2 border-t border-border">
-                  <span className="text-text-secondary text-sm">剩余时间</span>
+                  <span className="text-text-secondary text-sm">{t("backpack.detail.timeLeft")}</span>
                   <span className="text-amber-400 text-sm font-medium">
-                    {getTimeLeft(selectedGroup.instances[0].expiresAt)}
+                    {(() => {
+                      const result = getTimeLeft(selectedGroup.instances[0].expiresAt);
+                      switch (result.type) {
+                        case "expired": return t("backpack.timeLeft.expired");
+                        case "daysLeft": return `${result.value} ${t("backpack.timeLeft.days")}`;
+                        case "hoursLeft": return `${result.value} ${t("backpack.timeLeft.hours")}`;
+                        case "aboutToExpire": return t("backpack.timeLeft.aboutToExpire");
+                      }
+                    })()}
                   </span>
                 </div>
               )}
@@ -216,7 +226,7 @@ export function Backpack() {
             {selectedGroup.count > 1 && (
               <div className="bg-surface rounded-xl p-4">
                 <div className="flex items-center justify-between mb-3">
-                  <span className="text-text-secondary text-sm">使用数量</span>
+                  <span className="text-text-secondary text-sm">{t("backpack.detail.useQuantity")}</span>
                   <span className="text-text-primary text-sm font-medium">
                     {useQuantity} / {selectedGroup.count}
                   </span>
@@ -257,9 +267,9 @@ export function Backpack() {
               {isActionLoading ? (
                 <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin" />
               ) : selectedGroup.count > 1 ? (
-                `使用 ${useQuantity} 个奖励`
+                `${t("backpack.use")} ${useQuantity} ${t("backpack.rewards")}`
               ) : (
-                "使用奖励"
+                t("backpack.useReward")
               )}
             </button>
           </div>

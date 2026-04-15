@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { Package, Sparkles } from "lucide-react";
 import { DynamicIcon } from "@/components/DynamicIcon";
 import { EmptyState } from "@/components/EmptyState";
@@ -15,6 +16,8 @@ interface RewardsGridProps {
 }
 
 export function RewardsGrid({ rewards, isLoading, onRewardClick }: RewardsGridProps) {
+  const { t } = useTranslation();
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-12">
@@ -27,8 +30,8 @@ export function RewardsGrid({ rewards, isLoading, onRewardClick }: RewardsGridPr
     return (
       <EmptyState
         icon={<Package className="w-8 h-8" />}
-        title="暂无奖励"
-        description="点击右上角 + 创建新奖励"
+        title={t("store.noRewards")}
+        description={t("store.createReward")}
       />
     );
   }

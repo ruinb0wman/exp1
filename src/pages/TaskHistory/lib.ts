@@ -3,11 +3,11 @@ import type { TaskHistoryItem } from "@/db/services";
 import type { TaskHistoryFilterStatus } from "@/hooks/useTaskHistory";
 
 // 过滤标签配置
-export const filterTabs: { key: TaskHistoryFilterStatus; label: string }[] = [
-  { key: "all", label: "全部" },
-  { key: "pending", label: "待完成" },
-  { key: "completed", label: "已完成" },
-  { key: "skipped", label: "已跳过" },
+export const filterTabs: { key: TaskHistoryFilterStatus; labelKey: string }[] = [
+  { key: "all", labelKey: "stats.all" },
+  { key: "pending", labelKey: "stats.pending" },
+  { key: "completed", labelKey: "stats.completed" },
+  { key: "skipped", labelKey: "stats.skipped" },
 ];
 
 // 获取状态图标

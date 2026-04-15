@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import { Popup } from '@/components/Popup';
 import { DurationSlider } from './DurationSlider';
 import type { PomoSettings } from '@/db/types/pomo';
@@ -23,52 +24,56 @@ export function SettingsPopup({
   settings,
   onUpdateSettings,
 }: SettingsPopupProps) {
+  const { t } = useTranslation();
   return (
     <Popup
       isOpen={isOpen}
       onClose={onClose}
       position="center"
-      title="番茄钟设置"
+      title={t('pomo.settings.title')}
     >
       <div className="space-y-6 w-80">
         {/* 时长设置 */}
         <DurationSlider
-          label="专注时长"
+          label={t('pomo.settings.focusDuration')}
           value={settings.focusDuration}
           min={1}
           max={60}
+          unit={t('pomo.minutes')}
           onChange={(val) => onUpdateSettings({ focusDuration: val })}
         />
 
         <DurationSlider
-          label="短休息时长"
+          label={t('pomo.settings.shortBreakDuration')}
           value={settings.shortBreakDuration}
           min={1}
           max={15}
+          unit={t('pomo.minutes')}
           onChange={(val) => onUpdateSettings({ shortBreakDuration: val })}
         />
 
         <DurationSlider
-          label="长休息时长"
+          label={t('pomo.settings.longBreakDuration')}
           value={settings.longBreakDuration}
           min={5}
           max={30}
+          unit={t('pomo.minutes')}
           onChange={(val) => onUpdateSettings({ longBreakDuration: val })}
         />
 
         <DurationSlider
-          label="长休息间隔"
+          label={t('pomo.settings.longBreakInterval')}
           value={settings.longBreakInterval}
           min={2}
           max={8}
-          unit="个番茄"
+          unit={t('pomo.settings.pomoUnit')}
           onChange={(val) => onUpdateSettings({ longBreakInterval: val })}
         />
 
         {/* 自动开始设置 */}
         <div className="space-y-3 pt-2 border-t border-border">
           <label className="flex items-center justify-between">
-            <span className="text-text-secondary text-sm">自动开始休息</span>
+            <span className="text-text-secondary text-sm">{t('pomo.settings.autoStartBreaks')}</span>
             <button
               onClick={() =>
                 onUpdateSettings({ autoStartBreaks: !settings.autoStartBreaks })
@@ -86,7 +91,7 @@ export function SettingsPopup({
           </label>
 
           <label className="flex items-center justify-between">
-            <span className="text-text-secondary text-sm">自动开始专注</span>
+            <span className="text-text-secondary text-sm">{t('pomo.settings.autoStartPomos')}</span>
             <button
               onClick={() =>
                 onUpdateSettings({ autoStartPomos: !settings.autoStartPomos })

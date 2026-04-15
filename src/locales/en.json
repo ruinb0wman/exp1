@@ -20,5 +20,398 @@
       "afternoon": "Afternoon",
       "evening": "Evening"
     }
+  },
+  "home": {
+    "greeting": {
+      "morning": "Good Morning!",
+      "afternoon": "Good Afternoon!",
+      "evening": "Good Evening!"
+    },
+    "task": {
+      "title": "Today's Tasks",
+      "noDate": "No Date",
+      "noTasks": "No tasks for today",
+      "allTasks": "All Tasks",
+      "history": "History"
+    },
+    "status": {
+      "completed": "Completed",
+      "pending": "Pending",
+      "skipped": "Skipped",
+      "inProgress": "In Progress",
+      "expired": "Expired"
+    },
+    "progress": {
+      "completedOf": "You've completed {count} of {total} tasks today."
+    },
+    "detail": {
+      "taskDetail": "Task Detail",
+      "edit": "Edit",
+      "editTask": "Edit Task",
+      "description": "Description",
+      "repeat": "Repeat",
+      "date": "Date",
+      "progress": "Progress",
+      "subtasks": "Subtasks",
+      "clickSubtasks": "Click subtasks above to complete",
+      "loading": "Loading...",
+      "processing": "Processing...",
+      "markIncomplete": "Mark as Incomplete",
+      "usePomodoro": "Use Pomodoro",
+      "completeOne": "Complete One",
+      "completeTask": "Complete Task",
+      "close": "Close",
+      "taskExpired": "This task has expired"
+    },
+    "repeat": {
+      "daily": "Daily",
+      "weekly": "Weekly",
+      "monthly": "Monthly",
+      "oneTime": "One-time"
+    },
+    "units": {
+      "minutes": "min",
+      "times": "times",
+      "items": "items"
+    },
+    "time": {
+      "today": "Today",
+      "yesterday": "Yesterday",
+      "daysAgo": "{n} days ago",
+      "expired": "Expired",
+      "expiresInDays": "Expires in {n} days",
+      "expiresInHours": "Expires in {h} hours",
+      "expiresInMinutes": "Expires in {m} minutes",
+      "due": "Due",
+      "completed": "Completed",
+      "exp": "exp",
+      "sunday": "Sun",
+      "monday": "Mon",
+      "tuesday": "Tue",
+      "wednesday": "Wed",
+      "thursday": "Thu",
+      "friday": "Fri",
+      "saturday": "Sat"
+    },
+    "hint": {
+      "nextStage": "{remaining} more {unit} to earn +{points} exp"
+    },
+    "preview": "Preview",
+    "previewMode": "Preview Mode"
+  },
+  "common": {
+    "today": "Today",
+    "yesterday": "Yesterday",
+    "daysAgo": "{n} days ago",
+    "expired": "Expired",
+    "exp": "exp",
+    "justNow": "Just now",
+    "minutesAgo": "{n} min ago",
+    "hoursAgo": "{n} hours ago",
+    "confirm": "Confirm",
+    "cancel": "Cancel",
+    "apply": "Apply",
+    "save": "Save",
+    "delete": "Delete",
+    "edit": "Edit",
+    "loading": "Loading...",
+    "error": "Error",
+    "success": "Success",
+    "items": "items",
+    "failed": "Failed",
+    "itemsUnit": "{n}",
+    "hours": "h",
+    "minutes": "m"
+  },
+  "sync": {
+    "title": "Sync",
+    "syncWith": {
+      "pc": "Sync with PC",
+      "mobile": "Sync with Mobile"
+    },
+    "lastSync": {
+      "never": "Never synced",
+      "lastTime": "Last sync: {time}"
+    },
+    "scanQR": "Scan QR Code",
+    "showQR": "Show QR Code",
+    "syncInstructions": "How to Sync",
+    "instruction1": "PC shows QR code, scan with mobile",
+    "instruction2": "Mobile will exchange data with PC automatically",
+    "instruction3": "Both devices will have the same data after sync",
+    "cancelSync": "Cancel Sync",
+    "retry": "Retry",
+    "phase": {
+      "idle": "Preparing...",
+      "init": "Initializing...",
+      "upload": "Uploading data...",
+      "merge": "Merging data...",
+      "download": "Downloading data...",
+      "apply": "Applying data...",
+      "complete": "Sync complete",
+      "error": "Sync failed"
+    },
+    "pcInstructions": "Open the app on your mobile and scan the QR code below",
+    "mobileInstructions": "Tap the button below to scan the QR code on PC",
+    "waitingForConnection": "Waiting for mobile to connect..."
+  },
+  "data": {
+    "title": "Import & Export",
+    "export": {
+      "title": "Export Data",
+      "description": "Export all your tasks, rewards, and points history as a JSON file for backup or use on another device.",
+      "inProgress": "Exporting...",
+      "success": "Export successful",
+      "toFile": "Export to File",
+      "failed": "Export failed: {error}"
+    },
+    "import": {
+      "title": "Import Data",
+      "description": "Restore data from a backup file. You can choose to overwrite existing data.",
+      "reading": "Reading...",
+      "selectFile": "Select File",
+      "failed": "Import failed: {error}",
+      "preview": {
+        "title": "File contents:",
+        "taskTemplates": "Task Templates",
+        "taskInstances": "Task Instances",
+        "rewardTemplates": "Reward Templates",
+        "rewardInstances": "Reward Instances",
+        "users": "User Data",
+        "pointsHistory": "Points History"
+      }
+    },
+    "warnings": {
+      "title": "Important Notes",
+      "backup": "The exported file contains all your data. Keep it safe.",
+      "backupBeforeImport": "Export your current data as a backup before importing.",
+      "fullOverwrite": "Full overwrite will delete all existing data. Proceed with caution."
+    },
+    "strategy": {
+      "title": "Choose Import Method",
+      "warning": "Importing will overwrite all existing data. Please confirm before proceeding.",
+      "confirm": "Confirm Import",
+      "fullOverwrite": "Delete all existing data and use backup file data"
+    },
+    "result": {
+      "success": "Import Successful",
+      "failed": "Import Failed",
+      "stats": "Import Stats:"
+    }
+  },
+  "store": {
+    "noRewards": "No Rewards",
+    "createReward": "Tap + to create a new reward",
+    "pointsCost": "Costs {cost} exp",
+    "validDuration": "Valid for",
+    "forever": "Forever",
+    "currentStock": "Current Stock",
+    "stockLimit": "Stock Limit",
+    "redeemQuantity": "Quantity",
+    "total": "Total",
+    "stockShortage": "Not enough stock",
+    "pointsShortage": "Not enough points",
+    "redeem": "Redeem {count}"
+  },
+  "points": {
+    "taskReward": "Task Reward",
+    "taskUndo": "Undo Deduction",
+    "taskStage": "Stage Reward",
+    "taskCompletion": "Completion Reward",
+    "taskDeduction": "Progress Reverted",
+    "rewardExchange": "Reward Redeemed",
+    "adminAdjustment": "Admin Adjustment"
+  },
+  "profile": {
+    "lastSync": "Last sync: {time}",
+    "currentExp": "CURRENT EXP",
+    "greatWork": "Well done! Keep up the great work."
+  },
+  "iconPicker": {
+    "title": "Select Icon",
+    "preview": "Preview:",
+    "search": "Search icons...",
+    "iconColor": "Icon Color",
+    "icons": "Icons ({count})",
+    "notFound": "No matching icons found"
+  },
+  "timePicker": {
+    "selectTime": "Select Time",
+    "selected": "Selected: {time}"
+  },
+  "contribution": {
+    "title": "Completion Record",
+    "completed": "completed",
+    "legend": {
+      "completed": "Completed",
+      "skipped": "Skipped",
+      "noTask": "No task"
+    },
+    "tooltip": {
+      "completed": "{date}: Completed",
+      "skipped": "{date}: Skipped",
+      "inProgress": "{date}: In Progress",
+      "noTask": "{date}: No task"
+    }
+  },
+  "task": {
+    "simpleTask": "Simple task",
+    "checklistItems": "{count} checklist item(s)",
+    "randomSubtask": " (random)"
+  },
+  "pomo": {
+    "title": "Pomodoro",
+    "todayCompleted": "{count} completed today",
+    "confirm": {
+      "giveUp": "Are you sure you want to give up the current timer?",
+      "completeEarly": "Complete the current timer early?"
+    },
+    "settings": {
+      "title": "Pomodoro Settings",
+      "focusDuration": "Focus Duration",
+      "shortBreakDuration": "Short Break Duration",
+      "longBreakDuration": "Long Break Duration",
+      "longBreakInterval": "Long Break Interval",
+      "autoStartBreaks": "Auto-start Breaks",
+      "autoStartPomos": "Auto-start Focus",
+      "pomoUnit": "pomodoros"
+    },
+    "mode": {
+      "focus": "Focus",
+      "shortBreak": "Short Break",
+      "longBreak": "Long Break",
+      "focusRunning": "Focusing",
+      "shortBreakRunning": "Short Break",
+      "longBreakRunning": "Long Break"
+    },
+    "taskSelector": {
+      "title": "Select Focus Task",
+      "freeFocus": "Free Focus",
+      "noTasks": "No pending tasks for today"
+    },
+    "earlyComplete": "Complete Early",
+    "currentTask": "Current Focus Task",
+    "noTaskSelected": "No task selected",
+    "minutes": "min",
+    "paused": "Paused"
+  },
+  "backpack": {
+    "title": "My Backpack",
+    "stats": {
+      "total": "Total items in backpack",
+      "available": "available"
+    },
+    "tabs": {
+      "available": "Available",
+      "used": "Used",
+      "expired": "Expired"
+    },
+    "status": {
+      "available": "Available",
+      "used": "Used",
+      "expired": "Expired"
+    },
+    "detail": {
+      "rewardDetails": "Reward Details",
+      "pointsCost": "Redeemed for {cost} exp",
+      "status": "Status",
+      "owned": "Owned",
+      "firstRedeemed": "First Redeemed",
+      "expireTime": "Expire Time",
+      "timeLeft": "Time Left",
+      "useQuantity": "Quantity to Use"
+    },
+    "empty": {
+      "noAvailable": "No available rewards",
+      "noUsed": "No used rewards",
+      "noExpired": "No expired rewards",
+      "goToStore": "Go to store to redeem rewards!"
+    },
+    "timeLeft": {
+      "expired": "Expired",
+      "days": "days left",
+      "hours": "hours left",
+      "aboutToExpire": "About to expire"
+    },
+    "expiredAt": "Expired on {date}",
+    "usedAt": "Used on {date}",
+    "loadMore": "Load more ({count})",
+    "use": "Use",
+    "rewards": "rewards",
+    "useReward": "Use Reward",
+    "useFailed": "Failed to use reward"
+  },
+  "taskHistory": {
+    "title": "Task History"
+  },
+  "stats": {
+    "all": "All",
+    "pending": "Pending",
+    "completed": "Completed",
+    "skipped": "Skipped"
+  },
+  "filter": {
+    "totalRecords": "{total} records"
+  },
+  "loadingMore": {
+    "loading": "Loading...",
+    "noMore": "No more records"
+  },
+  "pointsHistory": {
+    "title": "Points History",
+    "income": "Income",
+    "expense": "Expense",
+    "loadMore": "Load More",
+    "noRecords": "No records",
+    "totalRecords": "{total} records",
+    "taskReward": "Task Reward:",
+    "taskUndo": "Undo Deduction:",
+    "rewardExchange": "Reward Exchange:",
+    "adminAdjustment": "Admin Adjustment:",
+    "filters": {
+      "all": "All",
+      "task_completion": "Tasks",
+      "reward_exchange": "Rewards"
+    }
+  },
+  "dateRange": {
+    "last7days": "Last 7 days",
+    "last30days": "Last 30 days",
+    "last90days": "Last 90 days"
+  },
+  "allTasks": {
+    "taskHistory": "Task History"
+  },
+  "editReward": {
+    "saveFailed": "Failed to save"
+  },
+  "popup": {
+    "close": "Close"
+  },
+  "qrScanner": {
+    "title": "Scan QR Code",
+    "startingCamera": "Starting camera...",
+    "scanHint": "Place the QR code in the frame to scan automatically",
+    "alignQR": "Align the QR code with the scanning frame",
+    "goBack": "Go Back"
+  },
+  "syncButton": {
+    "syncData": "Sync Data"
+  },
+  "editTask": {
+    "completionPoints": "Completion Points",
+    "stageConfig": "Stage Config (earn points on reaching goals)",
+    "addStage": "Add Stage",
+    "reachTarget": "Reach",
+    "minutesUnit": "(min)",
+    "timesUnit": "(times)",
+    "earnPoints": "Earn Points",
+    "completionBonus": "Completion Bonus",
+    "maxPoints": "Max points: {points}",
+    "subtaskList": "Subtask List",
+    "completeAllSubtasks": "Complete all subtasks",
+    "completeCount": "Complete specified count",
+    "complete": "Complete",
+    "itemsSufficient": "items to complete"
   }
 }

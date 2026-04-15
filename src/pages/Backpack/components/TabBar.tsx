@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import type { Tab, TabKey } from "../lib";
 
 interface TabBarProps {
@@ -7,6 +8,7 @@ interface TabBarProps {
 }
 
 export function TabBar({ tabs, activeTab, onTabChange }: TabBarProps) {
+  const { t } = useTranslation();
   return (
     <div className="px-4">
       <div className="flex gap-2 p-1 bg-surface rounded-xl">
@@ -20,7 +22,7 @@ export function TabBar({ tabs, activeTab, onTabChange }: TabBarProps) {
                 : "text-text-secondary hover:text-text-primary"
             }`}
           >
-            {tab.label}
+            {t(tab.label)}
             {tab.count > 0 && (
               <span
                 className={`ml-1.5 text-xs ${

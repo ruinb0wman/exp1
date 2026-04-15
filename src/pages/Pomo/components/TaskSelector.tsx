@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import { Popup } from '@/components/Popup';
 import { CheckCircle2, Circle } from 'lucide-react';
 import type { TaskWithTemplate } from '@/hooks/useTasks';
@@ -26,6 +27,7 @@ export function TaskSelector({
   selectedTaskId,
   onSelectTask,
 }: TaskSelectorProps) {
+  const { t } = useTranslation();
   const handleSelectTask = (taskId: string | null) => {
     onSelectTask(taskId);
     onClose();
@@ -41,7 +43,7 @@ export function TaskSelector({
       isOpen={isOpen}
       onClose={onClose}
       position="bottom"
-      title="选择专注任务"
+      title={t('pomo.taskSelector.title')}
     >
       <div className="space-y-2 max-h-80 overflow-y-auto">
         {/* 自由专注选项 */}
@@ -63,7 +65,7 @@ export function TaskSelector({
                 : 'text-text-primary'
             }
           >
-            自由专注
+{t('pomo.taskSelector.freeFocus')}
           </span>
         </button>
 
@@ -97,7 +99,7 @@ export function TaskSelector({
 
         {/* 空状态 */}
         {pendingTasks.length === 0 && (
-          <p className="text-center text-text-muted py-4">今日没有待办任务</p>
+          <p className="text-center text-text-muted py-4">{t('pomo.taskSelector.noTasks')}</p>
         )}
       </div>
     </Popup>

@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useTranslation } from "react-i18next";
 import { Clock, CheckCircle2, ArrowLeft, Package, ChevronDown } from "lucide-react";
 import { DynamicIcon } from "@/components/DynamicIcon";
 import { StatusBadge } from "./StatusBadge";
@@ -20,6 +21,7 @@ export function BackpackItemList({
   activeTab,
   onItemClick,
 }: BackpackItemListProps) {
+  const { t } = useTranslation();
   const [displayCount, setDisplayCount] = useState(PAGE_SIZE);
 
   // 当标签页或数据变化时重置显示数量
@@ -39,12 +41,12 @@ export function BackpackItemList({
       <div className="flex flex-col items-center justify-center py-12 text-text-muted">
         <Package className="w-16 h-16 mb-4 opacity-50" />
         <p className="text-lg font-medium">
-          {activeTab === "available" && "暂无可用奖励"}
-          {activeTab === "used" && "暂无已使用奖励"}
-          {activeTab === "expired" && "暂无过期奖励"}
+          {activeTab === "available" && t("backpack.empty.noAvailable")}
+          {activeTab === "used" && t("backpack.empty.noUsed")}
+          {activeTab === "expired" && t("backpack.empty.noExpired")}
         </p>
         <p className="text-sm mt-1">
-          {activeTab === "available" && "去商店兑换奖励吧！"}
+          {activeTab === "available" && t("backpack.empty.goToStore")}
         </p>
       </div>
     );
@@ -139,18 +141,26 @@ export function BackpackItemList({
               {instance.expiresAt && instance.status === "available" ? (
                 <span className="flex items-center gap-1 text-amber-400">
                   <Clock className="w-3 h-3" />
-                  {getTimeLeft(instance.expiresAt)}
+                  {(() => {
+                    const result = getTimeLeft(instance.expiresAt!);
+                    switch (result.type) {
+                      case "expired": return t("backpack.timeLeft.expired");
+                      case "daysLeft": return t("backpack.timeLeft.daysLeft", { n: result.value });
+                      case "hoursLeft": return t("backpack.timeLeft.hoursLeft", { n: result.value });
+                      case "aboutToExpire": return t("backpack.timeLeft.aboutToExpire");
+                    }
+                  })()}
                 </span>
               ) : instance.expiresAt ? (
                 <span className="flex items-center gap-1">
                   <Clock className="w-3 h-3" />
-                  过期于 {formatDate(instance.expiresAt)}
+                  {t("backpack.expiredAt", { date: formatDate(instance.expiresAt) })}
                 </span>
               ) : null}
               {instance.usedAt && (
                 <span className="flex items-center gap-1">
                   <CheckCircle2 className="w-3 h-3" />
-                  使用于 {formatDate(instance.usedAt)}
+                  {t("backpack.usedAt", { date: formatDate(instance.usedAt) })}
                 </span>
               )}
             </div>
@@ -171,7 +181,7 @@ export function BackpackItemList({
         >
           <ChevronDown className="w-4 h-4" />
           <span className="text-sm">
-            加载更多 ({remainingCount} 个)
+            {t("backpack.loadMore", { count: remainingCount })}
           </span>
         </button>
       )}

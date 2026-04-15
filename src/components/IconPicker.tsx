@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Search, X } from 'lucide-react';
 import { DynamicIcon } from './DynamicIcon';
 import {
@@ -23,22 +24,20 @@ export function IconPicker({
   selectedColor,
   onSelect,
 }: IconPickerProps) {
+  const { t } = useTranslation();
   const [searchQuery, setSearchQuery] = useState('');
   const [tempIcon, setTempIcon] = useState<RewardIconName>(selectedIcon);
   const [tempColor, setTempColor] = useState<RewardIconColor>(selectedColor);
 
-  // 过滤图标
   const filteredIcons = REWARD_ICONS.filter((icon) =>
     icon.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  // 确认选择
   const handleConfirm = () => {
     onSelect(tempIcon, tempColor);
     onClose();
   };
 
-  // 取消选择
   const handleCancel = () => {
     setTempIcon(selectedIcon);
     setTempColor(selectedColor);
@@ -50,17 +49,14 @@ export function IconPicker({
 
   return (
     <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center">
-      {/* Backdrop */}
       <div
         className="absolute inset-0 bg-black/60 backdrop-blur-sm"
         onClick={handleCancel}
       />
 
-      {/* Modal */}
       <div className="relative w-full max-w-lg bg-surface rounded-t-2xl sm:rounded-2xl max-h-[85vh] flex flex-col animate-in slide-in-from-bottom-4 duration-200">
-        {/* Header */}
         <div className="flex items-center justify-between px-4 py-3 border-b border-border">
-          <h3 className="text-text-primary text-lg font-bold">选择图标</h3>
+          <h3 className="text-text-primary text-lg font-bold">{t("iconPicker.title")}</h3>
           <button
             onClick={handleCancel}
             className="p-2 rounded-lg hover:bg-surface-light transition-colors"
@@ -69,11 +65,9 @@ export function IconPicker({
           </button>
         </div>
 
-        {/* Content */}
         <div className="flex-1 overflow-y-auto p-4 space-y-6">
-          {/* Preview */}
           <div className="flex items-center gap-4 p-4 bg-background rounded-xl">
-            <span className="text-text-secondary text-sm">预览:</span>
+            <span className="text-text-secondary text-sm">{t("iconPicker.preview")}</span>
             <div
               className="w-14 h-14 rounded-xl flex items-center justify-center"
               style={{ backgroundColor: `${tempColor}20` }}
@@ -87,21 +81,19 @@ export function IconPicker({
             <span className="text-text-secondary text-sm ml-2">{tempIcon}</span>
           </div>
 
-          {/* Search */}
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-muted" />
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="搜索图标..."
+              placeholder={t("iconPicker.search")}
               className="w-full h-10 pl-9 pr-4 rounded-lg bg-background border border-border text-text-primary placeholder:text-text-muted focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary"
             />
           </div>
 
-          {/* Color Selection */}
           <div>
-            <p className="text-text-primary text-sm font-medium mb-3">图标颜色</p>
+            <p className="text-text-primary text-sm font-medium mb-3">{t("iconPicker.iconColor")}</p>
             <div className="flex flex-wrap gap-3">
               {REWARD_ICON_COLORS.map((color) => (
                 <button
@@ -118,10 +110,9 @@ export function IconPicker({
             </div>
           </div>
 
-          {/* Icon Grid */}
           <div>
             <p className="text-text-primary text-sm font-medium mb-3">
-              图标 ({filteredIcons.length})
+              {t("iconPicker.icons", { count: filteredIcons.length })}
             </p>
             <div className="grid grid-cols-6 gap-2">
               {filteredIcons.map((iconName) => (
@@ -143,24 +134,23 @@ export function IconPicker({
               ))}
             </div>
             {filteredIcons.length === 0 && (
-              <p className="text-center text-text-muted py-8">未找到匹配的图标</p>
+              <p className="text-center text-text-muted py-8">{t("iconPicker.notFound")}</p>
             )}
           </div>
         </div>
 
-        {/* Footer */}
         <div className="flex gap-3 p-4 border-t border-border">
           <button
             onClick={handleCancel}
             className="flex-1 h-12 rounded-xl bg-surface-light text-text-primary font-bold hover:bg-surface transition-colors"
           >
-            取消
+            {t("common.cancel")}
           </button>
           <button
             onClick={handleConfirm}
             className="flex-1 h-12 rounded-xl bg-primary text-white font-bold hover:bg-primary-light transition-colors shadow-lg shadow-primary/30"
           >
-            确认
+            {t("common.confirm")}
           </button>
         </div>
       </div>

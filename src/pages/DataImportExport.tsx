@@ -1,4 +1,5 @@
 import { useState, useCallback } from "react";
+import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router";
 import {
   ChevronLeft,
@@ -22,15 +23,13 @@ import {
 } from "@/db/services";
 
 export function DataImportExport() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { refreshUser } = useUserStore();
 
-
-  // 导出状态
   const [isExporting, setIsExporting] = useState(false);
   const [exportSuccess, setExportSuccess] = useState(false);
 
-  // 导入状态
   const [isImporting, setIsImporting] = useState(false);
   const [importPreview, setImportPreview] = useState<ImportPreview | null>(null);
   const [pendingImportData, setPendingImportData] = useState<ExportData | null>(null);
@@ -38,17 +37,14 @@ export function DataImportExport() {
   const [importResult, setImportResult] = useState<ImportResult | null>(null);
   const [showResultDialog, setShowResultDialog] = useState(false);
 
-  // 处理导出
   const handleExport = useCallback(async () => {
     try {
       setIsExporting(true);
       setExportSuccess(false);
 
-      // 获取导出数据
       const exportData = await exportAllData();
       const jsonContent = JSON.stringify(exportData, null, 2);
 
-      // 保存文件
       const success = await fileSystem.saveFile({
         content: jsonContent,
         filename: generateExportFilename(),
@@ -61,13 +57,12 @@ export function DataImportExport() {
       }
     } catch (error) {
       console.error("Export failed:", error);
-      alert(`导出失败: ${error instanceof Error ? error.message : "未知错误"}`);
+      alert(t("data.export.failed", { error: error instanceof Error ? error.message : t("common.error") }));
     } finally {
       setIsExporting(false);
     }
-  }, []);
+  }, [t]);
 
-  // 处理文件选择
   const handleFileSelect = useCallback(async () => {
     try {
       setIsImporting(true);
@@ -80,7 +75,6 @@ export function DataImportExport() {
       if (file) {
         const data = JSON.parse(file.content) as ExportData;
 
-        // 验证数据
         const preview = validateImportData(data);
         setImportPreview(preview);
 
@@ -95,15 +89,14 @@ export function DataImportExport() {
       console.error("Import failed:", error);
       setImportPreview({
         isValid: false,
-        error: error instanceof Error ? error.message : "文件读取失败",
+        error: error instanceof Error ? error.message : t("common.error"),
       });
       setShowResultDialog(true);
     } finally {
       setIsImporting(false);
     }
-  }, []);
+  }, [t]);
 
-  // 执行导入
   const executeImport = useCallback(async () => {
     if (!pendingImportData) return;
 
@@ -115,14 +108,13 @@ export function DataImportExport() {
         setImportResult(result);
         setShowResultDialog(true);
 
-        // 导入成功后刷新用户积分
         if (result.success && result.userId) {
           await refreshUser();
         }
       } catch (error) {
         setImportResult({
           success: false,
-          message: `导入失败: ${error instanceof Error ? error.message : "未知错误"}`,
+          message: t("data.import.failed", { error: error instanceof Error ? error.message : t("common.error") }),
         });
         setShowResultDialog(true);
       } finally {
@@ -130,12 +122,11 @@ export function DataImportExport() {
         setPendingImportData(null);
       }
     },
-    [pendingImportData, refreshUser]
+    [pendingImportData, refreshUser, t]
   );
 
   return (
     <div className="bg-background">
-      {/* Header */}
       <header className="flex items-center p-4 pb-2 sticky top-0 bg-background z-10">
         <button
           onClick={() => navigate(-1)}
@@ -144,13 +135,11 @@ export function DataImportExport() {
           <ChevronLeft className="w-6 h-6" />
         </button>
         <h1 className="text-lg font-bold text-text-primary flex-1 text-center mr-8">
-          数据导入导出
+          {t("data.title")}
         </h1>
       </header>
 
-      {/* Content */}
       <div className="p-4">
-        {/* 导出卡片 */}
         <div className="rounded-xl bg-surface p-5 border border-border mb-4">
           <div className="flex items-start gap-4">
             <div className="w-12 h-12 rounded-xl bg-green-500/10 flex items-center justify-center shrink-0">
@@ -158,10 +147,10 @@ export function DataImportExport() {
             </div>
             <div className="flex-1">
               <h2 className="text-text-primary font-bold text-lg mb-1">
-                导出数据
+                {t("data.export.title")}
               </h2>
               <p className="text-text-secondary text-sm mb-4">
-                将您的所有任务、奖励、积分记录导出为 JSON 文件，作为备份或在其他设备上使用。
+                {t("data.export.description")}
               </p>
               <button
                 onClick={handleExport}
@@ -176,16 +165,15 @@ export function DataImportExport() {
                   <FileJson className="w-4 h-4" />
                 )}
                 {isExporting
-                  ? "导出中..."
+                  ? t("data.export.inProgress")
                   : exportSuccess
-                  ? "导出成功"
-                  : "导出到文件"}
+                  ? t("data.export.success")
+                  : t("data.export.toFile")}
               </button>
             </div>
           </div>
         </div>
 
-        {/* 导入卡片 */}
         <div className="rounded-xl bg-surface p-5 border border-border">
           <div className="flex items-start gap-4">
             <div className="w-12 h-12 rounded-xl bg-blue-500/10 flex items-center justify-center shrink-0">
@@ -193,10 +181,10 @@ export function DataImportExport() {
             </div>
             <div className="flex-1">
               <h2 className="text-text-primary font-bold text-lg mb-1">
-                导入数据
+                {t("data.import.title")}
               </h2>
               <p className="text-text-secondary text-sm mb-4">
-                从备份文件恢复数据。您可以选择覆盖现有数据或与现有数据合并。
+                {t("data.import.description")}
               </p>
               <button
                 onClick={handleFileSelect}
@@ -208,31 +196,29 @@ export function DataImportExport() {
                 ) : (
                   <FileJson className="w-4 h-4" />
                 )}
-                {isImporting ? "读取中..." : "选择文件"}
+                {isImporting ? t("data.import.reading") : t("data.import.selectFile")}
               </button>
             </div>
           </div>
         </div>
 
-        {/* 提示信息 */}
         <div className="mt-6 rounded-lg bg-yellow-500/10 border border-yellow-500/20 p-4">
           <div className="flex gap-3">
             <AlertTriangle className="w-5 h-5 text-yellow-500 shrink-0 mt-0.5" />
             <div>
               <h3 className="text-yellow-500 font-medium text-sm mb-1">
-                注意事项
+                {t("data.warnings.title")}
               </h3>
               <ul className="text-text-secondary text-sm space-y-1">
-                <li>• 导出的文件包含您的所有数据，请妥善保管</li>
-                <li>• 导入前建议先导出一份当前数据作为备份</li>
-                <li>• 全量覆盖将删除所有现有数据，请谨慎选择</li>
+                <li>• {t("data.warnings.backup")}</li>
+                <li>• {t("data.warnings.backupBeforeImport")}</li>
+                <li>• {t("data.warnings.fullOverwrite")}</li>
               </ul>
             </div>
           </div>
         </div>
       </div>
 
-      {/* 导入策略选择弹窗 */}
       <Popup
         isOpen={showStrategyDialog}
         onClose={() => {
@@ -240,37 +226,37 @@ export function DataImportExport() {
           setPendingImportData(null);
         }}
         position="center"
-        title="选择导入方式"
+        title={t("data.strategy.title")}
       >
         <div className="p-4">
           {importPreview?.stats && (
             <div className="mb-4 p-3 rounded-lg bg-surface-light">
-              <p className="text-text-secondary text-sm mb-2">文件内容概览：</p>
+              <p className="text-text-secondary text-sm mb-2">{t("data.import.preview.title")}</p>
               <div className="grid grid-cols-2 gap-2 text-sm">
                 <div className="text-text-secondary">
-                  任务模板: <span className="text-text-primary">{importPreview.stats.taskTemplates}</span>
+                  {t("data.import.preview.taskTemplates")}: <span className="text-text-primary">{importPreview.stats.taskTemplates}</span>
                 </div>
                 <div className="text-text-secondary">
-                  任务实例: <span className="text-text-primary">{importPreview.stats.taskInstances}</span>
+                  {t("data.import.preview.taskInstances")}: <span className="text-text-primary">{importPreview.stats.taskInstances}</span>
                 </div>
                 <div className="text-text-secondary">
-                  奖励模板: <span className="text-text-primary">{importPreview.stats.rewardTemplates}</span>
+                  {t("data.import.preview.rewardTemplates")}: <span className="text-text-primary">{importPreview.stats.rewardTemplates}</span>
                 </div>
                 <div className="text-text-secondary">
-                  奖励实例: <span className="text-text-primary">{importPreview.stats.rewardInstances}</span>
+                  {t("data.import.preview.rewardInstances")}: <span className="text-text-primary">{importPreview.stats.rewardInstances}</span>
                 </div>
                 <div className="text-text-secondary">
-                  用户数据: <span className="text-text-primary">{importPreview.stats.users}</span>
+                  {t("data.import.preview.users")}: <span className="text-text-primary">{importPreview.stats.users}</span>
                 </div>
                 <div className="text-text-secondary">
-                  积分记录: <span className="text-text-primary">{importPreview.stats.pointsHistory}</span>
+                  {t("data.import.preview.pointsHistory")}: <span className="text-text-primary">{importPreview.stats.pointsHistory}</span>
                 </div>
               </div>
             </div>
           )}
 
           <p className="text-text-secondary text-sm mb-4">
-            导入将覆盖所有现有数据，请确认后再操作。
+            {t("data.strategy.warning")}
           </p>
 
           <div className="flex flex-col gap-3">
@@ -279,17 +265,16 @@ export function DataImportExport() {
               className="flex flex-col items-start p-4 rounded-xl bg-surface border border-border hover:border-primary transition-colors text-left"
             >
               <span className="text-text-primary font-medium mb-1">
-                确认导入
+                {t("data.strategy.confirm")}
               </span>
               <span className="text-text-secondary text-sm">
-                删除所有现有数据，完全使用备份文件中的数据
+                {t("data.strategy.fullOverwrite")}
               </span>
             </button>
           </div>
         </div>
       </Popup>
 
-      {/* 导入结果弹窗 */}
       <Popup
         isOpen={showResultDialog}
         onClose={() => {
@@ -298,7 +283,7 @@ export function DataImportExport() {
           setImportPreview(null);
         }}
         position="center"
-        title={importResult?.success ? "导入成功" : "导入失败"}
+        title={importResult?.success ? t("data.result.success") : t("data.result.failed")}
       >
         <div className="p-4">
           {importPreview && !importPreview.isValid ? (
@@ -328,25 +313,25 @@ export function DataImportExport() {
               </p>
               {importResult.stats && (
                 <div className="w-full mt-4 p-3 rounded-lg bg-surface-light text-left">
-                  <p className="text-text-secondary text-sm mb-2">导入统计：</p>
+                  <p className="text-text-secondary text-sm mb-2">{t("data.result.stats")}</p>
                   <div className="grid grid-cols-2 gap-2 text-sm">
                     <div className="text-text-secondary">
-                      任务模板: <span className="text-text-primary">{importResult.stats.taskTemplates}</span>
+                      {t("data.import.preview.taskTemplates")}: <span className="text-text-primary">{importResult.stats.taskTemplates}</span>
                     </div>
                     <div className="text-text-secondary">
-                      任务实例: <span className="text-text-primary">{importResult.stats.taskInstances}</span>
+                      {t("data.import.preview.taskInstances")}: <span className="text-text-primary">{importResult.stats.taskInstances}</span>
                     </div>
                     <div className="text-text-secondary">
-                      奖励模板: <span className="text-text-primary">{importResult.stats.rewardTemplates}</span>
+                      {t("data.import.preview.rewardTemplates")}: <span className="text-text-primary">{importResult.stats.rewardTemplates}</span>
                     </div>
                     <div className="text-text-secondary">
-                      奖励实例: <span className="text-text-primary">{importResult.stats.rewardInstances}</span>
+                      {t("data.import.preview.rewardInstances")}: <span className="text-text-primary">{importResult.stats.rewardInstances}</span>
                     </div>
                     <div className="text-text-secondary">
-                      用户数据: <span className="text-text-primary">{importResult.stats.users}</span>
+                      {t("data.import.preview.users")}: <span className="text-text-primary">{importResult.stats.users}</span>
                     </div>
                     <div className="text-text-secondary">
-                      积分记录: <span className="text-text-primary">{importResult.stats.pointsHistory}</span>
+                      {t("data.import.preview.pointsHistory")}: <span className="text-text-primary">{importResult.stats.pointsHistory}</span>
                     </div>
                   </div>
                 </div>
@@ -362,7 +347,7 @@ export function DataImportExport() {
             }}
             className="w-full mt-6 py-3 rounded-xl bg-primary text-white font-medium hover:bg-primary-dark transition-colors"
           >
-            确定
+            {t("common.confirm")}
           </button>
         </div>
       </Popup>

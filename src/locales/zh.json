@@ -20,5 +20,398 @@
       "afternoon": "下午",
       "evening": "晚上"
     }
+  },
+  "home": {
+    "greeting": {
+      "morning": "早上好！",
+      "afternoon": "下午好！",
+      "evening": "晚上好！"
+    },
+    "task": {
+      "title": "今日任务",
+      "noDate": "无日期",
+      "noTasks": "今天没有任务",
+      "allTasks": "所有任务",
+      "history": "历史"
+    },
+    "status": {
+      "completed": "已完成",
+      "pending": "待完成",
+      "skipped": "已跳过",
+      "inProgress": "进行中",
+      "expired": "已过期"
+    },
+    "progress": {
+      "completedOf": "今日已完成 {count}/{total} 个任务"
+    },
+    "detail": {
+      "taskDetail": "任务详情",
+      "edit": "编辑",
+      "editTask": "编辑任务模板",
+      "description": "描述",
+      "repeat": "重复",
+      "date": "日期",
+      "progress": "完成进度",
+      "subtasks": "子任务",
+      "clickSubtasks": "点击上方子任务完成",
+      "loading": "加载中...",
+      "processing": "处理中...",
+      "markIncomplete": "标记为未完成",
+      "usePomodoro": "使用番茄钟",
+      "completeOne": "完成一次",
+      "completeTask": "完成任务",
+      "close": "关闭",
+      "taskExpired": "此任务已过期"
+    },
+    "repeat": {
+      "daily": "每天",
+      "weekly": "每周",
+      "monthly": "每月",
+      "oneTime": "一次性任务"
+    },
+    "units": {
+      "minutes": "分钟",
+      "times": "次",
+      "items": "项"
+    },
+    "time": {
+      "today": "今天",
+      "yesterday": "昨天",
+      "daysAgo": "{n}天前",
+      "expired": "已过期",
+      "expiresInDays": "{n}天后过期",
+      "expiresInHours": "{h}小时后过期",
+      "expiresInMinutes": "{m}分钟后过期",
+      "due": "截止",
+      "completed": "完成",
+      "exp": "积分",
+      "sunday": "周日",
+      "monday": "周一",
+      "tuesday": "周二",
+      "wednesday": "周三",
+      "thursday": "周四",
+      "friday": "周五",
+      "saturday": "周六"
+    },
+    "hint": {
+      "nextStage": "再{remaining}{unit}可获得+{points}积分"
+    },
+    "preview": "预览",
+    "previewMode": "预览模式"
+  },
+  "common": {
+    "today": "今天",
+    "yesterday": "昨天",
+    "daysAgo": "{n}天前",
+    "expired": "已过期",
+    "exp": "积分",
+    "justNow": "刚刚",
+    "minutesAgo": "{n}分钟前",
+    "hoursAgo": "{n}小时前",
+    "confirm": "确定",
+    "cancel": "取消",
+    "apply": "应用",
+    "save": "保存",
+    "delete": "删除",
+    "edit": "编辑",
+    "loading": "加载中...",
+    "error": "错误",
+    "success": "成功",
+    "items": "项",
+    "failed": "失败",
+    "itemsUnit": "{n} 个",
+    "hours": "时",
+    "minutes": "分"
+  },
+  "sync": {
+    "title": "数据同步",
+    "syncWith": {
+      "pc": "与 PC 端同步",
+      "mobile": "与手机端同步"
+    },
+    "lastSync": {
+      "never": "从未同步",
+      "lastTime": "最后同步: {time}"
+    },
+    "scanQR": "扫描二维码",
+    "showQR": "显示二维码",
+    "syncInstructions": "同步说明",
+    "instruction1": "PC 端显示二维码后，使用手机扫描",
+    "instruction2": "手机将自动与 PC 端交换数据",
+    "instruction3": "同步完成后，两端数据保持一致",
+    "cancelSync": "取消同步",
+    "retry": "重试",
+    "phase": {
+      "idle": "准备同步",
+      "init": "正在初始化...",
+      "upload": "正在上传数据...",
+      "merge": "正在合并数据...",
+      "download": "正在下载数据...",
+      "apply": "正在应用数据...",
+      "complete": "同步完成",
+      "error": "同步失败"
+    },
+    "pcInstructions": "请在手机端打开应用，扫描下方二维码进行同步",
+    "mobileInstructions": "点击下方按钮扫描 PC 端显示的二维码",
+    "waitingForConnection": "等待手机端连接..."
+  },
+  "data": {
+    "title": "数据导入导出",
+    "export": {
+      "title": "导出数据",
+      "description": "将您的所有任务、奖励、积分记录导出为 JSON 文件，作为备份或在其他设备上使用。",
+      "inProgress": "导出中...",
+      "success": "导出成功",
+      "toFile": "导出到文件",
+      "failed": "导出失败: {error}"
+    },
+    "import": {
+      "title": "导入数据",
+      "description": "从备份文件恢复数据。您可以选择覆盖现有数据或与现有数据合并。",
+      "reading": "读取中...",
+      "selectFile": "选择文件",
+      "failed": "导入失败: {error}",
+      "preview": {
+        "title": "文件内容概览：",
+        "taskTemplates": "任务模板",
+        "taskInstances": "任务实例",
+        "rewardTemplates": "奖励模板",
+        "rewardInstances": "奖励实例",
+        "users": "用户数据",
+        "pointsHistory": "积分记录"
+      }
+    },
+    "warnings": {
+      "title": "注意事项",
+      "backup": "导出的文件包含您的所有数据，请妥善保管",
+      "backupBeforeImport": "导入前建议先导出一份当前数据作为备份",
+      "fullOverwrite": "全量覆盖将删除所有现有数据，请谨慎选择"
+    },
+    "strategy": {
+      "title": "选择导入方式",
+      "warning": "导入将覆盖所有现有数据，请确认后再操作。",
+      "confirm": "确认导入",
+      "fullOverwrite": "删除所有现有数据，完全使用备份文件中的数据"
+    },
+    "result": {
+      "success": "导入成功",
+      "failed": "导入失败",
+      "stats": "导入统计："
+    }
+  },
+  "store": {
+    "noRewards": "暂无奖励",
+    "createReward": "点击右上角 + 创建新奖励",
+    "pointsCost": "需要 {cost} 积分",
+    "validDuration": "有效期",
+    "forever": "永久有效",
+    "currentStock": "当前库存",
+    "stockLimit": "库存上限",
+    "redeemQuantity": "兑换数量",
+    "total": "总计",
+    "stockShortage": "库存不足",
+    "pointsShortage": "积分不足",
+    "redeem": "兑换 {count} 个"
+  },
+  "points": {
+    "taskReward": "任务奖励",
+    "taskUndo": "撤销扣除",
+    "taskStage": "阶段奖励",
+    "taskCompletion": "完成奖励",
+    "taskDeduction": "进度回退",
+    "rewardExchange": "兑换奖励",
+    "adminAdjustment": "系统调整"
+  },
+  "profile": {
+    "lastSync": "最后同步: {time}",
+    "currentExp": "CURRENT EXP",
+    "greatWork": "Well done! Keep up the great work."
+  },
+  "iconPicker": {
+    "title": "选择图标",
+    "preview": "预览:",
+    "search": "搜索图标...",
+    "iconColor": "图标颜色",
+    "icons": "图标 ({count})",
+    "notFound": "未找到匹配的图标"
+  },
+  "timePicker": {
+    "selectTime": "选择时间",
+    "selected": "已选择: {time}"
+  },
+  "contribution": {
+    "title": "完成记录",
+    "completed": "完成",
+    "legend": {
+      "completed": "完成",
+      "skipped": "跳过",
+      "noTask": "无任务"
+    },
+    "tooltip": {
+      "completed": "{date}: 已完成",
+      "skipped": "{date}: 已跳过",
+      "inProgress": "{date}: 进行中",
+      "noTask": "{date}: 无任务"
+    }
+  },
+  "task": {
+    "simpleTask": "简单任务",
+    "checklistItems": "{count} checklist item(s)",
+    "randomSubtask": " (random)"
+  },
+  "pomo": {
+    "title": "番茄钟",
+    "todayCompleted": "今日完成 {count} 个",
+    "confirm": {
+      "giveUp": "确定要放弃当前计时吗？",
+      "completeEarly": "提前完成当前计时？"
+    },
+    "settings": {
+      "title": "番茄钟设置",
+      "focusDuration": "专注时长",
+      "shortBreakDuration": "短休息时长",
+      "longBreakDuration": "长休息时长",
+      "longBreakInterval": "长休息间隔",
+      "autoStartBreaks": "自动开始休息",
+      "autoStartPomos": "自动开始专注",
+      "pomoUnit": "个番茄"
+    },
+    "mode": {
+      "focus": "专注",
+      "shortBreak": "短休",
+      "longBreak": "长休",
+      "focusRunning": "专注中",
+      "shortBreakRunning": "短休中",
+      "longBreakRunning": "长休中"
+    },
+    "taskSelector": {
+      "title": "选择专注任务",
+      "freeFocus": "自由专注",
+      "noTasks": "今日没有待办任务"
+    },
+    "earlyComplete": "提前完成",
+    "currentTask": "当前专注任务",
+    "noTaskSelected": "未选择任务",
+    "minutes": "分钟",
+    "paused": "已暂停"
+  },
+  "backpack": {
+    "title": "My Backpack",
+    "stats": {
+      "total": "背包物品总数",
+      "available": "可用"
+    },
+    "tabs": {
+      "available": "可用",
+      "used": "已使用",
+      "expired": "已过期"
+    },
+    "status": {
+      "available": "可用",
+      "used": "已使用",
+      "expired": "已过期"
+    },
+    "detail": {
+      "rewardDetails": "Reward Details",
+      "pointsCost": "兑换 {cost} 积分",
+      "status": "状态",
+      "owned": "拥有数量",
+      "firstRedeemed": "最早兑换",
+      "expireTime": "过期时间",
+      "timeLeft": "剩余时间",
+      "useQuantity": "使用数量"
+    },
+    "empty": {
+      "noAvailable": "暂无可用奖励",
+      "noUsed": "暂无已使用奖励",
+      "noExpired": "暂无过期奖励",
+      "goToStore": "去商店兑换奖励吧！"
+    },
+    "timeLeft": {
+      "expired": "已过期",
+      "days": "天",
+      "hours": "小时",
+      "aboutToExpire": "即将过期"
+    },
+    "expiredAt": "过期于 {date}",
+    "usedAt": "使用于 {date}",
+    "loadMore": "加载更多 ({count} 个)",
+    "use": "使用",
+    "rewards": "个奖励",
+    "useReward": "使用奖励",
+    "useFailed": "使用失败"
+  },
+  "taskHistory": {
+    "title": "任务历史"
+  },
+  "stats": {
+    "all": "全部",
+    "pending": "待完成",
+    "completed": "已完成",
+    "skipped": "已跳过"
+  },
+  "filter": {
+    "totalRecords": "共 {total} 条"
+  },
+  "loadingMore": {
+    "loading": "加载中...",
+    "noMore": "没有更多记录了"
+  },
+  "pointsHistory": {
+    "title": "积分明细",
+    "income": "收入",
+    "expense": "支出",
+    "loadMore": "加载更多",
+    "noRecords": "暂无记录",
+    "totalRecords": "共 {total} 条记录",
+    "taskReward": "任务奖励:",
+    "taskUndo": "撤销扣除:",
+    "rewardExchange": "兑换消费:",
+    "adminAdjustment": "系统调整:",
+    "filters": {
+      "all": "全部",
+      "task_completion": "任务",
+      "reward_exchange": "消费"
+    }
+  },
+  "dateRange": {
+    "last7days": "最近7天",
+    "last30days": "最近30天",
+    "last90days": "最近90天"
+  },
+  "allTasks": {
+    "taskHistory": "任务历史"
+  },
+  "editReward": {
+    "saveFailed": "保存失败"
+  },
+  "popup": {
+    "close": "关闭"
+  },
+  "qrScanner": {
+    "title": "扫描二维码",
+    "startingCamera": "正在启动相机...",
+    "scanHint": "将二维码放入框内即可自动扫描",
+    "alignQR": "请将二维码对准扫描框",
+    "goBack": "返回"
+  },
+  "syncButton": {
+    "syncData": "同步数据"
+  },
+  "editTask": {
+    "completionPoints": "完成获得积分",
+    "stageConfig": "阶段配置（达到目标获得积分）",
+    "addStage": "添加阶段",
+    "reachTarget": "达到",
+    "minutesUnit": "（分钟）",
+    "timesUnit": "（次数）",
+    "earnPoints": "获得积分",
+    "completionBonus": "全部完成额外奖励",
+    "maxPoints": "最高可获得：{points} 积分",
+    "subtaskList": "子任务列表",
+    "completeAllSubtasks": "完成所有子任务",
+    "completeCount": "完成指定数量",
+    "complete": "完成",
+    "itemsSufficient": "项即可"
   }
 }

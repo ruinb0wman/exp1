@@ -1,4 +1,5 @@
-import { PomoMode, POMO_MODE_CONFIG } from '@/db/types/pomo';
+import { useTranslation } from 'react-i18next';
+import type { PomoMode } from '@/db/types/pomo';
 
 interface ModeSwitcherProps {
   /** 当前模式 */
@@ -23,7 +24,7 @@ function ModeButton({
   isRunning: boolean;
   onClick: () => void;
 }) {
-  const config = POMO_MODE_CONFIG[targetMode];
+  const { t } = useTranslation();
   const isActive = currentMode === targetMode;
 
   return (
@@ -36,7 +37,7 @@ function ModeButton({
           : 'text-text-secondary hover:text-text-primary hover:bg-surface/50'
       } ${isRunning && !isActive ? 'opacity-50 cursor-not-allowed' : ''}`}
     >
-      {config.label}
+      {t(`pomo.mode.${targetMode}`)}
     </button>
   );
 }

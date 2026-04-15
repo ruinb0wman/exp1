@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { ChevronDown } from "lucide-react";
 
 interface DateRangePickerProps {
@@ -12,6 +13,7 @@ export function DateRangePicker({
   endDate,
   onChange,
 }: DateRangePickerProps) {
+  const { t } = useTranslation();
   const [isOpen, setIsOpen] = useState(false);
 
   const formatDisplayDate = (dateStr: string) => {
@@ -33,6 +35,12 @@ export function DateRangePicker({
     setIsOpen(false);
   };
 
+  const quickOptions = [
+    { label: t("dateRange.last7days"), days: 7 },
+    { label: t("dateRange.last30days"), days: 30 },
+    { label: t("dateRange.last90days"), days: 90 },
+  ];
+
   return (
     <div className="relative">
       <button
@@ -49,11 +57,7 @@ export function DateRangePicker({
         <>
           <div className="fixed inset-0 z-40" onClick={() => setIsOpen(false)} />
           <div className="absolute top-full right-0 mt-2 w-48 rounded-xl bg-surface border border-border shadow-lg z-50 py-1">
-            {[
-              { label: "最近7天", days: 7 },
-              { label: "最近30天", days: 30 },
-              { label: "最近90天", days: 90 },
-            ].map((item) => (
+            {quickOptions.map((item) => (
               <button
                 key={item.days}
                 onClick={() => handleQuickSelect(item.days)}

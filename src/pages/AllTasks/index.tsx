@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router";
 import { History } from "lucide-react";
 import { Header } from "@/components/Header";
@@ -17,6 +18,7 @@ import { StatsSummary } from "./components/StatsSummary";
 import { FloatingAddButton } from "./components/FloatingAddButton";
 
 export function AllTasks() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { user } = useUserStore();
   const { templates, isLoading, error, refresh } = useTaskTemplates(user?.id);
@@ -72,7 +74,7 @@ export function AllTasks() {
           <button
             onClick={() => navigate("/task-history")}
             className="flex items-center justify-center w-10 h-10 rounded-full bg-primary/20 text-primary hover:bg-primary/30 transition-colors"
-            title="任务历史"
+            title={t("allTasks.taskHistory")}
           >
             <History className="w-5 h-5" />
           </button>

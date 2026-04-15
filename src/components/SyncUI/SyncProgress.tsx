@@ -1,8 +1,8 @@
+import { useTranslation } from "react-i18next";
 import { Check, Loader2, AlertCircle, Wifi, Download, Upload, GitMerge } from 'lucide-react';
 import type { SyncProgress } from '@/services/sync';
 
 interface SyncProgressProps {
-  /** 同步进度 */
   progress: SyncProgress;
 }
 
@@ -17,24 +17,13 @@ const phaseIcons: Record<SyncProgress['phase'], React.ReactNode> = {
   error: <AlertCircle className="w-6 h-6" />,
 };
 
-const phaseMessages: Record<SyncProgress['phase'], string> = {
-  idle: '准备同步',
-  init: '正在初始化...',
-  upload: '正在上传数据...',
-  merge: '正在合并数据...',
-  download: '正在下载数据...',
-  apply: '正在应用数据...',
-  complete: '同步完成',
-  error: '同步失败',
-};
-
 export function SyncProgressUI({ progress }: SyncProgressProps) {
+  const { t } = useTranslation();
   const isError = progress.phase === 'error';
   const isComplete = progress.phase === 'complete';
 
   return (
     <div className="flex flex-col items-center py-8">
-      {/* 图标 */}
       <div
         className={`w-16 h-16 rounded-full flex items-center justify-center mb-4 ${
           isError
@@ -47,7 +36,6 @@ export function SyncProgressUI({ progress }: SyncProgressProps) {
         {phaseIcons[progress.phase]}
       </div>
 
-      {/* 状态文字 */}
       <p
         className={`text-lg font-medium mb-2 ${
           isError
@@ -57,15 +45,13 @@ export function SyncProgressUI({ progress }: SyncProgressProps) {
             : 'text-text-primary'
         }`}
       >
-        {phaseMessages[progress.phase]}
+        {t(`sync.phase.${progress.phase}`)}
       </p>
 
-      {/* 详细消息 */}
       <p className="text-sm text-text-secondary text-center mb-6">
         {progress.message}
       </p>
 
-      {/* 进度条 */}
       <div className="w-full max-w-xs">
         <div className="h-2 bg-surface-light rounded-full overflow-hidden">
           <div

@@ -1,3 +1,6 @@
+import type { TFunction } from "i18next";
+import i18n from "i18next";
+
 /**
  * 时间工具函数
  * 所有时间使用本地时间，不使用 UTC
@@ -243,19 +246,19 @@ export function isExpiredByInstanceDate(
   return now.getTime() > expireLocalDate.getTime();
 }
 
-/**
- * 获取过期剩余时间文本（基于 instanceDate 动态计算）
- * @param instanceDate 实例日期（YYYY-MM-DD）
- * @param expireDays 过期天数
- * @param dayEndTime 本地时间的"一天结束"，格式 "HH:mm"
- */
+export type ExpireTimeResult = 
+  | { type: "expired" }
+  | { type: "expiresInDays"; value: number }
+  | { type: "expiresInHours"; hours: number; minutes: number }
+  | { type: "expiresInMinutes"; value: number };
+
 export function getExpireTimeTextByInstanceDate(
   instanceDate: string,
   expireDays: number,
   dayEndTime: string
-): string {
+): ExpireTimeResult {
   if (!instanceDate || !expireDays || expireDays <= 0) {
-    return '';
+    return { type: "expired" };
   }
 
   const expiredAt = calculateExpiredAtByInstanceDate(instanceDate, expireDays, dayEndTime);
@@ -263,19 +266,19 @@ export function getExpireTimeTextByInstanceDate(
   const expire = new Date(expiredAt);
   const diff = expire.getTime() - now.getTime();
 
-  if (diff <= 0) return '已过期';
+  if (diff <= 0) return { type: "expired" };
 
   const hours = Math.floor(diff / (1000 * 60 * 60));
   const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
 
   if (hours > 24) {
     const days = Math.floor(hours / 24);
-    return `${days}天后过期`;
+    return { type: "expiresInDays", value: days };
   }
   if (hours > 0) {
-    return `${hours}小时${minutes > 0 ? `${minutes}分钟` : ''}后过期`;
+    return { type: "expiresInHours", hours, minutes };
   }
-  return `${minutes}分钟后过期`;
+  return { type: "expiresInMinutes", value: minutes };
 }
 
 /**
@@ -332,31 +335,26 @@ export function isExpired(expiredAtUTC?: string): boolean {
   return now.getTime() > expireTime.getTime();
 }
 
-/**
- * 获取过期剩余时间文本（基于UTC时间）
- * @deprecated 使用 getExpireTimeTextByInstanceDate 代替
- * @param expiredAtUTC 过期时间（UTC ISO格式）
- */
-export function getExpireTimeText(expiredAtUTC?: string): string {
-  if (!expiredAtUTC) return '';
+export function getExpireTimeText(expiredAtUTC?: string): ExpireTimeResult {
+  if (!expiredAtUTC) return { type: "expired" };
   
   const now = new Date();
   const expire = new Date(expiredAtUTC);
   const diff = expire.getTime() - now.getTime();
   
-  if (diff <= 0) return '已过期';
+  if (diff <= 0) return { type: "expired" };
   
   const hours = Math.floor(diff / (1000 * 60 * 60));
   const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
   
   if (hours > 24) {
     const days = Math.floor(hours / 24);
-    return `${days}天后过期`;
+    return { type: "expiresInDays", value: days };
   }
   if (hours > 0) {
-    return `${hours}小时${minutes > 0 ? `${minutes}分钟` : ''}后过期`;
+    return { type: "expiresInHours", hours, minutes };
   }
-  return `${minutes}分钟后过期`;
+  return { type: "expiresInMinutes", value: minutes };
 }
 
 /**
@@ -412,39 +410,123 @@ export function getUTCRangeFromLocalDate(localDateStr: string): [string, string]
   return [startUTC, endUTC];
 }
 
-/**
- * 格式化持续时间（秒数）为可读字符串
- * @param seconds 持续时间（秒）
- * @returns 格式化后的字符串，如 "永久有效"、"3 个月"、"7 天"
- */
-export function formatDuration(seconds: number): string {
-  if (seconds <= 0) return "永久有效";
+export type DurationResult = 
+  | { type: "permanent" }
+  | { type: "days"; value: number }
+  | { type: "months"; value: number };
+
+export function formatDuration(seconds: number): DurationResult {
+  if (seconds <= 0) return { type: "permanent" };
   const days = Math.floor(seconds / 86400);
   if (days >= 30) {
     const months = Math.floor(days / 30);
-    return `${months} 个月`;
+    return { type: "months", value: months };
   }
-  return `${days} 天`;
+  return { type: "days", value: days };
 }
 
-/**
- * 格式化为相对时间（今天/昨天/X天前/MM-DD）
- * 用于积分历史、任务历史等列表的时间显示
- * @param dateStr ISO格式日期字符串
- * @returns 格式化后的相对时间字符串
- */
-export function formatRelativeDate(dateStr: string): string {
+export function formatDurationToString(result: DurationResult): string {
+  switch (result.type) {
+    case "permanent":
+      return "永久有效";
+    case "days":
+      return `${result.value} 天`;
+    case "months":
+      return `${result.value} 个月`;
+  }
+}
+
+export type RelativeDateResult = 
+  | { type: "today"; time: string }
+  | { type: "yesterday"; time: string }
+  | { type: "daysAgo"; value: number; time: string }
+  | { type: "monthDay"; month: number; day: number };
+
+export function formatRelativeDate(dateStr: string): RelativeDateResult {
   const date = new Date(dateStr);
   const now = new Date();
   const diffDays = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60 * 24));
 
+  const timeStr = `${date.getHours().toString().padStart(2, "0")}:${date.getMinutes().toString().padStart(2, "0")}`;
+
   if (diffDays === 0) {
-    return `今天 ${date.getHours().toString().padStart(2, "0")}:${date.getMinutes().toString().padStart(2, "0")}`;
+    return { type: "today", time: timeStr };
   } else if (diffDays === 1) {
-    return `昨天 ${date.getHours().toString().padStart(2, "0")}:${date.getMinutes().toString().padStart(2, "0")}`;
+    return { type: "yesterday", time: timeStr };
   } else if (diffDays < 7) {
-    return `${diffDays}天前`;
+    return { type: "daysAgo", value: diffDays, time: timeStr };
   } else {
-    return `${date.getMonth() + 1}/${date.getDate()}`;
+    return { type: "monthDay", month: date.getMonth() + 1, day: date.getDate() };
+  }
+}
+
+export function formatRelativeDateToString(result: RelativeDateResult): string {
+  switch (result.type) {
+    case "today":
+      return `今天 ${result.time}`;
+    case "yesterday":
+      return `昨天 ${result.time}`;
+    case "daysAgo":
+      return `${result.value}天前 ${result.time}`;
+    case "monthDay":
+      return `${result.month}/${result.day}`;
+   }
+}
+
+export type LastSyncResult = 
+  | { type: "never" }
+  | { type: "justNow" }
+  | { type: "minutesAgo"; value: number }
+  | { type: "hoursAgo"; value: number }
+  | { type: "yesterday" }
+  | { type: "daysAgo"; value: number }
+  | { type: "date"; month: number; day: number; year: number };
+
+export function formatLastSync(dateStr: string | null): LastSyncResult {
+  if (!dateStr) return { type: "never" };
+  const date = new Date(dateStr);
+  const now = new Date();
+  const diff = now.getTime() - date.getTime();
+  const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+
+  if (days === 0) {
+    const hours = Math.floor(diff / (1000 * 60 * 60));
+    if (hours === 0) {
+      const minutes = Math.floor(diff / (1000 * 60));
+      return minutes === 0 ? { type: "justNow" } : { type: "minutesAgo", value: minutes };
+    }
+    return { type: "hoursAgo", value: hours };
+  } else if (days === 1) {
+    return { type: "yesterday" };
+  } else if (days < 7) {
+    return { type: "daysAgo", value: days };
+  } else {
+    return { type: "date", month: date.getMonth() + 1, day: date.getDate(), year: date.getFullYear() };
+  }
+}
+
+export function formatLastSyncToString(result: LastSyncResult): string {
+  const lang = i18n.language === 'zh' ? 'zh' : 'en';
+  switch (result.type) {
+    case "never": return lang === 'zh' ? "从未同步" : "Never synced";
+    case "justNow": return lang === 'zh' ? "刚刚" : "Just now";
+    case "minutesAgo": return lang === 'zh' ? `${result.value}分钟前` : `${result.value} min ago`;
+    case "hoursAgo": return lang === 'zh' ? `${result.value}小时前` : `${result.value} hours ago`;
+    case "yesterday": return lang === 'zh' ? "昨天" : "Yesterday";
+    case "daysAgo": return lang === 'zh' ? `${result.value}天前` : `${result.value} days ago`;
+    case "date": return `${result.year}-${result.month.toString().padStart(2, "0")}-${result.day.toString().padStart(2, "0")}`;
+  }
+}
+
+export function formatLastSyncI18n(result: LastSyncResult, t: TFunction): string {
+  const lang = i18n.language === 'zh' ? 'zh' : 'en';
+  switch (result.type) {
+    case "never": return t("sync.lastSync.never");
+    case "justNow": return t("common.justNow");
+    case "minutesAgo": return lang === 'zh' ? `${result.value}分钟前` : `${result.value} min ago`;
+    case "hoursAgo": return lang === 'zh' ? `${result.value}小时前` : `${result.value} hours ago`;
+    case "yesterday": return t("common.yesterday");
+    case "daysAgo": return lang === 'zh' ? `${result.value}天前` : `${result.value} days ago`;
+    case "date": return `${result.year}-${result.month.toString().padStart(2, "0")}-${result.day.toString().padStart(2, "0")}`;
   }
 }

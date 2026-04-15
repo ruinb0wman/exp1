@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { usePomoStore } from '@/store/pomoStore';
 import { useUserStore } from '@/store/userStore';
 import { useTodayTasks } from '@/hooks/useTasks';
@@ -13,6 +14,7 @@ import {
 } from './components';
 
 export function Pomo() {
+  const { t } = useTranslation();
   const userStore = useUserStore();
   const userId = userStore.user?.id ?? 1;
   const dayEndTime = userStore.user?.dayEndTime;
@@ -53,14 +55,14 @@ export function Pomo() {
 
   // 放弃按钮
   const handleStop = () => {
-    if (confirm('确定要放弃当前计时吗？')) {
+    if (confirm(t('pomo.confirm.giveUp'))) {
       stopTimer(false);
     }
   };
 
   // 完成按钮（提前完成）
   const handleComplete = () => {
-    if (confirm('提前完成当前计时？')) {
+    if (confirm(t('pomo.confirm.completeEarly'))) {
       stopTimer(true);
     }
   };

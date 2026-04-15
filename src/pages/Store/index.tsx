@@ -1,4 +1,5 @@
 import { useState, useCallback, useEffect } from "react";
+import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router";
 import { Package, Plus, Pencil } from "lucide-react";
 import { Header } from "@/components/Header";
@@ -13,6 +14,7 @@ import { RewardDetailPopup } from "./components/RewardDetailPopup";
 import { filterRewardsBySearch, getMaxQuantity } from "./lib";
 
 export function Store() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { user, currentPoints, calculatePoints } = useUserStore();
 
@@ -77,13 +79,13 @@ export function Store() {
 
     // 检查库存
     if (template.replenishmentMode !== 'none' && availableCount < redeemQuantity) {
-      setRedeemError("库存不足");
+      setRedeemError(t("store.stockShortage"));
       return;
     }
 
     // 检查积分是否足够
     if (currentPoints < totalCost) {
-      setRedeemError("积分不足");
+      setRedeemError(t("store.pointsShortage"));
       return;
     }
 
@@ -100,9 +102,9 @@ export function Store() {
       setSelectedReward(null);
       setRedeemQuantity(1);
     } catch (err) {
-      setRedeemError(err instanceof Error ? err.message : "兑换失败");
+      setRedeemError(err instanceof Error ? err.message : t("common.error"));
     }
-  }, [selectedReward, user, redeem, refresh, currentPoints, redeemQuantity]);
+  }, [selectedReward, user, redeem, refresh, currentPoints, redeemQuantity, t]);
 
   return (
     <div className="min-h-screen pb-24 bg-background">

@@ -11,7 +11,7 @@ interface DurationSliderProps {
   max: number;
   /** 值变化回调 */
   onChange: (value: number) => void;
-  /** 单位文本，默认为"分钟" */
+  /** 单位文本，默认为空（由父组件传入翻译值） */
   unit?: string;
   /** 是否禁用 */
   disabled?: boolean;
@@ -25,7 +25,7 @@ export function DurationSlider({
   min,
   max,
   onChange,
-  unit = '分钟',
+  unit = '',
   disabled = false,
 }: DurationSliderProps) {
   return (

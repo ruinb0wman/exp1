@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Html5Qrcode } from 'html5-qrcode';
 import { Camera, X, RefreshCw } from 'lucide-react';
 
@@ -12,6 +13,7 @@ interface QRScannerProps {
 }
 
 export function QRScanner({ onScan, onCancel, isOpen }: QRScannerProps) {
+  const { t } = useTranslation();
   const scannerRef = useRef<Html5Qrcode | null>(null);
   const [error, setError] = useState<string>('');
   const [isInitializing, setIsInitializing] = useState(false);
@@ -168,7 +170,7 @@ export function QRScanner({ onScan, onCancel, isOpen }: QRScannerProps) {
     <div className="fixed inset-0 z-50 bg-black">
       {/* 头部 */}
       <div className="absolute top-0 left-0 right-0 z-10 flex items-center justify-between p-4 bg-gradient-to-b from-black/80 to-transparent">
-        <h2 className="text-lg font-semibold text-white">扫描二维码</h2>
+        <h2 className="text-lg font-semibold text-white">{t("qrScanner.title")}</h2>
         <button
           onClick={onCancel}
           className="p-2 rounded-full bg-white/10 hover:bg-white/20 transition-colors"
@@ -209,7 +211,7 @@ export function QRScanner({ onScan, onCancel, isOpen }: QRScannerProps) {
         {isInitializing && (
           <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/80">
             <Camera className="w-12 h-12 text-primary mb-4 animate-pulse" />
-            <p className="text-white">正在启动相机...</p>
+            <p className="text-white">{t("qrScanner.startingCamera")}</p>
           </div>
         )}
 
@@ -217,7 +219,7 @@ export function QRScanner({ onScan, onCancel, isOpen }: QRScannerProps) {
         {scanStatus === 'scanning' && !isInitializing && !error && (
           <div className="absolute top-24 left-0 right-0 text-center pointer-events-none">
             <p className="text-white/80 text-sm bg-black/50 inline-block px-4 py-2 rounded-full">
-              请将二维码对准扫描框
+              {t("qrScanner.alignQR")}
             </p>
           </div>
         )}
@@ -239,7 +241,7 @@ export function QRScanner({ onScan, onCancel, isOpen }: QRScannerProps) {
                 onClick={onCancel}
                 className="px-6 py-2 bg-surface text-white rounded-lg hover:bg-surface/80 transition-colors"
               >
-                返回
+                {t("qrScanner.goBack")}
               </button>
             </div>
           </div>
@@ -248,7 +250,7 @@ export function QRScanner({ onScan, onCancel, isOpen }: QRScannerProps) {
 
       {/* 底部提示 */}
       <div className="absolute bottom-8 left-0 right-0 text-center">
-        <p className="text-white/70 text-sm">将二维码放入框内即可自动扫描</p>
+        <p className="text-white/70 text-sm">{t("qrScanner.scanHint")}</p>
       </div>
 
       {/* 添加扫描线动画样式 */}

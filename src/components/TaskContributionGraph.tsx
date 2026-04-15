@@ -1,4 +1,5 @@
 import { useEffect, useState, useCallback } from "react";
+import { useTranslation } from "react-i18next";
 import { getDB } from "@/db";
 import type { TaskInstance, TaskTemplate } from "@/db/types";
 import { formatLocalDate, formatLocalDateToYYYYMMDD } from "@/libs/time";
@@ -30,6 +31,7 @@ export function TaskContributionGraph({
   userId,
   weeks: _weeks = 26,
 }: TaskContributionGraphProps) {
+  const { t } = useTranslation();
   const [rowsData, setRowsData] = useState<RowData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [totalStats, setTotalStats] = useState({ completed: 0, total: 0 });
@@ -135,13 +137,13 @@ export function TaskContributionGraph({
     const dateText = formatLocalDate(day.date);
     switch (day.status) {
       case "completed":
-        return `${dateText}: 已完成`;
+        return t("contribution.tooltip.completed", { date: dateText });
       case "skipped":
-        return `${dateText}: 已跳过`;
+        return t("contribution.tooltip.skipped", { date: dateText });
       case "pending":
-        return `${dateText}: 进行中`;
+        return t("contribution.tooltip.inProgress", { date: dateText });
       default:
-        return `${dateText}: 无任务`;
+        return t("contribution.tooltip.noTask", { date: dateText });
     }
   };
 
@@ -159,15 +161,13 @@ export function TaskContributionGraph({
 
   return (
     <div className="bg-surface rounded-xl p-4">
-      {/* 标题和统计 */}
       <div className="flex items-center justify-between mb-3">
-        <h4 className="text-sm font-medium text-text-primary">完成记录</h4>
+        <h4 className="text-sm font-medium text-text-primary">{t("contribution.title")}</h4>
         <span className="text-xs text-text-muted">
-          {totalStats.completed} / {totalStats.total} 完成
+          {`${totalStats.completed} / ${totalStats.total} ${t('contribution.completed')}`}
         </span>
       </div>
 
-      {/* 贡献图：6行 x 30列 */}
       <div className="flex flex-col gap-1 overflow-x-auto pb-2 scrollbar-hide">
         {rowsData.map((row, rowIndex) => (
           <div key={rowIndex} className="flex gap-1">
@@ -182,19 +182,18 @@ export function TaskContributionGraph({
         ))}
       </div>
 
-      {/* 图例 */}
       <div className="flex items-center justify-end gap-3 mt-3 text-[10px] text-text-muted">
         <div className="flex items-center gap-1">
           <div className="w-2.5 h-2.5 rounded-sm bg-green-500" />
-          <span>完成</span>
+          <span>{t("contribution.legend.completed")}</span>
         </div>
         <div className="flex items-center gap-1">
           <div className="w-2.5 h-2.5 rounded-sm bg-yellow-600" />
-          <span>跳过</span>
+          <span>{t("contribution.legend.skipped")}</span>
         </div>
         <div className="flex items-center gap-1">
           <div className="w-2.5 h-2.5 rounded-sm bg-surface-light/50" />
-          <span>无任务</span>
+          <span>{t("contribution.legend.noTask")}</span>
         </div>
       </div>
     </div>

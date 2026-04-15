@@ -58,17 +58,17 @@ export const POMO_MODE_CONFIG: Record<PomoMode, {
   gradient: string;
 }> = {
   focus: {
-    label: '专注',
+    label: 'focus',
     color: '#f56565',
     gradient: 'from-primary to-primary-light',
   },
   shortBreak: {
-    label: '短休',
+    label: 'shortBreak',
     color: '#48bb78',
     gradient: 'from-green-400 to-green-500',
   },
   longBreak: {
-    label: '长休',
+    label: 'longBreak',
     color: '#4299e1',
     gradient: 'from-blue-400 to-blue-500',
   },

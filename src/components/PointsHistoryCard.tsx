@@ -1,11 +1,11 @@
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
+import i18n from "i18next";
 import { BookOpen, Gift, RotateCcw, Settings, type LucideIcon } from "lucide-react";
 import type { PointsHistory, PointsHistoryType } from "@/db/types";
 import { formatRelativeDate } from "@/libs/time";
 import { getTaskInstanceById, getRewardInstanceById } from "@/db/services";
 
-
-// 获取类型图标
 export function getPointsHistoryIcon(type: PointsHistoryType): LucideIcon {
   switch (type) {
     case "task_reward":
@@ -21,29 +21,36 @@ export function getPointsHistoryIcon(type: PointsHistoryType): LucideIcon {
   }
 }
 
-// 获取类型标签
-export function getPointsHistoryLabel(type: PointsHistoryType): string {
+export type PointsHistoryLabelKey = 
+  | "taskReward" 
+  | "taskUndo" 
+  | "taskStage" 
+  | "taskCompletion" 
+  | "taskDeduction" 
+  | "rewardExchange" 
+  | "adminAdjustment";
+
+export function getPointsHistoryLabelKey(type: PointsHistoryType): PointsHistoryLabelKey {
   switch (type) {
     case "task_reward":
-      return "任务奖励";
+      return "taskReward";
     case "task_undo":
-      return "撤销扣除";
+      return "taskUndo";
     case "task_stage":
-      return "阶段奖励";
+      return "taskStage";
     case "task_completion":
-      return "完成奖励";
+      return "taskCompletion";
     case "task_deduction":
-      return "进度回退";
+      return "taskDeduction";
     case "reward_exchange":
-      return "兑换奖励";
+      return "rewardExchange";
     case "admin_adjustment":
-      return "系统调整";
+      return "adminAdjustment";
     default:
-      return "";
+      return "taskReward";
   }
 }
 
-// 获取相关实体名称（任务或奖品）
 export async function getRelatedEntityName(
   item: PointsHistory
 ): Promise<string | null> {
@@ -77,10 +84,13 @@ interface PointsHistoryCardProps {
 }
 
 export function PointsHistoryCard({ item }: PointsHistoryCardProps) {
+  const { t } = useTranslation();
   const [entityName, setEntityName] = useState<string | null>(null);
   const Icon = getPointsHistoryIcon(item.type);
   const isPositive = item.amount > 0;
-  const label = getPointsHistoryLabel(item.type);
+  const labelKey = getPointsHistoryLabelKey(item.type);
+  const label = t(`points.${labelKey}`);
+  const relativeDate = formatRelativeDate(item.createdAt);
 
   useEffect(() => {
     let mounted = true;
@@ -93,6 +103,19 @@ export function PointsHistoryCard({ item }: PointsHistoryCardProps) {
       mounted = false;
     };
   }, [item]);
+
+  const getRelativeDateText = () => {
+    switch (relativeDate.type) {
+      case "today":
+        return `${t("common.today")} ${relativeDate.time}`;
+      case "yesterday":
+        return `${t("common.yesterday")} ${relativeDate.time}`;
+      case "daysAgo":
+        return `${relativeDate.value}${i18n.language === 'zh' ? '天前' : ' days ago'} ${relativeDate.time}`;
+      case "monthDay":
+        return `${relativeDate.month}/${relativeDate.day}`;
+    }
+  };
 
   return (
     <div className="flex items-center gap-4 rounded-xl bg-surface p-4 border border-border">
@@ -111,7 +134,7 @@ export function PointsHistoryCard({ item }: PointsHistoryCardProps) {
           {item.description || label}
         </p>
         <p className="text-text-muted text-xs">
-          {formatRelativeDate(item.createdAt)}
+          {getRelativeDateText()}
         </p>
       </div>
       <p
