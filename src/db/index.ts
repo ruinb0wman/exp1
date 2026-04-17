@@ -15,14 +15,10 @@ import type { RewardTemplate } from './types';
 import type { RewardInstance } from './types';
 import type { PointsHistory } from './types';
 
-export type DeviceId = 'pc' | 'mobile';
-
 const state: { 
   db: null | ReturnType<typeof createDB>;
-  deviceId: DeviceId;
 } = {
   db: null,
-  deviceId: 'pc' // 默认为 pc，在应用启动时根据平台设置
 };
 
 // using for debugging
@@ -30,21 +26,6 @@ const state: {
 if (typeof window !== 'undefined') {
   //@ts-ignore
   window.dbstate = state;
-}
-
-/**
- * 设置设备标识
- * 应在应用启动时调用，根据平台设置为 'pc' 或 'mobile'
- */
-export function setDeviceId(deviceId: DeviceId) {
-  state.deviceId = deviceId;
-}
-
-/**
- * 获取当前设备标识
- */
-export function getDeviceId(): DeviceId {
-  return state.deviceId;
 }
 
 function getDB() {

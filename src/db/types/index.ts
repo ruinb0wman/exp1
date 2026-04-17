@@ -8,7 +8,6 @@ import { TaskTemplate, TaskInstance } from "./task";
 import { RewardTemplate, RewardInstance } from "./reward";
 import { User, PointsHistory } from "./user";
 import { PomoSession, PomoSettingsRecord } from "./pomo";
-import { SyncBackup, SyncConfig } from "../sync/types";
 
 export interface DB extends Dexie {
   taskTemplates: Table<TaskTemplate, string>;
@@ -19,6 +18,4 @@ export interface DB extends Dexie {
   pointsHistory: Table<PointsHistory, string>;
   pomoSessions: Table<PomoSession, number>;
   pomoSettings: Table<PomoSettingsRecord, number>;
-  syncBackups: Table<SyncBackup, number>;
-  syncConfig: Table<SyncConfig, string>;
 }

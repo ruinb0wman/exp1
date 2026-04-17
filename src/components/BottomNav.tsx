@@ -1,6 +1,5 @@
-import { Home, Store, BarChart3, User, Timer, RefreshCw } from "lucide-react";
+import { Home, Store, BarChart3, User, Timer } from "lucide-react";
 import { NavLink } from "react-router";
-import { getDeviceId } from "@/db";
 
 interface NavItemProps {
   to: string;
@@ -34,8 +33,6 @@ function NavItem({ to, icon, activeIcon, label }: NavItemProps) {
 }
 
 export function BottomNav() {
-  const isMobile = getDeviceId() === "mobile";
-
   return (
     <nav className="fixed bottom-0 left-0 right-0 landscape:top-0 landscape:bottom-0 landscape:left-0 landscape:right-auto landscape:w-56 landscape:h-screen landscape:pb-0 landscape:pt-safe landscape:border-t-0 landscape:border-r landscape:flex-col landscape:justify-start landscape:gap-2 landscape:px-3 landscape:py-4 h-20 pb-safe bg-background/80 landscape:bg-background backdrop-blur-lg landscape:backdrop-blur-none border-t border-border flex items-start justify-around px-4 pt-2 z-50">
       <NavItem
@@ -68,14 +65,6 @@ export function BottomNav() {
         activeIcon={<User strokeWidth={1.5} fill="currentColor" />}
         label="Profile"
       />
-      {!isMobile && (
-        <NavItem
-          to="/sync"
-          icon={<RefreshCw strokeWidth={1.5} />}
-          activeIcon={<RefreshCw strokeWidth={1.5} fill="currentColor" />}
-          label="Sync"
-        />
-      )}
     </nav>
   );
 }

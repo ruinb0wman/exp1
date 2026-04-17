@@ -2,12 +2,10 @@ use tauri::Manager;
 use std::sync::Arc;
 
 mod pomo_timer;
-mod sync;
 use pomo_timer::{PomoTimerManager, PomoMode, PomoTimerData};
 
 #[cfg(mobile)]
 use tauri::App;
-use sync::{start_sync_server, stop_sync_server, get_server_status, set_pc_sync_data, get_merged_sync_data, clear_sync_session};
 
 // Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
 #[tauri::command]
@@ -111,13 +109,7 @@ pub fn run() {
             resume_pomo_timer,
             stop_pomo_timer,
             get_pomo_timer_state,
-            start_sync_server,
-            stop_sync_server,
-            get_server_status,
             get_platform,
-            set_pc_sync_data,
-            get_merged_sync_data,
-            clear_sync_session,
         ])
         // 只在桌面端设置托盘和DevTools快捷键
         .setup(|app| {

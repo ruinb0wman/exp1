@@ -19,9 +19,7 @@ import { Backpack } from "@/pages/Backpack";
 import { TaskHistory } from "@/pages/TaskHistory";
 import { Settings } from "@/pages/Settings";
 import { DataImportExport } from "@/pages/DataImportExport";
-import { Sync } from "@/pages/Sync";
 import { MainLayout, SimpleLayout } from "@/components/layouts";
-import { setDeviceId } from "@/db";
 import "@/libs/i18n";
 
 function App() {
@@ -49,12 +47,8 @@ function App() {
         const platform = await invoke<string>("get_platform");
         const isMobilePlatform = platform === "mobile" || platform === "ios" || platform === "android";
         setIsMobile(isMobilePlatform);
-        // 根据平台设置 deviceId：mobile 平台设为 'mobile'，其他设为 'pc'
-        setDeviceId(isMobilePlatform ? "mobile" : "pc");
       } catch (error) {
         console.error("Failed to detect platform:", error);
-        // 默认设为 pc
-        setDeviceId("pc");
       }
     };
     initPlatform();
@@ -71,7 +65,6 @@ function App() {
             <Route path="/store" element={<Store />} />
             <Route path="/stats" element={<Stats />} />
             <Route path="/profile" element={<Profile />} />
-            <Route path="/sync" element={<Sync />} />
           </Route>
 
           {/* Simple layout without bottom navigation */}

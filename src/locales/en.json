@@ -123,38 +123,6 @@
     "hours": "h",
     "minutes": "m"
   },
-  "sync": {
-    "title": "Sync",
-    "syncWith": {
-      "pc": "Sync with PC",
-      "mobile": "Sync with Mobile"
-    },
-    "lastSync": {
-      "never": "Never synced",
-      "lastTime": "Last sync: {time}"
-    },
-    "scanQR": "Scan QR Code",
-    "showQR": "Show QR Code",
-    "syncInstructions": "How to Sync",
-    "instruction1": "PC shows QR code, scan with mobile",
-    "instruction2": "Mobile will exchange data with PC automatically",
-    "instruction3": "Both devices will have the same data after sync",
-    "cancelSync": "Cancel Sync",
-    "retry": "Retry",
-    "phase": {
-      "idle": "Preparing...",
-      "init": "Initializing...",
-      "upload": "Uploading data...",
-      "merge": "Merging data...",
-      "download": "Downloading data...",
-      "apply": "Applying data...",
-      "complete": "Sync complete",
-      "error": "Sync failed"
-    },
-    "pcInstructions": "Open the app on your mobile and scan the QR code below",
-    "mobileInstructions": "Tap the button below to scan the QR code on PC",
-    "waitingForConnection": "Waiting for mobile to connect..."
-  },
   "data": {
     "title": "Import & Export",
     "export": {
@@ -223,7 +191,6 @@
     "adminAdjustment": "Admin Adjustment"
   },
   "profile": {
-    "lastSync": "Last sync: {time}",
     "currentExp": "CURRENT EXP",
     "greatWork": "Well done! Keep up the great work."
   },
@@ -387,16 +354,6 @@
   },
   "popup": {
     "close": "Close"
-  },
-  "qrScanner": {
-    "title": "Scan QR Code",
-    "startingCamera": "Starting camera...",
-    "scanHint": "Place the QR code in the frame to scan automatically",
-    "alignQR": "Align the QR code with the scanning frame",
-    "goBack": "Go Back"
-  },
-  "syncButton": {
-    "syncData": "Sync Data"
   },
   "editTask": {
     "completionPoints": "Completion Points",

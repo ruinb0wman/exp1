@@ -123,38 +123,6 @@
     "hours": "时",
     "minutes": "分"
   },
-  "sync": {
-    "title": "数据同步",
-    "syncWith": {
-      "pc": "与 PC 端同步",
-      "mobile": "与手机端同步"
-    },
-    "lastSync": {
-      "never": "从未同步",
-      "lastTime": "最后同步: {time}"
-    },
-    "scanQR": "扫描二维码",
-    "showQR": "显示二维码",
-    "syncInstructions": "同步说明",
-    "instruction1": "PC 端显示二维码后，使用手机扫描",
-    "instruction2": "手机将自动与 PC 端交换数据",
-    "instruction3": "同步完成后，两端数据保持一致",
-    "cancelSync": "取消同步",
-    "retry": "重试",
-    "phase": {
-      "idle": "准备同步",
-      "init": "正在初始化...",
-      "upload": "正在上传数据...",
-      "merge": "正在合并数据...",
-      "download": "正在下载数据...",
-      "apply": "正在应用数据...",
-      "complete": "同步完成",
-      "error": "同步失败"
-    },
-    "pcInstructions": "请在手机端打开应用，扫描下方二维码进行同步",
-    "mobileInstructions": "点击下方按钮扫描 PC 端显示的二维码",
-    "waitingForConnection": "等待手机端连接..."
-  },
   "data": {
     "title": "数据导入导出",
     "export": {
@@ -223,7 +191,6 @@
     "adminAdjustment": "系统调整"
   },
   "profile": {
-    "lastSync": "最后同步: {time}",
     "currentExp": "CURRENT EXP",
     "greatWork": "Well done! Keep up the great work."
   },
@@ -387,16 +354,6 @@
   },
   "popup": {
     "close": "关闭"
-  },
-  "qrScanner": {
-    "title": "扫描二维码",
-    "startingCamera": "正在启动相机...",
-    "scanHint": "将二维码放入框内即可自动扫描",
-    "alignQR": "请将二维码对准扫描框",
-    "goBack": "返回"
-  },
-  "syncButton": {
-    "syncData": "同步数据"
   },
   "editTask": {
     "completionPoints": "完成获得积分",

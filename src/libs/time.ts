@@ -1,6 +1,3 @@
-import type { TFunction } from "i18next";
-import i18n from "i18next";
-
 /**
  * 时间工具函数
  * 所有时间使用本地时间，不使用 UTC
@@ -471,62 +468,4 @@ export function formatRelativeDateToString(result: RelativeDateResult): string {
     case "monthDay":
       return `${result.month}/${result.day}`;
    }
-}
-
-export type LastSyncResult = 
-  | { type: "never" }
-  | { type: "justNow" }
-  | { type: "minutesAgo"; value: number }
-  | { type: "hoursAgo"; value: number }
-  | { type: "yesterday" }
-  | { type: "daysAgo"; value: number }
-  | { type: "date"; month: number; day: number; year: number };
-
-export function formatLastSync(dateStr: string | null): LastSyncResult {
-  if (!dateStr) return { type: "never" };
-  const date = new Date(dateStr);
-  const now = new Date();
-  const diff = now.getTime() - date.getTime();
-  const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-
-  if (days === 0) {
-    const hours = Math.floor(diff / (1000 * 60 * 60));
-    if (hours === 0) {
-      const minutes = Math.floor(diff / (1000 * 60));
-      return minutes === 0 ? { type: "justNow" } : { type: "minutesAgo", value: minutes };
-    }
-    return { type: "hoursAgo", value: hours };
-  } else if (days === 1) {
-    return { type: "yesterday" };
-  } else if (days < 7) {
-    return { type: "daysAgo", value: days };
-  } else {
-    return { type: "date", month: date.getMonth() + 1, day: date.getDate(), year: date.getFullYear() };
-  }
-}
-
-export function formatLastSyncToString(result: LastSyncResult): string {
-  const lang = i18n.language === 'zh' ? 'zh' : 'en';
-  switch (result.type) {
-    case "never": return lang === 'zh' ? "从未同步" : "Never synced";
-    case "justNow": return lang === 'zh' ? "刚刚" : "Just now";
-    case "minutesAgo": return lang === 'zh' ? `${result.value}分钟前` : `${result.value} min ago`;
-    case "hoursAgo": return lang === 'zh' ? `${result.value}小时前` : `${result.value} hours ago`;
-    case "yesterday": return lang === 'zh' ? "昨天" : "Yesterday";
-    case "daysAgo": return lang === 'zh' ? `${result.value}天前` : `${result.value} days ago`;
-    case "date": return `${result.year}-${result.month.toString().padStart(2, "0")}-${result.day.toString().padStart(2, "0")}`;
-  }
-}
-
-export function formatLastSyncI18n(result: LastSyncResult, t: TFunction): string {
-  const lang = i18n.language === 'zh' ? 'zh' : 'en';
-  switch (result.type) {
-    case "never": return t("sync.lastSync.never");
-    case "justNow": return t("common.justNow");
-    case "minutesAgo": return lang === 'zh' ? `${result.value}分钟前` : `${result.value} min ago`;
-    case "hoursAgo": return lang === 'zh' ? `${result.value}小时前` : `${result.value} hours ago`;
-    case "yesterday": return t("common.yesterday");
-    case "daysAgo": return lang === 'zh' ? `${result.value}天前` : `${result.value} days ago`;
-    case "date": return `${result.year}-${result.month.toString().padStart(2, "0")}-${result.day.toString().padStart(2, "0")}`;
-  }
 }

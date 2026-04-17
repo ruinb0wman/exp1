@@ -1,6 +1,5 @@
+import { Settings } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { Settings, RefreshCw } from "lucide-react";
-import { formatLastSync, formatLastSyncI18n } from "@/libs/time";
 
 interface ProfileHeaderProps {
   onSettingsClick: () => void;
@@ -25,17 +24,9 @@ export function ProfileHeader({ onSettingsClick }: ProfileHeaderProps) {
 
 interface UserInfoSectionProps {
   user: { name?: string } | null;
-  onSyncClick?: () => void;
-  lastSyncAt?: string | null;
 }
 
-export function UserInfoSection({ user, onSyncClick, lastSyncAt }: UserInfoSectionProps) {
-  const { t } = useTranslation();
-  const lastSyncResult = formatLastSync(lastSyncAt ?? null);
-  const lastSyncText = lastSyncResult.type === "never" 
-    ? "" 
-    : t("profile.lastSync", { time: formatLastSyncI18n(lastSyncResult, t) });
-
+export function UserInfoSection({ user }: UserInfoSectionProps) {
   return (
     <div className="p-4">
       <div className="flex gap-4 items-center">
@@ -50,20 +41,7 @@ export function UserInfoSection({ user, onSyncClick, lastSyncAt }: UserInfoSecti
             @{user?.name?.toLowerCase().replace(/\s+/g, "_") ?? "user"}
           </p>
         </div>
-        {onSyncClick && (
-          <button
-            onClick={onSyncClick}
-            className="w-12 h-12 rounded-xl bg-surface flex flex-col items-center justify-center text-text-secondary hover:text-primary transition-colors border border-border shrink-0"
-          >
-            <RefreshCw className="w-5 h-5" />
-          </button>
-        )}
       </div>
-      {onSyncClick && lastSyncText && (
-        <p className="text-text-secondary text-xs mt-2 ml-24">
-          {lastSyncText}
-        </p>
-      )}
     </div>
   );
 }

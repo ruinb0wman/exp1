@@ -9,7 +9,5 @@ export function migration(db: DB) {
     users: 'id, name, updatedAt',
     pointsHistory: 'id, userId, type, relatedInstanceId, stageId, createdAt, updatedAt, [userId+createdAt]',
     pomoSessions: '++id, userId, taskId, mode, status, startedAt',
-    syncBackups: '++id, sessionId, table',
-    syncConfig: 'key'
   });
 }
