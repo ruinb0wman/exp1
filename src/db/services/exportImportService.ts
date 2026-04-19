@@ -1,6 +1,6 @@
 import { getDB } from '../index';
 import type { TaskTemplate, TaskInstance } from '../types/task';
-import type { RewardTemplate, RewardInstance } from '../types/reward';
+import type { RewardTemplate, RewardInstance, ReplenishmentRecord } from '../types/reward';
 import type { User, PointsHistory } from '../types/user';
 
 // 备份文件格式版本
@@ -16,6 +16,7 @@ export interface ExportData {
     taskInstances: TaskInstance[];
     rewardTemplates: RewardTemplate[];
     rewardInstances: RewardInstance[];
+    replenishmentRecords: ReplenishmentRecord[];
     users: User[];
     pointsHistory: PointsHistory[];
   };
@@ -28,12 +29,13 @@ export type ImportStrategy = 'overwrite';
 export interface ImportResult {
   success: boolean;
   message: string;
-  userId?: number; // 导入的用户ID，用于刷新积分
+  userId?: number;
   stats?: {
     taskTemplates: number;
     taskInstances: number;
     rewardTemplates: number;
     rewardInstances: number;
+    replenishmentRecords: number;
     users: number;
     pointsHistory: number;
   };
@@ -50,6 +52,7 @@ export interface ImportPreview {
     taskInstances: number;
     rewardTemplates: number;
     rewardInstances: number;
+    replenishmentRecords: number;
     users: number;
     pointsHistory: number;
   };
@@ -92,6 +95,7 @@ export async function exportAllData(): Promise<ExportData> {
     taskInstances,
     rewardTemplates,
     rewardInstances,
+    replenishmentRecords,
     users,
     pointsHistory,
   ] = await Promise.all([
@@ -99,6 +103,7 @@ export async function exportAllData(): Promise<ExportData> {
     db.taskInstances.toArray(),
     db.rewardTemplates.toArray(),
     db.rewardInstances.toArray(),
+    db.replenishmentRecords.toArray(),
     db.users.toArray(),
     db.pointsHistory.toArray(),
   ]);
@@ -112,6 +117,7 @@ export async function exportAllData(): Promise<ExportData> {
       taskInstances,
       rewardTemplates,
       rewardInstances,
+      replenishmentRecords,
       users,
       pointsHistory,
     },
@@ -155,12 +161,16 @@ export function validateImportData(data: unknown): ImportPreview {
     }
   }
 
+  // 兼容 v1 备份（无 replenishmentRecords 字段）
+  const hasReplenishmentRecords = Array.isArray((dbData as Record<string, unknown>).replenishmentRecords);
+
   // 计算统计信息
   const stats = {
     taskTemplates: (dbData.taskTemplates as unknown[]).length,
     taskInstances: (dbData.taskInstances as unknown[]).length,
     rewardTemplates: (dbData.rewardTemplates as unknown[]).length,
     rewardInstances: (dbData.rewardInstances as unknown[]).length,
+    replenishmentRecords: hasReplenishmentRecords ? (dbData.replenishmentRecords as unknown[]).length : 0,
     users: (dbData.users as unknown[]).length,
     pointsHistory: (dbData.pointsHistory as unknown[]).length,
   };
@@ -179,6 +189,9 @@ export function validateImportData(data: unknown): ImportPreview {
 async function importWithOverwrite(data: ExportData['data']): Promise<ImportResult> {
   const db = getDB();
 
+  // 兼容 v1 备份（无 replenishmentRecords 字段）
+  const hasReplenishmentRecords = Array.isArray(data.replenishmentRecords);
+
   try {
     // 开始事务，清空并写入新数据
     await db.transaction(
@@ -190,6 +203,7 @@ async function importWithOverwrite(data: ExportData['data']): Promise<ImportResu
         db.rewardInstances,
         db.users,
         db.pointsHistory,
+        db.replenishmentRecords,
       ],
       async () => {
         // 清空现有数据
@@ -200,6 +214,7 @@ async function importWithOverwrite(data: ExportData['data']): Promise<ImportResu
           db.rewardInstances.clear(),
           db.users.clear(),
           db.pointsHistory.clear(),
+          db.replenishmentRecords.clear(),
         ]);
 
         // 写入新数据（保留原始 id，使用 bulkPut 确保 ID 一致）
@@ -213,6 +228,9 @@ async function importWithOverwrite(data: ExportData['data']): Promise<ImportResu
             data.users.slice(0, 1).map(({ id, ...rest }) => ({ ...rest, id: 1 } as User))
           ),
           db.pointsHistory.bulkPut(data.pointsHistory as PointsHistory[]),
+          ...(hasReplenishmentRecords
+            ? [db.replenishmentRecords.bulkPut(data.replenishmentRecords as ReplenishmentRecord[])]
+            : []),
         ]);
       }
     );
@@ -220,12 +238,13 @@ async function importWithOverwrite(data: ExportData['data']): Promise<ImportResu
     return {
       success: true,
       message: '数据导入成功（全量覆盖）',
-      userId: 1, // 覆盖导入后用户ID为1
+      userId: 1,
       stats: {
         taskTemplates: data.taskTemplates.length,
         taskInstances: data.taskInstances.length,
         rewardTemplates: data.rewardTemplates.length,
         rewardInstances: data.rewardInstances.length,
+        replenishmentRecords: hasReplenishmentRecords ? data.replenishmentRecords.length : 0,
         users: data.users.length,
         pointsHistory: data.pointsHistory.length,
       },

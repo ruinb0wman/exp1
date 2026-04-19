@@ -74,13 +74,25 @@ export interface RewardTemplate {
 }
 
 export interface RewardInstance {
-  id: string;
-  templateId: string;
-  template: RewardTemplate;
-  userId: number;
-  status: RewardStatus;
-  createdAt: string;
-  updatedAt?: string;
-  expiresAt?: string;
-  usedAt?: string;
+	id: string;
+	templateId: string;
+	template: RewardTemplate;
+	userId: number;
+	status: RewardStatus;
+	createdAt: string;
+	updatedAt?: string;
+	expiresAt?: string;
+	usedAt?: string;
+}
+
+export interface ReplenishmentRecord {
+	id: string;
+	templateId: string;
+	userId: number;
+	quantity: number;
+	stockBefore: number;
+	stockAfter: number;
+	reason: "auto" | "manual";
+	scheduledDate: string; // 应该补货的日期
+	createdAt: string;     // 实际补货时间
 }

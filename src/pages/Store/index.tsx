@@ -1,7 +1,7 @@
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router";
-import { Package, Plus, Pencil } from "lucide-react";
+import { Package, Plus, Pencil, History } from "lucide-react";
 import { Header } from "@/components/Header";
 import { Popup } from "@/components/Popup";
 import { useUserStore } from "@/store";
@@ -25,11 +25,16 @@ export function Store() {
 
   const { rewards, isLoading, refresh } = useStoreRewards(user?.id ?? 0);
 
+  // 防止补货并发执行的锁
+  const isReplenishingRef = useRef(false);
+
   // 进入页面时检查并补货
   useEffect(() => {
     if (!user?.id) return;
+    if (isReplenishingRef.current) return;
 
     const checkAndReplenish = async () => {
+      isReplenishingRef.current = true;
       try {
         const templates = await getTemplatesNeedingReplenishment(
           user.id,
@@ -43,6 +48,8 @@ export function Store() {
         }
       } catch (err) {
         console.error("Replenishment failed:", err);
+      } finally {
+        isReplenishingRef.current = false;
       }
     };
 
@@ -162,15 +169,28 @@ export function Store() {
         title="Reward Details"
         headerRight={
           selectedReward ? (
-            <button
-              onClick={() => {
-                setIsPopupOpen(false);
-                navigate(`/rewards/${selectedReward.template.id}`);
-              }}
-              className="flex items-center justify-center text-text-secondary hover:text-primary transition-colors"
-            >
-              <Pencil className="w-5 h-5" />
-            </button>
+            <div className="flex items-center gap-3">
+              {selectedReward.template.replenishmentMode !== "none" && (
+                <button
+                  onClick={() => {
+                    setIsPopupOpen(false);
+                    navigate(`/replenishment/${selectedReward.template.id}`);
+                  }}
+                  className="flex items-center justify-center text-text-secondary hover:text-primary transition-colors"
+                >
+                  <History className="w-5 h-5" />
+                </button>
+              )}
+              <button
+                onClick={() => {
+                  setIsPopupOpen(false);
+                  navigate(`/rewards/${selectedReward.template.id}`);
+                }}
+                className="flex items-center justify-center text-text-secondary hover:text-primary transition-colors"
+              >
+                <Pencil className="w-5 h-5" />
+              </button>
+            </div>
           ) : null
         }
       >

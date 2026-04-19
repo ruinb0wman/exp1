@@ -1,5 +1,5 @@
 import { getDB } from '../index';
-import type { RewardTemplate, RewardInstance, RewardStatus, ReplenishmentMode } from '../types';
+import type { RewardTemplate, RewardInstance, RewardStatus, ReplenishmentMode, ReplenishmentRecord } from '../types';
 import { getUserCurrentDate } from '@/libs/time';
 
 // ==================== RewardTemplate CRUD ====================
@@ -94,13 +94,14 @@ export async function updateRewardTemplate(
 }
 
 /**
- * 删除奖励模板（同时删除关联的奖励实例）
+ * 删除奖励模板（同时删除关联的奖励实例和补货记录）
  */
 export async function deleteRewardTemplate(id: string): Promise<void> {
   const db = getDB();
 
-  await db.transaction('rw', db.rewardTemplates, db.rewardInstances, async () => {
+  await db.transaction('rw', db.rewardTemplates, db.rewardInstances, db.replenishmentRecords, async () => {
     await db.rewardInstances.where('templateId').equals(id).delete();
+    await db.replenishmentRecords.where('templateId').equals(id).delete();
     await db.rewardTemplates.delete(id);
   });
 }
@@ -629,6 +630,59 @@ function calculateMissedDays(
 }
 
 /**
+ * 获取应补货日期列表
+ * 按从旧到新的顺序返回
+ */
+function getReplenishmentScheduledDates(
+  replenishmentMode: ReplenishmentMode,
+  lastReplenishedDate: string | undefined,
+  userCurrentDate: string,
+  repeatDaysOfWeek?: number[],
+  repeatDaysOfMonth?: number[]
+): string[] {
+  if (!lastReplenishedDate) return [userCurrentDate];
+  if (lastReplenishedDate === userCurrentDate) return [];
+
+  const lastDateObj = new Date(lastReplenishedDate);
+  const userCurrentDateObj = new Date(userCurrentDate);
+  const dates: string[] = [];
+
+  const checkDate = new Date(lastDateObj);
+  checkDate.setDate(checkDate.getDate() + 1);
+
+  while (checkDate <= userCurrentDateObj) {
+    let shouldInclude = false;
+
+    switch (replenishmentMode) {
+      case 'daily':
+        shouldInclude = true;
+        break;
+      case 'weekly': {
+        const targetDays = repeatDaysOfWeek?.length ? repeatDaysOfWeek : [1];
+        shouldInclude = targetDays.includes(checkDate.getDay());
+        break;
+      }
+      case 'monthly': {
+        const targetDays = repeatDaysOfMonth?.length ? repeatDaysOfMonth : [1];
+        shouldInclude = targetDays.includes(checkDate.getDate());
+        break;
+      }
+    }
+
+    if (shouldInclude) {
+      const y = checkDate.getFullYear();
+      const m = String(checkDate.getMonth() + 1).padStart(2, '0');
+      const d = String(checkDate.getDate()).padStart(2, '0');
+      dates.push(`${y}-${m}-${d}`);
+    }
+
+    checkDate.setDate(checkDate.getDate() + 1);
+  }
+
+  return dates;
+}
+
+/**
  * 获取需要补货的奖励模板
  * 根据 replenishmentMode 和上次补货时间判断是否需要补货
  * 返回需要补货的模板及其漏掉天数
@@ -668,48 +722,159 @@ export async function getTemplatesNeedingReplenishment(
  * 为模板补货
  * @param templateId 模板ID
  * @param missedDays 漏掉的天数，默认为1
+ * @param reason 补货原因，默认为自动补货
  */
 export async function replenishRewardTemplate(
   templateId: string,
-  missedDays: number = 1
+  missedDays: number = 1,
+  reason: "auto" | "manual" = "auto"
 ): Promise<number> {
   const db = getDB();
 
-  const template = await db.rewardTemplates.get(templateId);
-  if (!template) {
-    throw new Error('Reward template not found');
-  }
+  return db.transaction(
+    "rw",
+    [db.rewardTemplates, db.replenishmentRecords],
+    async () => {
+      const template = await db.rewardTemplates.get(templateId);
+      if (!template) {
+        throw new Error('Reward template not found');
+      }
 
-  if (!template.enabled) {
-    throw new Error('Reward template is disabled');
-  }
+      if (!template.enabled) {
+        throw new Error('Reward template is disabled');
+      }
 
-  const currentStock = template.currentStock ?? 0;
+      // 防止竞态条件：在 transaction 内重新检查是否仍需要补货
+      const userCurrentDate = getUserCurrentDate();
+      const actualMissedDays = calculateMissedDays(
+        template.replenishmentMode,
+        template.lastReplenishedDate,
+        userCurrentDate,
+        template.repeatDaysOfWeek,
+        template.repeatDaysOfMonth
+      );
+      if (actualMissedDays <= 0) {
+        return 0;
+      }
+      // 如果实际漏掉天数小于传入值，以实际为准（其他进程已补货了部分）
+      const effectiveMissedDays = Math.min(missedDays, actualMissedDays);
 
-  if (template.replenishmentLimit !== undefined && currentStock >= template.replenishmentLimit) {
-    return 0;
-  }
+      // 获取应补货日期列表
+      const scheduledDates = getReplenishmentScheduledDates(
+        template.replenishmentMode,
+        template.lastReplenishedDate,
+        userCurrentDate,
+        template.repeatDaysOfWeek,
+        template.repeatDaysOfMonth
+      );
+      const datesToReplenish = scheduledDates.slice(0, effectiveMissedDays);
+      if (datesToReplenish.length === 0) {
+        return 0;
+      }
 
-  // 计算补货数量 = 每次补货数量 × 漏掉天数
-  let replenishCount = (template.replenishmentNum || 1) * missedDays;
+      let currentStock = template.currentStock ?? 0;
+      const dailyReplenishCount = template.replenishmentNum || 1;
+      const now = new Date().toISOString();
+      let totalReplenished = 0;
 
-  if (template.replenishmentLimit !== undefined) {
-    const availableSpace = template.replenishmentLimit - currentStock;
-    replenishCount = Math.min(replenishCount, availableSpace);
-  }
+      for (const scheduledDate of datesToReplenish) {
+        // 检查库存上限
+        if (template.replenishmentLimit !== undefined && currentStock >= template.replenishmentLimit) {
+          break;
+        }
 
-  if (replenishCount <= 0) {
-    return 0;
-  }
+        let dayCount = dailyReplenishCount;
+        if (template.replenishmentLimit !== undefined) {
+          const availableSpace = template.replenishmentLimit - currentStock;
+          dayCount = Math.min(dayCount, availableSpace);
+        }
 
-  const newStock = currentStock + replenishCount;
-  const now = new Date().toISOString();
-  const today = now.split('T')[0];
-  await db.rewardTemplates.update(templateId, {
-    currentStock: newStock,
-    lastReplenishedDate: today,
-    updatedAt: now,
-  });
+        if (dayCount <= 0) break;
 
-  return replenishCount;
+        const newStock = currentStock + dayCount;
+
+        // 写入补货记录（每天一条）
+        await db.replenishmentRecords.add({
+          id: "" as string,
+          templateId,
+          userId: template.userId,
+          quantity: dayCount,
+          stockBefore: currentStock,
+          stockAfter: newStock,
+          reason,
+          scheduledDate,
+          createdAt: now,
+        } as unknown as ReplenishmentRecord);
+
+        currentStock = newStock;
+        totalReplenished += dayCount;
+      }
+
+      if (totalReplenished > 0) {
+        // 更新模板库存和最后补货日期
+        const lastScheduledDate = datesToReplenish[datesToReplenish.length - 1];
+        await db.rewardTemplates.update(templateId, {
+          currentStock,
+          lastReplenishedDate: lastScheduledDate,
+          updatedAt: now,
+        });
+      }
+
+      return totalReplenished;
+    }
+  );
+}
+
+// ==================== ReplenishmentRecord CRUD ====================
+
+/**
+ * 创建补货记录
+ */
+export async function createReplenishmentRecord(
+  record: Omit<ReplenishmentRecord, "id" | "createdAt">
+): Promise<string> {
+  const db = getDB();
+  return db.replenishmentRecords.add({
+    ...record,
+    id: "" as string,
+    createdAt: new Date().toISOString(),
+  } as unknown as ReplenishmentRecord);
+}
+
+/**
+ * 根据模板ID获取补货记录（按时间倒序）
+ */
+export async function getReplenishmentRecordsByTemplateId(
+  templateId: string
+): Promise<ReplenishmentRecord[]> {
+  const db = getDB();
+  return db.replenishmentRecords
+    .where("templateId")
+    .equals(templateId)
+    .reverse()
+    .sortBy("createdAt");
+}
+
+/**
+ * 根据用户ID获取补货记录
+ */
+export async function getReplenishmentRecordsByUserId(
+  userId: number,
+  limit?: number
+): Promise<ReplenishmentRecord[]> {
+  const db = getDB();
+  const records = await db.replenishmentRecords
+    .where("userId")
+    .equals(userId)
+    .reverse()
+    .sortBy("createdAt");
+  return limit ? records.slice(0, limit) : records;
+}
+
+/**
+ * 删除某模板的所有补货记录
+ */
+export async function deleteReplenishmentRecordsByTemplateId(templateId: string): Promise<number> {
+  const db = getDB();
+  return db.replenishmentRecords.where("templateId").equals(templateId).delete();
 }

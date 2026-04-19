@@ -16,6 +16,7 @@ import {
   checkAndUpdateExpiredRewards,
   replenishRewardTemplate,
   redeemRewardsWithStockCheck,
+  getReplenishmentRecordsByTemplateId,
 } from '@/db/services';
 
 // ==================== RewardTemplate Hooks ====================
@@ -378,4 +379,35 @@ export function useRewardStatistics(userId: number) {
   }, [refresh, userId]);
 
   return { stats, isLoading, error, refresh };
+}
+
+// ==================== Replenishment History Hook ====================
+
+import type { ReplenishmentRecord } from '@/db/types';
+
+export function useReplenishmentHistory(templateId: string) {
+  const [records, setRecords] = useState<ReplenishmentRecord[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const refresh = useCallback(async () => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const data = await getReplenishmentRecordsByTemplateId(templateId);
+      setRecords(data);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to load replenishment history');
+    } finally {
+      setIsLoading(false);
+    }
+  }, [templateId]);
+
+  useEffect(() => {
+    if (templateId) {
+      refresh();
+    }
+  }, [refresh, templateId]);
+
+  return { records, isLoading, error, refresh };
 }

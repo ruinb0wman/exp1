@@ -14,6 +14,7 @@ import type { TaskInstance } from './types';
 import type { RewardTemplate } from './types';
 import type { RewardInstance } from './types';
 import type { PointsHistory } from './types';
+import type { ReplenishmentRecord } from './types';
 
 const state: { 
   db: null | ReturnType<typeof createDB>;
@@ -98,6 +99,15 @@ const createDB = () => {
 
   db.rewardInstances.hook('updating', function () {
     return { updatedAt: new Date().toISOString() };
+  });
+
+  db.replenishmentRecords.hook('creating', function (_primKey, obj, _trans) {
+    const item = obj as ReplenishmentRecord;
+    if (!item.id) {
+      item.id = generateUUID();
+    }
+    const now = new Date().toISOString();
+    if (!item.createdAt) item.createdAt = now;
   });
 
   db.pointsHistory.hook('creating', function (_primKey, obj, _trans) {

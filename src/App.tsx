@@ -17,6 +17,7 @@ import { Pomo } from "@/pages/Pomo";
 import { PointsHistory } from "@/pages/PointsHistory";
 import { Backpack } from "@/pages/Backpack";
 import { TaskHistory } from "@/pages/TaskHistory";
+import { ReplenishmentHistory } from "@/pages/ReplenishmentHistory";
 import { Settings } from "@/pages/Settings";
 import { DataImportExport } from "@/pages/DataImportExport";
 import { MainLayout, SimpleLayout } from "@/components/layouts";
@@ -74,6 +75,7 @@ function App() {
             <Route path="/tasks/:id" element={<EditTask />} />
             <Route path="/rewards/new" element={<EditReward />} />
             <Route path="/rewards/:id" element={<EditReward />} />
+            <Route path="/replenishment/:templateId" element={<ReplenishmentHistory />} />
             <Route path="/points-history" element={<PointsHistory />} />
             <Route path="/backpack" element={<Backpack />} />
             <Route path="/task-history" element={<TaskHistory />} />
