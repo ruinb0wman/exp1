@@ -6,7 +6,7 @@
   "build": {
     "beforeDevCommand": "",
     "devUrl": "http://localhost:1420",
-    "beforeBuildCommand": "bun run build",
+    "beforeBuildCommand": "pnpm run build",
     "frontendDist": "../dist"
   },
   "app": {
@@ -19,9 +19,6 @@
         "dragDropEnabled": true
       }
     ],
-    "trayIcon": {
-      "iconPath": "icons/tray_icon.png"
-    },
     "security": {
       "csp": null
     }
