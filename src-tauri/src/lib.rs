@@ -175,6 +175,7 @@ fn setup_tray(app: &mut tauri::App) -> Result<(), Box<dyn std::error::Error>> {
         .on_tray_icon_event(|tray, event| match event {
             TrayIconEvent::Click {
                 button: MouseButton::Left,
+                button_state: tauri::tray::MouseButtonState::Down,
                 ..
             } => {
                 let app = tray.app_handle();
