@@ -12,6 +12,10 @@
     "dataImportExportDescription": "备份或恢复您的任务和奖励数据",
     "about": "关于",
     "version": "版本信息",
+    "autostart": "开机自启",
+    "autostartDescription": "登录系统时自动启动应用",
+    "silentStart": "静默启动",
+    "silentStartDescription": "开机自启时不显示主窗口",
     "timeDescriptions": {
       "naturalDay": "自然日（午夜12点）",
       "dawn": "凌晨",

@@ -12,6 +12,10 @@
     "dataImportExportDescription": "Backup or restore your tasks and rewards",
     "about": "About",
     "version": "Version",
+    "autostart": "Auto Start",
+    "autostartDescription": "Automatically launch app on system login",
+    "silentStart": "Silent Start",
+    "silentStartDescription": "Start minimized without showing the main window",
     "timeDescriptions": {
       "naturalDay": "Natural day (midnight)",
       "dawn": "Dawn",

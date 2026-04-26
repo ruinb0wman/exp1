@@ -20,6 +20,7 @@ export interface User {
   dayEndTime?: string; // 一天结束时间，"HH:mm" 格式，默认 "00:00"
   pomoSettings?: PomoSettings; // 番茄钟设置
   language?: SupportedLanguage; // 语言偏好
+  silentStart?: boolean; // 静默启动（自启时不打开窗口）
 }
 
 export interface PointsHistory {
