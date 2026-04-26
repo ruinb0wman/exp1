@@ -1,5 +1,5 @@
 use tauri::Manager;
-use std::sync::Arc;
+use std::sync::{Arc, Mutex};
 
 mod pomo_timer;
 use pomo_timer::{PomoTimerManager, PomoMode, PomoTimerData};
@@ -73,6 +73,87 @@ fn get_platform() -> &'static str {
     }
 }
 
+/// 应用状态
+#[derive(Default)]
+struct AppState {
+    silent_start: Mutex<bool>,
+}
+
+/// 获取开机自启状态
+#[tauri::command]
+fn get_autostart(app: tauri::AppHandle) -> Result<bool, String> {
+    #[cfg(desktop)]
+    {
+        use tauri_plugin_autostart::ManagerExt;
+        app.autolaunch()
+            .is_enabled()
+            .map_err(|e| e.to_string())
+    }
+    #[cfg(not(desktop))]
+    {
+        Ok(false)
+    }
+}
+
+/// 设置开机自启
+#[tauri::command]
+fn set_autostart(app: tauri::AppHandle, enabled: bool, silent: bool) -> Result<(), String> {
+    #[cfg(desktop)]
+    {
+        use tauri_plugin_autostart::ManagerExt;
+        let autolaunch = app.autolaunch();
+        if enabled {
+            autolaunch.enable().map_err(|e| e.to_string())?;
+        } else {
+            autolaunch.disable().map_err(|e| e.to_string())?;
+        }
+
+        // 同步静默启动 flag 文件
+        let data_dir = app.path().app_data_dir().map_err(|e| e.to_string())?;
+        let flag = data_dir.join(".silent_start");
+        if enabled && silent {
+            std::fs::create_dir_all(&data_dir).map_err(|e| e.to_string())?;
+            std::fs::write(&flag, "").map_err(|e| e.to_string())?;
+        } else {
+            let _ = std::fs::remove_file(&flag);
+        }
+
+        // 同步更新内存状态
+        if let Some(state) = app.try_state::<AppState>() {
+            if let Ok(mut s) = state.silent_start.lock() {
+                *s = silent;
+            }
+        }
+        Ok(())
+    }
+    #[cfg(not(desktop))]
+    {
+        Ok(())
+    }
+}
+
+/// 设置静默启动标记
+#[tauri::command]
+fn set_silent_start(app: tauri::AppHandle, silent: bool) -> Result<(), String> {
+    // 持久化到 flag 文件
+    let data_dir = app.path().app_data_dir().map_err(|e| e.to_string())?;
+    let flag = data_dir.join(".silent_start");
+    if silent {
+        std::fs::create_dir_all(&data_dir).map_err(|e| e.to_string())?;
+        std::fs::write(&flag, "").map_err(|e| e.to_string())?;
+    } else {
+        let _ = std::fs::remove_file(&flag);
+    }
+
+    // 同步更新内存状态
+    if let Some(state) = app.try_state::<AppState>() {
+        if let Ok(mut s) = state.silent_start.lock() {
+            *s = silent;
+        }
+    }
+    Ok(())
+}
+
 /// 处理单例模式：当第二个实例启动时，聚焦到已存在的窗口（仅桌面端）
 #[cfg(desktop)]
 fn handle_single_instance(app: &tauri::AppHandle, _args: Vec<String>, _cwd: String) {
@@ -101,6 +182,15 @@ pub fn run() {
         builder = builder.plugin(tauri_plugin_single_instance::init(handle_single_instance));
     }
 
+    // 开机自启插件：只在桌面端启用，传入 --autostart 参数以便区分启动方式
+    #[cfg(desktop)]
+    {
+        builder = builder.plugin(tauri_plugin_autostart::init(
+            tauri_plugin_autostart::MacosLauncher::LaunchAgent,
+            Some(vec!["--autostart"]),
+        ));
+    }
+
     builder
         .invoke_handler(tauri::generate_handler![
             greet,
@@ -110,12 +200,18 @@ pub fn run() {
             stop_pomo_timer,
             get_pomo_timer_state,
             get_platform,
+            get_autostart,
+            set_autostart,
+            set_silent_start,
         ])
         // 只在桌面端设置托盘和DevTools快捷键
         .setup(|app| {
             // 初始化番茄钟计时器管理器
             let manager = Arc::new(PomoTimerManager::new());
             app.manage(manager);
+
+            // 初始化应用状态
+            app.manage(AppState::default());
             
             // 移动端：监听应用恢复事件，同步计时器状态
             #[cfg(mobile)]
@@ -131,6 +227,20 @@ pub fn run() {
             {
                 setup_tray(app)?;
                 setup_devtools_shortcut(app)?;
+
+                // 检查是否是开机自启且开启了静默启动
+                let args: Vec<String> = std::env::args().collect();
+                let is_autostart = args.contains(&"--autostart".to_string());
+                if is_autostart {
+                    if let Ok(data_dir) = app.path().app_data_dir() {
+                        let silent_flag = data_dir.join(".silent_start");
+                        if silent_flag.exists() {
+                            if let Some(window) = app.get_webview_window("main") {
+                                let _ = window.hide();
+                            }
+                        }
+                    }
+                }
             }
             Ok(())
         })

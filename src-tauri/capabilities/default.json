@@ -24,7 +24,10 @@
       "pause_pomo_timer",
       "resume_pomo_timer",
       "stop_pomo_timer",
-      "get_pomo_timer_state"
+      "get_pomo_timer_state",
+      "get_autostart",
+      "set_autostart",
+      "set_silent_start"
     ]
   }
 }

@@ -183,9 +183,8 @@ export function Settings() {
           <h2 className="text-text-secondary text-sm font-medium px-2 mb-3">
             {t("settings.general")}
           </h2>
-          <button
-            onClick={() => {}}
-            className="w-full flex items-center gap-4 rounded-xl bg-surface p-4 border border-border hover:bg-surface-light transition-colors text-left"
+          <div
+            className="w-full flex items-center gap-4 rounded-xl bg-surface p-4 border border-border hover:bg-surface-light transition-colors"
           >
             <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
               <Globe className="w-5 h-5 text-primary" />
@@ -216,7 +215,7 @@ export function Settings() {
                 </button>
               ))}
             </div>
-          </button>
+          </div>
         </div>
 
         {/* 启动设置 */}
