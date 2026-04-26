@@ -4,7 +4,6 @@ import { invoke } from "@tauri-apps/api/core";
 import { useTranslation } from "react-i18next";
 import { ConfirmProvider } from "@/hooks/useConfirm";
 import { useAppBootstrap } from "@/hooks/useAppBootstrap";
-import { useEscHideWindow } from "@/hooks/useEscHideWindow";
 import { useUserStore } from "@/store";
 import { Home } from "@/pages/Home";
 import { AllTasks } from "@/pages/AllTasks";
@@ -37,9 +36,6 @@ function App() {
 
   // 应用启动初始化
   useAppBootstrap();
-
-  // ESC 隐藏窗口
-  useEscHideWindow();
 
   // 初始化平台检测
   useEffect(() => {
