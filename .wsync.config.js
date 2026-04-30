@@ -19,7 +19,8 @@ export default {
     '.env',
     '*.log',
     'tmp/',
-    '.DS_Store'
+    '.DS_Store',
+    '.git/'
   ],
 
   // 额外要遵循的 ignore 文件
