@@ -51,6 +51,18 @@ function App() {
     initPlatform();
   }, []);
 
+  // 桌面端：Ctrl+Shift+I 切换DevTools（仅窗口聚焦时生效）
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.ctrlKey && e.shiftKey && e.key === "I") {
+        e.preventDefault();
+        invoke("toggle_devtools").catch(() => {});
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, []);
+
   return (
     <ConfirmProvider>
       <BrowserRouter>

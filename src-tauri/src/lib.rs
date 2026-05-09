@@ -73,6 +73,17 @@ fn get_platform() -> &'static str {
     }
 }
 
+/// 切换DevTools开关状态
+#[cfg(desktop)]
+#[tauri::command]
+fn toggle_devtools(window: tauri::WebviewWindow) {
+    if window.is_devtools_open() {
+        let _ = window.close_devtools();
+    } else {
+        let _ = window.open_devtools();
+    }
+}
+
 /// 应用状态
 #[derive(Default)]
 struct AppState {
@@ -170,13 +181,7 @@ pub fn run() {
         .plugin(tauri_plugin_fs::init())
         .plugin(tauri_plugin_notification::init());
 
-    // 只在桌面端启用全局快捷键插件
-    #[cfg(desktop)]
-    {
-        builder = builder.plugin(tauri_plugin_global_shortcut::Builder::new().build());
-    }
-
-        // 单例模式插件：只在桌面端启用
+    // 单例模式插件：只在桌面端启用
     #[cfg(desktop)]
     {
         builder = builder.plugin(tauri_plugin_single_instance::init(handle_single_instance));
@@ -203,6 +208,8 @@ pub fn run() {
             get_autostart,
             set_autostart,
             set_silent_start,
+            #[cfg(desktop)]
+            toggle_devtools,
         ])
         // 只在桌面端设置托盘和DevTools快捷键
         .setup(|app| {
@@ -226,7 +233,6 @@ pub fn run() {
             #[cfg(desktop)]
             {
                 setup_tray(app)?;
-                setup_devtools_shortcut(app)?;
 
                 // 检查是否是开机自启且开启了静默启动
                 let args: Vec<String> = std::env::args().collect();
@@ -305,27 +311,4 @@ fn setup_tray(app: &mut tauri::App) -> Result<(), Box<dyn std::error::Error>> {
     Ok(())
 }
 
-/// 设置DevTools快捷键（仅桌面端）
-#[cfg(desktop)]
-fn setup_devtools_shortcut(app: &mut tauri::App) -> Result<(), Box<dyn std::error::Error>> {
-    use tauri_plugin_global_shortcut::{GlobalShortcutExt, Shortcut, Code, Modifiers};
-    
-    let app_handle = app.handle().clone();
-    
-    // 定义快捷键: Ctrl+Shift+I
-    let shortcut = Shortcut::new(Some(Modifiers::CONTROL | Modifiers::SHIFT), Code::KeyI);
-    
-    // 注册快捷键
-    app.global_shortcut().on_shortcut(shortcut, move |_app, _shortcut, _event| {
-        if let Some(window) = app_handle.get_webview_window("main") {
-            // 切换DevTools状态
-            if window.is_devtools_open() {
-                let _ = window.close_devtools();
-            } else {
-                let _ = window.open_devtools();
-            }
-        }
-    })?;
-    
-    Ok(())
-}
+
