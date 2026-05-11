@@ -1,6 +1,7 @@
 import { useCallback, useRef } from "react";
 import { getDB } from "@/db";
-import { checkAllTemplatesAndGenerate } from "@/db/middleware/taskTemplateMiddleware";
+import { checkAllTemplatesAndGenerate, backfillMissingInstancesForAllTemplates } from "@/db/middleware/taskTemplateMiddleware";
+import { checkAndUpdateExpiredTasks } from "@/db/services";
 
 interface UsePageInitializerOptions {
   userId?: number;
@@ -32,18 +33,29 @@ export function usePageInitializer({
 
     hasInitializedRef.current = true;
 
+    console.log(`[pageInit] ====== 页面初始化开始 ======`);
+    console.log(`[pageInit] userId=${userId}, dayEndTime=${dayEndTime}`);
+
     try {
       const db = getDB();
+      console.log(`[pageInit] 步骤1: checkAllTemplatesAndGenerate...`);
       const generatedCount = await checkAllTemplatesAndGenerate(db, userId, dayEndTime);
+      console.log(`[pageInit] 步骤1完成: 生成今日实例 ${generatedCount} 条`);
 
-      if (generatedCount > 0) {
-        console.log(`Generated ${generatedCount} task instances on page init`);
-      }
+      console.log(`[pageInit] 步骤2: backfillMissingInstancesForAllTemplates...`);
+      const backfillCount = await backfillMissingInstancesForAllTemplates(db, userId, dayEndTime);
+      console.log(`[pageInit] 步骤2完成: 回填历史实例 ${backfillCount} 条`);
+
+      console.log(`[pageInit] 步骤3: checkAndUpdateExpiredTasks...`);
+      const expiredIds = await checkAndUpdateExpiredTasks(userId, dayEndTime);
+      console.log(`[pageInit] 步骤3完成: 过期实例 ${expiredIds.length} 条`);
+
+      console.log(`[pageInit] ====== 页面初始化完成 ======`);
 
       onInitialized?.();
     } catch (error) {
       const err = error instanceof Error ? error : new Error(String(error));
-      console.error("Failed to initialize page:", err);
+      console.error("[pageInit] ❌ 初始化失败:", err);
       onError?.(err);
       throw err;
     }

@@ -4,6 +4,7 @@ import {
   shouldGenerateInstanceOnDate, 
   generateTaskInstance,
   toUserDateString,
+  formatLocalDate,
 } from '@/libs/task';
 
 // 用于防止重复处理的 Set
@@ -138,6 +139,156 @@ export async function checkAllTemplatesAndGenerate(
   }
 
   return generatedCount;
+}
+
+/**
+ * 为指定模板补建缺失的历史实例（从 startAt 到今天）
+ * 解决未打开应用导致过去日期缺少实例的问题
+ */
+export async function backfillMissingInstancesForTemplate(
+  db: DB,
+  template: TaskTemplate,
+  dayEndTime?: string
+): Promise<number> {
+  console.log(`[backfill] 📋 处理模板: "${template.title}" (id=${template.id}, repeatMode=${template.repeatMode}, startAt=${template.startAt})`);
+
+  if (!template.enabled || template.repeatMode === 'none') {
+    console.log(`[backfill] ⏭ 跳过: enabled=${template.enabled}, repeatMode=${template.repeatMode}`);
+    return 0;
+  }
+
+  if (!template.startAt) {
+    console.log(`[backfill] ⏭ 跳过 "${template.title}": 无 startAt`);
+    return 0;
+  }
+
+  if (!dayEndTime || dayEndTime === "00:00") {
+    const user = await db.users.get(template.userId);
+    dayEndTime = user?.dayEndTime || "00:00";
+  }
+  console.log(`[backfill] dayEndTime=${dayEndTime}`);
+
+  const allInstances = await db.taskInstances
+    .where('templateId')
+    .equals(template.id!)
+    .toArray();
+  console.log(`[backfill] 已有实例数: ${allInstances.length}`);
+
+  if (template.endCondition === 'times' && template.endValue) {
+    const maxTimes = parseInt(template.endValue, 10);
+    console.log(`[backfill] endCondition=times, maxTimes=${maxTimes}, 当前=${allInstances.length}`);
+    if (allInstances.length >= maxTimes) {
+      console.log(`[backfill] ⏭ 跳过 "${template.title}": 已达最大次数 ${maxTimes}`);
+      return 0;
+    }
+  }
+
+  const existingDates = new Set<string>();
+  for (const inst of allInstances) {
+    if (inst.instanceDate) {
+      existingDates.add(inst.instanceDate);
+    }
+  }
+  console.log(`[backfill] 已有日期: [${[...existingDates].join(", ")}]`);
+
+  const now = new Date();
+  const todayStr = formatLocalDate(now);
+  console.log(`[backfill] todayStr=${todayStr}`);
+
+  let endDate: Date;
+  if (template.endCondition === 'date' && template.endValue) {
+    endDate = new Date(template.endValue);
+    const endDateStr = formatLocalDate(endDate);
+    console.log(`[backfill] endCondition=date, endValue=${template.endValue}, endDateStr=${endDateStr}`);
+    if (endDateStr < todayStr) {
+      endDate = new Date(endDateStr);
+    } else {
+      endDate = now;
+    }
+  } else {
+    endDate = now;
+  }
+
+  const instancesToAdd: Omit<TaskInstance, 'id'>[] = [];
+  const currentDate = new Date(template.startAt);
+  const end = new Date(endDate);
+  console.log(`[backfill] 日期范围: ${formatLocalDate(currentDate)} ~ ${formatLocalDate(end)}`);
+
+  let totalInstanceCount = allInstances.length;
+
+  while (currentDate <= end) {
+    const dateStr = formatLocalDate(currentDate);
+
+    if (!existingDates.has(dateStr)) {
+      if (shouldGenerateInstanceOnDate(template, allInstances, currentDate, "00:00")) {
+        const instanceData = generateTaskInstance(template, currentDate);
+        instancesToAdd.push({
+          ...instanceData,
+          createdAt: new Date().toISOString(),
+        } as TaskInstance);
+        totalInstanceCount++;
+        console.log(`[backfill] ✅ 生成实例: date=${dateStr}, 已累计=${totalInstanceCount}`);
+
+        if (template.endCondition === 'times' && template.endValue) {
+          const maxTimes = parseInt(template.endValue, 10);
+          if (totalInstanceCount >= maxTimes) {
+            console.log(`[backfill] ⛔ 已达最大次数 ${maxTimes}，停止`);
+            break;
+          }
+        }
+      }
+    }
+
+    currentDate.setDate(currentDate.getDate() + 1);
+  }
+
+  console.log(`[backfill] 待插入实例数: ${instancesToAdd.length}`);
+  if (instancesToAdd.length > 0) {
+    const datesToInsert = instancesToAdd.map(i => i.instanceDate);
+    console.log(`[backfill] 📅 待插入日期: [${datesToInsert.join(", ")}]`);
+    try {
+      await db.taskInstances.bulkAdd(instancesToAdd as TaskInstance[], { allKeys: true });
+      console.log(`[backfill] ✅ bulkAdd 成功, 已插入 ${instancesToAdd.length} 条`);
+    } catch (error) {
+      console.error(`[backfill] ❌ bulkAdd 失败:`, error);
+    }
+  } else {
+    console.log(`[backfill] ℹ️ 无新实例需要创建`);
+  }
+
+  return instancesToAdd.length;
+}
+
+/**
+ * 为所有启用的模板补建缺失的历史实例
+ */
+export async function backfillMissingInstancesForAllTemplates(
+  db: DB,
+  userId: number,
+  dayEndTime: string = "00:00"
+): Promise<number> {
+  console.log(`[backfill] ====== 开始批量回填 ======`);
+  console.log(`[backfill] userId=${userId}, dayEndTime=${dayEndTime}`);
+
+  const templates = await db.taskTemplates
+    .where('userId')
+    .equals(userId)
+    .and((t) => t.enabled)
+    .toArray();
+  console.log(`[backfill] 启用的模板数: ${templates.length}`);
+
+  let totalBackfilled = 0;
+
+  for (const template of templates) {
+    const count = await backfillMissingInstancesForTemplate(db, template, dayEndTime);
+    if (count > 0) {
+      totalBackfilled += count;
+    }
+    console.log(`[backfill] 模板 "${template.title}": 回填 ${count} 条`);
+  }
+
+  console.log(`[backfill] ====== 批量回填结束, 总计: ${totalBackfilled} 条 ======`);
+  return totalBackfilled;
 }
 
 /**
