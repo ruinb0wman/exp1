@@ -147,6 +147,7 @@ src/
 │   └── migrations/ # Schema migrations
 ├── services/       # Business logic (sync, etc.)
 ├── libs/           # Utility functions
+├── docs/           # System design & architecture docs
 └── index.css       # Global styles + Tailwind
 
 src-tauri/
