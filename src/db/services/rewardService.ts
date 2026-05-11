@@ -13,16 +13,14 @@ export async function createRewardTemplate(
   const db = getDB();
 
   const now = new Date().toISOString();
-  const today = now.split('T')[0];
   const shouldReplenish = template.replenishmentMode !== 'none';
 
-  const newTemplate: RewardTemplate = {
-    ...template,
-    id: '' as string,
-    createdAt: now,
-    currentStock: shouldReplenish ? 0 : undefined,
-    lastReplenishedDate: shouldReplenish ? today : undefined,
-  };
+	const newTemplate: RewardTemplate = {
+		...template,
+		id: '' as string,
+		createdAt: now,
+		currentStock: shouldReplenish ? 0 : undefined,
+	};
 
   return db.rewardTemplates.add(newTemplate as unknown as RewardTemplate);
 }
