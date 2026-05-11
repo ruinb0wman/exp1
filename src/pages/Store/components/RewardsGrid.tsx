@@ -37,7 +37,7 @@ export function RewardsGrid({ rewards, isLoading, onRewardClick }: RewardsGridPr
   }
 
   return (
-    <div className="grid grid-cols-3 gap-3">
+    <div className="grid gap-3 grid-cols-[repeat(auto-fill,minmax(100px,1fr))]">
       {rewards.map(({ template, availableCount }) => (
         <button
           key={template.id}
