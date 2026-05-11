@@ -3,6 +3,8 @@ import { useTranslation } from "react-i18next";
 import { getDB } from "@/db";
 import type { TaskInstance, TaskTemplate } from "@/db/types";
 import { formatLocalDate, formatLocalDateToYYYYMMDD } from "@/libs/time";
+import { shouldGenerateInstanceOnDate } from "@/libs/task";
+import { useUserStore } from "@/store/userStore";
 
 interface TaskContributionGraphProps {
   template: TaskTemplate;
@@ -40,6 +42,7 @@ export function TaskContributionGraph({
     setIsLoading(true);
     try {
       const db = getDB();
+      const dayEndTime = useUserStore.getState().user?.dayEndTime ?? "00:00";
 
       // 计算日期范围：180天前到今天
       const totalDays = 180;
@@ -82,6 +85,8 @@ export function TaskContributionGraph({
           // 计算当前格子的日期：行号 * 30 + 列号
           const dayOffset = r * daysPerRow + d;
           currentDate.setDate(startDate.getDate() + dayOffset);
+          // 归一化到中午，避免 dayEndTime 导致 toUserDateString 回退日期
+          currentDate.setHours(12, 0, 0, 0);
 
           // 使用本地日期生成 key
           const dateStr = formatLocalDateToYYYYMMDD(currentDate);
@@ -94,6 +99,8 @@ export function TaskContributionGraph({
             if (instance.status === "completed") {
               completedCount++;
             }
+          } else if (shouldGenerateInstanceOnDate(template, instances, currentDate, dayEndTime)) {
+            status = "skipped";
           }
 
           rowDays.push({

@@ -176,6 +176,10 @@ export async function backfillMissingInstancesForTemplate(
   const end = new Date(endDate);
   console.log(`[backfill] 日期范围: ${formatLocalDate(currentDate)} ~ ${formatLocalDate(end)}`);
 
+  // 将时间归一化到 dayEndTime 之后，避免 toUserDateString 回退日期
+  const [endHour, endMinute] = dayEndTime.split(':').map(Number);
+  currentDate.setHours(endHour, endMinute, 1, 0);
+
   let totalInstanceCount = allInstances.length;
 
   while (currentDate <= end) {
