@@ -27,7 +27,6 @@ export function Home() {
 
   const { initialize: initializePage } = usePageInitializer({
     userId: user?.id,
-    dayEndTime: user?.dayEndTime,
     onError: (error) => {
       console.error("Failed to initialize page:", error);
     },
@@ -42,7 +41,7 @@ export function Home() {
   // 任务详情 popup 状态
   const [selectedTask, setSelectedTask] = useState<{ instance: TaskInstance; template: TaskTemplate } | null>(null);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
-  const { tasks, isLoading: isTasksLoading, refresh: refreshTasks } = useTodayTasks(user?.id ?? 0, user?.dayEndTime);
+  const { tasks, isLoading: isTasksLoading, refresh: refreshTasks } = useTodayTasks(user?.id ?? 0);
   const { tasks: noDateTasks, isLoading: isNoDateTasksLoading, refresh: refreshNoDateTasks } = useNoDateTasks(user?.id ?? 0);
   const { complete, reset } = useTaskInstanceActions();
 

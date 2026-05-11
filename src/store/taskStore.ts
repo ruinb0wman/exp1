@@ -5,6 +5,7 @@ import {
 	getTodayTaskInstances,
 	getNoDateTaskInstances,
 } from "@/db/services";
+import { useUserStore } from "@/store/userStore";
 
 interface TaskWithTemplate {
 	instance: TaskInstance;
@@ -12,18 +13,15 @@ interface TaskWithTemplate {
 }
 
 interface TaskState {
-	// 数据
 	todayTasks: TaskWithTemplate[];
 	noDateTasks: TaskWithTemplate[];
 	isLoading: boolean;
 	error: string | null;
 
-	// 订阅管理
 	todayTasksSubscription: (() => void) | null;
 	noDateTasksSubscription: (() => void) | null;
 
-	// 方法
-	subscribeToTodayTasks: (userId: number, dayEndTime?: string) => void;
+	subscribeToTodayTasks: (userId: number) => void;
 	subscribeToNoDateTasks: (userId: number) => void;
 	unsubscribeFromTodayTasks: () => void;
 	unsubscribeFromNoDateTasks: () => void;
@@ -39,9 +37,11 @@ export const useTaskStore = create<TaskState>((set, get) => ({
 	todayTasksSubscription: null,
 	noDateTasksSubscription: null,
 
-	subscribeToTodayTasks: (userId, dayEndTime) => {
-		// 如果已有订阅，先取消
+	subscribeToTodayTasks: (userId) => {
 		get().unsubscribeFromTodayTasks();
+
+		const user = useUserStore.getState().user;
+		const dayEndTime = user?.dayEndTime ?? "00:00";
 
 		const observable = liveQuery(() =>
 			getTodayTaskInstances(userId, dayEndTime),

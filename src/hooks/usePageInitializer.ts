@@ -2,24 +2,20 @@ import { useCallback, useRef } from "react";
 import { getDB } from "@/db";
 import { checkAllTemplatesAndGenerate, backfillMissingInstancesForAllTemplates } from "@/db/middleware/taskTemplateMiddleware";
 import { checkAndUpdateExpiredTasks } from "@/db/services";
+import { useUserStore } from "@/store";
 
 interface UsePageInitializerOptions {
   userId?: number;
-  dayEndTime?: string;
   onInitialized?: () => void;
   onError?: (error: Error) => void;
 }
 
-/**
- * 页面初始化 Hook
- * 在进入页面时检查所有启用的模板并生成今天的任务实例
- */
 export function usePageInitializer({
   userId,
-  dayEndTime = "00:00",
   onInitialized,
   onError,
 }: UsePageInitializerOptions) {
+  const user = useUserStore(s => s.user);
   const hasInitializedRef = useRef(false);
 
   const initialize = useCallback(async () => {
@@ -33,17 +29,19 @@ export function usePageInitializer({
 
     hasInitializedRef.current = true;
 
+    const dayEndTime = user?.dayEndTime ?? "00:00";
+
     console.log(`[pageInit] ====== 页面初始化开始 ======`);
-    console.log(`[pageInit] userId=${userId}, dayEndTime=${dayEndTime}`);
+    console.log(`[pageInit] userId=${userId}`);
 
     try {
       const db = getDB();
       console.log(`[pageInit] 步骤1: checkAllTemplatesAndGenerate...`);
-      const generatedCount = await checkAllTemplatesAndGenerate(db, userId, dayEndTime);
+      const generatedCount = await checkAllTemplatesAndGenerate(db, userId);
       console.log(`[pageInit] 步骤1完成: 生成今日实例 ${generatedCount} 条`);
 
       console.log(`[pageInit] 步骤2: backfillMissingInstancesForAllTemplates...`);
-      const backfillCount = await backfillMissingInstancesForAllTemplates(db, userId, dayEndTime);
+      const backfillCount = await backfillMissingInstancesForAllTemplates(db, userId);
       console.log(`[pageInit] 步骤2完成: 回填历史实例 ${backfillCount} 条`);
 
       console.log(`[pageInit] 步骤3: checkAndUpdateExpiredTasks...`);
@@ -59,7 +57,7 @@ export function usePageInitializer({
       onError?.(err);
       throw err;
     }
-  }, [userId, dayEndTime, onInitialized, onError]);
+  }, [userId, user?.dayEndTime, onInitialized, onError]);
 
   return { initialize };
 }

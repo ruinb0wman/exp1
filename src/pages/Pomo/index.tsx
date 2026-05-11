@@ -17,7 +17,6 @@ export function Pomo() {
   const { t } = useTranslation();
   const userStore = useUserStore();
   const userId = userStore.user?.id ?? 1;
-  const dayEndTime = userStore.user?.dayEndTime;
 
   const {
     mode,
@@ -38,7 +37,7 @@ export function Pomo() {
     loadSettings,
   } = usePomoStore();
 
-  const { tasks } = useTodayTasks(userId, dayEndTime);
+  const { tasks } = useTodayTasks(userId);
   const [showTaskSelector, setShowTaskSelector] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
 

@@ -144,17 +144,14 @@ export interface TaskWithTemplate {
   template: TaskTemplate;
 }
 
-/**
- * 获取今日任务列表（支持 dayEndTime）- 使用全局 Store
- */
-export function useTodayTasks(userId: number, dayEndTime?: string) {
+export function useTodayTasks(userId: number) {
   const { todayTasks, isLoading, error, subscribeToTodayTasks, refreshTodayTasks } = useTaskStore();
 
   useEffect(() => {
     if (userId) {
-      subscribeToTodayTasks(userId, dayEndTime);
+      subscribeToTodayTasks(userId);
     }
-  }, [userId, dayEndTime, subscribeToTodayTasks]);
+  }, [userId, subscribeToTodayTasks]);
 
   return { tasks: todayTasks, isLoading, error, refresh: refreshTodayTasks };
 }

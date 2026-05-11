@@ -16,45 +16,11 @@ export function toUserDateString(date: Date | string, dayEndTime: string): strin
   const d = typeof date === 'string' ? new Date(date) : new Date(date.getTime());
   const [endHour, endMinute] = dayEndTime.split(':').map(Number);
   
-  // 如果当前本地时间 < dayEndTime，算前一天
   if (d.getHours() < endHour || (d.getHours() === endHour && d.getMinutes() < endMinute)) {
     d.setDate(d.getDate() - 1);
   }
   
   return formatLocalDate(d);
-}
-
-/**
- * 计算两个 UTC 时间之间的"用户天数差"（考虑 dayEndTime）
- */
-function daysBetweenUserDates(
-  date1: Date | string, 
-  date2: Date | string, 
-  dayEndTime: string
-): number {
-  const userDate1 = toUserDateString(date1, dayEndTime);
-  const userDate2 = toUserDateString(date2, dayEndTime);
-  
-  const d1 = new Date(userDate1);
-  const d2 = new Date(userDate2);
-  return Math.floor((d2.getTime() - d1.getTime()) / (1000 * 60 * 60 * 24));
-}
-
-/**
- * 计算两个 UTC 时间之间的"用户月数差"（考虑 dayEndTime）
- */
-function monthsBetweenUserDates(
-  date1: Date | string, 
-  date2: Date | string, 
-  dayEndTime: string
-): number {
-  const userDate1 = toUserDateString(date1, dayEndTime);
-  const userDate2 = toUserDateString(date2, dayEndTime);
-  
-  const [y1, m1] = userDate1.split('-').map(Number);
-  const [y2, m2] = userDate2.split('-').map(Number);
-  
-  return (y2 - y1) * 12 + (m2 - m1);
 }
 
 // 重新导出 formatLocalDate 以保持兼容性
@@ -164,7 +130,6 @@ export function isTemplateEnded(
 
 /**
  * 判断指定日期是否需要为该模板生成任务实例
- * 使用"用户日期"进行计算（考虑 dayEndTime 偏移）
  * @param existingInstances 该模板已存在的所有实例
  * @param targetDate 目标日期（本地时间），默认为今天
  * @param dayEndTime 一天结束时间，格式 "HH:mm"，默认 "00:00"
@@ -177,74 +142,55 @@ export function shouldGenerateInstanceOnDate(
 ): boolean {
   const { repeatMode, repeatInterval, repeatDaysOfWeek, repeatDaysOfMonth, startAt } = template;
 
-  // 辅助函数：检查是否已有目标日期的实例（使用"用户日期"比较）
   const hasInstanceOnDate = (): boolean => {
     const targetUserDate = toUserDateString(targetDate, dayEndTime);
     return existingInstances.some((inst) => {
       if (!inst.instanceDate) return false;
-      const instUserDate = inst.instanceDate;
-      return instUserDate === targetUserDate;
+      return inst.instanceDate === targetUserDate;
     });
   };
 
   switch (repeatMode) {
     case 'none': {
-      // 不重复：只生成一次，检查是否已经有实例
       return existingInstances.length === 0;
     }
 
     case 'daily': {
-      // 每日：先检查是否已存在该日期的实例
       if (hasInstanceOnDate()) return false;
-      
-      // 检查间隔天数（基于用户日期），使用 startAt 作为基准
-      if (!startAt) return false; // 周期性任务必须有 startAt
+      if (!startAt) return false;
       const interval = repeatInterval || 1;
-      // 使用"用户日期"计算天数差
-      const daysDiff = daysBetweenUserDates(startAt, targetDate, dayEndTime);
+      const daysDiff = daysBetweenUTC(startAt, targetDate);
       return daysDiff >= 0 && daysDiff % interval === 0;
     }
 
     case 'weekly': {
-      // 每周：先检查是否已存在该日期的实例
       if (hasInstanceOnDate()) return false;
-      
-      // 检查是否在指定星期几，且满足间隔周数（基于用户日期）
       if (!startAt) return false;
       const interval = repeatInterval || 1;
-      // 使用"用户日期"获取星期几
       const currentUserDateStr = toUserDateString(targetDate, dayEndTime);
-      const currentDayOfWeek = new Date(currentUserDateStr).getDay(); // 0-6
+      const currentDayOfWeek = new Date(currentUserDateStr).getDay();
 
-      // 检查目标日期的用户日期是否在指定的星期几列表中
       if (!repeatDaysOfWeek || !repeatDaysOfWeek.includes(currentDayOfWeek)) {
         return false;
       }
 
-      // 检查是否满足间隔周数（基于用户日期计算）
-      const daysDiff = daysBetweenUserDates(startAt, targetDate, dayEndTime);
+      const daysDiff = daysBetweenUTC(startAt, targetDate);
       const weeksDiff = Math.floor(daysDiff / 7);
       return weeksDiff >= 0 && weeksDiff % interval === 0;
     }
 
     case 'monthly': {
-      // 每月：先检查是否已存在该日期的实例
       if (hasInstanceOnDate()) return false;
-      
-      // 检查是否在指定日期，且满足间隔月数（基于用户日期）
       if (!startAt) return false;
       const interval = repeatInterval || 1;
-      // 使用"用户日期"获取日期
       const currentUserDateStr = toUserDateString(targetDate, dayEndTime);
       const currentDayOfMonth = new Date(currentUserDateStr).getDate();
 
-      // 检查目标日期的用户日期是否在指定的日期列表中
       if (!repeatDaysOfMonth || !repeatDaysOfMonth.includes(currentDayOfMonth)) {
         return false;
       }
 
-      // 检查是否满足间隔月数（基于用户日期计算）
-      const monthsDiff = monthsBetweenUserDates(startAt, targetDate, dayEndTime);
+      const monthsDiff = monthsBetweenUTC(startAt, targetDate);
       return monthsDiff >= 0 && monthsDiff % interval === 0;
     }
 
@@ -266,7 +212,6 @@ export function shouldGenerateInstanceToday(
 
 /**
  * 过滤出指定日期需要生成实例的任务模板
- * 使用"用户日期"进行日期比较（考虑 dayEndTime）
  * @param dayEndTime 一天结束时间，格式 "HH:mm"，默认 "00:00"
  */
 export function filterTemplatesNeedingInstancesOnDate(
@@ -276,45 +221,23 @@ export function filterTemplatesNeedingInstancesOnDate(
   dayEndTime: string = "00:00"
 ): TaskTemplate[] {
   return templates.filter((template) => {
-    // 只处理启用的模板
     if (!template.enabled) {
       return false;
     }
 
-    // 获取该模板的所有实例
     const templateInstances = existingInstances.filter(
       (inst) => inst.templateId === template.id
     );
 
-    // 检查在目标日期是否已满足结束条件
     if (isTemplateEndedOnDate(template, templateInstances, targetDate)) {
       return false;
     }
 
-    // 对于周期性任务（repeatMode !== 'none'），必须确保 startAt 存在
     if (template.repeatMode !== 'none' && !template.startAt) {
       console.warn(`Template ${template.id} (${template.title}) has no startAt, skipping`);
       return false;
     }
 
-    // 对于 repeatMode 为 'none' 的，只检查是否已经有实例（不依赖 dayEndTime）
-    if (template.repeatMode === 'none') {
-      return shouldGenerateInstanceOnDate(template, templateInstances, targetDate, dayEndTime);
-    }
-
-    // 对于其他 repeatMode，检查目标日期的"用户日期"是否已经生成过实例
-    const targetUserDate = toUserDateString(targetDate, dayEndTime);
-    const hasInstanceOnDate = templateInstances.some((inst) => {
-      if (!inst.instanceDate) return false;
-      // 使用"用户日期"比较是否是同一天
-      const instUserDate = inst.instanceDate;
-      return instUserDate === targetUserDate;
-    });
-    if (hasInstanceOnDate) {
-      return false;
-    }
-
-    // 检查目标日期是否应该生成实例
     return shouldGenerateInstanceOnDate(template, templateInstances, targetDate, dayEndTime);
   });
 }
@@ -331,14 +254,16 @@ export function filterTemplatesNeedingInstances(
 }
 
 /**
- * 为任务模板生成任务实例数据（使用UTC时间）
+ * 为任务模板生成任务实例数据
  * @param dayEndTime 本地时间的"一天结束"，格式 "HH:mm"
  */
 export function generateTaskInstance(
   template: TaskTemplate,
-  date?: Date
+  date?: Date,
+  dayEndTime?: string
 ): Omit<TaskInstance, 'id'> {
   const targetDate = date || new Date();
+  const effectiveDayEndTime = dayEndTime || "00:00";
 
   const subtasks = template.subtasks || [];
 
@@ -348,10 +273,10 @@ export function generateTaskInstance(
     if (template.startAt) {
       instanceDate = template.startAt.split('T')[0];
     } else {
-      instanceDate = formatLocalDate(new Date());
+      instanceDate = toUserDateString(new Date(), effectiveDayEndTime);
     }
   } else {
-    instanceDate = formatLocalDate(targetDate);
+    instanceDate = toUserDateString(targetDate, effectiveDayEndTime);
   }
 
   const now = new Date().toISOString();
@@ -377,13 +302,14 @@ export function generateTaskInstance(
 }
 
 /**
- * 批量生成任务实例（使用UTC时间）
+ * 批量生成任务实例
  */
 export function generateTaskInstances(
   templates: TaskTemplate[],
-  date?: Date
+  date?: Date,
+  dayEndTime?: string
 ): Omit<TaskInstance, 'id' | 'createdAt'>[] {
-  return templates.map((template) => generateTaskInstance(template, date));
+  return templates.map((template) => generateTaskInstance(template, date, dayEndTime));
 }
 
 // ==================== taskService 相关工具函数 ====================
