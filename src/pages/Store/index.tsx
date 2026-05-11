@@ -166,6 +166,7 @@ export function Store() {
         isOpen={isPopupOpen}
         onClose={() => setIsPopupOpen(false)}
         position="bottom"
+        maxHeight="80vh"
         title="Reward Details"
         headerRight={
           selectedReward ? (
