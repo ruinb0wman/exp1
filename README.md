@@ -14,6 +14,20 @@
 - 🔔 **通知提醒** - 番茄钟计时结束时发送系统通知
 - 💾 **数据备份** - 支持 JSON 格式导入/导出数据
 
+## Preview
+
+### PC
+
+|Home|Pomo|Store|Stats|Profile|
+|-|-|-|-|-|
+|![](./README/PC-Home.png)|![](./README/PC-Pomo.png)|![](./README/PC-Store.png)|![](./README/PC-Stats.png)|![](./README/PC-Profile.png)|
+
+### mobile
+
+|Home|Pomo|Store|Stats|Profile|
+|-|-|-|-|-|
+|![](./README/Mobile-Home.png)|![](./README/Mobile-Pomo.png)|![](./README/Mobile-Store.png)|![](./README/Mobile-Stats.png)|![](./README/Mobile-Profile.png)|
+
 ## 技术栈
 
 - **框架**: Tauri v2 + React 19 + Vite
