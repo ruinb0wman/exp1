@@ -1,11 +1,9 @@
-use tauri::Manager;
+use tauri::{Manager, Listener, Emitter};
 use std::sync::{Arc, Mutex};
 
 mod pomo_timer;
 use pomo_timer::{PomoTimerManager, PomoMode, PomoTimerData};
 
-#[cfg(mobile)]
-use tauri::App;
 
 // Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
 #[tauri::command]
@@ -92,11 +90,11 @@ struct AppState {
 
 /// 获取开机自启状态
 #[tauri::command]
-fn get_autostart(app: tauri::AppHandle) -> Result<bool, String> {
+fn get_autostart(_app: tauri::AppHandle) -> Result<bool, String> {
     #[cfg(desktop)]
     {
         use tauri_plugin_autostart::ManagerExt;
-        app.autolaunch()
+        _app.autolaunch()
             .is_enabled()
             .map_err(|e| e.to_string())
     }
@@ -108,21 +106,21 @@ fn get_autostart(app: tauri::AppHandle) -> Result<bool, String> {
 
 /// 设置开机自启
 #[tauri::command]
-fn set_autostart(app: tauri::AppHandle, enabled: bool, silent: bool) -> Result<(), String> {
+fn set_autostart(_app: tauri::AppHandle, _enabled: bool, _silent: bool) -> Result<(), String> {
     #[cfg(desktop)]
     {
         use tauri_plugin_autostart::ManagerExt;
-        let autolaunch = app.autolaunch();
-        if enabled {
+        let autolaunch = _app.autolaunch();
+        if _enabled {
             autolaunch.enable().map_err(|e| e.to_string())?;
         } else {
             autolaunch.disable().map_err(|e| e.to_string())?;
         }
 
         // 同步静默启动 flag 文件
-        let data_dir = app.path().app_data_dir().map_err(|e| e.to_string())?;
+        let data_dir = _app.path().app_data_dir().map_err(|e| e.to_string())?;
         let flag = data_dir.join(".silent_start");
-        if enabled && silent {
+        if _enabled && _silent {
             std::fs::create_dir_all(&data_dir).map_err(|e| e.to_string())?;
             std::fs::write(&flag, "").map_err(|e| e.to_string())?;
         } else {
@@ -130,9 +128,9 @@ fn set_autostart(app: tauri::AppHandle, enabled: bool, silent: bool) -> Result<(
         }
 
         // 同步更新内存状态
-        if let Some(state) = app.try_state::<AppState>() {
+        if let Some(state) = _app.try_state::<AppState>() {
             if let Ok(mut s) = state.silent_start.lock() {
-                *s = silent;
+                *s = _silent;
             }
         }
         Ok(())
