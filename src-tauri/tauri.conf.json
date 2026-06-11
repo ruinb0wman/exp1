@@ -23,6 +23,9 @@
       "csp": null
     }
   },
+  "plugins": {
+    "background-service": {}
+  },
   "bundle": {
     "active": true,
     "icon": [

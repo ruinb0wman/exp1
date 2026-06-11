@@ -32,6 +32,7 @@ pub struct PomoTimerData {
     pub time_left: i64,
     pub total_time: i64,
     pub session_id: Option<i64>,
+    pub is_completed: bool,
 }
 
 impl Default for PomoTimerData {
@@ -42,6 +43,7 @@ impl Default for PomoTimerData {
             time_left: 25 * 60, // 默认25分钟
             total_time: 25 * 60,
             session_id: None,
+            is_completed: false,
         }
     }
 }
@@ -56,6 +58,14 @@ impl PomoTimerManager {
     pub fn new() -> Self {
         Self {
             data: Arc::new(RwLock::new(PomoTimerData::default())),
+            cancel_token: Arc::new(Mutex::new(None)),
+        }
+    }
+
+    /// 使用外部共享数据构造（Android 端与 BackgroundService 共享状态）
+    pub fn from_data(data: Arc<RwLock<PomoTimerData>>) -> Self {
+        Self {
+            data,
             cancel_token: Arc::new(Mutex::new(None)),
         }
     }
@@ -84,6 +94,7 @@ impl PomoTimerManager {
             data.total_time = duration;
             data.state = TimerState::Running;
             data.session_id = session_id;
+            data.is_completed = false;
         }
 
         // 创建取消令牌
@@ -225,7 +236,8 @@ async fn tick(app_handle: &AppHandle, data: &Arc<RwLock<PomoTimerData>>, cancel_
         // 重置状态为 Idle
         data_guard.state = TimerState::Idle;
         data_guard.time_left = 0; // 确保显示为 0，而不是重置为 total_time
-        
+        data_guard.is_completed = true;
+
         // 清除取消令牌，防止重复停止
         drop(data_guard);
         {
@@ -239,7 +251,8 @@ async fn tick(app_handle: &AppHandle, data: &Arc<RwLock<PomoTimerData>>, cancel_
             session_id,
         });
 
-        // 发送系统通知
+        // 发送系统通知（Android 端由前台服务通知处理，不额外弹出）
+        #[cfg(not(target_os = "android"))]
         send_completion_notification(app_handle, mode);
 
         return false; // 停止计时器循环

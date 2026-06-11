@@ -4,6 +4,10 @@ use std::sync::{Arc, Mutex};
 mod pomo_timer;
 use pomo_timer::{PomoTimerManager, PomoMode, PomoTimerData};
 
+#[cfg(target_os = "android")]
+mod pomo_background;
+#[cfg(target_os = "android")]
+use pomo_background::PomoBackgroundService;
 
 // Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
 #[tauri::command]
@@ -25,7 +29,6 @@ async fn start_pomo_timer(
         "longBreak" => PomoMode::LongBreak,
         _ => return Err("无效的模式".to_string()),
     };
-
     let manager = pomo_timer::get_timer_manager(&app);
     manager.start_timer(app, mode, duration, session_id).await
 }
@@ -174,10 +177,21 @@ fn handle_single_instance(app: &tauri::AppHandle, _args: Vec<String>, _cwd: Stri
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
+    // 创建共享计时器数据，供 PomoTimerManager 和 Android BackgroundService 共用
+    let timer_data = Arc::new(tokio::sync::RwLock::new(PomoTimerData::default()));
+
     let mut builder = tauri::Builder::default()
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_fs::init())
         .plugin(tauri_plugin_notification::init());
+
+    // Android 端：注册 BackgroundService 插件（必须在 notification 之后）
+    #[cfg(target_os = "android")]
+    {
+        builder = builder.plugin(
+            tauri_plugin_background_service::init_with_service(|| PomoBackgroundService)
+        );
+    }
 
     // 单例模式插件：只在桌面端启用
     #[cfg(desktop)]
@@ -209,25 +223,26 @@ pub fn run() {
             #[cfg(desktop)]
             toggle_devtools,
         ])
-        // 只在桌面端设置托盘和DevTools快捷键
-        .setup(|app| {
-            // 初始化番茄钟计时器管理器
-            let manager = Arc::new(PomoTimerManager::new());
+        .setup(move |app| {
+            // 使用共享数据初始化计时器管理器
+            let manager = Arc::new(PomoTimerManager::from_data(timer_data.clone()));
             app.manage(manager);
+
+            // 托管共享数据，供 Android BackgroundService run() 读取
+            app.manage(timer_data.clone());
 
             // 初始化应用状态
             app.manage(AppState::default());
-            
+
             // 移动端：监听应用恢复事件，同步计时器状态
             #[cfg(mobile)]
             {
                 let app_handle = app.handle().clone();
                 app.listen("AppEvent::Resumed", move |_event| {
-                    // 应用恢复时，发送事件让前端重新检查后端状态
                     let _ = app_handle.emit("app:resumed", ());
                 });
             }
-            
+
             #[cfg(desktop)]
             {
                 setup_tray(app)?;
@@ -249,10 +264,10 @@ pub fn run() {
             Ok(())
         })
         // 只在桌面端阻止窗口关闭
-        .on_window_event(|window, event| {
+        .on_window_event(|_window, _event| {
             #[cfg(desktop)]
-            if let tauri::WindowEvent::CloseRequested { api, .. } = event {
-                window.hide().unwrap();
+            if let tauri::WindowEvent::CloseRequested { api, .. } = _event {
+                _window.hide().unwrap();
                 api.prevent_close();
             }
         })
@@ -308,5 +323,3 @@ fn setup_tray(app: &mut tauri::App) -> Result<(), Box<dyn std::error::Error>> {
 
     Ok(())
 }
-
-

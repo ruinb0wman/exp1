@@ -6,6 +6,7 @@ import {
   requestPermission, 
   isPermissionGranted,
 } from '@tauri-apps/plugin-notification';
+import { startService, stopService } from 'tauri-plugin-background-service';
 
 // 后端计时器数据类型
 interface BackendTimerData {
@@ -22,10 +23,22 @@ interface PomoCompletedEvent {
   sessionId: number | null;
 }
 
+// 格式化时间为 MM:SS 或 H:MM:SS
+function formatTimeLabel(seconds: number): string {
+  const h = Math.floor(seconds / 3600);
+  const m = Math.floor((seconds % 3600) / 60);
+  const s = seconds % 60;
+  if (h > 0) {
+    return `${h}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+  }
+  return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+}
+
 /**
  * 全局番茄钟计时器 Hook
  * 
  * 使用 Tauri 后端计时器，确保即使窗口关闭（隐藏到托盘）也能继续计时和发送通知
+ * Android 端通过 BackgroundService 实现前台服务保活 + 动态通知显示剩余时间
  */
 export function useGlobalPomoTimer() {
   const {
@@ -56,6 +69,8 @@ export function useGlobalPomoTimer() {
   const isCompletingRef = useRef(false);
   // 用于标记是否正在处理自动切换
   const isAutoSwitchingRef = useRef(false);
+  // 标记 Android 后台服务是否已启动
+  const backgroundServiceStartedRef = useRef(false);
 
   // 更新 refs
   useEffect(() => {
@@ -77,6 +92,28 @@ export function useGlobalPomoTimer() {
     setupNotification();
   }, []);
 
+  // 启动 Android 后台服务（保活 + 通知）
+  const ensureBackgroundService = useCallback(async (label: string) => {
+    if (backgroundServiceStartedRef.current) return;
+    try {
+      await startService({ serviceLabel: label });
+      backgroundServiceStartedRef.current = true;
+    } catch {
+      // 非 Android 平台，忽略
+    }
+  }, []);
+
+  // 停止 Android 后台服务
+  const stopBackgroundService = useCallback(async () => {
+    if (!backgroundServiceStartedRef.current) return;
+    try {
+      await stopService();
+      backgroundServiceStartedRef.current = false;
+    } catch {
+      // 非 Android 平台，忽略
+    }
+  }, []);
+
   // 处理计时完成
   const handleTimerComplete = useCallback(async (completedMode: 'focus' | 'shortBreak' | 'longBreak') => {
     // 防止重复处理
@@ -92,6 +129,9 @@ export function useGlobalPomoTimer() {
 
       console.log('计时完成，处理中...', { completedMode, currentSettings });
 
+      // 先标记自动切换，防止 sync effect 在 stopTimer 后误 stopService
+      isAutoSwitchingRef.current = true;
+
       // 先确保后端计时器已经停止
       try {
         await invoke('stop_pomo_timer');
@@ -103,9 +143,6 @@ export function useGlobalPomoTimer() {
       // 停止前端计时器（更新数据库等）
       await stopTimer(true);
       console.log('前端计时器已停止');
-
-      // 标记正在自动切换，防止同步 effect 干扰
-      isAutoSwitchingRef.current = true;
 
       // 自动切换模式
       if (currentSettings.autoStartBreaks && completedMode === 'focus') {
@@ -122,6 +159,8 @@ export function useGlobalPomoTimer() {
             });
           }, 1000);
         } else {
+          // 不自动开始，停止后台服务
+          await stopBackgroundService();
           isAutoSwitchingRef.current = false;
         }
       } else if (currentSettings.autoStartPomos && completedMode !== 'focus') {
@@ -134,10 +173,13 @@ export function useGlobalPomoTimer() {
           });
         }, 1000);
       } else {
+        // 不需要自动切换，停止后台服务
+        await stopBackgroundService();
         isAutoSwitchingRef.current = false;
       }
     } catch (err) {
       console.error('处理计时完成失败:', err);
+      await stopBackgroundService();
       isAutoSwitchingRef.current = false;
     } finally {
       // 延迟重置标志，确保所有异步操作完成
@@ -145,7 +187,7 @@ export function useGlobalPomoTimer() {
         isCompletingRef.current = false;
       }, 2000);
     }
-  }, [stopTimer, setMode, startTimerStore]);
+  }, [stopTimer, setMode, startTimerStore, stopBackgroundService]);
 
   // 监听后端事件
   useEffect(() => {
@@ -212,6 +254,8 @@ export function useGlobalPomoTimer() {
         // 如果前端正在运行但后端没有，启动后端计时器
         if (isRunning && !isPaused && backendState.state !== 'running') {
           console.log('同步：启动后端计时器');
+          // Android 端：先启动 BackgroundService 保活
+          await ensureBackgroundService(`番茄钟 ${formatTimeLabel(timeLeft)}`);
           await invoke('start_pomo_timer', {
             mode,
             duration: timeLeft,
@@ -232,6 +276,8 @@ export function useGlobalPomoTimer() {
         else if (!isRunning && backendState.state !== 'idle') {
           console.log('同步：停止后端计时器');
           await invoke('stop_pomo_timer');
+          // Android 端：停止后台服务
+          await stopBackgroundService();
         }
       } catch (err) {
         console.error('同步计时器状态失败:', err);
@@ -239,7 +285,7 @@ export function useGlobalPomoTimer() {
     };
 
     syncToBackend();
-  }, [isRunning, isPaused, mode, currentSessionId]);
+  }, [isRunning, isPaused, mode, currentSessionId, ensureBackgroundService, stopBackgroundService]);
 
   // 组件挂载时检查后端状态（用于页面刷新恢复）
   useEffect(() => {
@@ -250,6 +296,10 @@ export function useGlobalPomoTimer() {
         // 如果后端有正在运行的计时器，同步到前端
         if (backendState.state === 'running' || backendState.state === 'paused') {
           console.log('恢复后端计时器状态:', backendState);
+          // Android 端：如果后端有计时器在运行，确保后台服务已启动
+          if (backendState.state === 'running') {
+            await ensureBackgroundService(`番茄钟 ${formatTimeLabel(backendState.timeLeft)}`);
+          }
           usePomoStore.setState({
             isRunning: true,
             isPaused: backendState.state === 'paused',
@@ -263,7 +313,7 @@ export function useGlobalPomoTimer() {
     };
 
     checkBackendState();
-  }, []);
+  }, [ensureBackgroundService]);
 
   // 监听应用恢复事件（移动端从后台恢复时）
   useEffect(() => {

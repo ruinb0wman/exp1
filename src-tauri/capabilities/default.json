@@ -16,7 +16,12 @@
     "notification:allow-register-action-types",
     "notification:allow-request-permission",
     "notification:allow-show",
-    "notification:allow-register-listener"
+    "notification:allow-register-listener",
+    "background-service:default",
+    "background-service:allow-start",
+    "background-service:allow-stop",
+    "background-service:allow-is-running",
+    "background-service:allow-get-service-state"
   ],
   "commands": {
     "allow": [
