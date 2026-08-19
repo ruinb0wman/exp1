@@ -131,7 +131,7 @@ function TaskDetailContent({
     : getTotalPointsEarned(instance);
   
   const expectedPoints = isSimpleRule
-    ? (isCompleted ? rule.completionPoints : 0)
+    ? rule.completionPoints
     : (hasCompleteRule ? calculateMaxPoints(rule) : 0);
 
   const isCountRule = rule?.type === "count";
