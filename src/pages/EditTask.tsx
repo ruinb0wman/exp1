@@ -475,7 +475,7 @@ export function EditTask() {
                         }
                       }}
                       placeholder="Add a subtask"
-                      className="flex-1 bg-transparent text-text-primary focus:outline-none border-b-2 border-transparent focus:border-primary text-base font-normal leading-normal py-1"
+                      className="flex-1 min-w-0 bg-transparent text-text-primary focus:outline-none border-b-2 border-transparent focus:border-primary text-base font-normal leading-normal py-1"
                     />
                     <button
                       onClick={handleAddSubtask}
@@ -501,7 +501,7 @@ export function EditTask() {
                           newSubtasks[index] = e.target.value;
                           setSubtasks(newSubtasks);
                         }}
-                        className="flex-1 bg-transparent text-text-primary focus:outline-none border-b-2 border-transparent focus:border-primary text-base font-normal leading-normal py-1"
+                        className="flex-1 min-w-0 bg-transparent text-text-primary focus:outline-none border-b-2 border-transparent focus:border-primary text-base font-normal leading-normal py-1"
                       />
                       <NumberInput
                         value={pointsPerSubtask[index] || 0}
