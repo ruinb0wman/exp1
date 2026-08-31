@@ -9,7 +9,10 @@
     "dev:android": "tauri android dev --host 192.168.1.20 --no-dev-server",
     "build": "tsc && vite build",
     "build:pc": "tauri build --no-bundle",
-    "build:android": "tauri android build",
+    "build:android": "tauri android build --apk",
+    "build:android:arm64": "tauri android build --target aarch64 --apk",
+    "build:android:dev": "tauri android build -d --target aarch64 --apk",
+    "build:android:release:all": "tauri android build --split-per-abi --apk",
     "preview": "vite preview",
     "tauri": "tauri"
   },
