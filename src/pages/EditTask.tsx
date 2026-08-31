@@ -396,11 +396,20 @@ export function EditTask() {
                 </div>
 
                 {stages.map((stage, index) => (
-                  <div key={stage.id} className="flex items-center gap-3 bg-surface-light p-3 rounded-xl">
-                    <span className="text-text-muted w-6">#{index + 1}</span>
-                    
-                    <div className="flex-1">
-                      <label className="text-xs text-text-muted block mb-1">
+                  <div key={stage.id} className="bg-surface-light p-3 rounded-xl space-y-3">
+                    <div className="flex items-center justify-between">
+                      <span className="text-text-muted text-sm">#{index + 1}</span>
+                      <button
+                        onClick={() => removeStage(index)}
+                        className="p-2 text-text-muted hover:text-error"
+                        disabled={stages.length <= 1}
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
+
+                    <div className="flex items-center justify-between gap-3 min-w-0">
+                      <label className="flex-1 min-w-0 truncate text-xs text-text-muted">
                         {t("editTask.reachTarget")}{taskType === 'time' ? t("editTask.minutesUnit") : t("editTask.timesUnit")}
                       </label>
                       <NumberInput
@@ -409,27 +418,23 @@ export function EditTask() {
                         min={1}
                         size="sm"
                         inputWidth="w-16"
+                        className="shrink-0"
                       />
                     </div>
-                    
-                    <div className="flex-1">
-                      <label className="text-xs text-text-muted block mb-1">{t("editTask.earnPoints")}</label>
+
+                    <div className="flex items-center justify-between gap-3 min-w-0">
+                      <label className="flex-1 min-w-0 truncate text-xs text-text-muted">
+                        {t("editTask.earnPoints")}
+                      </label>
                       <NumberInput
                         value={stage.points}
                         onChange={(value) => updateStage(index, 'points', value)}
                         min={0}
                         size="sm"
                         inputWidth="w-16"
+                        className="shrink-0"
                       />
                     </div>
-                    
-                    <button
-                      onClick={() => removeStage(index)}
-                      className="p-2 text-text-muted hover:text-error"
-                      disabled={stages.length <= 1}
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
                   </div>
                 ))}
 
