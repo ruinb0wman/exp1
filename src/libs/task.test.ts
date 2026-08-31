@@ -6,6 +6,7 @@ import {
   shouldGenerateInstanceOnDate,
   filterTemplatesNeedingInstancesOnDate,
   toUserDateString,
+  toInUserDay,
 } from "@/libs/task";
 import { toLocalDateString, daysBetweenLocal, monthsBetweenLocal } from "@/libs/time";
 
@@ -300,6 +301,57 @@ describe("shouldGenerateInstanceOnDate", () => {
       expect(shouldGenerateInstanceOnDate(template, [], april)).toBe(true);
       expect(shouldGenerateInstanceOnDate(template, [], may)).toBe(false);
       expect(shouldGenerateInstanceOnDate(template, [], june)).toBe(true);
+    });
+  });
+
+  describe("toInUserDay (日历预览日归一化)", () => {
+    it("午夜日期在 dayEndTime>00:00 时被 toUserDateString 回退到前一天(旧行为)", () => {
+      const midnight = new Date(2026, 8, 6, 0, 0, 0, 0); // 周日 2026-09-06 00:00
+      expect(toUserDateString(midnight, "01:00")).toBe("2026-09-05");
+    });
+
+    it("toInUserDay 后 toUserDateString 保持为选中的日历日", () => {
+      const midnight = new Date(2026, 8, 6, 0, 0, 0, 0); // 周日 2026-09-06
+      const inDay = toInUserDay(midnight, "01:00");
+      expect(toUserDateString(inDay, "01:00")).toBe("2026-09-06");
+      // dayEndTime 00:00 时保持不变
+      expect(toUserDateString(toInUserDay(midnight, "00:00"), "00:00")).toBe("2026-09-06");
+    });
+
+    it("回归:周日每周模板在 stats 点选周日午夜时也应显示预览(dayEndTime=01:00)", () => {
+      const template = createTemplate({
+        repeatMode: "weekly",
+        repeatInterval: 1,
+        repeatDaysOfWeek: [0],
+        startAt: "2026-08-31", // 周一
+      });
+
+      // 旧行为:直接传午夜会回退到周六,导致周日预览丢失
+      const buggy = shouldGenerateInstanceOnDate(
+        template,
+        [],
+        new Date(2026, 8, 6, 0, 0, 0, 0),
+        "01:00"
+      );
+      expect(buggy).toBe(false);
+
+      // 修复后:归一化到用户日内再判断,周日返回 true
+      const fixed = shouldGenerateInstanceOnDate(
+        template,
+        [],
+        toInUserDay(new Date(2026, 8, 6, 0, 0, 0, 0), "01:00"),
+        "01:00"
+      );
+      expect(fixed).toBe(true);
+
+      // 周一(9/7)不再误报预览
+      const mondayFixed = shouldGenerateInstanceOnDate(
+        template,
+        [],
+        toInUserDay(new Date(2026, 8, 7, 0, 0, 0, 0), "01:00"),
+        "01:00"
+      );
+      expect(mondayFixed).toBe(false);
     });
   });
 

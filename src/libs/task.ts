@@ -27,6 +27,31 @@ export function toUserDateString(date: Date | string, dayEndTime: string): strin
   return formatLocalDate(d);
 }
 
+/**
+ * 将"日历日"语义的日期(通常为本地午夜)归一化为该用户日内部的一个时刻
+ * (dayEndTime + 1 秒,即该用户日的"起点"之后)。
+ *
+ * 用于日历/统计等"选中某一天"的场景:选中的日历格子代表的是用户日本身,
+ * 不应套用 toUserDateString 针对"当前时刻"的回退逻辑——否则当 dayEndTime
+ * 不为 00:00 时,点选周日会被解析成周六(午夜早于 dayEndTime 回退一天)。
+ *
+ * @param date 日历日(本地时间,通常为 00:00 或任意时刻)
+ * @param dayEndTime 一天结束时间,格式 "HH:mm"
+ * @returns 位于同一本地日历日、且恒晚于 dayEndTime 的 Date
+ */
+export function toInUserDay(date: Date, dayEndTime: string = "00:00"): Date {
+  const [endHour, endMinute] = dayEndTime.split(':').map(Number);
+  return new Date(
+    date.getFullYear(),
+    date.getMonth(),
+    date.getDate(),
+    endHour,
+    endMinute,
+    1,
+    0
+  );
+}
+
 // 重新导出 formatLocalDate 以保持兼容性
 export { formatLocalDate };
 

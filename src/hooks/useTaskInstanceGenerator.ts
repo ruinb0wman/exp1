@@ -9,6 +9,7 @@ import {
   filterTemplatesNeedingInstancesOnDate,
   generateTaskInstances,
   toUserDateString,
+  toInUserDay,
 } from '@/libs/task';
 import { useUserStore } from '@/store';
 
@@ -126,10 +127,14 @@ export function useTaskInstanceGenerator(options: UseTaskInstanceGeneratorOption
 
     const dayEndTime = user?.dayEndTime ?? "00:00";
 
+    // 日历选中的是"日历日"语义:把日期归一化到该用户日内部的一个时刻
+    // (dayEndTime + 1s)。直接套用 toUserDateString 会因"当前时刻早于
+    // dayEndTime 则回退到前一天"而把周日解析成周六(如 dayEndTime=01:00 时)。
+    const inDayDate = toInUserDay(date, dayEndTime);
+    const userDateStr = toUserDateString(inDayDate, dayEndTime);
+
     const templates = await getEnabledTaskTemplates(userId);
     const allInstances = await getAllTaskInstances(userId);
-
-    const userDateStr = toUserDateString(date, dayEndTime);
 
     const existingInstancesOnDate = allInstances.filter(inst => {
       if (!inst.instanceDate) return false;
@@ -144,7 +149,7 @@ export function useTaskInstanceGenerator(options: UseTaskInstanceGeneratorOption
     const templatesNeedingInstances = filterTemplatesNeedingInstancesOnDate(
       templates,
       allInstances,
-      date,
+      inDayDate,
       dayEndTime
     );
 
