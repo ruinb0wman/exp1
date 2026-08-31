@@ -1,5 +1,6 @@
 import type { DB } from "../types";
 import { generateUUID } from "@/libs/id";
+import { toLocalDateString } from "@/libs/time";
 
 export function migration(db: DB) {
 	db.version(1).stores({
@@ -49,6 +50,28 @@ export function migration(db: DB) {
 			}));
 		if (updates.length > 0) {
 			await d.replenishmentRecords.bulkUpdate(updates);
+		}
+	});
+
+	// v4：统一日历日存储 —— 把旧的"本地午夜 UTC ISO" startAt / 日期型 endValue 迁移为本地日期串 YYYY-MM-DD
+	db.version(4).upgrade(async (trans) => {
+		const d = trans.db as DB;
+		const templates = await d.taskTemplates.toArray();
+		const hasT = (s?: string) => !!s && s.includes('T');
+		const updates = templates
+			.filter(t => hasT(t.startAt) || (t.endCondition === 'date' && hasT(t.endValue)))
+			.map(t => {
+				const changes: { startAt?: string; endValue?: string } = {};
+				if (hasT(t.startAt)) {
+					changes.startAt = toLocalDateString(t.startAt!);
+				}
+				if (t.endCondition === 'date' && hasT(t.endValue)) {
+					changes.endValue = toLocalDateString(t.endValue!);
+				}
+				return { key: t.id, changes };
+			});
+		if (updates.length > 0) {
+			await d.taskTemplates.bulkUpdate(updates);
 		}
 	});
 }

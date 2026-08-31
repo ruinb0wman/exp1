@@ -1,17 +1,24 @@
 import type { TaskTemplate, TaskInstance } from '@/db/types';
 import type { DB } from '@/db/types';
-import { 
-  shouldGenerateInstanceOnDate, 
+import {
+  shouldGenerateInstanceOnDate,
   generateTaskInstance,
   toUserDateString,
   formatLocalDate,
 } from '@/libs/task';
+import { toLocalDateString } from '@/libs/time';
 
 const processedTemplateIds = new Set<string>();
 
 async function getUserDayEndTime(db: DB, userId: number): Promise<string> {
   const user = await db.users.get(userId);
   return user?.dayEndTime || "00:00";
+}
+
+/** 将本地日历日 YYYY-MM-DD 构造为本地 Date（午夜） */
+function parseLocalDateStr(dateStr: string): Date {
+  const [year, month, day] = dateStr.split('-').map(Number);
+  return new Date(year, month - 1, day);
 }
 
 /**
@@ -159,11 +166,11 @@ export async function backfillMissingInstancesForTemplate(
 
   let endDate: Date;
   if (template.endCondition === 'date' && template.endValue) {
-    endDate = new Date(template.endValue);
-    const endDateStr = formatLocalDate(endDate);
-    console.log(`[backfill] endCondition=date, endValue=${template.endValue}, endDateStr=${endDateStr}`);
-    if (endDateStr < todayStr) {
-      endDate = new Date(endDateStr);
+    // endValue 为本地日历日（兼容旧 UTC ISO），构造本地 Date
+    const endLocal = toLocalDateString(template.endValue);
+    console.log(`[backfill] endCondition=date, endValue=${template.endValue}, endLocal=${endLocal}`);
+    if (endLocal < todayStr) {
+      endDate = parseLocalDateStr(endLocal);
     } else {
       endDate = now;
     }
@@ -172,7 +179,8 @@ export async function backfillMissingInstancesForTemplate(
   }
 
   const instancesToAdd: Omit<TaskInstance, 'id'>[] = [];
-  const currentDate = new Date(template.startAt);
+  // startAt 按本地日历日构造，避免 UTC 时区导致的错位
+  const currentDate = parseLocalDateStr(toLocalDateString(template.startAt!));
   const end = new Date(endDate);
   console.log(`[backfill] 日期范围: ${formatLocalDate(currentDate)} ~ ${formatLocalDate(end)}`);
 

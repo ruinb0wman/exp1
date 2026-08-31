@@ -355,8 +355,62 @@ export function getExpireTimeText(expiredAtUTC?: string): ExpireTimeResult {
 }
 
 /**
+ * 将 Date 或时间字符串规范化为"本地日历日"字符串 YYYY-MM-DD
+ * - Date / ISO/UTC 字符串：按本地时区取 getFullYear/getMonth/getDate，得到该时间点的本地日历日
+ * - 已是 YYYY-MM-DD：原样返回
+ * 用于把"日历日"语义的字段（如 startAt、endValue）统一成本地日期串，避免经由 UTC 分量导致的错位。
+ */
+export function toLocalDateString(value: Date | string): string {
+  if (value instanceof Date) {
+    return formatLocalDate(value);
+  }
+  // 已是 YYYY-MM-DD，直接返回
+  if (/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+    return value;
+  }
+  return formatLocalDate(new Date(value));
+}
+
+/**
+ * 将 YYYY-MM-DD 解析为"本地日中"的 Date（正午，避免 DST 影响日界判断）
+ */
+function parseLocalDate(dateStr: string): Date {
+  const [year, month, day] = dateStr.split('-').map(Number);
+  return new Date(year, month - 1, day, 12, 0, 0, 0);
+}
+
+/**
+ * 计算两个"本地日历日"之间的天数差（end - start），可为负数
+ * 基于字符串的日历日分量做整数差，绝不依赖 UTC 时刻的 getUTC* 分量。
+ */
+export function daysBetweenLocal(startStr: string, endStr: string): number {
+  const s = parseLocalDate(startStr);
+  const e = parseLocalDate(endStr);
+  const utcS = Date.UTC(s.getFullYear(), s.getMonth(), s.getDate());
+  const utcE = Date.UTC(e.getFullYear(), e.getMonth(), e.getDate());
+  return Math.round((utcE - utcS) / (1000 * 60 * 60 * 24));
+}
+
+/**
+ * 计算两个"本地日历日"之间的周数差（向下取整），可为负数
+ */
+export function weeksBetweenLocal(startStr: string, endStr: string): number {
+  return Math.floor(daysBetweenLocal(startStr, endStr) / 7);
+}
+
+/**
+ * 计算两个"本地日历日"之间的月数差（年份差×12+月份差），可为负数
+ */
+export function monthsBetweenLocal(startStr: string, endStr: string): number {
+  const [sy, sm] = startStr.split('-').map(Number);
+  const [ey, em] = endStr.split('-').map(Number);
+  return (ey - sy) * 12 + (em - sm);
+}
+
+/**
  * 计算两个UTC时间之间的天数差
  * 返回 date2 - date1 的天数（可以为负数）
+ * @deprecated 对"日历日"语义请使用 daysBetweenLocal 搭配 toLocalDateString
  */
 export function daysBetweenUTC(date1: Date | string, date2: Date | string): number {
   const d1 = typeof date1 === 'string' ? new Date(date1) : date1;

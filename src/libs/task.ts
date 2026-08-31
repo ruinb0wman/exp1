@@ -1,6 +1,10 @@
 import type { TaskTemplate, TaskInstance } from '@/db/types';
-import { 
+import {
   formatLocalDate,
+  toLocalDateString,
+  daysBetweenLocal,
+  weeksBetweenLocal,
+  monthsBetweenLocal,
   daysBetweenUTC,
   weeksBetweenUTC,
   monthsBetweenUTC,
@@ -88,7 +92,8 @@ export function monthsBetween(date1: Date, date2: Date): number {
 export function isTemplateEndedOnDate(
   template: TaskTemplate,
   existingInstances: TaskInstance[],
-  targetDate: Date = new Date()
+  targetDate: Date = new Date(),
+  dayEndTime: string = "00:00"
 ): boolean {
   const { endCondition, endValue } = template;
 
@@ -97,16 +102,11 @@ export function isTemplateEndedOnDate(
   }
 
   if (endCondition === 'date' && endValue) {
-    // endValue 存储的是 UTC ISO 格式或 YYYY-MM-DD 格式
-    const endDate = new Date(endValue);
-    // 设置为UTC当天的最后一刻
-    const endDateUTC = new Date(Date.UTC(
-      endDate.getUTCFullYear(),
-      endDate.getUTCMonth(),
-      endDate.getUTCDate(),
-      23, 59, 59, 999
-    ));
-    return targetDate.getTime() > endDateUTC.getTime();
+    // endValue 现在是本地日历日 YYYY-MM-DD（兼容旧 UTC ISO 格式）
+    // 用日历日串比较：目标用户日严格晚于结束日才算结束
+    const endLocal = toLocalDateString(endValue);
+    const targetLocal = toUserDateString(targetDate, dayEndTime);
+    return targetLocal > endLocal;
   }
 
   if (endCondition === 'times' && endValue) {
@@ -142,8 +142,10 @@ export function shouldGenerateInstanceOnDate(
 ): boolean {
   const { repeatMode, repeatInterval, repeatDaysOfWeek, repeatDaysOfMonth, startAt } = template;
 
+  const targetUserDate = toUserDateString(targetDate, dayEndTime);
+  const startLocalDate = startAt ? toLocalDateString(startAt) : null;
+
   const hasInstanceOnDate = (): boolean => {
-    const targetUserDate = toUserDateString(targetDate, dayEndTime);
     return existingInstances.some((inst) => {
       if (!inst.instanceDate) return false;
       return inst.instanceDate === targetUserDate;
@@ -157,40 +159,37 @@ export function shouldGenerateInstanceOnDate(
 
     case 'daily': {
       if (hasInstanceOnDate()) return false;
-      if (!startAt) return false;
+      if (!startLocalDate) return false;
       const interval = repeatInterval || 1;
-      const daysDiff = daysBetweenUTC(startAt, targetDate);
+      const daysDiff = daysBetweenLocal(startLocalDate, targetUserDate);
       return daysDiff >= 0 && daysDiff % interval === 0;
     }
 
     case 'weekly': {
       if (hasInstanceOnDate()) return false;
-      if (!startAt) return false;
+      if (!startLocalDate) return false;
       const interval = repeatInterval || 1;
-      const currentUserDateStr = toUserDateString(targetDate, dayEndTime);
-      const currentDayOfWeek = new Date(currentUserDateStr).getDay();
+      const currentDayOfWeek = new Date(targetUserDate + 'T00:00:00').getDay();
 
       if (!repeatDaysOfWeek || !repeatDaysOfWeek.includes(currentDayOfWeek)) {
         return false;
       }
 
-      const daysDiff = daysBetweenUTC(startAt, targetDate);
-      const weeksDiff = Math.floor(daysDiff / 7);
+      const weeksDiff = weeksBetweenLocal(startLocalDate, targetUserDate);
       return weeksDiff >= 0 && weeksDiff % interval === 0;
     }
 
     case 'monthly': {
       if (hasInstanceOnDate()) return false;
-      if (!startAt) return false;
+      if (!startLocalDate) return false;
       const interval = repeatInterval || 1;
-      const currentUserDateStr = toUserDateString(targetDate, dayEndTime);
-      const currentDayOfMonth = new Date(currentUserDateStr).getDate();
+      const currentDayOfMonth = new Date(targetUserDate + 'T00:00:00').getDate();
 
       if (!repeatDaysOfMonth || !repeatDaysOfMonth.includes(currentDayOfMonth)) {
         return false;
       }
 
-      const monthsDiff = monthsBetweenUTC(startAt, targetDate);
+      const monthsDiff = monthsBetweenLocal(startLocalDate, targetUserDate);
       return monthsDiff >= 0 && monthsDiff % interval === 0;
     }
 
@@ -229,7 +228,7 @@ export function filterTemplatesNeedingInstancesOnDate(
       (inst) => inst.templateId === template.id
     );
 
-    if (isTemplateEndedOnDate(template, templateInstances, targetDate)) {
+    if (isTemplateEndedOnDate(template, templateInstances, targetDate, dayEndTime)) {
       return false;
     }
 
@@ -271,7 +270,7 @@ export function generateTaskInstance(
 
   if (template.repeatMode === 'none') {
     if (template.startAt) {
-      instanceDate = template.startAt.split('T')[0];
+      instanceDate = toLocalDateString(template.startAt);
     } else {
       instanceDate = toUserDateString(new Date(), effectiveDayEndTime);
     }

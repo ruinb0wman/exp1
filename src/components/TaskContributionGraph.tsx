@@ -2,7 +2,7 @@ import { useEffect, useState, useCallback } from "react";
 import { useTranslation } from "react-i18next";
 import { getDB } from "@/db";
 import type { TaskInstance, TaskTemplate } from "@/db/types";
-import { formatLocalDate, formatLocalDateToYYYYMMDD } from "@/libs/time";
+import { formatLocalDate, formatLocalDateToYYYYMMDD, toLocalDateString } from "@/libs/time";
 import { shouldGenerateInstanceOnDate } from "@/libs/task";
 import { useUserStore } from "@/store/userStore";
 
@@ -99,7 +99,10 @@ export function TaskContributionGraph({
             if (instance.status === "completed") {
               completedCount++;
             }
-          } else if (shouldGenerateInstanceOnDate(template, instances, currentDate, dayEndTime)) {
+          } else if (
+            (!template.startAt || dateStr >= toLocalDateString(template.startAt)) &&
+            shouldGenerateInstanceOnDate(template, instances, currentDate, dayEndTime)
+          ) {
             status = "skipped";
           }
 

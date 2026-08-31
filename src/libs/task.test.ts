@@ -7,6 +7,7 @@ import {
   filterTemplatesNeedingInstancesOnDate,
   toUserDateString,
 } from "@/libs/task";
+import { toLocalDateString, daysBetweenLocal, monthsBetweenLocal } from "@/libs/time";
 
 function createTemplate(overrides?: Partial<TaskTemplate>): TaskTemplate {
   return {
@@ -432,5 +433,57 @@ describe("filterTemplatesNeedingInstancesOnDate", () => {
       new Date(Date.UTC(2026, 4, 11)),
     );
     expect(result).toHaveLength(0);
+  });
+});
+
+// ===== 日历日语义（二分法：日历日存日期串，绝对时刻存 UTC） =====
+
+describe("calendar-day semantics", () => {
+  it("toLocalDateString keeps YYYY-MM-DD and normalizes Date to local day", () => {
+    expect(toLocalDateString("2026-06-05")).toBe("2026-06-05");
+    const d = new Date(2026, 5, 5, 12, 0, 0, 0);
+    expect(toLocalDateString(d)).toBe("2026-06-05");
+  });
+
+  it("daysBetweenLocal uses calendar-day integers (timezone-stable)", () => {
+    expect(daysBetweenLocal("2026-06-05", "2026-06-05")).toBe(0);
+    expect(daysBetweenLocal("2026-06-05", "2026-06-04")).toBe(-1);
+    expect(daysBetweenLocal("2026-06-04", "2026-06-05")).toBe(1);
+    expect(daysBetweenLocal("2026-06-05", "2026-06-08")).toBe(3);
+    expect(monthsBetweenLocal("2026-05-01", "2026-06-01")).toBe(1);
+  });
+
+  it("never generates on the calendar day before startAt (regression: spurious skipped)", () => {
+    // startAt 为规范化的本地日历日；该日应生成，前一日绝不应生成
+    const template = createTemplate({
+      repeatMode: "daily",
+      repeatInterval: 1,
+      startAt: "2026-06-05",
+    });
+    const startDay = new Date(2026, 5, 5, 12, 0, 0, 0);
+    const dayBefore = new Date(2026, 5, 4, 12, 0, 0, 0);
+    expect(shouldGenerateInstanceOnDate(template, [], startDay)).toBe(true);
+    expect(shouldGenerateInstanceOnDate(template, [], dayBefore)).toBe(false);
+  });
+
+  it("legacy ISO startAt (local-midnight to UTC) does not shift a day (regression)", () => {
+    // 旧 EditTask 存法：本地午夜 → toISOString
+    const startAtISO = new Date(2026, 5, 5, 0, 0, 0, 0).toISOString();
+    const template = createTemplate({
+      repeatMode: "daily",
+      repeatInterval: 1,
+      startAt: startAtISO,
+    });
+    const startDayLocalNoon = new Date(2026, 5, 5, 12, 0, 0, 0);
+    const dayBeforeLocalNoon = new Date(2026, 5, 4, 12, 0, 0, 0);
+    // 本地正午 = 贡献图对格子做的 12:00 归一化
+    expect(shouldGenerateInstanceOnDate(template, [], dayBeforeLocalNoon)).toBe(false);
+    expect(shouldGenerateInstanceOnDate(template, [], startDayLocalNoon)).toBe(true);
+  });
+
+  it("generateTaskInstance uses the local calendar day for repeatMode=none with startAt", () => {
+    const template = createTemplate({ repeatMode: "none", startAt: "2026-06-05" });
+    const inst = generateTaskInstance(template, new Date(2026, 5, 5, 12, 0, 0, 0));
+    expect(inst.instanceDate).toBe("2026-06-05");
   });
 });

@@ -10,6 +10,7 @@ import { useUserStore } from "@/store";
 import { useTaskTemplate, useTaskTemplateActions } from "@/hooks/useTasks";
 import type { TaskTemplate, RepeatMode, EndCondition, CompleteRule, Stage, SubtaskConfig, TaskType } from "../db/types/task";
 import { NumberInput } from "@/components/NumberInput";
+import { toLocalDateString } from "@/libs/time";
 
 const repeatOptions = ["None", "Daily", "Weekly", "Monthly"];
 const repeatValues: RepeatMode[] = ["none", "daily", "weekly", "monthly"];
@@ -90,13 +91,9 @@ export function EditTask() {
       setRepeatDaysOfMonth(existingTemplate.repeatDaysOfMonth ?? []);
       setEndIndex(endValues.indexOf(existingTemplate.endCondition));
       
-      const formatToDateStr = (isoStr: string | undefined): string => {
-        if (!isoStr) return "";
-        const date = new Date(isoStr);
-        const year = date.getFullYear();
-        const month = String(date.getMonth() + 1).padStart(2, '0');
-        const day = String(date.getDate()).padStart(2, '0');
-        return `${year}-${month}-${day}`;
+      const formatToDateStr = (dateStr: string | undefined): string => {
+        if (!dateStr) return "";
+        return toLocalDateString(dateStr);
       };
       
       setEndValue(formatToDateStr(existingTemplate.endValue));
@@ -195,11 +192,7 @@ export function EditTask() {
       return;
     }
 
-    const formatToUTCISO = (dateStr: string): string | undefined => {
-      if (!dateStr) return undefined;
-      const [year, month, day] = dateStr.split('-').map(Number);
-      return new Date(year, month - 1, day, 0, 0, 0, 0).toISOString();
-    };
+    // 日历日字段（startAt/日期型 endValue）存本地日期串 YYYY-MM-DD；绝对时刻（createdAt 等）存 UTC ISO
 
     // 构建 CompleteRule
     // simple 任务也需要 completeRule，type 为 'simple'
@@ -236,13 +229,13 @@ export function EditTask() {
       repeatDaysOfWeek: repeatValues[repeatIndex] === "weekly" ? repeatDaysOfWeek : undefined,
       repeatDaysOfMonth: repeatValues[repeatIndex] === "monthly" ? repeatDaysOfMonth : undefined,
       endCondition: endValues[endIndex],
-      endValue: endValues[endIndex] !== "manual" ? formatToUTCISO(endValue) : undefined,
+      endValue: endValues[endIndex] !== "manual" ? endValue : undefined,
       enabled,
       subtasks,
       completeRule,
       completeTarget: undefined, // 旧字段，不再使用
       completeExpireDays: completeExpireDays > 0 ? completeExpireDays : undefined,
-      startAt: isScheduleEnabled ? formatToUTCISO(startAt) : undefined,
+      startAt: isScheduleEnabled ? startAt : undefined,
     };
 
     try {
