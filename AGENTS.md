@@ -7,31 +7,31 @@ AI coding assistant guidelines for this Tauri v2 + React 19 + TypeScript project
 - **Frontend**: React 19 + Vite + Tailwind CSS v4 + Zustand
 - **Backend**: Rust (Tauri v2)
 - **Database**: Dexie.js (IndexedDB wrapper)
-- **Package Manager**: pnpm
+- **Package Manager**: bun
 - **TypeScript**: Strict mode enabled
 
 ## Build Commands
 
 ```bash
 # Development
-pnpm run dev              # Frontend only
-pnpm run dev:pc           # Desktop (Tauri)
-pnpm run dev:android      # Android (with host IP)
+bun run dev              # Frontend only
+bun run dev:pc           # Desktop (Tauri)
+bun run dev:android      # Android (with host IP)
 
 # Build
-pnpm run build            # Frontend production build
-pnpm run build:pc         # Desktop production build
-pnpm run build:android    # Android production build
+bun run build            # Frontend production build
+bun run build:pc         # Desktop production build
+bun run build:android    # Android production build
 
 # Type Checking
-pnpm run build            # Runs tsc && vite build
-pnpmx tsc --noEmit        # TypeScript check only
+bun run build            # Runs tsc && vite build
+bunx tsc --noEmit        # TypeScript check only
 
 # Testing
-pnpmx vitest              # Run all tests
-pnpmx vitest [pattern]    # Run tests matching pattern
-pnpmx vitest src/db/services/taskService.test.ts  # Run single test file
-pnpmx vitest --reporter=verbose  # Verbose output
+bunx vitest              # Run all tests
+bunx vitest [pattern]    # Run tests matching pattern
+bunx vitest src/db/services/taskService.test.ts  # Run single test file
+bunx vitest --reporter=verbose  # Verbose output
 
 # Rust (in src-tauri/)
 cd src-tauri && cargo check
