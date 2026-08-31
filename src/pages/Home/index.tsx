@@ -43,7 +43,7 @@ export function Home() {
   const [isDetailOpen, setIsDetailOpen] = useState(false);
   const { tasks, isLoading: isTasksLoading, refresh: refreshTasks } = useTodayTasks(user?.id ?? 0);
   const { tasks: noDateTasks, isLoading: isNoDateTasksLoading, refresh: refreshNoDateTasks } = useNoDateTasks(user?.id ?? 0);
-  const { complete, reset } = useTaskInstanceActions();
+  const { complete, reset, remove: deleteInstance } = useTaskInstanceActions();
 
   // 进入页面时重新计算积分
   useEffect(() => {
@@ -132,6 +132,19 @@ export function Home() {
     }
   }, [selectedTask, refreshTasks, refreshNoDateTasks]);
 
+  // 在 popup 中删除任务实例（同时删除其积分记录，下次进入页面时按最新模板重新生成）
+  const handleDeleteInPopup = useCallback(async () => {
+    if (!selectedTask) return;
+    const { instance } = selectedTask;
+    try {
+      await deleteInstance(instance.id!);
+      handleCloseDetail();
+      // liveQuery 会自动刷新今日任务列表
+    } catch (error) {
+      console.error("Failed to delete task instance:", error);
+    }
+  }, [selectedTask, deleteInstance, handleCloseDetail]);
+
   const pendingTasks = filterTodayTasks(tasks);
   const pendingNoDateTasks = filterPendingTasks(noDateTasks);
 
@@ -196,6 +209,7 @@ export function Home() {
         onReset={handleResetInPopup}
         onIncrementCount={handleIncrementCount}
         onToggleSubtask={handleToggleSubtask}
+        onDelete={handleDeleteInPopup}
       />
     </div>
   );

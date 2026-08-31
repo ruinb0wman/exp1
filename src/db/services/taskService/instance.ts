@@ -230,6 +230,32 @@ export async function deleteTaskInstance(id: string): Promise<void> {
   return db.taskInstances.delete(id);
 }
 
+/**
+ * 删除任务实例，并同时删除其关联的积分记录
+ * （积分余额由积分记录求和得出，删除记录后余额会相应减少）
+ */
+export async function deleteTaskInstanceWithPoints(id: string): Promise<void> {
+  const db = getDB();
+
+  return db.transaction('rw', [db.taskInstances, db.pointsHistory], async () => {
+    const instance = await db.taskInstances.get(id);
+    if (!instance) {
+      throw new Error('Task instance not found');
+    }
+
+    const pointRecords = await db.pointsHistory
+      .where('relatedInstanceId')
+      .equals(id)
+      .toArray();
+
+    if (pointRecords.length > 0) {
+      await db.pointsHistory.bulkDelete(pointRecords.map((record) => record.id));
+    }
+
+    await db.taskInstances.delete(id);
+  });
+}
+
 export async function deleteTaskInstances(ids: string[]): Promise<void> {
   const db = getDB();
   return db.taskInstances.bulkDelete(ids);

@@ -38,7 +38,7 @@ export function TaskHistory() {
     pageSize: 20,
   });
 
-  const { complete, reset } = useTaskInstanceActions();
+  const { complete, reset, remove: deleteInstance } = useTaskInstanceActions();
   const [selectedTask, setSelectedTask] = useState<TaskHistoryItem | null>(null);
   const [isPopupOpen, setIsPopupOpen] = useState(false);
   const [isActionLoading, setIsActionLoading] = useState(false);
@@ -99,6 +99,23 @@ export function TaskHistory() {
       handleClosePopup();
     } catch (error) {
       console.error("Failed to perform action:", error);
+    } finally {
+      setIsActionLoading(false);
+    }
+  };
+
+  // 处理删除任务实例（同时删除其积分记录）
+  const handleDeleteInstance = async () => {
+    if (!selectedInstance) return;
+    setIsActionLoading(true);
+    try {
+      await deleteInstance(selectedInstance.id!);
+      // 刷新列表
+      await refresh();
+      // 关闭弹窗
+      handleClosePopup();
+    } catch (error) {
+      console.error("Failed to delete task instance:", error);
     } finally {
       setIsActionLoading(false);
     }
@@ -179,6 +196,7 @@ export function TaskHistory() {
             handleTaskAction("reset", selectedInstance.id!);
           }
         }}
+        onDelete={handleDeleteInstance}
         isLoading={isActionLoading}
       />
     </div>

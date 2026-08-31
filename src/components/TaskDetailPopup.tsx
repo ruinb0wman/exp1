@@ -1,9 +1,11 @@
 import { useNavigate } from "react-router";
+import { useState, useCallback } from "react";
 import { useTranslation } from "react-i18next";
 import i18n from "i18next";
-import { CheckCircle2, XCircle, Clock, RefreshCw, Calendar, AlignLeft, Pencil, CheckSquare, Square, Timer, ChevronRight } from "lucide-react";
+import { CheckCircle2, XCircle, Clock, RefreshCw, Calendar, AlignLeft, Pencil, CheckSquare, Square, Timer, ChevronRight, Trash2 } from "lucide-react";
 import { Popup } from "./Popup";
 import { TaskContributionGraph } from "./TaskContributionGraph";
+import { useConfirm } from "@/hooks/useConfirm";
 import type { TaskInstance, TaskTemplate } from "@/db/types";
 import { isExpiredByInstanceDate, getExpireTimeTextByInstanceDate, type ExpireTimeResult } from "@/libs/time";
 import { getTaskProgressPercent, getNextStage, getTotalPointsEarned } from "@/db/services";
@@ -20,6 +22,8 @@ export interface TaskDetailPopupProps {
   onReset?: () => void;
   onIncrementCount?: () => void;
   onToggleSubtask?: (index: number) => void;
+  /** 删除实例操作（由页面实现：删除 + 刷新列表 + 关闭弹窗） */
+  onDelete?: () => void;
   isLoading?: boolean;
   disabled?: boolean;
 }
@@ -33,11 +37,14 @@ export function TaskDetailPopup({
   onReset,
   onIncrementCount,
   onToggleSubtask,
+  onDelete,
   isLoading = false,
   disabled = false,
 }: TaskDetailPopupProps) {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const confirm = useConfirm();
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const handleEdit = () => {
     onClose();
@@ -45,6 +52,30 @@ export function TaskDetailPopup({
       navigate(`/tasks/${template.id}`);
     }
   };
+
+  // 删除实例前确认，确认后交由页面执行删除逻辑
+  const handleDelete = useCallback(async () => {
+    if (!template) return;
+
+    const confirmed = await confirm({
+      title: t('home.detail.delete'),
+      message: t('home.detail.deleteConfirm'),
+      confirmLabel: t('home.detail.delete'),
+      cancelLabel: t('common.cancel'),
+      variant: 'danger',
+    });
+
+    if (!confirmed) return;
+
+    setIsDeleting(true);
+    try {
+      await onDelete?.();
+    } finally {
+      setIsDeleting(false);
+    }
+  }, [template, confirm, t, onDelete]);
+
+  const busy = isLoading || isDeleting;
 
   return (
     <Popup
@@ -55,15 +86,28 @@ export function TaskDetailPopup({
       maskClosable={true}
       maxHeight="80vh"
       headerRight={(
-        <button
-          onClick={handleEdit}
-          disabled={isLoading}
-          className="flex items-center gap-1 px-2 py-1 text-xs text-text-secondary hover:text-primary disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-          title={t('home.detail.editTask')}
-        >
-          <Pencil className="w-3.5 h-3.5" />
-          <span>{t('home.detail.edit')}</span>
-        </button>
+        <div className="flex items-center gap-1">
+          {onDelete && (
+            <button
+              onClick={handleDelete}
+              disabled={busy}
+              className="flex items-center gap-1 px-2 py-1 text-xs text-text-secondary hover:text-red-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              title={t('home.detail.delete')}
+            >
+              <Trash2 className="w-3.5 h-3.5" />
+              <span>{t('home.detail.delete')}</span>
+            </button>
+          )}
+          <button
+            onClick={handleEdit}
+            disabled={busy}
+            className="flex items-center gap-1 px-2 py-1 text-xs text-text-secondary hover:text-primary disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            title={t('home.detail.editTask')}
+          >
+            <Pencil className="w-3.5 h-3.5" />
+            <span>{t('home.detail.edit')}</span>
+          </button>
+        </div>
       )}
     >
       {instance && template ? (

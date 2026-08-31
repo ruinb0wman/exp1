@@ -52,6 +52,8 @@
       "taskDetail": "任务详情",
       "edit": "编辑",
       "editTask": "编辑任务模板",
+      "delete": "删除",
+      "deleteConfirm": "确定删除该任务实例吗？其积分记录将一并移除，下次进入页面时会按最新模板重新生成。",
       "description": "描述",
       "repeat": "重复",
       "date": "日期",

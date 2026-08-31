@@ -12,6 +12,7 @@ import {
   completeTaskInstance,
   skipTaskInstance,
   resetTaskInstance,
+  deleteTaskInstanceWithPoints,
   getTaskStatistics,
 } from '@/db/services';
 
@@ -245,7 +246,20 @@ export function useTaskInstanceActions() {
     }
   }, []);
 
-  return { complete, skip, reset, isLoading, error };
+  const remove = useCallback(async (instanceId: string) => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      await deleteTaskInstanceWithPoints(instanceId);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to delete task instance');
+      throw err;
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  return { complete, skip, reset, remove, isLoading, error };
 }
 
 // ==================== Statistics Hooks ====================

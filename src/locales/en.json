@@ -52,6 +52,8 @@
       "taskDetail": "Task Detail",
       "edit": "Edit",
       "editTask": "Edit Task",
+      "delete": "Delete",
+      "deleteConfirm": "Delete this task instance? Its points records will also be removed. It will be regenerated with the latest template on your next page visit.",
       "description": "Description",
       "repeat": "Repeat",
       "date": "Date",

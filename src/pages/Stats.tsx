@@ -30,7 +30,7 @@ export function Stats() {
   const [isDetailOpen, setIsDetailOpen] = useState(false);
 
   const { user: currentUser } = useUserStore();
-  const { complete, reset } = useTaskInstanceActions();
+  const { complete, reset, remove: deleteInstance } = useTaskInstanceActions();
 
   const { getDisplayTasksForDate } = useTaskInstanceGenerator({
     userId: currentUser?.id,
@@ -91,6 +91,20 @@ export function Stats() {
       await loadTasksForDate(selectedDate);
     }
   }, [selectedDate]);
+
+  // 在 popup 中删除任务实例（同时删除其积分记录）
+  const handleDeleteInPopup = useCallback(async () => {
+    if (!selectedTask) return;
+    const { instance } = selectedTask;
+    try {
+      await deleteInstance(instance.id!);
+      // 删除后刷新当前日期的任务列表（该模板会以预览形式重新出现）
+      await refreshTasks();
+      handleCloseDetail();
+    } catch (error) {
+      console.error("Failed to delete task instance:", error);
+    }
+  }, [selectedTask, deleteInstance, refreshTasks, handleCloseDetail]);
 
   // 在 popup 中完成任务
   const handleCompleteInPopup = useCallback(async () => {
@@ -221,6 +235,7 @@ export function Stats() {
         onComplete={handleCompleteInPopup}
         onReset={handleResetInPopup}
         onIncrementCount={handleIncrementCount}
+        onDelete={handleDeleteInPopup}
       />
     </div>
   );
