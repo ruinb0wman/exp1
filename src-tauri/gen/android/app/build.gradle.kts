@@ -35,6 +35,9 @@ android {
 
     buildTypes {
         getByName("debug") {
+            // 调试包独立包名，避免覆盖已安装的 release 包（com.ruinb0w.exp1）
+            applicationIdSuffix = ".debug"
+            versionNameSuffix = "-debug"
             manifestPlaceholders["usesCleartextTraffic"] = "true"
             isDebuggable = true
             isJniDebuggable = true

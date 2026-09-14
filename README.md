@@ -50,6 +50,22 @@
 - **图标**：Lucide 线性图标，1.5px 细线条
 - **圆角**：小元素 6px，大元素 12px
 
+## Android 调试包与发布包
+
+Android 构建分为两个互不覆盖的包，可以在同一台设备上共存：
+
+| 变体 | 包名 | 应用名 | 构建命令 |
+|-|-|-|-|
+| debug | `com.ruinb0w.exp1.debug` | exp1 Debug | `bun run dev:android` / `bun run build:android:debug` |
+| release | `com.ruinb0w.exp1` | exp1 | `bun run build:android` / `bun run build:android:all` |
+
+- debug 的独立包名来自 `src-tauri/gen/android/app/build.gradle.kts` 中的 `applicationIdSuffix = ".debug"`（`versionNameSuffix = "-debug"`），应用名来自 `app/src/debug/res/values/strings.xml`。
+- 两个包的数据相互独立（各自的 IndexedDB、通知权限、后台服务与同步配置），debug 包首次安装是空数据库，需要迁移数据时使用应用内「设置 → 数据导入导出」。
+- **`bun run dev:android` 不会自动拉起调试包**：tauri-cli 固定用 `tauri.conf.json` 的 `identifier`（`com.ruinb0w.exp1`）执行 `am start -n <identifier>/.MainActivity`，即指向 release 包。安装完成后请手动点桌面上的「exp1 Debug」图标，或执行 `bun run launch:android:debug`；dev 会话、Rust 热重载与前端 dev server 均不受影响。
+- **dev server 地址由 CLI 自动探测**：`dev:android` 不再写死 `--host`，CLI 会打印 `Using <ip> to access the development server.` 并把 `devUrl` 的主机改成该 IP。手机需与电脑同一局域网，且先手动跑 `bun run dev`（vite 的 `--host` 已监听 0.0.0.0）。需要指定时用 `bun run dev:android -- --host <ip>`；若局域网不可用，可用 `adb reverse tcp:1420 tcp:1420` 配合 `bun run dev:android -- --host 127.0.0.1`。
+- release 包签名仍使用 `~/.android/debug.keystore`（见 `app/build.gradle.kts` 的 `signingConfigs`），安装 `com.ruinb0w.exp1` 的 release APK 依旧可以原地升级。
+- 重新执行 `tauri android init`（例如新增插件）可能重写 `app/build.gradle.kts`，之后请检查 `applicationIdSuffix` / `versionNameSuffix` 两行与 `app/src/debug/res/values/strings.xml` 是否仍然存在。
+
 ## Licence
 
 本项目采用双重许可模式：

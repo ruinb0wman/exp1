@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- debug 变体专属应用名，覆盖 main 中的 exp1 -->
+    <string name="app_name">exp1 Debug</string>
+    <string name="main_activity_title">exp1 Debug</string>
+</resources>
