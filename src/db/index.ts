@@ -15,6 +15,7 @@ import type { RewardTemplate } from './types';
 import type { RewardInstance } from './types';
 import type { PointsHistory } from './types';
 import type { ReplenishmentRecord } from './types';
+import type { Achievement } from './types';
 
 const state: { 
   db: null | ReturnType<typeof createDB>;
@@ -123,6 +124,20 @@ const createDB = () => {
   });
 
   db.pointsHistory.hook('updating', function () {
+    return { updatedAt: new Date().toISOString() };
+  });
+
+  db.achievements.hook('creating', function (_primKey, obj, _trans) {
+    const item = obj as Achievement;
+    if (!item.id) {
+      item.id = generateUUID();
+    }
+    const now = new Date().toISOString();
+    if (!item.createdAt) item.createdAt = now;
+    item.updatedAt = undefined as any;
+  });
+
+  db.achievements.hook('updating', function () {
     return { updatedAt: new Date().toISOString() };
   });
 

@@ -70,6 +70,7 @@ interface QuickActionsProps {
     icon: React.ComponentType<{ className?: string }>;
     label: string;
     path: string;
+    badge?: number;
   }>;
   onActionClick: (path: string) => void;
 }
@@ -81,10 +82,15 @@ export function QuickActions({ actions, onActionClick }: QuickActionsProps) {
         <button
           key={action.label}
           onClick={() => onActionClick(action.path)}
-          className="flex flex-col items-center gap-3 rounded-xl bg-surface p-4 text-center border border-border hover:bg-surface-light transition-colors"
+          className="relative flex flex-col items-center gap-3 rounded-xl bg-surface p-4 text-center border border-border hover:bg-surface-light transition-colors"
         >
           <action.icon className="w-6 h-6 text-primary" />
           <h2 className="text-text-primary text-sm font-bold">{action.label}</h2>
+          {action.badge !== undefined && action.badge > 0 && (
+            <span className="absolute top-2 right-2 min-w-5 h-5 px-1 rounded-full bg-primary text-white text-[10px] font-bold flex items-center justify-center">
+              {action.badge}
+            </span>
+          )}
         </button>
       ))}
     </div>

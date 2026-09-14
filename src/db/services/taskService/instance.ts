@@ -2,6 +2,7 @@ import { getDB } from '../../index';
 import type { TaskInstance, TaskStatus } from '../../types';
 
 import { createPointsRecord } from './points';
+import { reconcileOrphanedAchievements } from '../achievementService';
 
 export async function createTaskInstance(
   instance: Omit<TaskInstance, 'id' | 'createdAt'>
@@ -254,6 +255,9 @@ export async function deleteTaskInstanceWithPoints(id: string): Promise<void> {
 
     await db.taskInstances.delete(id);
   });
+
+  // 模板可能已被删除，校正绑定成就的孤儿状态
+  await reconcileOrphanedAchievements();
 }
 
 export async function deleteTaskInstances(ids: string[]): Promise<void> {
@@ -263,5 +267,7 @@ export async function deleteTaskInstances(ids: string[]): Promise<void> {
 
 export async function deleteTaskInstancesByTemplateId(templateId: string): Promise<number> {
   const db = getDB();
-  return db.taskInstances.where('templateId').equals(templateId).delete();
+  const deleted = await db.taskInstances.where('templateId').equals(templateId).delete();
+  await reconcileOrphanedAchievements();
+  return deleted;
 }

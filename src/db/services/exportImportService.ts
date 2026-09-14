@@ -2,9 +2,10 @@ import { getDB } from '../index';
 import type { TaskTemplate, TaskInstance } from '../types/task';
 import type { RewardTemplate, RewardInstance, ReplenishmentRecord } from '../types/reward';
 import type { User, PointsHistory } from '../types/user';
+import type { Achievement } from '../types/achievement';
 
 // 备份文件格式版本
-const BACKUP_VERSION = '1.0';
+const BACKUP_VERSION = '1.1';
 
 // 导出数据接口
 export interface ExportData {
@@ -19,6 +20,7 @@ export interface ExportData {
     replenishmentRecords: ReplenishmentRecord[];
     users: User[];
     pointsHistory: PointsHistory[];
+    achievements: Achievement[];
   };
 }
 
@@ -38,6 +40,7 @@ export interface ImportResult {
     replenishmentRecords: number;
     users: number;
     pointsHistory: number;
+    achievements: number;
   };
 }
 
@@ -55,6 +58,7 @@ export interface ImportPreview {
     replenishmentRecords: number;
     users: number;
     pointsHistory: number;
+    achievements: number;
   };
 }
 
@@ -98,6 +102,7 @@ export async function exportAllData(): Promise<ExportData> {
     replenishmentRecords,
     users,
     pointsHistory,
+    achievements,
   ] = await Promise.all([
     db.taskTemplates.toArray(),
     db.taskInstances.toArray(),
@@ -106,6 +111,7 @@ export async function exportAllData(): Promise<ExportData> {
     db.replenishmentRecords.toArray(),
     db.users.toArray(),
     db.pointsHistory.toArray(),
+    db.achievements.toArray(),
   ]);
 
   return {
@@ -120,6 +126,7 @@ export async function exportAllData(): Promise<ExportData> {
       replenishmentRecords,
       users,
       pointsHistory,
+      achievements,
     },
   };
 }
@@ -163,6 +170,8 @@ export function validateImportData(data: unknown): ImportPreview {
 
   // 兼容 v1 备份（无 replenishmentRecords 字段）
   const hasReplenishmentRecords = Array.isArray((dbData as Record<string, unknown>).replenishmentRecords);
+  // 兼容 1.0 备份（无 achievements 字段）
+  const hasAchievements = Array.isArray((dbData as Record<string, unknown>).achievements);
 
   // 计算统计信息
   const stats = {
@@ -173,6 +182,7 @@ export function validateImportData(data: unknown): ImportPreview {
     replenishmentRecords: hasReplenishmentRecords ? (dbData.replenishmentRecords as unknown[]).length : 0,
     users: (dbData.users as unknown[]).length,
     pointsHistory: (dbData.pointsHistory as unknown[]).length,
+    achievements: hasAchievements ? (dbData.achievements as unknown[]).length : 0,
   };
 
   return {
@@ -191,6 +201,8 @@ async function importWithOverwrite(data: ExportData['data']): Promise<ImportResu
 
   // 兼容 v1 备份（无 replenishmentRecords 字段）
   const hasReplenishmentRecords = Array.isArray(data.replenishmentRecords);
+  // 兼容 1.0 备份（无 achievements 字段）
+  const hasAchievements = Array.isArray(data.achievements);
 
   try {
     // 开始事务，清空并写入新数据
@@ -204,6 +216,7 @@ async function importWithOverwrite(data: ExportData['data']): Promise<ImportResu
         db.users,
         db.pointsHistory,
         db.replenishmentRecords,
+        db.achievements,
       ],
       async () => {
         // 清空现有数据
@@ -215,6 +228,7 @@ async function importWithOverwrite(data: ExportData['data']): Promise<ImportResu
           db.users.clear(),
           db.pointsHistory.clear(),
           db.replenishmentRecords.clear(),
+          db.achievements.clear(),
         ]);
 
         // 写入新数据（保留原始 id，使用 bulkPut 确保 ID 一致）
@@ -230,6 +244,9 @@ async function importWithOverwrite(data: ExportData['data']): Promise<ImportResu
           db.pointsHistory.bulkPut(data.pointsHistory as PointsHistory[]),
           ...(hasReplenishmentRecords
             ? [db.replenishmentRecords.bulkPut(data.replenishmentRecords as ReplenishmentRecord[])]
+            : []),
+          ...(hasAchievements
+            ? [db.achievements.bulkPut(data.achievements as Achievement[])]
             : []),
         ]);
       }
@@ -247,6 +264,7 @@ async function importWithOverwrite(data: ExportData['data']): Promise<ImportResu
         replenishmentRecords: hasReplenishmentRecords ? data.replenishmentRecords.length : 0,
         users: data.users.length,
         pointsHistory: data.pointsHistory.length,
+        achievements: hasAchievements ? data.achievements.length : 0,
       },
     };
   } catch (error) {

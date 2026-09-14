@@ -15,6 +15,7 @@ export function PointsHistory() {
     { key: "all", label: t("pointsHistory.filters.all") },
     { key: "task_completion", label: t("pointsHistory.filters.task_completion") },
     { key: "reward_exchange", label: t("pointsHistory.filters.reward_exchange") },
+    { key: "achievement", label: t("pointsHistory.filters.achievement") },
   ];
 
   const {

@@ -2,6 +2,7 @@ import { useEffect } from "react";
 import { useUserStore, useTaskStore } from "@/store";
 import { useExpiredTaskChecker } from "@/hooks/useExpiredTaskChecker";
 import { useGlobalPomoTimer } from "@/hooks/useGlobalPomoTimer";
+import { useAchievementWatcher } from "@/hooks/useAchievementWatcher";
 
 export function useAppBootstrap() {
   const { user, initUser } = useUserStore();
@@ -11,6 +12,7 @@ export function useAppBootstrap() {
   });
 
   useGlobalPomoTimer();
+  useAchievementWatcher(user?.id);
 
   useEffect(() => {
     if (!user) {

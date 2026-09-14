@@ -28,10 +28,24 @@ import {
   Zap,
   Trophy,
   Crown,
+  Medal,
+  Flame,
+  Target,
+  Rocket,
+  Award,
+  Shield,
+  Swords,
+  Gem,
+  Compass,
+  Timer,
+  CalendarCheck,
+  TrendingUp,
+  Sparkles,
 } from 'lucide-react';
-import type { RewardIconName, RewardIconColor } from '@/db/types';
+import type { RewardIconName, RewardIconColor, AchievementIconName } from '@/db/types';
 
-const iconMap: Record<RewardIconName, React.ComponentType<LucideProps>> = {
+/** 奖励图标 ∪ 成就图标的合并注册表 */
+const iconMap: Record<string, React.ComponentType<LucideProps>> = {
   Gift,
   Coffee,
   Beer,
@@ -60,20 +74,35 @@ const iconMap: Record<RewardIconName, React.ComponentType<LucideProps>> = {
   Zap,
   Trophy,
   Crown,
+  Medal,
+  Flame,
+  Target,
+  Rocket,
+  Award,
+  Shield,
+  Swords,
+  Gem,
+  Compass,
+  Timer,
+  CalendarCheck,
+  TrendingUp,
+  Sparkles,
 };
 
+export type DynamicIconName = RewardIconName | AchievementIconName | (string & {});
+
 interface DynamicIconProps extends Omit<LucideProps, 'color'> {
-  name: RewardIconName;
+  name: DynamicIconName;
   color?: RewardIconColor | string;
 }
 
 export function DynamicIcon({ name, color, ...props }: DynamicIconProps) {
   const IconComponent = iconMap[name];
-  
+
   if (!IconComponent) {
-    // 如果找不到图标，返回默认的 Gift 图标
-    return <Gift color={color} {...props} />;
+    // 如果找不到图标，返回默认的 Trophy 图标
+    return <Trophy color={color} {...props} />;
   }
-  
+
   return <IconComponent color={color} {...props} />;
 }

@@ -17,9 +17,11 @@ import { PointsHistory } from "@/pages/PointsHistory";
 import { Backpack } from "@/pages/Backpack";
 import { TaskHistory } from "@/pages/TaskHistory";
 import { ReplenishmentHistory } from "@/pages/ReplenishmentHistory";
+import { Achievements } from "@/pages/Achievements";
 import { Settings } from "@/pages/Settings";
 import { DataImportExport } from "@/pages/DataImportExport";
 import { MainLayout, SimpleLayout } from "@/components/layouts";
+import { AchievementUnlockDialog } from "@/pages/Achievements/components/AchievementUnlockDialog";
 import "@/libs/i18n";
 
 function App() {
@@ -87,11 +89,13 @@ function App() {
             <Route path="/points-history" element={<PointsHistory />} />
             <Route path="/backpack" element={<Backpack />} />
             <Route path="/task-history" element={<TaskHistory />} />
+            <Route path="/achievements" element={<Achievements />} />
             <Route path="/settings" element={<Settings />} />
             <Route path="/data-import-export" element={<DataImportExport />} />
           </Route>
         </Routes>
       </BrowserRouter>
+      <AchievementUnlockDialog />
     </ConfirmProvider>
   );
 }

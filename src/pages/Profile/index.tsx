@@ -1,7 +1,8 @@
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 import { useNavigate } from "react-router";
 import { useUserStore } from "@/store";
 import { useProfileStats } from "@/hooks/useProfileStats";
+import { useAchievements } from "@/hooks/useAchievements";
 import { quickActions } from "./lib";
 import {
   ProfileHeader,
@@ -24,6 +25,22 @@ export function Profile() {
     user?.id ?? null
   );
 
+  const { achievements } = useAchievements(user?.id ?? null);
+  const unlockedCount = useMemo(
+    () => achievements.filter((item) => item.status === 'unlocked').length,
+    [achievements]
+  );
+
+  const actions = useMemo(
+    () =>
+      quickActions.map((action) =>
+        action.path === "/achievements"
+          ? { ...action, badge: unlockedCount }
+          : action
+      ),
+    [unlockedCount]
+  );
+
   const isLoading = userLoading || statsLoading;
 
   return (
@@ -32,7 +49,7 @@ export function Profile() {
       <UserInfoSection user={user} />
       <PointsCard currentPoints={currentPoints} />
       <QuickActions
-        actions={quickActions}
+        actions={actions}
         onActionClick={(path) => navigate(path)}
       />
       <StatsSection stats={stats} isLoading={isLoading} />

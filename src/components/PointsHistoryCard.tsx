@@ -1,10 +1,10 @@
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import i18n from "i18next";
-import { BookOpen, Gift, RotateCcw, Settings, type LucideIcon } from "lucide-react";
+import { BookOpen, Gift, RotateCcw, Settings, Trophy, type LucideIcon } from "lucide-react";
 import type { PointsHistory, PointsHistoryType } from "@/db/types";
 import { formatRelativeDate } from "@/libs/time";
-import { getTaskInstanceById, getRewardInstanceById } from "@/db/services";
+import { getAchievementById, getTaskInstanceById, getRewardInstanceById } from "@/db/services";
 
 export function getPointsHistoryIcon(type: PointsHistoryType): LucideIcon {
   switch (type) {
@@ -14,6 +14,8 @@ export function getPointsHistoryIcon(type: PointsHistoryType): LucideIcon {
       return RotateCcw;
     case "reward_exchange":
       return Gift;
+    case "achievement":
+      return Trophy;
     case "admin_adjustment":
       return Settings;
     default:
@@ -28,6 +30,7 @@ export type PointsHistoryLabelKey =
   | "taskCompletion" 
   | "taskDeduction" 
   | "rewardExchange" 
+  | "achievement"
   | "adminAdjustment";
 
 export function getPointsHistoryLabelKey(type: PointsHistoryType): PointsHistoryLabelKey {
@@ -44,6 +47,8 @@ export function getPointsHistoryLabelKey(type: PointsHistoryType): PointsHistory
       return "taskDeduction";
     case "reward_exchange":
       return "rewardExchange";
+    case "achievement":
+      return "achievement";
     case "admin_adjustment":
       return "adminAdjustment";
     default:
@@ -69,6 +74,10 @@ export async function getRelatedEntityName(
       case "reward_exchange": {
         const instance = await getRewardInstanceById(item.relatedInstanceId);
         return instance?.template?.title ?? null;
+      }
+      case "achievement": {
+        const achievement = await getAchievementById(item.relatedInstanceId);
+        return achievement?.title ?? null;
       }
       case "admin_adjustment":
       default:

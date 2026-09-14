@@ -4,6 +4,18 @@
     "general": "通用设置",
     "language": "语言",
     "languageDescription": "选择应用显示语言",
+    "ai": {
+      "title": "AI 成就",
+      "description": "配置 OpenAI 兼容 API，用于生成个性化成就",
+      "baseUrl": "Base URL",
+      "model": "模型",
+      "apiKey": "API Key",
+      "apiKeySaved": "已保存（••••）",
+      "saved": "已保存",
+      "test": "测试连接",
+      "testOk": "连接成功",
+      "clearKey": "清除 API Key"
+    },
     "timeSettings": "时间设置",
     "dayEndTime": "一天结束时间",
     "dayEndTimeDescription": "此时间前任务不会过期",
@@ -152,7 +164,8 @@
         "rewardTemplates": "奖励模板",
         "rewardInstances": "奖励实例",
         "users": "用户数据",
-        "pointsHistory": "积分记录"
+        "pointsHistory": "积分记录",
+        "achievements": "成就"
       }
     },
     "warnings": {
@@ -194,6 +207,7 @@
     "taskCompletion": "完成奖励",
     "taskDeduction": "进度回退",
     "rewardExchange": "兑换奖励",
+    "achievement": "成就奖励",
     "adminAdjustment": "系统调整"
   },
   "profile": {
@@ -344,7 +358,8 @@
     "filters": {
       "all": "全部",
       "task_completion": "任务",
-      "reward_exchange": "消费"
+      "reward_exchange": "消费",
+      "achievement": "成就"
     }
   },
   "dateRange": {
@@ -376,5 +391,66 @@
     "completeCount": "完成指定数量",
     "complete": "完成",
     "itemsSufficient": "项即可"
+  },
+  "achievement": {
+    "title": "成就",
+    "generate": "生成成就",
+    "generating": "正在生成…",
+    "generatedBy": "由 {model} 生成，接取后进度从零开始",
+    "tabs": {
+      "proposed": "待接取",
+      "active": "进行中",
+      "unlocked": "已解锁"
+    },
+    "empty": {
+      "proposed": "还没有成就提案",
+      "proposedHint": "点击上方按钮，让 AI 根据你的任务生成一些挑战",
+      "active": "没有进行中的成就",
+      "unlocked": "还没有解锁任何成就"
+    },
+    "accept": "接取",
+    "dismiss": "忽略",
+    "dismissAll": "全部忽略",
+    "dismissAllConfirm": "确定忽略当前所有待接取的成就提案吗？",
+    "abandon": "放弃成就",
+    "abandonConfirm": "确定放弃「{title}」吗？已获得的进度不会保留。",
+    "acceptTitle": "接取成就",
+    "acceptConfirm": "确认接取",
+    "condition": "成就条件",
+    "progress": "进度",
+    "progressHint": "接取后从现在开始计算，可随时修改奖励积分",
+    "fieldTitle": "名称",
+    "fieldDescription": "描述",
+    "fieldIcon": "图标",
+    "fieldReward": "奖励积分",
+    "orphaned": "所属任务已删除，该成就已冻结",
+    "unlockedAt": "解锁于 {time}",
+    "unlockedBadge": "成就解锁",
+    "awesome": "太棒了",
+    "nextUnlock": "下一个（还有 {n} 个）",
+    "fallbackTitle": "生成成就",
+    "fallbackNoKey": "尚未配置 AI 服务。你可以在设置中填入 Base URL、模型和 API Key，或先使用内置推荐成就。",
+    "fallbackError": "生成失败。你可以检查设置中的 AI 配置，或先使用内置推荐成就。",
+    "goToSettings": "前往设置",
+    "usePresets": "使用推荐成就",
+    "conditions": {
+      "scopeAll": "",
+      "scopeTemplate": "《{title}》",
+      "task_complete_count": "{scope}累计完成 {target} 个任务",
+      "task_complete_count_typed": "{scope}累计完成 {target} 个{type}任务",
+      "stage_complete_count": "{scope}累计达成 {target} 个阶段",
+      "points_earned": "{scope}累计获得 {target} 积分",
+      "pomo_focus_minutes": "{scope}累计专注 {target} 分钟",
+      "pomo_session_count": "{scope}完成 {target} 个专注番茄",
+      "streak_days": "{scope}连续 {target} 天完成任务",
+      "daily_task_count": "{scope}单日完成 {target} 个任务",
+      "reward_redeem_count": "{scope}兑换 {target} 次奖励"
+    },
+    "taskTypes": {
+      "simple": "简单",
+      "time": "计时",
+      "count": "计数",
+      "subtask": "子任务"
+    }
   }
 }

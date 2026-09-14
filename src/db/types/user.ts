@@ -9,6 +9,7 @@ export type PointsHistoryType =
   | 'task_completion' // 任务完成奖励（新类型）
   | 'task_deduction'  // 任务进度回退扣除
   | 'reward_exchange' // 奖励兑换
+  | 'achievement'     // 成就达成奖励
   | 'admin_adjustment'; // 管理员调整
 
 export interface User {

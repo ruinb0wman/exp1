@@ -18,6 +18,7 @@ export interface PointsStats {
   taskReward: number; // 任务获得
   taskUndo: number; // 撤销扣除
   rewardExchange: number; // 兑换消费
+  achievementReward: number; // 成就奖励
   adminAdjustment: number; // 管理员调整
 }
 
@@ -112,6 +113,7 @@ export async function getPointsStats(
     taskReward: 0,
     taskUndo: 0,
     rewardExchange: 0,
+    achievementReward: 0,
     adminAdjustment: 0,
   };
 
@@ -132,6 +134,10 @@ export async function getPointsStats(
       case 'reward_exchange':
         stats.rewardExchange += Math.abs(amount);
         stats.expense += Math.abs(amount);
+        break;
+      case 'achievement':
+        stats.achievementReward += amount;
+        stats.income += amount;
         break;
       case 'admin_adjustment':
         stats.adminAdjustment += amount;

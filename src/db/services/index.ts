@@ -4,3 +4,4 @@ export * from './rewardService';
 export * from './pointsHistoryService';
 export * from './exportImportService';
 export * from './pomoService';
+export * from './achievementService';

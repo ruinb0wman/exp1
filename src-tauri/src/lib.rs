@@ -4,6 +4,8 @@ use std::sync::{Arc, Mutex};
 mod pomo_timer;
 use pomo_timer::{PomoTimerManager, PomoMode, PomoTimerData};
 
+mod llm;
+
 #[cfg(target_os = "android")]
 mod pomo_background;
 #[cfg(target_os = "android")]
@@ -220,6 +222,10 @@ pub fn run() {
             get_autostart,
             set_autostart,
             set_silent_start,
+            llm::get_llm_settings,
+            llm::set_llm_settings,
+            llm::test_llm_connection,
+            llm::llm_chat,
             #[cfg(desktop)]
             toggle_devtools,
         ])

@@ -74,4 +74,9 @@ export function migration(db: DB) {
 			await d.taskTemplates.bulkUpdate(updates);
 		}
 	});
+
+	// v5：成就系统
+	db.version(5).stores({
+		achievements: 'id, userId, status, createdAt, [userId+status]',
+	});
 }

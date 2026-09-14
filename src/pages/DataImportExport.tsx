@@ -251,6 +251,9 @@ export function DataImportExport() {
                 <div className="text-text-secondary">
                   {t("data.import.preview.pointsHistory")}: <span className="text-text-primary">{importPreview.stats.pointsHistory}</span>
                 </div>
+                <div className="text-text-secondary">
+                  {t("data.import.preview.achievements")}: <span className="text-text-primary">{importPreview.stats.achievements}</span>
+                </div>
               </div>
             </div>
           )}
@@ -332,6 +335,9 @@ export function DataImportExport() {
                     </div>
                     <div className="text-text-secondary">
                       {t("data.import.preview.pointsHistory")}: <span className="text-text-primary">{importResult.stats.pointsHistory}</span>
+                    </div>
+                    <div className="text-text-secondary">
+                      {t("data.import.preview.achievements")}: <span className="text-text-primary">{importResult.stats.achievements}</span>
                     </div>
                   </div>
                 </div>

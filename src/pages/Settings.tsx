@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next";
 import { ChevronLeft, Download, Info, Clock, Globe, Power, EyeOff } from "lucide-react";
 import { invoke } from "@tauri-apps/api/core";
 import { TimePicker } from "@/components/TimePicker";
+import { AiSettingsSection } from "@/components/AiSettingsSection";
 import { useUserStore } from "@/store";
 import { updateUserDayEndTime } from "@/db/services";
 import { SUPPORTED_LANGUAGES } from "@/libs/i18n";
@@ -278,6 +279,8 @@ export function Settings() {
             />
           </div>
         </div>
+
+        <AiSettingsSection />
 
         <div className="mb-6">
           <h2 className="text-text-secondary text-sm font-medium px-2 mb-3">
