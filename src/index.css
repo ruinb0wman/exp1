@@ -18,6 +18,9 @@
   
   /* 边框/分割线 */
   --color-border: #2a2a30;
+
+  /* 布局尺寸：通用 Header 高度（含底边线），供 h-header / sticky 偏移共用 */
+  --spacing-header: 52px;
   
   --font-display: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
 }

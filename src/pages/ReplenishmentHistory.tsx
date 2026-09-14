@@ -1,5 +1,6 @@
 import { useMemo } from "react";
 import { useParams } from "react-router";
+import { useTranslation } from "react-i18next";
 import { Loader2, ArrowUpDown, Package } from "lucide-react";
 import { Header } from "@/components/Header";
 import { useRewardTemplate } from "@/hooks/useRewards";
@@ -38,6 +39,7 @@ function formatDateLabel(isoString: string | undefined) {
 }
 
 export function ReplenishmentHistory() {
+	const { t } = useTranslation();
 	const { templateId } = useParams<{ templateId: string }>();
 
 	const { template, isLoading: isLoadingTemplate } = useRewardTemplate(templateId ?? null);
@@ -56,7 +58,7 @@ export function ReplenishmentHistory() {
 		return map;
 	}, [records]);
 
-	const title = template?.title ?? "Replenishment History";
+	const title = template?.title ?? t("replenishment.title");
 
 	return (
 		<div className="min-h-screen bg-background">
@@ -108,7 +110,7 @@ export function ReplenishmentHistory() {
 					<div className="flex flex-col gap-4">
 					{Array.from(grouped.entries()).map(([dateStr, dayRecords]) => (
 						<div key={dateStr}>
-							<p className="text-text-muted text-xs font-medium mb-2 sticky top-0 bg-background py-1">
+							<p className="text-text-muted text-xs font-medium mb-2 sticky top-[var(--spacing-header)] bg-background py-1">
 								{formatDateLabel(dateStr)}
 							</p>
 							<div className="flex flex-col gap-2">

@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router";
 import { useTranslation } from "react-i18next";
-import { ArrowLeft, Sparkles, CheckCircle2, Minus, Plus, Package } from "lucide-react";
+import { Sparkles, CheckCircle2, Minus, Plus, Package } from "lucide-react";
 import { Header } from "@/components/Header";
 import { Popup } from "@/components/Popup";
 import { DynamicIcon } from "@/components/DynamicIcon";
@@ -17,7 +16,6 @@ import { formatDate, getTimeLeft, getTabs, type GroupedReward, type TabKey } fro
 
 export function Backpack() {
   const { t } = useTranslation();
-  const navigate = useNavigate();
   const { user } = useUserStore();
   const { items, isLoading, refresh } = useUserBackpack(user?.id ?? 0);
   const {
@@ -98,17 +96,7 @@ export function Backpack() {
   return (
     <div className="min-h-screen pb-24 bg-background">
       {/* Header */}
-      <Header
-        title="My Backpack"
-        leftSlot={
-          <button
-            onClick={() => navigate(-1)}
-            className="flex size-12 items-center justify-start text-text-secondary hover:text-primary transition-colors"
-          >
-            <ArrowLeft className="w-5 h-5" />
-          </button>
-        }
-      />
+      <Header title={t("backpack.title")} back />
 
       {/* Stats Card */}
       <StatsCard items={items} />

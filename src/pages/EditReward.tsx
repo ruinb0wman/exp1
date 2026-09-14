@@ -171,7 +171,10 @@ export function EditReward() {
 
   return (
     <div className="relative min-h-screen bg-background pb-32">
-      <Header title={isEditing ? "Edit Reward" : "Create Reward"} back />
+      <Header
+        title={isEditing ? t("editReward.title") : t("editReward.createTitle")}
+        back
+      />
 
       <main className="flex-1 px-4 py-6 space-y-6">
         {/* Icon Selector Card */}

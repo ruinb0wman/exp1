@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router";
 import { useTranslation } from "react-i18next";
-import { Header } from "../components/Header";
+import { Header } from "@/components/Header";
 import { RadioGroup } from "../components/RadioGroup";
 import { MultiSelectGrid } from "../components/MultiSelectGrid";
 import { DatePicker } from "../components/DatePicker";
@@ -286,7 +286,10 @@ export function EditTask() {
 
   return (
     <div className="min-h-screen bg-background">
-      <Header title={isEditMode ? "Edit Task" : "Create Task"} back />
+      <Header
+        title={isEditMode ? t("editTask.title") : t("editTask.createTitle")}
+        back
+      />
 
       <main className="flex-1 px-4 py-6 space-y-6">
         {/* Main Task Details Card */}

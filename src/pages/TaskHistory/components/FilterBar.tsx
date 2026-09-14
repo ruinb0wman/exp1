@@ -12,7 +12,7 @@ export function FilterBar({ filterStatus, total, onFilterChange }: FilterBarProp
   const { t } = useTranslation();
 
   return (
-    <div className="px-4 py-2 flex items-center justify-between sticky top-[60px] bg-background z-10 shrink-0">
+    <div className="px-4 py-2 flex items-center justify-between sticky top-[var(--spacing-header)] bg-background z-10 shrink-0">
       {/* Filter Tabs */}
       <div className="flex gap-1 bg-surface rounded-lg p-1">
         {filterTabs.map((tab) => (

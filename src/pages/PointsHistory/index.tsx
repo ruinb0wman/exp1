@@ -92,7 +92,7 @@ export function PointsHistory() {
       </div>
 
       {/* Filter Bar */}
-      <div className="px-4 py-2 flex items-center justify-between sticky top-[60px] bg-background z-10">
+      <div className="px-4 py-2 flex items-center justify-between sticky top-[var(--spacing-header)] bg-background z-10">
         {/* Filter Tabs */}
         <div className="flex gap-1 bg-surface rounded-lg p-1">
           {filterTabs.map((tab) => (

@@ -1,26 +1,4 @@
-import { Settings } from "lucide-react";
 import { useTranslation } from "react-i18next";
-
-interface ProfileHeaderProps {
-  onSettingsClick: () => void;
-}
-
-export function ProfileHeader({ onSettingsClick }: ProfileHeaderProps) {
-  return (
-    <header className="flex items-center p-4 pb-2 justify-between sticky top-0 bg-background z-10">
-      <div className="w-12" />
-      <h1 className="text-lg font-bold text-text-primary flex-1 text-center">
-        My Profile
-      </h1>
-      <button
-        onClick={onSettingsClick}
-        className="w-12 flex justify-end text-text-secondary hover:text-primary transition-colors"
-      >
-        <Settings className="w-5 h-5" />
-      </button>
-    </header>
-  );
-}
 
 interface UserInfoSectionProps {
   user: { name?: string } | null;

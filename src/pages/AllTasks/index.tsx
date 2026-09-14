@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router";
 import { History } from "lucide-react";
-import { Header } from "@/components/Header";
+import { Header, HeaderActionButton } from "@/components/Header";
 import { FilterTabs } from "@/components/FilterTabs";
 import { useConfirm } from "@/hooks/useConfirm";
 import { useTaskTemplates, useTaskTemplateActions } from "@/hooks/useTasks";
@@ -68,16 +68,15 @@ export function AllTasks() {
   return (
     <div className="min-h-screen pb-24 bg-background">
       <Header
-        title="All Tasks"
+        title={t("allTasks.title")}
         back
         rightSlot={
-          <button
+          <HeaderActionButton
+            icon={History}
+            side="end"
+            label={t("allTasks.taskHistory")}
             onClick={() => navigate("/task-history")}
-            className="flex items-center justify-center w-10 h-10 rounded-full bg-primary/20 text-primary hover:bg-primary/30 transition-colors"
-            title={t("allTasks.taskHistory")}
-          >
-            <History className="w-5 h-5" />
-          </button>
+          />
         }
       />
 

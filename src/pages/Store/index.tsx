@@ -2,7 +2,7 @@ import { useState, useCallback, useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router";
 import { Package, Plus, Pencil, History } from "lucide-react";
-import { Header } from "@/components/Header";
+import { Header, HeaderActionButton } from "@/components/Header";
 import { Popup } from "@/components/Popup";
 import { useUserStore } from "@/store";
 import { useStoreRewards, useRewardInstanceActions } from "@/hooks/useRewards";
@@ -118,22 +118,22 @@ export function Store() {
       {/* Header */}
       <div className="sticky top-0 z-10 bg-background">
         <Header
-          title="Rewards Store"
+          title={t("store.title")}
           leftSlot={
-            <button
+            <HeaderActionButton
+              icon={Package}
+              side="start"
+              label={t("backpack.title")}
               onClick={() => navigate("/backpack")}
-              className="flex size-12 items-center justify-start text-text-secondary hover:text-primary transition-colors"
-            >
-              <Package className="w-5 h-5" />
-            </button>
+            />
           }
           rightSlot={
-            <button
+            <HeaderActionButton
+              icon={Plus}
+              side="end"
+              label={t("editReward.createTitle")}
               onClick={() => navigate("/rewards/new")}
-              className="flex size-12 items-center justify-end text-text-secondary hover:text-primary transition-colors"
-            >
-              <Plus className="w-5 h-5" />
-            </button>
+            />
           }
         />
 

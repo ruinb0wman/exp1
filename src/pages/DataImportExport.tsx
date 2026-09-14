@@ -1,14 +1,13 @@
 import { useState, useCallback } from "react";
 import { useTranslation } from "react-i18next";
-import { useNavigate } from "react-router";
 import {
-  ChevronLeft,
   Download,
   FileJson,
   AlertTriangle,
   CheckCircle,
   Loader2,
 } from "lucide-react";
+import { Header } from "@/components/Header";
 import { Popup } from "@/components/Popup";
 import { fileSystem } from "@/libs/fileSystem";
 import { useUserStore } from "@/store/userStore";
@@ -24,7 +23,6 @@ import {
 
 export function DataImportExport() {
   const { t } = useTranslation();
-  const navigate = useNavigate();
   const { refreshUser } = useUserStore();
 
   const [isExporting, setIsExporting] = useState(false);
@@ -127,17 +125,7 @@ export function DataImportExport() {
 
   return (
     <div className="bg-background">
-      <header className="flex items-center p-4 pb-2 sticky top-0 bg-background z-10">
-        <button
-          onClick={() => navigate(-1)}
-          className="w-10 h-10 flex items-center justify-center -ml-2 text-text-primary hover:text-primary transition-colors"
-        >
-          <ChevronLeft className="w-6 h-6" />
-        </button>
-        <h1 className="text-lg font-bold text-text-primary flex-1 text-center mr-8">
-          {t("data.title")}
-        </h1>
-      </header>
+      <Header title={t("data.title")} back />
 
       <div className="p-4">
         <div className="rounded-xl bg-surface p-5 border border-border mb-4">

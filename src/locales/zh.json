@@ -135,7 +135,8 @@
     "failed": "失败",
     "itemsUnit": "{n} 个",
     "hours": "时",
-    "minutes": "分"
+    "minutes": "分",
+    "back": "返回"
   },
   "data": {
     "title": "数据导入导出",
@@ -183,6 +184,7 @@
     }
   },
   "store": {
+    "title": "奖励商店",
     "noRewards": "暂无奖励",
     "createReward": "点击右上角 + 创建新奖励",
     "pointsCost": "需要 {cost} 积分",
@@ -207,6 +209,7 @@
     "adminAdjustment": "系统调整"
   },
   "profile": {
+    "title": "个人中心",
     "currentExp": "CURRENT EXP",
     "greatWork": "Well done! Keep up the great work."
   },
@@ -279,7 +282,7 @@
     "paused": "已暂停"
   },
   "backpack": {
-    "title": "My Backpack",
+    "title": "背包",
     "stats": {
       "total": "背包物品总数",
       "available": "可用"
@@ -333,6 +336,12 @@
     "completed": "已完成",
     "skipped": "已跳过"
   },
+  "calendar": {
+    "title": "日历"
+  },
+  "replenishment": {
+    "title": "补货历史"
+  },
   "filter": {
     "totalRecords": "共 {total} 条"
   },
@@ -364,15 +373,20 @@
     "last90days": "最近90天"
   },
   "allTasks": {
+    "title": "全部任务",
     "taskHistory": "任务历史"
   },
   "editReward": {
+    "title": "编辑奖励",
+    "createTitle": "创建奖励",
     "saveFailed": "保存失败"
   },
   "popup": {
     "close": "关闭"
   },
   "editTask": {
+    "title": "编辑任务",
+    "createTitle": "创建任务",
     "completionPoints": "完成获得积分",
     "stageConfig": "阶段配置（达到目标获得积分）",
     "addStage": "添加阶段",

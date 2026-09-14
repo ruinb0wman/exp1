@@ -1,6 +1,9 @@
 import { useEffect, useState, useCallback } from "react";
-import { ChevronLeft } from "lucide-react";
+import { Plus } from "lucide-react";
+import { useNavigate } from "react-router";
+import { useTranslation } from "react-i18next";
 import { Calendar } from "../components/Calendar";
+import { Header, HeaderActionButton } from "@/components/Header";
 import { TaskInstanceCard } from "@/components/TaskInstanceCard";
 import { TaskDetailPopup } from "@/components/TaskDetailPopup";
 import { useUserStore } from "@/store";
@@ -21,6 +24,8 @@ function isSameDay(date1: Date, date2: Date): boolean {
 }
 
 export function Stats() {
+  const { t } = useTranslation();
+  const navigate = useNavigate();
   const [selectedDate, setSelectedDate] = useState<Date | null>(new Date());
   const [tasks, setTasks] = useState<DisplayTaskItem[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -154,19 +159,17 @@ export function Stats() {
   return (
     <div className="min-h-screen pb-24 bg-background">
       {/* Header */}
-      <header className="flex items-center p-4 pb-2 justify-between">
-        <button className="w-12 flex items-center text-text-secondary hover:text-text-primary transition-colors">
-          <ChevronLeft className="w-5 h-5" />
-        </button>
-        <h1 className="text-lg font-bold text-text-primary flex-1 text-center">
-          Calendar
-        </h1>
-        <div className="w-12 flex justify-end">
-          <button className="text-text-primary hover:text-primary transition-colors text-2xl font-light">
-            +
-          </button>
-        </div>
-      </header>
+      <Header
+        title={t("calendar.title")}
+        rightSlot={
+          <HeaderActionButton
+            icon={Plus}
+            side="end"
+            label={t("editTask.createTitle")}
+            onClick={() => navigate("/tasks/new")}
+          />
+        }
+      />
 
       <main className="px-4">
         {/* Calendar - 使用默认配置 */}

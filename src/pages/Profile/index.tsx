@@ -1,11 +1,13 @@
 import { useEffect, useMemo } from "react";
 import { useNavigate } from "react-router";
+import { useTranslation } from "react-i18next";
+import { Settings } from "lucide-react";
+import { Header, HeaderActionButton } from "@/components/Header";
 import { useUserStore } from "@/store";
 import { useProfileStats } from "@/hooks/useProfileStats";
 import { useAchievements } from "@/hooks/useAchievements";
 import { quickActions } from "./lib";
 import {
-  ProfileHeader,
   UserInfoSection,
   PointsCard,
   QuickActions,
@@ -15,6 +17,7 @@ import { RecentHistoryList } from "./components/RecentHistoryList";
 
 export function Profile() {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const { user, currentPoints, isLoading: userLoading, calculatePoints } = useUserStore();
 
   useEffect(() => {
@@ -45,7 +48,17 @@ export function Profile() {
 
   return (
     <div className="min-h-screen pb-24 bg-background">
-      <ProfileHeader onSettingsClick={() => navigate("/settings")} />
+      <Header
+        title={t("profile.title")}
+        rightSlot={
+          <HeaderActionButton
+            icon={Settings}
+            side="end"
+            label={t("settings.title")}
+            onClick={() => navigate("/settings")}
+          />
+        }
+      />
       <UserInfoSection user={user} />
       <PointsCard currentPoints={currentPoints} />
       <QuickActions

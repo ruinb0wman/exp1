@@ -135,7 +135,8 @@
     "failed": "Failed",
     "itemsUnit": "{n}",
     "hours": "h",
-    "minutes": "m"
+    "minutes": "m",
+    "back": "Back"
   },
   "data": {
     "title": "Import & Export",
@@ -183,6 +184,7 @@
     }
   },
   "store": {
+    "title": "Rewards Store",
     "noRewards": "No Rewards",
     "createReward": "Tap + to create a new reward",
     "pointsCost": "Costs {cost} exp",
@@ -207,6 +209,7 @@
     "adminAdjustment": "Admin Adjustment"
   },
   "profile": {
+    "title": "My Profile",
     "currentExp": "CURRENT EXP",
     "greatWork": "Well done! Keep up the great work."
   },
@@ -333,6 +336,12 @@
     "completed": "Completed",
     "skipped": "Skipped"
   },
+  "calendar": {
+    "title": "Calendar"
+  },
+  "replenishment": {
+    "title": "Replenishment History"
+  },
   "filter": {
     "totalRecords": "{total} records"
   },
@@ -364,15 +373,20 @@
     "last90days": "Last 90 days"
   },
   "allTasks": {
+    "title": "All Tasks",
     "taskHistory": "Task History"
   },
   "editReward": {
+    "title": "Edit Reward",
+    "createTitle": "Create Reward",
     "saveFailed": "Failed to save"
   },
   "popup": {
     "close": "Close"
   },
   "editTask": {
+    "title": "Edit Task",
+    "createTitle": "Create Task",
     "completionPoints": "Completion Points",
     "stageConfig": "Stage Config (earn points on reaching goals)",
     "addStage": "Add Stage",

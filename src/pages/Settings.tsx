@@ -3,6 +3,7 @@ import { useNavigate } from "react-router";
 import { useTranslation } from "react-i18next";
 import { ChevronLeft, Download, Info, Clock, Globe } from "lucide-react";
 import { TimePicker } from "@/components/TimePicker";
+import { Header } from "@/components/Header";
 import { AiSettingsSection } from "@/components/AiSettingsSection";
 import { useUserStore } from "@/store";
 import { updateUserDayEndTime } from "@/db/services";
@@ -60,17 +61,7 @@ export function Settings() {
 
   return (
     <div className="bg-background min-h-screen">
-      <header className="flex items-center p-4 pb-2 sticky top-0 bg-background z-10">
-        <button
-          onClick={() => navigate(-1)}
-          className="w-10 h-10 flex items-center justify-center -ml-2 text-text-primary hover:text-primary transition-colors"
-        >
-          <ChevronLeft className="w-6 h-6" />
-        </button>
-        <h1 className="text-lg font-bold text-text-primary flex-1 text-center mr-8">
-          {t("settings.title")}
-        </h1>
-      </header>
+      <Header title={t("settings.title")} back />
 
       <div className="p-4">
         <div className="mb-6">
