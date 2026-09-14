@@ -448,5 +448,205 @@
       "count": "counted",
       "subtask": "subtask"
     }
+  },
+  "reports": {
+    "page": {
+      "title": "Reports",
+      "subtitle": "Export weekly/monthly/yearly task data to feed an LLM alongside your Logseq journal",
+      "loading": "Generating report…",
+      "retry": "Retry"
+    },
+    "scope": {
+      "week": "Weekly",
+      "month": "Monthly",
+      "year": "Yearly",
+      "custom": "Custom"
+    },
+    "anchor": {
+      "prev": "Previous",
+      "next": "Next",
+      "today": "Today",
+      "customStart": "Start date",
+      "customEnd": "End date"
+    },
+    "action": {
+      "exportMd": "Export Markdown",
+      "exportJson": "Export JSON",
+      "exporting": "Exporting…",
+      "success": "Report saved",
+      "failed": "Failed to save",
+      "cancelled": "Save cancelled"
+    },
+    "option": {
+      "includePrompt": "Append analysis prompt"
+    },
+    "summary": {
+      "title": "Report preview",
+      "range": "Range"
+    },
+    "title": "Task Review · {label} ({start} ~ {end})",
+    "empty": "No data for this period",
+    "meta": {
+      "generatedAt": "Generated at",
+      "range": "Range",
+      "previousRange": "Previous range",
+      "dayEndTime": "Day end time",
+      "timeZone": "Time zone",
+      "appVersion": "App version",
+      "user": "User",
+      "partialSuffix": " (as of {date})"
+    },
+    "notes": {
+      "title": "Notes",
+      "noData": "No tasks, pomodoro sessions or points in this period.",
+      "partialPeriod": "This period is still in progress; data is as of {date}.",
+      "noPreviousData": "The previous period has no comparable data, so change columns show —.",
+      "carriedOver": "{count} task(s) were completed during this period but were scheduled before {start} (carried over).",
+      "noDateTasks": "{count} undated task(s) were completed in this period and are excluded from the completion-rate denominator."
+    },
+    "caliber": {
+      "title": "Definitions",
+      "item1": "All dates are split by \"user day\": a day starts at your configured day end time ({dayEndTime}) and ends just before the same time the next day.",
+      "item2": "Planned = task instances generated within the period (completed / pending / skipped); completion rate = completed ÷ planned.",
+      "item3": "Overdue = still pending within the period and past the template's configured expire days.",
+      "item4": "Trend and completion rate are attributed by the task's scheduled date (instanceDate); streaks, active days and peak hours are attributed by actual completion time.",
+      "item5": "Undated tasks are excluded from the completion-rate denominator; completions in this period whose scheduled date is earlier are counted as carried over.",
+      "item6": "Focus minutes only count completed pomodoro sessions, floored to minutes per session; points income/spending are attributed by record creation time."
+    },
+    "section": {
+      "overview": "Overview",
+      "trend": "Trend",
+      "tasks": "Task breakdown",
+      "pomo": "Pomodoro",
+      "points": "Points",
+      "insights": "Habit insights",
+      "extras": "Extras",
+      "prompt": "Analysis prompt"
+    },
+    "col": {
+      "metric": "Metric",
+      "current": "Current",
+      "previous": "Previous",
+      "change": "Change"
+    },
+    "metric": {
+      "planned": "Planned tasks",
+      "completed": "Completed tasks",
+      "skipped": "Skipped tasks",
+      "pending": "Pending tasks",
+      "overdue": "Overdue tasks",
+      "completionRate": "Completion rate",
+      "activeDays": "Active days",
+      "longestStreak": "Longest streak",
+      "endStreak": "Streak at period end",
+      "focusMinutes": "Focus minutes",
+      "focusSessions": "Focus sessions",
+      "interruptions": "Interruptions",
+      "pointsEarned": "Points earned",
+      "pointsSpent": "Points spent",
+      "pointsNet": "Points net",
+      "carriedOver": "Carried over",
+      "noDateCompleted": "Undated completions"
+    },
+    "trend": {
+      "col": {
+        "bucket": "Date",
+        "planned": "Planned",
+        "completed": "Completed",
+        "skipped": "Skipped",
+        "completionRate": "Rate",
+        "focusMinutes": "Focus min",
+        "pointsNet": "Points net"
+      }
+    },
+    "tasks": {
+      "col": {
+        "title": "Task",
+        "type": "Type",
+        "planned": "Planned",
+        "completed": "Completed",
+        "skipped": "Skipped",
+        "overdue": "Overdue",
+        "completionRate": "Rate",
+        "points": "Points",
+        "focusMinutes": "Focus min"
+      }
+    },
+    "pomo": {
+      "col": {
+        "mode": "Mode",
+        "sessions": "Sessions",
+        "minutes": "Minutes",
+        "interruptions": "Interruptions"
+      },
+      "mode": {
+        "focus": "Focus",
+        "shortBreak": "Short break",
+        "longBreak": "Long break"
+      }
+    },
+    "points": {
+      "col": {
+        "type": "Type",
+        "amount": "Amount",
+        "count": "Count",
+        "date": "Date",
+        "description": "Description"
+      },
+      "topEarn": "Top income",
+      "topSpend": "Top spending",
+      "type": {
+        "task_undo": "Task undo",
+        "task_stage": "Task stage",
+        "task_reward": "Task completion",
+        "task_completion": "Task completion",
+        "task_deduction": "Task progress rollback",
+        "reward_exchange": "Reward redemption",
+        "achievement": "Achievement reward",
+        "admin_adjustment": "Manual adjustment"
+      }
+    },
+    "insights": {
+      "bestWeekday": "Most active weekday",
+      "bestHour": "Most active hour",
+      "topTask": "Most completed task",
+      "mostSkipped": "Most skipped task",
+      "avgDailyCompleted": "Average per day",
+      "chronicallyOverdue": "Chronically overdue",
+      "none": "None",
+      "weekdayValue": "{weekday} ({count} completions)",
+      "hourValue": "{hour}:00 - {hour}:59 ({count} completions)",
+      "taskValue": "{title} ({count} times)",
+      "skippedValue": "{title} (skipped {count} times)"
+    },
+    "weekday": {
+      "0": "Sunday",
+      "1": "Monday",
+      "2": "Tuesday",
+      "3": "Wednesday",
+      "4": "Thursday",
+      "5": "Friday",
+      "6": "Saturday"
+    },
+    "extras": {
+      "templatesCreated": "Templates created",
+      "achievementsUnlocked": "Achievements unlocked",
+      "rewardsRedeemed": "Rewards redeemed"
+    },
+    "taskType": {
+      "simple": "simple",
+      "time": "timed",
+      "count": "counted",
+      "subtask": "subtask"
+    },
+    "prompt": {
+      "hint": "Send the text below to an LLM together with this report, and attach your Logseq journal for {start} ~ {end}.",
+      "intro": "You are my habit and task review assistant. Attached is my task report from the exp1 app for {period}; I will also paste my Logseq journal for the same period.",
+      "requirementsTitle": "Requirements:",
+      "requirement1": "1. Only rely on the data in the report and journal; never make things up, and state clearly what is missing when data is insufficient.",
+      "requirement2": "2. Focus on: days/tasks with abnormal completion rates, tasks that are consistently delayed or repeatedly skipped, mismatches between focus time and output, and trend inflection points or sustained decline.",
+      "requirement3": "3. Give at most one actionable suggestion per problem, then propose 1-3 concrete, verifiable adjustments for next week.",
+      "requirement4": "4. Output structure: conclusion summary / evidence (cite specific dates and numbers) / suggestions. Answer in English."
+    }
   }
 }

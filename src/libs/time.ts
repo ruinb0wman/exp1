@@ -243,6 +243,46 @@ export function isExpiredByInstanceDate(
   return now.getTime() > expireLocalDate.getTime();
 }
 
+/**
+ * 用户日加减天数（基于本地日历日做整数运算，不受 DST 影响）
+ * @param userDate 用户日 YYYY-MM-DD
+ * @param days 偏移天数，可为负数
+ */
+export function addUserDays(userDate: string, days: number): string {
+  const [year, month, day] = userDate.split('-').map(Number);
+  const date = new Date(year, month - 1, day + days, 12, 0, 0, 0);
+  return formatLocalDate(date);
+}
+
+/**
+ * 把一个时间戳归属到某个「用户日」（考虑 dayEndTime 偏移）
+ * 例如 dayEndTime = "04:00" 时，01:30 完成的任务算作前一天。
+ * @param value Date 或 ISO/UTC 时间字符串
+ * @param dayEndTime "HH:mm" 格式，默认 "00:00"
+ * @returns 用户日 YYYY-MM-DD
+ */
+export function toUserDateString(value: Date | string, dayEndTime: string = "00:00"): string {
+  const date = typeof value === 'string' ? new Date(value) : value;
+  const [endHour, endMinute] = dayEndTime.split(':').map(Number);
+  const boundaryMinutes = (endHour || 0) * 60 + (endMinute || 0);
+  const minutesOfDay = date.getHours() * 60 + date.getMinutes();
+
+  const dateStr = formatLocalDate(date);
+  if (boundaryMinutes > 0 && minutesOfDay < boundaryMinutes) {
+    return addUserDays(dateStr, -1);
+  }
+  return dateStr;
+}
+
+/**
+ * 获取用户日是星期几
+ * @returns 0=周日 … 6=周六
+ */
+export function getUserWeekday(userDate: string): number {
+  const [year, month, day] = userDate.split('-').map(Number);
+  return new Date(year, month - 1, day, 12, 0, 0, 0).getDay();
+}
+
 export type ExpireTimeResult = 
   | { type: "expired" }
   | { type: "expiresInDays"; value: number }

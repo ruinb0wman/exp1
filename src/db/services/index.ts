@@ -5,3 +5,4 @@ export * from './pointsHistoryService';
 export * from './exportImportService';
 export * from './pomoService';
 export * from './achievementService';
+export * from './reportService';

@@ -22,6 +22,8 @@ export interface SaveFileData {
   filename: string;
   /** MIME 类型 */
   mimeType?: string;
+  /** 文件扩展名（不含点），用于生成保存对话框过滤器，如 ["md"] */
+  extensions?: string[];
 }
 
 /**
@@ -164,13 +166,19 @@ async function tauriSelectFile(
  */
 async function tauriSaveFile(data: SaveFileData): Promise<boolean> {
   try {
+    const extensions = data.extensions?.length
+      ? data.extensions
+      : data.mimeType?.includes("json")
+        ? ["json"]
+        : undefined;
+
     const filePath = await save({
       defaultPath: data.filename,
-      filters: data.mimeType?.includes("json")
+      filters: extensions
         ? [
             {
-              name: "JSON",
-              extensions: ["json"],
+              name: extensions[0].toUpperCase(),
+              extensions,
             },
           ]
         : undefined,
