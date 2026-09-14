@@ -1,5 +1,4 @@
 import { Outlet } from "react-router";
-import { TitleBar } from "@/components/TitleBar";
 import { useSafeAreaInsets } from "@/hooks/useSafeAreaInsets";
 
 interface BaseLayoutProps {
@@ -14,13 +13,11 @@ interface BaseLayoutProps {
 export function BaseLayout({ children, showBottomNav = true }: BaseLayoutProps) {
   const { top: safeAreaTop } = useSafeAreaInsets();
 
-  // 移动端使用动态计算的 safeAreaTop，桌面端使用固定 32px
-  const isMobile = safeAreaTop > 0;
-  const topPadding = isMobile ? safeAreaTop : 32;
+  // 移动端顶部占位：优先使用安全区，读不到时用 32px 兜底
+  const topPadding = safeAreaTop || 32;
 
   return (
     <>
-      <TitleBar />
       <div className="h-screen flex flex-col bg-background landscape:pl-56 overflow-hidden">
         {/* 固定安全区域 - 状态栏占位（透明背景） */}
         <div

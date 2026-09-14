@@ -1,5 +1,7 @@
-use tauri::{Manager, Listener, Emitter};
-use std::sync::{Arc, Mutex};
+use tauri::Manager;
+#[cfg(mobile)]
+use tauri::{Emitter, Listener};
+use std::sync::Arc;
 
 mod pomo_timer;
 use pomo_timer::{PomoTimerManager, PomoMode, PomoTimerData};
@@ -63,152 +65,21 @@ async fn get_pomo_timer_state(app: tauri::AppHandle) -> Result<PomoTimerData, St
     Ok(manager.get_data().await)
 }
 
-/// 获取当前平台类型
-#[tauri::command]
-fn get_platform() -> &'static str {
-    #[cfg(desktop)]
-    {
-        "desktop"
-    }
-    #[cfg(mobile)]
-    {
-        "mobile"
-    }
-}
-
-/// 切换DevTools开关状态
-#[cfg(desktop)]
-#[tauri::command]
-fn toggle_devtools(window: tauri::WebviewWindow) {
-    if window.is_devtools_open() {
-        let _ = window.close_devtools();
-    } else {
-        let _ = window.open_devtools();
-    }
-}
-
-/// 应用状态
-#[derive(Default)]
-struct AppState {
-    silent_start: Mutex<bool>,
-}
-
-/// 获取开机自启状态
-#[tauri::command]
-fn get_autostart(_app: tauri::AppHandle) -> Result<bool, String> {
-    #[cfg(desktop)]
-    {
-        use tauri_plugin_autostart::ManagerExt;
-        _app.autolaunch()
-            .is_enabled()
-            .map_err(|e| e.to_string())
-    }
-    #[cfg(not(desktop))]
-    {
-        Ok(false)
-    }
-}
-
-/// 设置开机自启
-#[tauri::command]
-fn set_autostart(_app: tauri::AppHandle, _enabled: bool, _silent: bool) -> Result<(), String> {
-    #[cfg(desktop)]
-    {
-        use tauri_plugin_autostart::ManagerExt;
-        let autolaunch = _app.autolaunch();
-        if _enabled {
-            autolaunch.enable().map_err(|e| e.to_string())?;
-        } else {
-            autolaunch.disable().map_err(|e| e.to_string())?;
-        }
-
-        // 同步静默启动 flag 文件
-        let data_dir = _app.path().app_data_dir().map_err(|e| e.to_string())?;
-        let flag = data_dir.join(".silent_start");
-        if _enabled && _silent {
-            std::fs::create_dir_all(&data_dir).map_err(|e| e.to_string())?;
-            std::fs::write(&flag, "").map_err(|e| e.to_string())?;
-        } else {
-            let _ = std::fs::remove_file(&flag);
-        }
-
-        // 同步更新内存状态
-        if let Some(state) = _app.try_state::<AppState>() {
-            if let Ok(mut s) = state.silent_start.lock() {
-                *s = _silent;
-            }
-        }
-        Ok(())
-    }
-    #[cfg(not(desktop))]
-    {
-        Ok(())
-    }
-}
-
-/// 设置静默启动标记
-#[tauri::command]
-fn set_silent_start(app: tauri::AppHandle, silent: bool) -> Result<(), String> {
-    // 持久化到 flag 文件
-    let data_dir = app.path().app_data_dir().map_err(|e| e.to_string())?;
-    let flag = data_dir.join(".silent_start");
-    if silent {
-        std::fs::create_dir_all(&data_dir).map_err(|e| e.to_string())?;
-        std::fs::write(&flag, "").map_err(|e| e.to_string())?;
-    } else {
-        let _ = std::fs::remove_file(&flag);
-    }
-
-    // 同步更新内存状态
-    if let Some(state) = app.try_state::<AppState>() {
-        if let Ok(mut s) = state.silent_start.lock() {
-            *s = silent;
-        }
-    }
-    Ok(())
-}
-
-/// 处理单例模式：当第二个实例启动时，聚焦到已存在的窗口（仅桌面端）
-#[cfg(desktop)]
-fn handle_single_instance(app: &tauri::AppHandle, _args: Vec<String>, _cwd: String) {
-    if let Some(window) = app.get_webview_window("main") {
-        let _ = window.show();
-        let _ = window.set_focus();
-    }
-}
-
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     // 创建共享计时器数据，供 PomoTimerManager 和 Android BackgroundService 共用
     let timer_data = Arc::new(tokio::sync::RwLock::new(PomoTimerData::default()));
 
-    let mut builder = tauri::Builder::default()
+    let builder = tauri::Builder::default()
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_fs::init())
         .plugin(tauri_plugin_notification::init());
 
     // Android 端：注册 BackgroundService 插件（必须在 notification 之后）
     #[cfg(target_os = "android")]
-    {
-        builder = builder.plugin(
-            tauri_plugin_background_service::init_with_service(|| PomoBackgroundService)
-        );
-    }
-
-    // 单例模式插件：只在桌面端启用
-    #[cfg(desktop)]
-    {
-        builder = builder.plugin(tauri_plugin_single_instance::init(handle_single_instance));
-    }
-
-    // 开机自启插件：只在桌面端启用，传入 --autostart 参数以便区分启动方式
-    #[cfg(desktop)]
-    {
-        builder = builder.plugin(tauri_plugin_autostart::init(
-            tauri_plugin_autostart::MacosLauncher::LaunchAgent,
-            Some(vec!["--autostart"]),
-        ));
-    }
+    let builder = builder.plugin(
+        tauri_plugin_background_service::init_with_service(|| PomoBackgroundService)
+    );
 
     builder
         .invoke_handler(tauri::generate_handler![
@@ -218,16 +89,10 @@ pub fn run() {
             resume_pomo_timer,
             stop_pomo_timer,
             get_pomo_timer_state,
-            get_platform,
-            get_autostart,
-            set_autostart,
-            set_silent_start,
             llm::get_llm_settings,
             llm::set_llm_settings,
             llm::test_llm_connection,
             llm::llm_chat,
-            #[cfg(desktop)]
-            toggle_devtools,
         ])
         .setup(move |app| {
             // 使用共享数据初始化计时器管理器
@@ -236,9 +101,6 @@ pub fn run() {
 
             // 托管共享数据，供 Android BackgroundService run() 读取
             app.manage(timer_data.clone());
-
-            // 初始化应用状态
-            app.manage(AppState::default());
 
             // 移动端：监听应用恢复事件，同步计时器状态
             #[cfg(mobile)]
@@ -249,83 +111,8 @@ pub fn run() {
                 });
             }
 
-            #[cfg(desktop)]
-            {
-                setup_tray(app)?;
-
-                // 检查是否是开机自启且开启了静默启动
-                let args: Vec<String> = std::env::args().collect();
-                let is_autostart = args.contains(&"--autostart".to_string());
-                if is_autostart {
-                    if let Ok(data_dir) = app.path().app_data_dir() {
-                        let silent_flag = data_dir.join(".silent_start");
-                        if silent_flag.exists() {
-                            if let Some(window) = app.get_webview_window("main") {
-                                let _ = window.hide();
-                            }
-                        }
-                    }
-                }
-            }
             Ok(())
-        })
-        // 只在桌面端阻止窗口关闭
-        .on_window_event(|_window, _event| {
-            #[cfg(desktop)]
-            if let tauri::WindowEvent::CloseRequested { api, .. } = _event {
-                _window.hide().unwrap();
-                api.prevent_close();
-            }
         })
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
-}
-
-/// 设置系统托盘（仅桌面端）
-#[cfg(desktop)]
-fn setup_tray(app: &mut tauri::App) -> Result<(), Box<dyn std::error::Error>> {
-    use tauri::menu::{Menu, MenuItem};
-    use tauri::tray::{MouseButton, TrayIconBuilder, TrayIconEvent};
-
-    let quit = MenuItem::with_id(app, "quit", "退出", true, None::<&str>)?;
-    let show = MenuItem::with_id(app, "show", "显示窗口", true, None::<&str>)?;
-    let menu = Menu::with_items(app, &[&show, &quit])?;
-
-    TrayIconBuilder::new()
-        .icon(app.default_window_icon().unwrap().clone())
-        .menu(&menu)
-        .show_menu_on_left_click(false)
-        .on_menu_event(|app, event| match event.id().as_ref() {
-            "quit" => {
-                app.exit(0);
-            }
-            "show" => {
-                if let Some(window) = app.get_webview_window("main") {
-                    let _ = window.show();
-                    let _ = window.set_focus();
-                }
-            }
-            _ => {}
-        })
-        .on_tray_icon_event(|tray, event| match event {
-            TrayIconEvent::Click {
-                button: MouseButton::Left,
-                button_state: tauri::tray::MouseButtonState::Down,
-                ..
-            } => {
-                let app = tray.app_handle();
-                if let Some(window) = app.get_webview_window("main") {
-                    if window.is_visible().unwrap_or(false) {
-                        let _ = window.hide();
-                    } else {
-                        let _ = window.show();
-                        let _ = window.set_focus();
-                    }
-                }
-            }
-            _ => {}
-        })
-        .build(app)?;
-
-    Ok(())
 }

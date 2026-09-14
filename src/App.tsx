@@ -1,6 +1,5 @@
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { BrowserRouter, Routes, Route } from "react-router";
-import { invoke } from "@tauri-apps/api/core";
 import { useTranslation } from "react-i18next";
 import { ConfirmProvider } from "@/hooks/useConfirm";
 import { useAppBootstrap } from "@/hooks/useAppBootstrap";
@@ -25,7 +24,6 @@ import { AchievementUnlockDialog } from "@/pages/Achievements/components/Achieve
 import "@/libs/i18n";
 
 function App() {
-  const [, setIsMobile] = useState(false);
   const { user } = useUserStore();
   const { i18n } = useTranslation();
 
@@ -38,32 +36,6 @@ function App() {
 
   // 应用启动初始化
   useAppBootstrap();
-
-  // 初始化平台检测
-  useEffect(() => {
-    const initPlatform = async () => {
-      try {
-        const platform = await invoke<string>("get_platform");
-        const isMobilePlatform = platform === "mobile" || platform === "ios" || platform === "android";
-        setIsMobile(isMobilePlatform);
-      } catch (error) {
-        console.error("Failed to detect platform:", error);
-      }
-    };
-    initPlatform();
-  }, []);
-
-  // 桌面端：Ctrl+Shift+I 切换DevTools（仅窗口聚焦时生效）
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.ctrlKey && e.shiftKey && e.key === "I") {
-        e.preventDefault();
-        invoke("toggle_devtools").catch(() => {});
-      }
-    };
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, []);
 
   return (
     <ConfirmProvider>

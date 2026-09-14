@@ -192,7 +192,7 @@ async function tauriSaveFile(data: SaveFileData): Promise<boolean> {
  * 文件系统兼容库
  *
  * 根据运行环境自动选择合适的实现：
- * - Tauri 环境（PC/Android）：使用 Tauri 的 dialog 和 fs 插件
+ * - Tauri 环境（Android）：使用 Tauri 的 dialog 和 fs 插件
  * - 浏览器环境：使用 Web File API
  */
 export const fileSystem = {

@@ -6,6 +6,7 @@ AI coding assistant guidelines for this Tauri v2 + React 19 + TypeScript project
 
 - **Frontend**: React 19 + Vite + Tailwind CSS v4 + Zustand
 - **Backend**: Rust (Tauri v2)
+- **Target**: Android only (无桌面端支持)
 - **Database**: Dexie.js (IndexedDB wrapper)
 - **Package Manager**: bun
 - **TypeScript**: Strict mode enabled
@@ -15,12 +16,10 @@ AI coding assistant guidelines for this Tauri v2 + React 19 + TypeScript project
 ```bash
 # Development
 bun run dev              # Frontend only
-bun run dev:pc           # Desktop (Tauri)
 bun run dev:android      # Android (with host IP)
 
 # Build
 bun run build            # Frontend production build
-bun run build:pc         # Desktop production build
 bun run build:android    # Android production build
 
 # Type Checking
@@ -131,7 +130,7 @@ try {
 - Types/structs: `PascalCase`
 - Constants: `UPPER_SNAKE_CASE`
 - Use `#[tauri::command]` to expose to frontend
-- Platform-specific: `#[cfg(desktop)]` / `#[cfg(mobile)]`
+- Platform-specific: `#[cfg(mobile)]`
 
 ## Project Structure
 

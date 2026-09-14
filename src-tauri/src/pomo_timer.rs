@@ -251,9 +251,7 @@ async fn tick(app_handle: &AppHandle, data: &Arc<RwLock<PomoTimerData>>, cancel_
             session_id,
         });
 
-        // 发送系统通知（Android 端由前台服务通知处理，不额外弹出）
-        #[cfg(not(target_os = "android"))]
-        send_completion_notification(app_handle, mode);
+        // 系统通知由 Android 前台服务处理，此处不额外弹出
 
         return false; // 停止计时器循环
     }
@@ -266,29 +264,6 @@ async fn tick(app_handle: &AppHandle, data: &Arc<RwLock<PomoTimerData>>, cancel_
 struct PomoCompletedEvent {
     mode: PomoMode,
     session_id: Option<i64>,
-}
-
-/// 发送完成通知
-fn send_completion_notification(app_handle: &AppHandle, mode: PomoMode) {
-    use tauri_plugin_notification::NotificationExt;
-
-    let (title, body) = match mode {
-        PomoMode::Focus => (
-            "🍅 专注完成！",
-            "恭喜完成一个番茄钟，休息一下吧~"
-        ),
-        _ => (
-            "☕ 休息结束",
-            "休息结束，准备开始新的专注吧！"
-        ),
-    };
-
-    // 发送通知
-    let notification = app_handle.notification();
-    let _ = notification.builder()
-        .title(title)
-        .body(body)
-        .show();
 }
 
 /// 获取全局计时器管理器

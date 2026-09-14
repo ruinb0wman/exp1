@@ -5,10 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "vite --host --port 1420",
-    "dev:pc": "tauri dev --no-dev-server",
     "dev:android": "tauri android dev --no-dev-server",
     "build": "tsc && vite build",
-    "build:pc": "tauri build --no-bundle",
     "build:android:all": "tauri android build --apk",
     "build:android": "tauri android build --target aarch64 --apk",
     "build:android:debug": "tauri android build --target aarch64 --debug --apk",

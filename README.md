@@ -10,17 +10,11 @@
 - 🎁 **奖励系统** - 使用积分兑换自定义奖励
 - 🎒 **背包系统** - 管理已兑换的奖励物品
 - 📊 **数据统计** - 任务进度、番茄钟会话、积分历史的全面统计
-- 📡 **本地同步** - PC 与手机通过 QR Code 局域网同步数据
+- 📡 **本地同步** - 通过 QR Code 局域网同步数据
 - 🔔 **通知提醒** - 番茄钟计时结束时发送系统通知
 - 💾 **数据备份** - 支持 JSON 格式导入/导出数据
 
 ## Preview
-
-### PC
-
-|Home|Pomo|Store|Stats|Profile|
-|-|-|-|-|-|
-|![](./README/PC-Home.png)|![](./README/PC-Pomo.png)|![](./README/PC-Store.png)|![](./README/PC-Stats.png)|![](./README/PC-Profile.png)|
 
 ### mobile
 
