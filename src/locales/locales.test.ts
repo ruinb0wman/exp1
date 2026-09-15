@@ -20,6 +20,7 @@ const HEADER_KEYS = [
   "editReward.createTitle",
   "calendar.title",
   "replenishment.title",
+  "consumption.title",
   "pointsHistory.title",
   "taskHistory.title",
   "achievement.title",

@@ -1,7 +1,7 @@
 import { useState, useCallback, useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router";
-import { Plus, Pencil, History } from "lucide-react";
+import { ChartPie, Plus, Pencil, History } from "lucide-react";
 import { Header, HeaderActionButton } from "@/components/Header";
 import { Popup } from "@/components/Popup";
 import { useUserStore } from "@/store";
@@ -120,6 +120,14 @@ export function Store() {
       <div className="sticky top-0 z-10 bg-background">
         <Header
           title={t("store.title")}
+          leftSlot={
+            <HeaderActionButton
+              icon={ChartPie}
+              side="start"
+              label={t("consumption.title")}
+              onClick={() => navigate("/consumption")}
+            />
+          }
           rightSlot={
             <HeaderActionButton
               icon={Plus}

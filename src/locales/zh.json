@@ -280,6 +280,44 @@
     "minutes": "分钟",
     "paused": "已暂停"
   },
+  "consumption": {
+    "title": "消费统计",
+    "subtitle": "购买即消费，按商品与周期统计消费积分和折合金额",
+    "loading": "加载中...",
+    "retry": "重试",
+    "scope": {
+      "month": "月",
+      "year": "年",
+      "custom": "自定义"
+    },
+    "anchor": {
+      "prev": "上一期",
+      "next": "下一期",
+      "today": "回到今天",
+      "customStart": "开始日期",
+      "customEnd": "结束日期"
+    },
+    "meta": {
+      "range": "统计区间",
+      "partialSuffix": "（截至 {date}）"
+    },
+    "summary": {
+      "points": "消费积分",
+      "money": "折合金额",
+      "count": "{quantity} 件商品"
+    },
+    "breakdown": {
+      "title": "商品占比",
+      "empty": "本周期暂无消费",
+      "meta": "{count} 笔 · {quantity} 件"
+    },
+    "detail": {
+      "title": "消费明细",
+      "empty": "本周期暂无消费",
+      "delete": "删除",
+      "confirmDelete": "删除「{title}」这条消费记录？将返还 {points} 积分与对应消费额度。"
+    }
+  },
   "taskHistory": {
     "title": "任务历史"
   },

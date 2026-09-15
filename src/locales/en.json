@@ -280,6 +280,44 @@
     "minutes": "min",
     "paused": "Paused"
   },
+  "consumption": {
+    "title": "Spending",
+    "subtitle": "Buying is spending — points and money totals by item and period",
+    "loading": "Loading...",
+    "retry": "Retry",
+    "scope": {
+      "month": "Month",
+      "year": "Year",
+      "custom": "Custom"
+    },
+    "anchor": {
+      "prev": "Previous",
+      "next": "Next",
+      "today": "Back to today",
+      "customStart": "Start date",
+      "customEnd": "End date"
+    },
+    "meta": {
+      "range": "Range",
+      "partialSuffix": " (up to {date})"
+    },
+    "summary": {
+      "points": "Points spent",
+      "money": "Money value",
+      "count": "{quantity} items"
+    },
+    "breakdown": {
+      "title": "By item",
+      "empty": "No spending in this period",
+      "meta": "{count} purchases · {quantity} items"
+    },
+    "detail": {
+      "title": "Details",
+      "empty": "No spending in this period",
+      "delete": "Delete",
+      "confirmDelete": "Delete the \"{title}\" purchase? {points} points and the matching quota will be refunded."
+    }
+  },
   "taskHistory": {
     "title": "Task History"
   },
