@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { getDB } from '@/db';
-import type { Achievement, User } from '@/db/types';
+import type { Achievement, RewardPurchase, RewardTemplate, User } from '@/db/types';
 import {
   exportAllData,
   importData,
@@ -47,7 +47,8 @@ function legacyBackup(): ExportData {
       taskTemplates: [],
       taskInstances: [],
       rewardTemplates: [],
-      rewardInstances: [],
+      // 旧备份没有消费记录表
+      rewardPurchases: undefined as unknown as RewardPurchase[],
       replenishmentRecords: [],
       users: [user()],
       pointsHistory: [],
@@ -63,7 +64,7 @@ describe('exportImportService - achievements', () => {
     await db.taskTemplates.clear();
     await db.taskInstances.clear();
     await db.pointsHistory.clear();
-    await db.rewardInstances.clear();
+    await db.rewardPurchases.clear();
     await db.replenishmentRecords.clear();
     await db.achievements.clear();
     await db.users.add(user());
@@ -117,5 +118,65 @@ describe('exportImportService - achievements', () => {
 
     // 旧备份覆盖导入后，成就表被清空
     expect(await db.achievements.count()).toBe(0);
+  });
+
+  it('旧备份没有消费记录表时，消费记录计 0 且导入成功', async () => {
+    const legacy = legacyBackup();
+    const preview = validateImportData(legacy);
+    expect(preview.isValid).toBe(true);
+    expect(preview.stats?.rewardPurchases).toBe(0);
+
+    const result = await importData(legacy);
+    expect(result.success).toBe(true);
+    expect(result.stats?.rewardPurchases).toBe(0);
+    expect(await db.rewardPurchases.count()).toBe(0);
+  });
+
+  it('消费记录可导出并完整还原，旧模板缺少比例时兜底为 1', async () => {
+    await db.rewardPurchases.add({
+      id: 'p1',
+      userId: 1,
+      templateId: 't1',
+      template: { templateId: 't1', title: '吃饭', icon: 'Pizza', pointsCost: 100, pointsPerYuan: 1 },
+      quantity: 2,
+      pointsCost: 100,
+      pointsSpent: 200,
+      moneyAmount: 200,
+      createdAt: '2026-09-01T00:00:00.000Z',
+    });
+
+    const exported = await exportAllData();
+    expect(exported.data.rewardPurchases).toHaveLength(1);
+
+    const preview = validateImportData(exported);
+    expect(preview.stats?.rewardPurchases).toBe(1);
+
+    await db.rewardPurchases.clear();
+    await db.rewardTemplates.clear();
+    // 模拟旧备份里的模板：没有 pointsPerYuan 字段
+    const exportedWithLegacyTemplate = {
+      ...exported,
+      data: {
+        ...exported.data,
+        rewardTemplates: [
+          {
+            id: 't1',
+            userId: 1,
+            title: '吃饭',
+            pointsCost: 100,
+            enabled: true,
+            replenishmentMode: 'none' as const,
+            icon: 'Pizza' as const,
+            createdAt: '2026-01-01T00:00:00.000Z',
+          } as unknown as RewardTemplate,
+        ],
+      },
+    };
+
+    const result = await importData(exportedWithLegacyTemplate);
+    expect(result.success).toBe(true);
+    expect(result.stats?.rewardPurchases).toBe(1);
+    expect(await db.rewardPurchases.count()).toBe(1);
+    expect((await db.rewardTemplates.get('t1'))?.pointsPerYuan).toBe(1);
   });
 });

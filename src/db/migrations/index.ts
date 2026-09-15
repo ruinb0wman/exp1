@@ -79,4 +79,24 @@ export function migration(db: DB) {
 	db.version(5).stores({
 		achievements: 'id, userId, status, createdAt, [userId+status]',
 	});
+
+	// v6：购买即消费 —— 删除背包实例表，新增消费记录表；清理有效期字段，补齐积分货币比例
+	db.version(6).stores({
+		rewardInstances: null,
+		rewardPurchases: 'id, userId, templateId, createdAt, [userId+createdAt]',
+	}).upgrade(async (trans) => {
+		const d = trans.db as DB;
+		const templates = await d.rewardTemplates.toArray();
+		const updates = templates.map((t) => ({
+			key: t.id,
+			changes: {
+				// Dexie：显式 undefined 会删除该字段
+				validDuration: undefined,
+				pointsPerYuan: t.pointsPerYuan ?? 1,
+			},
+		}));
+		if (updates.length > 0) {
+			await d.rewardTemplates.bulkUpdate(updates);
+		}
+	});
 }

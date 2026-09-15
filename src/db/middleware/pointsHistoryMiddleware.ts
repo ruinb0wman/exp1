@@ -1,4 +1,4 @@
-import type { TaskInstance, RewardInstance, PointsHistory } from '@/db/types';
+import type { TaskInstance, PointsHistory } from '@/db/types';
 import type { DB } from '@/db/types';
 
 /**
@@ -87,42 +87,6 @@ export function createPointsHistoryMiddleware() {
               }
             });
           }
-        }
-      });
-
-      // 监听 rewardInstances 的创建（兑换奖励）
-      db.rewardInstances.hook('creating', function (_primKey, obj, _trans) {
-        const instance = obj as RewardInstance;
-        const pointsCost = instance.template?.pointsCost || 0;
-
-        if (pointsCost > 0) {
-          this.onsuccess = async (actualPrimKey) => {
-            try {
-              const now = new Date().toISOString();
-              await db.pointsHistory.put({
-                userId: instance.userId,
-                amount: -pointsCost,
-                type: 'reward_exchange',
-                relatedInstanceId: actualPrimKey as string,
-                description: '兑换奖励',
-                createdAt: now,
-              } as unknown as PointsHistory);
-
-              // 更新用户总积分
-              const user = await db.users.get(instance.userId);
-              if (user) {
-                await db.users.update(instance.userId, {
-                  totalPoints: Math.max(0, (user.totalPoints || 0) - pointsCost),
-                });
-              }
-            } catch (error) {
-              console.error('[PointsHistoryMiddleware] Failed to add reward exchange:', error);
-            }
-          };
-
-          this.onerror = (error) => {
-            console.error('[PointsHistoryMiddleware] Failed to create reward instance:', error);
-          };
         }
       });
     },

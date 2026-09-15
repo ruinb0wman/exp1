@@ -12,6 +12,16 @@ interface NumberInputProps {
   size?: "sm" | "md" | "lg";
   inputWidth?: string;
   className?: string;
+  /** 允许输入小数（默认关闭，保持既有调用点行为不变） */
+  allowDecimal?: boolean;
+}
+
+/** 小数模式下保留的位数 */
+const DECIMAL_PLACES = 2;
+
+function roundTo(value: number, places: number): number {
+  const factor = 10 ** places;
+  return Math.round(value * factor) / factor;
 }
 
 const sizeConfig = {
@@ -47,19 +57,20 @@ export function NumberInput({
   size = "md",
   inputWidth,
   className = "",
+  allowDecimal = false,
 }: NumberInputProps) {
   const config = sizeConfig[size];
 
   const handleDecrease = () => {
     if (disabled) return;
     const newValue = value - step;
-    onChange(Math.max(min, newValue));
+    onChange(Math.max(min, allowDecimal ? roundTo(newValue, DECIMAL_PLACES) : newValue));
   };
 
   const handleIncrease = () => {
     if (disabled) return;
     const newValue = value + step;
-    onChange(Math.min(max, newValue));
+    onChange(Math.min(max, allowDecimal ? roundTo(newValue, DECIMAL_PLACES) : newValue));
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -69,12 +80,14 @@ export function NumberInput({
     // 允许空值，但不做处理
     if (inputValue === "") return;
 
-    const num = parseInt(inputValue, 10);
+    const num = allowDecimal
+      ? parseFloat(inputValue)
+      : parseInt(inputValue, 10);
     if (isNaN(num)) return;
 
     // 限制在 min 和 max 之间
     const clampedValue = Math.max(min, Math.min(max, num));
-    onChange(clampedValue);
+    onChange(allowDecimal ? roundTo(clampedValue, DECIMAL_PLACES) : clampedValue);
   };
 
   const isMinReached = value <= min;
@@ -96,6 +109,7 @@ export function NumberInput({
         type="number"
         min={min}
         max={max}
+        step={allowDecimal ? step : 1}
         value={value}
         onChange={handleInputChange}
         disabled={disabled}

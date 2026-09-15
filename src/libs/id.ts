@@ -32,12 +32,3 @@ export function hashPointsHistory(instanceId: string, type: string, stageId?: st
   const base = `${instanceId}-${type}`;
   return hashString(stageId ? `${base}-${stageId}` : base);
 }
-
-export function hashRewardInstance(
-  templateId: string,
-  userId: number,
-  timestamp: string
-): string {
-  const randomSuffix = Math.random().toString(36).substring(2, 8);
-  return hashString(`${templateId}-${userId}-${timestamp}-${randomSuffix}`);
-}

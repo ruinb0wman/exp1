@@ -3,7 +3,7 @@ import type {
 	Achievement,
 	PointsHistory,
 	PomoSession,
-	RewardInstance,
+	RewardPurchase,
 	TaskInstance,
 	TaskStatus,
 	TaskTemplate,
@@ -256,13 +256,16 @@ const achievements: Achievement[] = [
 	},
 ];
 
-const rewardInstances: RewardInstance[] = [
+const rewardPurchases: RewardPurchase[] = [
 	{
 		id: 'r1',
 		templateId: 'rt1',
-		template: {} as RewardInstance['template'],
+		template: { templateId: 'rt1', title: '测试奖励', icon: 'Gift', pointsCost: 10, pointsPerYuan: 1 },
 		userId: 1,
-		status: 'used',
+		quantity: 1,
+		pointsCost: 10,
+		pointsSpent: 10,
+		moneyAmount: 10,
 		createdAt: localISO(2026, 3, 18, 9, 0),
 	},
 ];
@@ -271,7 +274,7 @@ const sources: ReportSources = {
 	instances,
 	sessions,
 	pointsRecords,
-	rewardInstances,
+	rewardPurchases,
 	achievements,
 	templates,
 	user,
@@ -450,7 +453,7 @@ describe('aggregateReport - 空数据与天界', () => {
 			instances: [],
 			sessions: [],
 			pointsRecords: [],
-			rewardInstances: [],
+			rewardPurchases: [],
 			achievements: [],
 			templates: [],
 		};

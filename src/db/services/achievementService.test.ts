@@ -83,7 +83,7 @@ describe('achievementService', () => {
     await db.taskTemplates.clear();
     await db.taskInstances.clear();
     await db.pointsHistory.clear();
-    await db.rewardInstances.clear();
+    await db.rewardPurchases.clear();
     await db.pomoSessions.clear();
     await db.achievements.clear();
     await db.users.add(user());

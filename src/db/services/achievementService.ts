@@ -19,13 +19,13 @@ async function loadSources(
   db: ReturnType<typeof getDB>,
   userId: number
 ): Promise<AchievementSources> {
-  const [instances, sessions, pointsRecords, rewardInstances] = await Promise.all([
+  const [instances, sessions, pointsRecords, rewardPurchases] = await Promise.all([
     db.taskInstances.where('userId').equals(userId).toArray(),
     db.pomoSessions.where('userId').equals(userId).toArray(),
     db.pointsHistory.where('userId').equals(userId).toArray(),
-    db.rewardInstances.where('userId').equals(userId).toArray(),
+    db.rewardPurchases.where('userId').equals(userId).toArray(),
   ]);
-  return { instances, sessions, pointsRecords, rewardInstances };
+  return { instances, sessions, pointsRecords, rewardPurchases };
 }
 
 // ==================== 查询 ====================

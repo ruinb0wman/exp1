@@ -13,7 +13,6 @@ import { Stats } from "@/pages/Stats";
 import { Profile } from "@/pages/Profile";
 import { Pomo } from "@/pages/Pomo";
 import { PointsHistory } from "@/pages/PointsHistory";
-import { Backpack } from "@/pages/Backpack";
 import { TaskHistory } from "@/pages/TaskHistory";
 import { Reports } from "@/pages/Reports";
 import { ReplenishmentHistory } from "@/pages/ReplenishmentHistory";
@@ -60,7 +59,6 @@ function App() {
             <Route path="/rewards/:id" element={<EditReward />} />
             <Route path="/replenishment/:templateId" element={<ReplenishmentHistory />} />
             <Route path="/points-history" element={<PointsHistory />} />
-            <Route path="/backpack" element={<Backpack />} />
             <Route path="/task-history" element={<TaskHistory />} />
             <Route path="/reports" element={<Reports />} />
             <Route path="/achievements" element={<Achievements />} />

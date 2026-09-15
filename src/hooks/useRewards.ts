@@ -1,5 +1,5 @@
-import { useState, useEffect, useCallback } from 'react';
-import type { RewardTemplate, RewardInstance } from '@/db/types';
+import { useState, useEffect, useCallback, useRef } from 'react';
+import type { RewardTemplate, ReplenishmentRecord } from '@/db/types';
 import {
   getAllRewardTemplates,
   getRewardTemplateById,
@@ -8,14 +8,6 @@ import {
   deleteRewardTemplate,
   toggleRewardTemplateEnabled,
   getStoreRewardTemplates,
-  getAvailableRewardInstances,
-  getUserBackpack,
-  getRewardStatistics,
-  useRewardInstance,
-  useRewardInstances,
-  checkAndUpdateExpiredRewards,
-  replenishRewardTemplate,
-  redeemRewardsWithStockCheck,
   getReplenishmentRecordsByTemplateId,
 } from '@/db/services';
 
@@ -149,23 +141,31 @@ interface StoreReward {
 }
 
 /**
- * 获取商店奖励列表（带库存）
+ * 获取商店奖励列表（带剩余消费额度）
  */
 export function useStoreRewards(userId: number) {
   const [rewards, setRewards] = useState<StoreReward[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const requestId = useRef(0);
 
   const refresh = useCallback(async () => {
+    const currentRequest = requestId.current + 1;
+    requestId.current = currentRequest;
+
     setIsLoading(true);
     setError(null);
     try {
       const data = await getStoreRewardTemplates(userId);
+      if (requestId.current !== currentRequest) return;
       setRewards(data);
     } catch (err) {
+      if (requestId.current !== currentRequest) return;
       setError(err instanceof Error ? err.message : 'Failed to load store');
     } finally {
-      setIsLoading(false);
+      if (requestId.current === currentRequest) {
+        setIsLoading(false);
+      }
     }
   }, [userId]);
 
@@ -178,212 +178,7 @@ export function useStoreRewards(userId: number) {
   return { rewards, isLoading, error, refresh };
 }
 
-// ==================== Backpack Hooks ====================
-
-interface RewardWithTemplate {
-  instance: RewardInstance;
-  template: RewardTemplate;
-}
-
-/**
- * 获取可用奖励实例
- */
-export function useAvailableRewards(userId: number) {
-  const [rewards, setRewards] = useState<RewardWithTemplate[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  const refresh = useCallback(async () => {
-    setIsLoading(true);
-    setError(null);
-    try {
-      const data = await getAvailableRewardInstances(userId);
-      setRewards(data);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load rewards');
-    } finally {
-      setIsLoading(false);
-    }
-  }, [userId]);
-
-  useEffect(() => {
-    if (userId) {
-      refresh();
-    }
-  }, [refresh, userId]);
-
-  return { rewards, isLoading, error, refresh };
-}
-
-/**
- * 获取用户背包（所有奖励）
- */
-export function useUserBackpack(userId: number) {
-  const [items, setItems] = useState<RewardWithTemplate[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  const refresh = useCallback(async () => {
-    setIsLoading(true);
-    setError(null);
-    try {
-      const data = await getUserBackpack(userId);
-      setItems(data);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load backpack');
-    } finally {
-      setIsLoading(false);
-    }
-  }, [userId]);
-
-  useEffect(() => {
-    if (userId) {
-      refresh();
-    }
-  }, [refresh, userId]);
-
-  return { items, isLoading, error, refresh };
-}
-
-/**
- * 奖励实例操作
- */
-export function useRewardInstanceActions() {
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  /**
-   * 兑换奖励（带库存检查）
-   * 会自动检查库存、扣除库存并创建奖励实例
-   * @param templateId 奖励模板ID
-   * @param userId 用户ID
-   * @param _validDuration 保留参数以保持兼容性，实际从模板读取
-   * @param quantity 兑换数量，默认为1
-   * @returns 创建的奖励实例ID数组
-   */
-  const redeem = useCallback(async (
-    templateId: string,
-    userId: number,
-    _validDuration: number, // 保留参数以保持兼容性，实际从模板读取
-    quantity: number = 1
-  ) => {
-    setIsLoading(true);
-    setError(null);
-    try {
-      const ids = await redeemRewardsWithStockCheck(templateId, userId, quantity);
-      return ids;
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to redeem reward');
-      throw err;
-    } finally {
-      setIsLoading(false);
-    }
-  }, [])
-
-  const useReward = useCallback(async (instanceId: string) => {
-    setIsLoading(true);
-    setError(null);
-    try {
-      await useRewardInstance(instanceId);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to use reward');
-      throw err;
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
-
-  /**
-   * 批量使用奖励实例
-   * @param instanceIds 实例ID数组
-   * @param quantity 要使用数量，不传则使用全部
-   * @returns 实际使用的数量
-   */
-  const useRewardsBatch = useCallback(async (instanceIds: string[], quantity?: number) => {
-    setIsLoading(true);
-    setError(null);
-    try {
-      const count = await useRewardInstances(instanceIds, quantity);
-      return count;
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to use rewards');
-      throw err;
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
-
-  const checkExpired = useCallback(async (userId?: number) => {
-    setIsLoading(true);
-    setError(null);
-    try {
-      const count = await checkAndUpdateExpiredRewards(userId);
-      return count;
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to check expired');
-      throw err;
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
-
-  const replenish = useCallback(async (templateId: string) => {
-    setIsLoading(true);
-    setError(null);
-    try {
-      const count = await replenishRewardTemplate(templateId);
-      return count;
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to replenish');
-      throw err;
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
-
-  return { redeem, useReward, useRewardsBatch, checkExpired, replenish, isLoading, error };
-}
-
-// ==================== Statistics Hooks ====================
-
-/**
- * 获取奖励统计
- */
-export function useRewardStatistics(userId: number) {
-  const [stats, setStats] = useState<{
-    total: number;
-    available: number;
-    used: number;
-    expired: number;
-  } | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  const refresh = useCallback(async () => {
-    setIsLoading(true);
-    setError(null);
-    try {
-      const data = await getRewardStatistics(userId);
-      setStats(data);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load statistics');
-    } finally {
-      setIsLoading(false);
-    }
-  }, [userId]);
-
-  useEffect(() => {
-    if (userId) {
-      refresh();
-    }
-  }, [refresh, userId]);
-
-  return { stats, isLoading, error, refresh };
-}
-
-// ==================== Replenishment History Hook ====================
-
-import type { ReplenishmentRecord } from '@/db/types';
+// ==================== 消费额度补货 ====================
 
 export function useReplenishmentHistory(templateId: string) {
   const [records, setRecords] = useState<ReplenishmentRecord[]>([]);

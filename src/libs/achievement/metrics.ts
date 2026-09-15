@@ -2,7 +2,7 @@ import type {
   AchievementCondition,
   PointsHistory,
   PomoSession,
-  RewardInstance,
+  RewardPurchase,
   TaskInstance,
 } from '@/db/types';
 import { CUMULATIVE_CONDITION_TYPES } from '@/db/types';
@@ -13,7 +13,7 @@ export interface AchievementSources {
   instances: TaskInstance[];
   sessions: PomoSession[];
   pointsRecords: PointsHistory[];
-  rewardInstances: RewardInstance[];
+  rewardPurchases: RewardPurchase[];
 }
 
 /** 计入「累计积分收入」的积分记录类型（排除 achievement 自身，避免自馈） */
@@ -124,7 +124,7 @@ export function computeRawMetric(
     }
 
     case 'reward_redeem_count': {
-      return sources.rewardInstances.length;
+      return sources.rewardPurchases.length;
     }
 
     default:

@@ -3,6 +3,7 @@ import { Package, Sparkles } from "lucide-react";
 import { DynamicIcon } from "@/components/DynamicIcon";
 import { EmptyState } from "@/components/EmptyState";
 import type { RewardTemplate } from "@/db/types";
+import { formatMoney, pointsToMoney } from "@/libs/reward";
 
 export interface StoreReward {
   template: RewardTemplate;
@@ -63,10 +64,13 @@ export function RewardsGrid({ rewards, isLoading, onRewardClick }: RewardsGridPr
               <p className="text-text-secondary text-sm">
                 {template.pointsCost} exp
               </p>
+              <p className="text-green-400 text-xs">
+                {formatMoney(pointsToMoney(template.pointsCost, template.pointsPerYuan))}
+              </p>
             </div>
             {template.replenishmentMode !== 'none' && availableCount > 0 && (
               <p className="text-text-muted text-xs mt-0.5">
-                库存: {availableCount}
+                {t("store.remainingQuota", { count: availableCount })}
               </p>
             )}
           </div>

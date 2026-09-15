@@ -492,7 +492,7 @@ function computeExtras(
 		achievementsUnlocked: sources.achievements.filter((achievement) =>
 			inWindow(achievement.unlockedAt)
 		).length,
-		rewardsRedeemed: sources.rewardInstances.filter((instance) => inWindow(instance.createdAt))
+		rewardsRedeemed: sources.rewardPurchases.filter((purchase) => inWindow(purchase.createdAt))
 			.length,
 	};
 }

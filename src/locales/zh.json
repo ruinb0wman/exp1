@@ -159,7 +159,7 @@
         "taskTemplates": "任务模板",
         "taskInstances": "任务实例",
         "rewardTemplates": "奖励模板",
-        "rewardInstances": "奖励实例",
+        "rewardPurchases": "消费记录",
         "users": "用户数据",
         "pointsHistory": "积分记录",
         "achievements": "成就"
@@ -187,16 +187,15 @@
     "title": "奖励商店",
     "noRewards": "暂无奖励",
     "createReward": "点击右上角 + 创建新奖励",
-    "pointsCost": "需要 {cost} 积分",
-    "validDuration": "有效期",
-    "forever": "永久有效",
-    "currentStock": "当前库存",
-    "stockLimit": "库存上限",
-    "redeemQuantity": "兑换数量",
+    "currentStock": "剩余额度",
+    "stockLimit": "额度上限",
+    "remainingQuota": "剩余 {count}",
+    "purchaseQuantity": "购买数量",
+    "moneyValue": "折合金额",
     "total": "总计",
-    "stockShortage": "库存不足",
+    "stockShortage": "消费额度不足",
     "pointsShortage": "积分不足",
-    "redeem": "兑换 {count} 个"
+    "buyCount": "购买 {count} 个"
   },
   "points": {
     "taskReward": "任务奖励",
@@ -204,7 +203,7 @@
     "taskStage": "阶段奖励",
     "taskCompletion": "完成奖励",
     "taskDeduction": "进度回退",
-    "rewardExchange": "兑换奖励",
+    "rewardExchange": "购买消费",
     "achievement": "成就奖励",
     "adminAdjustment": "系统调整"
   },
@@ -281,52 +280,6 @@
     "minutes": "分钟",
     "paused": "已暂停"
   },
-  "backpack": {
-    "title": "背包",
-    "stats": {
-      "total": "背包物品总数",
-      "available": "可用"
-    },
-    "tabs": {
-      "available": "可用",
-      "used": "已使用",
-      "expired": "已过期"
-    },
-    "status": {
-      "available": "可用",
-      "used": "已使用",
-      "expired": "已过期"
-    },
-    "detail": {
-      "rewardDetails": "Reward Details",
-      "pointsCost": "兑换 {cost} 积分",
-      "status": "状态",
-      "owned": "拥有数量",
-      "firstRedeemed": "最早兑换",
-      "expireTime": "过期时间",
-      "timeLeft": "剩余时间",
-      "useQuantity": "使用数量"
-    },
-    "empty": {
-      "noAvailable": "暂无可用奖励",
-      "noUsed": "暂无已使用奖励",
-      "noExpired": "暂无过期奖励",
-      "goToStore": "去商店兑换奖励吧！"
-    },
-    "timeLeft": {
-      "expired": "已过期",
-      "days": "天",
-      "hours": "小时",
-      "aboutToExpire": "即将过期"
-    },
-    "expiredAt": "过期于 {date}",
-    "usedAt": "使用于 {date}",
-    "loadMore": "加载更多 ({count} 个)",
-    "use": "使用",
-    "rewards": "个奖励",
-    "useReward": "使用奖励",
-    "useFailed": "使用失败"
-  },
   "taskHistory": {
     "title": "任务历史"
   },
@@ -358,7 +311,7 @@
     "totalRecords": "共 {total} 条记录",
     "taskReward": "任务奖励:",
     "taskUndo": "撤销扣除:",
-    "rewardExchange": "兑换消费:",
+    "rewardExchange": "购买消费:",
     "adminAdjustment": "系统调整:",
     "filters": {
       "all": "全部",
@@ -379,7 +332,12 @@
   "editReward": {
     "title": "编辑奖励",
     "createTitle": "创建奖励",
-    "saveFailed": "保存失败"
+    "saveFailed": "保存失败",
+    "pointsPerYuan": "积分货币比例",
+    "pointsPerYuanLabel": "每 ¥1 需要积分",
+    "pointsPerYuanHint": "例如吃饭填 1（1 积分抵 ¥1），香烟填 2（2 积分抵 ¥1）。允许小数。",
+    "ratioPreview": "{cost} 积分折合",
+    "invalidRatio": "积分货币比例必须是大于 0 的数字"
   },
   "popup": {
     "close": "关闭"
@@ -615,7 +573,7 @@
         "task_reward": "任务完成奖励",
         "task_completion": "任务完成奖励",
         "task_deduction": "任务进度回退",
-        "reward_exchange": "奖励兑换",
+        "reward_exchange": "购买消费",
         "achievement": "成就奖励",
         "admin_adjustment": "手动调整"
       }
@@ -645,7 +603,7 @@
     "extras": {
       "templatesCreated": "新建任务模板",
       "achievementsUnlocked": "解锁成就",
-      "rewardsRedeemed": "兑换奖励"
+      "rewardsRedeemed": "消费笔数"
     },
     "taskType": {
       "simple": "简单",

@@ -6,10 +6,11 @@ import { RadioGroup } from "@/components/RadioGroup";
 import { IconPicker } from "@/components/IconPicker";
 import { DynamicIcon } from "@/components/DynamicIcon";
 import { MultiSelectGrid } from "@/components/MultiSelectGrid";
-import { Package, Clock, Sparkles } from "lucide-react";
+import { Package, Sparkles, Scale } from "lucide-react";
 import { NumberInput } from "@/components/NumberInput";
 import type { RewardTemplate, RewardIconName, RewardIconColor, ReplenishmentMode } from "@/db/types";
 import { REWARD_ICON_COLORS } from "@/db/types";
+import { isValidRatio, pointsToMoney, formatMoney } from "@/libs/reward";
 import { useRewardTemplate, useRewardTemplateActions } from "@/hooks/useRewards";
 import { useUserStore } from "@/store";
 
@@ -48,16 +49,14 @@ export function EditReward() {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [pointsCost, setPointsCost] = useState(100);
+  // 积分货币比例：每 ¥1 折合多少积分
+  const [pointsPerYuan, setPointsPerYuan] = useState(1);
   const [enabled, setEnabled] = useState(true);
 
   // Icon
   const [selectedIcon, setSelectedIcon] = useState<RewardIconName>("Gift");
   const [selectedColor, setSelectedColor] = useState<RewardIconColor>(REWARD_ICON_COLORS[0]);
   const [isIconPickerOpen, setIsIconPickerOpen] = useState(false);
-
-  // Valid Duration (days) - stored as seconds in DB
-  const [validDurationDays, setValidDurationDays] = useState(30);
-  const [hasValidDuration, setHasValidDuration] = useState(true);
 
   // Replenishment
   const [restockIndex, setRestockIndex] = useState(0);
@@ -74,15 +73,11 @@ export function EditReward() {
       setTitle(template.title);
       setDescription(template.description ?? "");
       setPointsCost(template.pointsCost);
+      setPointsPerYuan(template.pointsPerYuan ?? 1);
       setEnabled(template.enabled);
       setSelectedIcon(template.icon);
       setSelectedColor(template.iconColor ?? REWARD_ICON_COLORS[0]);
-      
-      // Convert seconds to days for display
-      const days = template.validDuration > 0 ? Math.floor(template.validDuration / 86400) : 30;
-      setValidDurationDays(days);
-      setHasValidDuration(template.validDuration > 0);
-      
+
       setRestockIndex(restockValues.indexOf(template.replenishmentMode));
       setRepeatInterval(template.repeatInterval ?? 1);
       setRepeatDaysOfWeek(template.repeatDaysOfWeek ?? []);
@@ -113,16 +108,9 @@ export function EditReward() {
   const handleSubmit = async () => {
     if (!user?.id) return;
 
-    // Convert days to seconds for storage
-    const validDurationSeconds = hasValidDuration ? validDurationDays * 86400 : 0;
-
-    // 计算初始库存：如果启用了补货模式，初始库存设为 replenishmentNum 或 replenishmentLimit（取较小值）
-    // 仅在创建新奖励时设置，编辑时保留原值
-    let initialStock: number | undefined = undefined;
-    if (!isEditing && restockValues[restockIndex] !== "none") {
-      const limit = hasStockLimit ? replenishmentLimit : undefined;
-      const num = replenishmentNum || 1;
-      initialStock = limit !== undefined ? Math.min(num, limit) : num;
+    if (!isValidRatio(pointsPerYuan)) {
+      alert(t("editReward.invalidRatio"));
+      return;
     }
 
     const rewardData: Omit<RewardTemplate, "id" | "createdAt" | "updatedAt"> = {
@@ -130,7 +118,7 @@ export function EditReward() {
       title,
       description: description || undefined,
       pointsCost,
-      validDuration: validDurationSeconds,
+      pointsPerYuan,
       enabled,
       replenishmentMode: restockValues[restockIndex],
       repeatInterval: restockValues[restockIndex] !== "none" ? repeatInterval : undefined,
@@ -138,16 +126,14 @@ export function EditReward() {
       repeatDaysOfMonth: restockValues[restockIndex] === "monthly" ? repeatDaysOfMonth : undefined,
       replenishmentNum: restockValues[restockIndex] !== "none" ? replenishmentNum : undefined,
       replenishmentLimit: hasStockLimit ? replenishmentLimit : undefined,
-      currentStock: initialStock,
       icon: selectedIcon,
       iconColor: selectedColor,
     };
 
     try {
       if (isEditing && rewardId) {
-        // 编辑时排除 currentStock 字段，保留原值
-        const { currentStock: _, ...updateData } = rewardData;
-        await update(rewardId, updateData);
+        // 消费额度由补货流程管理，编辑时不改动
+        await update(rewardId, rewardData);
       } else {
         await create(rewardData);
       }
@@ -267,53 +253,45 @@ export function EditReward() {
           </div>
         </div>
 
-        {/* Valid Duration Section */}
+        {/* Points / Money Ratio Section */}
         <div>
           <h3 className="text-text-primary text-lg font-bold leading-tight tracking-[-0.015em] px-2 pb-2 pt-4">
-            Valid Duration
+            {t("editReward.pointsPerYuan")}
           </h3>
           <div className="rounded-xl bg-surface p-4 space-y-4">
-            {/* Enable Valid Duration Toggle */}
             <div className="flex items-center gap-4 min-h-10 justify-between">
               <div className="flex items-center gap-4">
                 <div className="text-primary flex items-center justify-center rounded-lg bg-primary/20 shrink-0 size-10">
-                  <Clock className="w-5 h-5" />
+                  <Scale className="w-5 h-5" />
                 </div>
                 <p className="text-text-primary text-base font-normal leading-normal">
-                  Expires after
+                  {t("editReward.pointsPerYuanLabel")}
                 </p>
               </div>
-              <button
-                onClick={() => setHasValidDuration(!hasValidDuration)}
-                className={`relative inline-flex h-7 w-12 items-center rounded-full transition-colors ${
-                  hasValidDuration ? "bg-primary" : "bg-surface-light"
-                }`}
-              >
-                <span
-                  className={`inline-block h-5 w-5 transform rounded-full bg-white transition-transform ${
-                    hasValidDuration ? "translate-x-6" : "translate-x-1"
-                  }`}
-                />
-              </button>
+              <NumberInput
+                value={pointsPerYuan}
+                onChange={setPointsPerYuan}
+                min={0.01}
+                step={0.5}
+                allowDecimal
+                size="lg"
+              />
             </div>
 
-            {hasValidDuration && (
-              <div className="flex items-center gap-4 pt-2 border-t border-surface-light">
-                <p className="text-text-secondary text-sm">Valid for</p>
-                <NumberInput
-                  value={validDurationDays}
-                  onChange={setValidDurationDays}
-                  min={1}
-                  suffix="days"
-                />
-              </div>
-            )}
+            <p className="text-text-muted text-sm pt-2 border-t border-surface-light">
+              {t("editReward.pointsPerYuanHint")}
+            </p>
 
-            {!hasValidDuration && (
-              <p className="text-text-muted text-sm pt-2 border-t border-surface-light">
-                Reward will never expire
-              </p>
-            )}
+            <div className="flex items-center justify-between pt-2 border-t border-surface-light">
+              <span className="text-text-secondary text-sm">
+                {t("editReward.ratioPreview", { cost: pointsCost })}
+              </span>
+              <span className="text-green-400 font-bold">
+                {isValidRatio(pointsPerYuan)
+                  ? formatMoney(pointsToMoney(pointsCost, pointsPerYuan))
+                  : "-"}
+              </span>
+            </div>
           </div>
         </div>
 

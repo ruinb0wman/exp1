@@ -30,7 +30,7 @@ function getStatsConfig(stats: ProfileStats): StatItemConfig[] {
       icon: CheckCircle,
     },
     {
-      label: "Items Redeemed",
+      label: "Purchases",
       value: formatNumber(stats.itemsRedeemed),
       icon: Gift,
     },

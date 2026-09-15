@@ -1,11 +1,12 @@
 import { useState, useCallback, useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router";
-import { Package, Plus, Pencil, History } from "lucide-react";
+import { Plus, Pencil, History } from "lucide-react";
 import { Header, HeaderActionButton } from "@/components/Header";
 import { Popup } from "@/components/Popup";
 import { useUserStore } from "@/store";
-import { useStoreRewards, useRewardInstanceActions } from "@/hooks/useRewards";
+import { useStoreRewards } from "@/hooks/useRewards";
+import { useRewardPurchaseActions } from "@/hooks/useRewardPurchases";
 import { getTemplatesNeedingReplenishment, replenishRewardTemplate } from "@/db/services/rewardService";
 import { PointsCard } from "./components/PointsCard";
 import { SearchBar } from "./components/SearchBar";
@@ -55,7 +56,7 @@ export function Store() {
 
     checkAndReplenish();
   }, [user?.id, user?.dayEndTime, refresh]);
-  const { redeem, isLoading: isActionLoading } = useRewardInstanceActions();
+  const { purchase, isLoading: isActionLoading } = useRewardPurchaseActions();
 
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedReward, setSelectedReward] = useState<StoreReward | null>(null);
@@ -77,14 +78,14 @@ export function Store() {
   // 计算最大可兑换数量
   const maxQuantity = getMaxQuantity(selectedReward, currentPoints);
 
-  // 处理兑换
-  const handleRedeem = useCallback(async () => {
+  // 处理购买（购买即消费）
+  const handlePurchase = useCallback(async () => {
     if (!selectedReward || !user) return;
 
     const { template, availableCount } = selectedReward;
     const totalCost = template.pointsCost * redeemQuantity;
 
-    // 检查库存
+    // 检查消费额度
     if (template.replenishmentMode !== 'none' && availableCount < redeemQuantity) {
       setRedeemError(t("store.stockShortage"));
       return;
@@ -97,12 +98,12 @@ export function Store() {
     }
 
     try {
-      // 兑换奖励（带库存检查和积分检查）
-      // 积分扣除由中间件自动处理
-      await redeem(template.id!, user.id, template.validDuration, redeemQuantity);
+      // 扣积分、写消费记录、扣额度在服务层同一事务内完成
+      await purchase(template.id!, user.id, redeemQuantity);
 
-      // 刷新商店列表
+      // 刷新商店列表（额度已变化）与积分余额
       await refresh();
+      await calculatePoints();
 
       // 关闭 popup
       setIsPopupOpen(false);
@@ -111,7 +112,7 @@ export function Store() {
     } catch (err) {
       setRedeemError(err instanceof Error ? err.message : t("common.error"));
     }
-  }, [selectedReward, user, redeem, refresh, currentPoints, redeemQuantity, t]);
+  }, [selectedReward, user, purchase, refresh, calculatePoints, currentPoints, redeemQuantity, t]);
 
   return (
     <div className="min-h-screen pb-24 bg-background">
@@ -119,14 +120,6 @@ export function Store() {
       <div className="sticky top-0 z-10 bg-background">
         <Header
           title={t("store.title")}
-          leftSlot={
-            <HeaderActionButton
-              icon={Package}
-              side="start"
-              label={t("backpack.title")}
-              onClick={() => navigate("/backpack")}
-            />
-          }
           rightSlot={
             <HeaderActionButton
               icon={Plus}
@@ -204,7 +197,7 @@ export function Store() {
             currentPoints={currentPoints}
             isActionLoading={isActionLoading}
             redeemError={redeemError}
-            onRedeem={handleRedeem}
+            onRedeem={handlePurchase}
           />
         )}
       </Popup>

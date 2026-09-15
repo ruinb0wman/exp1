@@ -40,7 +40,7 @@ export type AchievementConditionType =
   | 'pomo_session_count' // 完成的专注番茄数
   | 'streak_days' // 连续 N 天有完成记录
   | 'daily_task_count' // 单日完成 N 个任务（峰值）
-  | 'reward_redeem_count'; // 兑换次数
+  | 'reward_redeem_count'; // 消费次数（购买即消费）
 
 export const ACHIEVEMENT_CONDITION_TYPES: AchievementConditionType[] = [
   'task_complete_count',

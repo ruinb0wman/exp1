@@ -1,4 +1,3 @@
-export type RewardStatus = 'available' | 'used' | 'expired';
 export type ReplenishmentMode = 'none' | 'daily' | 'weekly' | 'monthly';
 
 // 预设图标名称列表
@@ -56,8 +55,13 @@ export interface RewardTemplate {
   userId: number;
   title: string;
   description?: string;
+  /** 单个商品所需积分 */
   pointsCost: number;
-  validDuration: number;
+  /**
+   * 积分货币比例：每 ¥1 折合多少积分（吃饭 = 1，香烟 = 2）
+   * 必须为有限正数，允许小数；金额换算为 pointsCost / pointsPerYuan
+   */
+  pointsPerYuan: number;
   enabled: boolean;
   replenishmentMode: ReplenishmentMode;
   repeatInterval?: number;
@@ -73,16 +77,32 @@ export interface RewardTemplate {
   updatedAt?: string;
 }
 
-export interface RewardInstance {
-	id: string;
-	templateId: string;
-	template: RewardTemplate;
-	userId: number;
-	status: RewardStatus;
-	createdAt: string;
-	updatedAt?: string;
-	expiresAt?: string;
-	usedAt?: string;
+/** 购买时的商品快照：商品改名或删除后统计仍可读 */
+export interface RewardPurchaseSnapshot {
+  templateId: string;
+  title: string;
+  icon: RewardIconName;
+  iconColor?: RewardIconColor;
+  pointsCost: number;
+  pointsPerYuan: number;
+}
+
+/** 消费记录：购买即消费，没有中间态 */
+export interface RewardPurchase {
+  id: string;
+  userId: number;
+  templateId: string;
+  /** 购买时的商品快照 */
+  template: RewardPurchaseSnapshot;
+  quantity: number;
+  /** 单价快照（等于 template.pointsCost），便于统计 */
+  pointsCost: number;
+  /** 实际扣除积分 = pointsCost * quantity */
+  pointsSpent: number;
+  /** 折合金额 = pointsSpent / pointsPerYuan，保留 2 位小数 */
+  moneyAmount: number;
+  createdAt: string;
+  updatedAt?: string;
 }
 
 export interface ReplenishmentRecord {

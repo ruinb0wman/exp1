@@ -159,7 +159,7 @@
         "taskTemplates": "Task Templates",
         "taskInstances": "Task Instances",
         "rewardTemplates": "Reward Templates",
-        "rewardInstances": "Reward Instances",
+        "rewardPurchases": "Purchases",
         "users": "User Data",
         "pointsHistory": "Points History",
         "achievements": "Achievements"
@@ -187,16 +187,15 @@
     "title": "Rewards Store",
     "noRewards": "No Rewards",
     "createReward": "Tap + to create a new reward",
-    "pointsCost": "Costs {cost} exp",
-    "validDuration": "Valid for",
-    "forever": "Forever",
-    "currentStock": "Current Stock",
-    "stockLimit": "Stock Limit",
-    "redeemQuantity": "Quantity",
+    "currentStock": "Remaining quota",
+    "stockLimit": "Quota limit",
+    "remainingQuota": "{count} left",
+    "purchaseQuantity": "Quantity",
+    "moneyValue": "Money value",
     "total": "Total",
-    "stockShortage": "Not enough stock",
+    "stockShortage": "Not enough quota",
     "pointsShortage": "Not enough points",
-    "redeem": "Redeem {count}"
+    "buyCount": "Buy {count}"
   },
   "points": {
     "taskReward": "Task Reward",
@@ -204,7 +203,7 @@
     "taskStage": "Stage Reward",
     "taskCompletion": "Completion Reward",
     "taskDeduction": "Progress Reverted",
-    "rewardExchange": "Reward Redeemed",
+    "rewardExchange": "Purchase",
     "achievement": "Achievement Reward",
     "adminAdjustment": "Admin Adjustment"
   },
@@ -281,52 +280,6 @@
     "minutes": "min",
     "paused": "Paused"
   },
-  "backpack": {
-    "title": "My Backpack",
-    "stats": {
-      "total": "Total items in backpack",
-      "available": "available"
-    },
-    "tabs": {
-      "available": "Available",
-      "used": "Used",
-      "expired": "Expired"
-    },
-    "status": {
-      "available": "Available",
-      "used": "Used",
-      "expired": "Expired"
-    },
-    "detail": {
-      "rewardDetails": "Reward Details",
-      "pointsCost": "Redeemed for {cost} exp",
-      "status": "Status",
-      "owned": "Owned",
-      "firstRedeemed": "First Redeemed",
-      "expireTime": "Expire Time",
-      "timeLeft": "Time Left",
-      "useQuantity": "Quantity to Use"
-    },
-    "empty": {
-      "noAvailable": "No available rewards",
-      "noUsed": "No used rewards",
-      "noExpired": "No expired rewards",
-      "goToStore": "Go to store to redeem rewards!"
-    },
-    "timeLeft": {
-      "expired": "Expired",
-      "days": "days left",
-      "hours": "hours left",
-      "aboutToExpire": "About to expire"
-    },
-    "expiredAt": "Expired on {date}",
-    "usedAt": "Used on {date}",
-    "loadMore": "Load more ({count})",
-    "use": "Use",
-    "rewards": "rewards",
-    "useReward": "Use Reward",
-    "useFailed": "Failed to use reward"
-  },
   "taskHistory": {
     "title": "Task History"
   },
@@ -358,7 +311,7 @@
     "totalRecords": "{total} records",
     "taskReward": "Task Reward:",
     "taskUndo": "Undo Deduction:",
-    "rewardExchange": "Reward Exchange:",
+    "rewardExchange": "Purchases:",
     "adminAdjustment": "Admin Adjustment:",
     "filters": {
       "all": "All",
@@ -379,7 +332,12 @@
   "editReward": {
     "title": "Edit Reward",
     "createTitle": "Create Reward",
-    "saveFailed": "Failed to save"
+    "saveFailed": "Failed to save",
+    "pointsPerYuan": "Points / Money Ratio",
+    "pointsPerYuanLabel": "Points per ¥1",
+    "pointsPerYuanHint": "E.g. 1 for meals (1 point = ¥1), 2 for cigarettes (2 points = ¥1). Decimals allowed.",
+    "ratioPreview": "{cost} points equals",
+    "invalidRatio": "Ratio must be a number greater than 0"
   },
   "popup": {
     "close": "Close"
@@ -615,7 +573,7 @@
         "task_reward": "Task completion",
         "task_completion": "Task completion",
         "task_deduction": "Task progress rollback",
-        "reward_exchange": "Reward redemption",
+        "reward_exchange": "Purchase",
         "achievement": "Achievement reward",
         "admin_adjustment": "Manual adjustment"
       }
@@ -645,7 +603,7 @@
     "extras": {
       "templatesCreated": "Templates created",
       "achievementsUnlocked": "Achievements unlocked",
-      "rewardsRedeemed": "Rewards redeemed"
+      "rewardsRedeemed": "Purchases"
     },
     "taskType": {
       "simple": "simple",

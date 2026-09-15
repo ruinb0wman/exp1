@@ -46,13 +46,13 @@ const MAX_HISTORY_CHARS = 60;
 
 async function loadSources(userId: number): Promise<AchievementSources> {
   const db = getDB();
-  const [instances, sessions, pointsRecords, rewardInstances] = await Promise.all([
+  const [instances, sessions, pointsRecords, rewardPurchases] = await Promise.all([
     db.taskInstances.where('userId').equals(userId).toArray(),
     db.pomoSessions.where('userId').equals(userId).toArray(),
     db.pointsHistory.where('userId').equals(userId).toArray(),
-    db.rewardInstances.where('userId').equals(userId).toArray(),
+    db.rewardPurchases.where('userId').equals(userId).toArray(),
   ]);
-  return { instances, sessions, pointsRecords, rewardInstances };
+  return { instances, sessions, pointsRecords, rewardPurchases };
 }
 
 /** 采集生成成就所需的上下文（不包含任务描述全文） */
@@ -106,7 +106,7 @@ export async function buildContext(userId: number): Promise<AchievementContext> 
     currentStreak: computeRawMetric({ type: 'streak_days', target: 1 }, sources),
     pomoFocusMinutes: computeRawMetric({ type: 'pomo_focus_minutes', target: 1 }, sources),
     pomoSessions: computeRawMetric({ type: 'pomo_session_count', target: 1 }, sources),
-    itemsRedeemed: sources.rewardInstances.length,
+    itemsRedeemed: sources.rewardPurchases.length,
     activeDays: activeDates.size,
     last30dCompleted,
     avgDailyTasks: Math.round((last30dCompleted / 30) * 10) / 10,

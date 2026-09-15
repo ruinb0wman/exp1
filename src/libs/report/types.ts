@@ -4,7 +4,7 @@ import type {
 	PointsHistoryType,
 	PomoMode,
 	PomoSession,
-	RewardInstance,
+	RewardPurchase,
 	TaskInstance,
 	TaskTemplate,
 	TaskType,
@@ -162,7 +162,7 @@ export interface ReportSources {
 	instances: TaskInstance[];
 	sessions: PomoSession[];
 	pointsRecords: PointsHistory[];
-	rewardInstances: RewardInstance[];
+	rewardPurchases: RewardPurchase[];
 	achievements: Achievement[];
 	templates: TaskTemplate[];
 	user: User;

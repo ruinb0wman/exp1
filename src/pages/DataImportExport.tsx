@@ -231,7 +231,7 @@ export function DataImportExport() {
                   {t("data.import.preview.rewardTemplates")}: <span className="text-text-primary">{importPreview.stats.rewardTemplates}</span>
                 </div>
                 <div className="text-text-secondary">
-                  {t("data.import.preview.rewardInstances")}: <span className="text-text-primary">{importPreview.stats.rewardInstances}</span>
+                  {t("data.import.preview.rewardPurchases")}: <span className="text-text-primary">{importPreview.stats.rewardPurchases}</span>
                 </div>
                 <div className="text-text-secondary">
                   {t("data.import.preview.users")}: <span className="text-text-primary">{importPreview.stats.users}</span>
@@ -316,7 +316,7 @@ export function DataImportExport() {
                       {t("data.import.preview.rewardTemplates")}: <span className="text-text-primary">{importResult.stats.rewardTemplates}</span>
                     </div>
                     <div className="text-text-secondary">
-                      {t("data.import.preview.rewardInstances")}: <span className="text-text-primary">{importResult.stats.rewardInstances}</span>
+                      {t("data.import.preview.rewardPurchases")}: <span className="text-text-primary">{importResult.stats.rewardPurchases}</span>
                     </div>
                     <div className="text-text-secondary">
                       {t("data.import.preview.users")}: <span className="text-text-primary">{importResult.stats.users}</span>

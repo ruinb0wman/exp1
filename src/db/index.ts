@@ -7,12 +7,11 @@ import {
   generateUUID,
   hashTaskInstance,
   hashPointsHistory,
-  hashRewardInstance,
 } from '@/libs/id';
 import type { TaskTemplate } from './types';
 import type { TaskInstance } from './types';
 import type { RewardTemplate } from './types';
-import type { RewardInstance } from './types';
+import type { RewardPurchase } from './types';
 import type { PointsHistory } from './types';
 import type { ReplenishmentRecord } from './types';
 import type { Achievement } from './types';
@@ -88,17 +87,17 @@ const createDB = () => {
     return { updatedAt: new Date().toISOString() };
   });
 
-  db.rewardInstances.hook('creating', function (_primKey, obj, _trans) {
-    const item = obj as RewardInstance;
+  db.rewardPurchases.hook('creating', function (_primKey, obj, _trans) {
+    const item = obj as RewardPurchase;
     if (!item.id) {
-      item.id = hashRewardInstance(item.templateId, item.userId, item.createdAt || new Date().toISOString());
+      item.id = generateUUID();
     }
     const now = new Date().toISOString();
     if (!item.createdAt) item.createdAt = now;
     item.updatedAt = undefined as any;
   });
 
-  db.rewardInstances.hook('updating', function () {
+  db.rewardPurchases.hook('updating', function () {
     return { updatedAt: new Date().toISOString() };
   });
 

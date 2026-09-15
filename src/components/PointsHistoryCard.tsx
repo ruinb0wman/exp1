@@ -4,7 +4,7 @@ import i18n from "i18next";
 import { BookOpen, Gift, RotateCcw, Settings, Trophy, type LucideIcon } from "lucide-react";
 import type { PointsHistory, PointsHistoryType } from "@/db/types";
 import { formatRelativeDate } from "@/libs/time";
-import { getAchievementById, getTaskInstanceById, getRewardInstanceById } from "@/db/services";
+import { getAchievementById, getTaskInstanceById, getRewardPurchaseById } from "@/db/services";
 
 export function getPointsHistoryIcon(type: PointsHistoryType): LucideIcon {
   switch (type) {
@@ -72,8 +72,8 @@ export async function getRelatedEntityName(
         return instance?.template?.title ?? null;
       }
       case "reward_exchange": {
-        const instance = await getRewardInstanceById(item.relatedInstanceId);
-        return instance?.template?.title ?? null;
+        const purchase = await getRewardPurchaseById(item.relatedInstanceId);
+        return purchase?.template?.title ?? null;
       }
       case "achievement": {
         const achievement = await getAchievementById(item.relatedInstanceId);

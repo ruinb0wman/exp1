@@ -1,4 +1,5 @@
 import type { RewardTemplate } from "@/db/types";
+import { pointsToMoney } from "@/libs/reward";
 
 export interface StoreReward {
   template: RewardTemplate;
@@ -21,7 +22,7 @@ export function filterRewardsBySearch(
 }
 
 /**
- * 计算最大可兑换数量
+ * 计算最大可购买数量（受积分与消费额度限制）
  */
 export function getMaxQuantity(
   reward: StoreReward | null,
@@ -37,4 +38,14 @@ export function getMaxQuantity(
   const maxByStock = template.replenishmentMode === 'none' ? Infinity : availableCount;
 
   return Math.max(1, Math.min(maxByPoints, maxByStock, 99));
+}
+
+/**
+ * 计算某商品购买指定数量折合的金额（元）
+ */
+export function getPurchaseMoney(
+  template: RewardTemplate,
+  quantity: number
+): number {
+  return pointsToMoney(template.pointsCost * quantity, template.pointsPerYuan);
 }

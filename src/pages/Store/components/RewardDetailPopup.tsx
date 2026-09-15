@@ -1,10 +1,10 @@
 import { useTranslation } from "react-i18next";
-import i18n from "i18next";
-import { Sparkles, Clock } from "lucide-react";
+import { Sparkles, Banknote } from "lucide-react";
 import { NumberInput } from "@/components/NumberInput";
 import { DynamicIcon } from "@/components/DynamicIcon";
-import { formatDuration, formatDurationToString } from "@/libs/time";
+import { formatMoney } from "@/libs/reward";
 import type { StoreReward } from "./RewardsGrid";
+import { getPurchaseMoney } from "../lib";
 
 interface RewardDetailPopupProps {
   reward: StoreReward;
@@ -30,15 +30,11 @@ export function RewardDetailPopup({
   const { t } = useTranslation();
   const { template, availableCount } = reward;
   const totalCost = template.pointsCost * redeemQuantity;
-  const canRedeem = 
-    !isActionLoading && 
+  const purchaseMoney = getPurchaseMoney(template, redeemQuantity);
+  const canRedeem =
+    !isActionLoading &&
     currentPoints >= totalCost &&
     (template.replenishmentMode === 'none' || availableCount >= redeemQuantity);
-
-  const durationResult = formatDuration(template.validDuration);
-  const durationText = durationResult.type === "permanent" 
-    ? t("store.forever") 
-    : formatDurationToString(durationResult);
 
   return (
     <div className="space-y-6 py-2">
@@ -71,16 +67,14 @@ export function RewardDetailPopup({
             <Sparkles className="w-4 h-4" />
             <span className="text-lg font-bold">{template.pointsCost}</span>
           </div>
-          <p className="text-text-muted text-xs">{i18n.language === 'zh' ? `需要 ${t("common.exp")} 积分` : `Costs ${t("common.exp")} exp`}</p>
+          <p className="text-text-muted text-xs">{t("common.exp")}</p>
         </div>
         <div className="bg-surface rounded-xl p-4 text-center">
-          <div className="flex items-center justify-center gap-1 text-text-secondary mb-1">
-            <Clock className="w-4 h-4" />
-            <span className="text-lg font-bold">
-              {durationText}
-            </span>
+          <div className="flex items-center justify-center gap-1 text-green-400 mb-1">
+            <Banknote className="w-4 h-4" />
+            <span className="text-lg font-bold">{formatMoney(purchaseMoney)}</span>
           </div>
-          <p className="text-text-muted text-xs">{t("store.validDuration")}</p>
+          <p className="text-text-muted text-xs">{t("store.moneyValue")}</p>
         </div>
       </div>
 
@@ -105,7 +99,7 @@ export function RewardDetailPopup({
 
       <div className="bg-surface rounded-xl p-4">
         <div className="flex items-center justify-between mb-3">
-          <span className="text-text-secondary text-sm">{t("store.redeemQuantity")}</span>
+          <span className="text-text-secondary text-sm">{t("store.purchaseQuantity")}</span>
           <NumberInput
             value={redeemQuantity}
             onChange={onQuantityChange}
@@ -118,6 +112,9 @@ export function RewardDetailPopup({
           <span className="text-text-secondary text-sm">{t("store.total")}</span>
           <span className="text-primary font-bold text-lg">
             {totalCost.toLocaleString()} {t("common.exp")}
+            <span className="text-text-secondary font-normal text-sm ml-2">
+              ≈ {formatMoney(purchaseMoney)}
+            </span>
           </span>
         </div>
       </div>
@@ -138,7 +135,7 @@ export function RewardDetailPopup({
         ) : currentPoints < totalCost ? (
           t("store.pointsShortage")
         ) : (
-          i18n.language === 'zh' ? `兑换 ${redeemQuantity} 个` : `Redeem ${redeemQuantity}`
+          t("store.buyCount", { count: redeemQuantity })
         )}
       </button>
     </div>

@@ -178,7 +178,7 @@ describe('reportService', () => {
 			db.taskTemplates.clear(),
 			db.taskInstances.clear(),
 			db.pointsHistory.clear(),
-			db.rewardInstances.clear(),
+			db.rewardPurchases.clear(),
 			db.pomoSessions.clear(),
 			db.achievements.clear(),
 		]);

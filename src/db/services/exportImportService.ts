@@ -1,8 +1,9 @@
 import { getDB } from '../index';
 import type { TaskTemplate, TaskInstance } from '../types/task';
-import type { RewardTemplate, RewardInstance, ReplenishmentRecord } from '../types/reward';
+import type { RewardTemplate, RewardPurchase, ReplenishmentRecord } from '../types/reward';
 import type { User, PointsHistory } from '../types/user';
 import type { Achievement } from '../types/achievement';
+import { normalizeRatio } from '@/libs/reward';
 
 // 备份文件格式版本
 const BACKUP_VERSION = '1.1';
@@ -16,7 +17,7 @@ export interface ExportData {
     taskTemplates: TaskTemplate[];
     taskInstances: TaskInstance[];
     rewardTemplates: RewardTemplate[];
-    rewardInstances: RewardInstance[];
+    rewardPurchases: RewardPurchase[];
     replenishmentRecords: ReplenishmentRecord[];
     users: User[];
     pointsHistory: PointsHistory[];
@@ -36,7 +37,7 @@ export interface ImportResult {
     taskTemplates: number;
     taskInstances: number;
     rewardTemplates: number;
-    rewardInstances: number;
+    rewardPurchases: number;
     replenishmentRecords: number;
     users: number;
     pointsHistory: number;
@@ -54,7 +55,7 @@ export interface ImportPreview {
     taskTemplates: number;
     taskInstances: number;
     rewardTemplates: number;
-    rewardInstances: number;
+    rewardPurchases: number;
     replenishmentRecords: number;
     users: number;
     pointsHistory: number;
@@ -98,7 +99,7 @@ export async function exportAllData(): Promise<ExportData> {
     taskTemplates,
     taskInstances,
     rewardTemplates,
-    rewardInstances,
+    rewardPurchases,
     replenishmentRecords,
     users,
     pointsHistory,
@@ -107,7 +108,7 @@ export async function exportAllData(): Promise<ExportData> {
     db.taskTemplates.toArray(),
     db.taskInstances.toArray(),
     db.rewardTemplates.toArray(),
-    db.rewardInstances.toArray(),
+    db.rewardPurchases.toArray(),
     db.replenishmentRecords.toArray(),
     db.users.toArray(),
     db.pointsHistory.toArray(),
@@ -122,7 +123,7 @@ export async function exportAllData(): Promise<ExportData> {
       taskTemplates,
       taskInstances,
       rewardTemplates,
-      rewardInstances,
+      rewardPurchases,
       replenishmentRecords,
       users,
       pointsHistory,
@@ -157,7 +158,6 @@ export function validateImportData(data: unknown): ImportPreview {
     'taskTemplates',
     'taskInstances',
     'rewardTemplates',
-    'rewardInstances',
     'users',
     'pointsHistory',
   ];
@@ -172,13 +172,15 @@ export function validateImportData(data: unknown): ImportPreview {
   const hasReplenishmentRecords = Array.isArray((dbData as Record<string, unknown>).replenishmentRecords);
   // 兼容 1.0 备份（无 achievements 字段）
   const hasAchievements = Array.isArray((dbData as Record<string, unknown>).achievements);
+  // 兼容旧备份（只有 rewardInstances、无 rewardPurchases）
+  const hasRewardPurchases = Array.isArray((dbData as Record<string, unknown>).rewardPurchases);
 
   // 计算统计信息
   const stats = {
     taskTemplates: (dbData.taskTemplates as unknown[]).length,
     taskInstances: (dbData.taskInstances as unknown[]).length,
     rewardTemplates: (dbData.rewardTemplates as unknown[]).length,
-    rewardInstances: (dbData.rewardInstances as unknown[]).length,
+    rewardPurchases: hasRewardPurchases ? (dbData.rewardPurchases as unknown[]).length : 0,
     replenishmentRecords: hasReplenishmentRecords ? (dbData.replenishmentRecords as unknown[]).length : 0,
     users: (dbData.users as unknown[]).length,
     pointsHistory: (dbData.pointsHistory as unknown[]).length,
@@ -203,6 +205,8 @@ async function importWithOverwrite(data: ExportData['data']): Promise<ImportResu
   const hasReplenishmentRecords = Array.isArray(data.replenishmentRecords);
   // 兼容 1.0 备份（无 achievements 字段）
   const hasAchievements = Array.isArray(data.achievements);
+  // 兼容旧备份（只有 rewardInstances、无 rewardPurchases）
+  const rewardPurchases = Array.isArray(data.rewardPurchases) ? data.rewardPurchases : [];
 
   try {
     // 开始事务，清空并写入新数据
@@ -212,7 +216,7 @@ async function importWithOverwrite(data: ExportData['data']): Promise<ImportResu
         db.taskTemplates,
         db.taskInstances,
         db.rewardTemplates,
-        db.rewardInstances,
+        db.rewardPurchases,
         db.users,
         db.pointsHistory,
         db.replenishmentRecords,
@@ -224,7 +228,7 @@ async function importWithOverwrite(data: ExportData['data']): Promise<ImportResu
           db.taskTemplates.clear(),
           db.taskInstances.clear(),
           db.rewardTemplates.clear(),
-          db.rewardInstances.clear(),
+          db.rewardPurchases.clear(),
           db.users.clear(),
           db.pointsHistory.clear(),
           db.replenishmentRecords.clear(),
@@ -235,8 +239,14 @@ async function importWithOverwrite(data: ExportData['data']): Promise<ImportResu
         await Promise.all([
           db.taskTemplates.bulkPut(data.taskTemplates as TaskTemplate[]),
           db.taskInstances.bulkPut(data.taskInstances as TaskInstance[]),
-          db.rewardTemplates.bulkPut(data.rewardTemplates as RewardTemplate[]),
-          db.rewardInstances.bulkPut(data.rewardInstances as RewardInstance[]),
+          // 旧备份没有 pointsPerYuan，导入时归一化兜底为 1
+          db.rewardTemplates.bulkPut(
+            (data.rewardTemplates as RewardTemplate[]).map((template) => ({
+              ...template,
+              pointsPerYuan: normalizeRatio(template.pointsPerYuan),
+            }))
+          ),
+          db.rewardPurchases.bulkPut(rewardPurchases as RewardPurchase[]),
           // 只导入第一个用户，并设置 id 为 1
           db.users.bulkAdd(
             data.users.slice(0, 1).map(({ id, ...rest }) => ({ ...rest, id: 1 } as User))
@@ -260,7 +270,7 @@ async function importWithOverwrite(data: ExportData['data']): Promise<ImportResu
         taskTemplates: data.taskTemplates.length,
         taskInstances: data.taskInstances.length,
         rewardTemplates: data.rewardTemplates.length,
-        rewardInstances: data.rewardInstances.length,
+        rewardPurchases: rewardPurchases.length,
         replenishmentRecords: hasReplenishmentRecords ? data.replenishmentRecords.length : 0,
         users: data.users.length,
         pointsHistory: data.pointsHistory.length,

@@ -8,7 +8,7 @@ const DEBOUNCE_MS = 800;
 
 /**
  * 成就监听：源数据变化（防抖 800ms）后重新判定成就
- * 只订阅源表（任务/番茄/积分/兑换）的派生签名，成就表自身的写入不会触发回环
+ * 只订阅源表（任务/番茄/积分/消费）的派生签名，成就表自身的写入不会触发回环
  */
 export function useAchievementWatcher(userId?: number | null) {
   useEffect(() => {
@@ -33,10 +33,10 @@ export function useAchievementWatcher(userId?: number | null) {
 
     const observable = liveQuery(async () => {
       const db = getDB();
-      const [instances, sessions, rewards, records] = await Promise.all([
+      const [instances, sessions, purchases, records] = await Promise.all([
         db.taskInstances.where('userId').equals(userId).toArray(),
         db.pomoSessions.where('userId').equals(userId).toArray(),
-        db.rewardInstances.where('userId').equals(userId).toArray(),
+        db.rewardPurchases.where('userId').equals(userId).toArray(),
         db.pointsHistory.where('userId').equals(userId).toArray(),
       ]);
 
@@ -55,7 +55,7 @@ export function useAchievementWatcher(userId?: number | null) {
         completedSessions.reduce((total, session) => total + session.actualDuration, 0),
         records.filter((record) => record.amount > 0).reduce((total, record) => total + record.amount, 0),
         records.length,
-        rewards.length,
+        purchases.length,
       ].join(':');
     });
 

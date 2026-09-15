@@ -1,6 +1,17 @@
 import { getDB } from '../index';
-import type { RewardTemplate, RewardInstance, RewardStatus, ReplenishmentMode, ReplenishmentRecord } from '../types';
+import type {
+  RewardTemplate,
+  ReplenishmentMode,
+  ReplenishmentRecord,
+  RewardPurchase,
+  RewardPurchaseSnapshot,
+  RewardIconName,
+  RewardIconColor,
+  PointsHistory,
+} from '../types';
 import { getUserCurrentDate } from '@/libs/time';
+import { generateUUID } from '@/libs/id';
+import { pointsToMoney, normalizeRatio } from '@/libs/reward';
 
 // ==================== RewardTemplate CRUD ====================
 
@@ -17,6 +28,7 @@ export async function createRewardTemplate(
 
 	const newTemplate: RewardTemplate = {
 		...template,
+		pointsPerYuan: normalizeRatio(template.pointsPerYuan),
 		id: '' as string,
 		createdAt: now,
 		currentStock: shouldReplenish ? 0 : undefined,
@@ -85,6 +97,9 @@ export async function updateRewardTemplate(
 
   const updateData = {
     ...updates,
+    ...(updates.pointsPerYuan !== undefined
+      ? { pointsPerYuan: normalizeRatio(updates.pointsPerYuan) }
+      : {}),
     updatedAt: new Date().toISOString(),
   };
 
@@ -92,13 +107,13 @@ export async function updateRewardTemplate(
 }
 
 /**
- * 删除奖励模板（同时删除关联的奖励实例和补货记录）
+ * 删除奖励模板（同时删除关联的补货记录）
+ * 注意：消费记录必须保留 —— 删掉商品不能抹掉记账历史
  */
 export async function deleteRewardTemplate(id: string): Promise<void> {
   const db = getDB();
 
-  await db.transaction('rw', db.rewardTemplates, db.rewardInstances, db.replenishmentRecords, async () => {
-    await db.rewardInstances.where('templateId').equals(id).delete();
+  await db.transaction('rw', db.rewardTemplates, db.replenishmentRecords, async () => {
     await db.replenishmentRecords.where('templateId').equals(id).delete();
     await db.rewardTemplates.delete(id);
   });
@@ -126,390 +141,270 @@ export async function toggleRewardTemplateEnabled(
   });
 }
 
-// ==================== RewardInstance CRUD ====================
+// ==================== 购买（购买即消费） ====================
 
-/**
- * 创建奖励实例（兑换奖励）
- * 注意：此函数不检查库存，直接使用 createRewardInstanceWithStockCheck
- */
-export async function createRewardInstance(
-  instance: Omit<RewardInstance, 'id' | 'createdAt'>
-): Promise<string> {
-  const db = getDB();
-
-  const newInstance: RewardInstance = {
-    ...instance,
-    id: '' as string, // Dexie auto-generates
-    createdAt: new Date().toISOString(),
+/** 从模板生成购买快照 */
+function toPurchaseSnapshot(template: RewardTemplate): RewardPurchaseSnapshot {
+  return {
+    templateId: template.id,
+    title: template.title,
+    icon: template.icon,
+    iconColor: template.iconColor,
+    pointsCost: template.pointsCost,
+    pointsPerYuan: normalizeRatio(template.pointsPerYuan),
   };
-
-  return db.rewardInstances.add(newInstance as unknown as RewardInstance);
 }
 
 /**
- * 兑换奖励（带库存检查）
- * 检查库存、扣除库存，然后创建奖励实例
+ * 购买奖励：一次性扣除积分并写入消费记录（购买即消费，无中间态）
+ *
+ * 事务内完成：额度校验与扣减、积分校验、写消费记录、写积分流水
+ * @returns 消费记录 ID
  */
-export async function redeemRewardWithStockCheck(
-  templateId: string,
-  userId: number
-): Promise<string> {
-  const ids = await redeemRewardsWithStockCheck(templateId, userId, 1);
-  return ids[0];
-}
-
-export async function redeemRewardsWithStockCheck(
+export async function purchaseReward(
   templateId: string,
   userId: number,
-  quantity: number
-): Promise<string[]> {
+  quantity: number = 1
+): Promise<string> {
   const db = getDB();
 
-  if (quantity <= 0) {
-    throw new Error('Quantity must be greater than 0');
+  if (!Number.isInteger(quantity) || quantity <= 0) {
+    throw new Error('数量不合法');
   }
 
-  return db.transaction('rw', db.rewardTemplates, db.rewardInstances, db.pointsHistory, async () => {
-    const template = await db.rewardTemplates.get(templateId);
-    if (!template) {
-      throw new Error('Reward template not found');
-    }
-
-    if (!template.enabled) {
-      throw new Error('Reward template is disabled');
-    }
-
-    // 检查库存（仅对自动补货的奖品）
-    if (template.replenishmentMode !== 'none') {
-      const currentStock = template.currentStock ?? 0;
-      if (currentStock < quantity) {
-        throw new Error('Reward out of stock');
+  return db.transaction(
+    'rw',
+    [db.rewardTemplates, db.rewardPurchases, db.pointsHistory],
+    async () => {
+      const template = await db.rewardTemplates.get(templateId);
+      if (!template) {
+        throw new Error('商品不存在');
+      }
+      if (!template.enabled) {
+        throw new Error('商品已下架');
       }
 
-      // 扣除库存
-      await db.rewardTemplates.update(templateId, {
-        currentStock: currentStock - quantity,
-        updatedAt: new Date().toISOString(),
+      const ratio = normalizeRatio(template.pointsPerYuan);
+      const pointsCost = template.pointsCost;
+      if (!Number.isFinite(pointsCost) || pointsCost <= 0) {
+        throw new Error('商品积分价格无效');
+      }
+
+      // 消费额度检查（补货模式即额度模式）
+      const hasQuota = template.replenishmentMode !== 'none';
+      const currentStock = template.currentStock ?? 0;
+      if (hasQuota && currentStock < quantity) {
+        throw new Error('消费额度不足');
+      }
+
+      // 积分检查
+      const totalCost = pointsCost * quantity;
+      const pointsRecords = await db.pointsHistory.where('userId').equals(userId).toArray();
+      const balance = pointsRecords.reduce((sum, record) => sum + record.amount, 0);
+
+      if (balance < totalCost) {
+        throw new Error(`积分不足。需要: ${totalCost}, 当前: ${balance}`);
+      }
+
+      const purchaseId = generateUUID();
+      const now = new Date().toISOString();
+
+      const purchase: RewardPurchase = {
+        id: purchaseId,
+        userId,
+        templateId,
+        template: toPurchaseSnapshot(template),
+        quantity,
+        pointsCost,
+        pointsSpent: totalCost,
+        moneyAmount: pointsToMoney(totalCost, ratio),
+        createdAt: now,
+      };
+      await db.rewardPurchases.add(purchase);
+
+      // 积分扣减与消费记录同事务写入，避免出现「扣了积分没有记录」
+      const spendRecord: PointsHistory = {
+        id: generateUUID(),
+        userId,
+        amount: -totalCost,
+        type: 'reward_exchange',
+        relatedInstanceId: purchaseId,
+        description: `购买 ${template.title} ×${quantity}`,
+        createdAt: now,
+      };
+      await db.pointsHistory.add(spendRecord);
+
+      if (hasQuota) {
+        await db.rewardTemplates.update(templateId, {
+          currentStock: currentStock - quantity,
+          updatedAt: now,
+        });
+      }
+
+      return purchaseId;
+    }
+  );
+}
+
+/**
+ * 获取用户的全部消费记录（按时间倒序）
+ */
+export async function getRewardPurchases(userId: number): Promise<RewardPurchase[]> {
+  const db = getDB();
+  const purchases = await db.rewardPurchases.where('userId').equals(userId).toArray();
+  return purchases.sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+}
+
+export async function getRewardPurchaseById(id: string): Promise<RewardPurchase | undefined> {
+  const db = getDB();
+  return db.rewardPurchases.get(id);
+}
+
+/**
+ * 获取用户的消费笔数
+ */
+export async function getRewardPurchaseCount(userId: number): Promise<number> {
+  const db = getDB();
+  return db.rewardPurchases.where('userId').equals(userId).count();
+}
+
+/**
+ * 删除消费记录并回滚：删记录 + 删对应积分流水 + 返还消费额度
+ *
+ * 直接删除原积分流水（而非写反向流水），保证积分明细与消费统计
+ * 不会出现「已撤销但仍显示」的幽灵记录。
+ */
+export async function deleteRewardPurchase(id: string): Promise<void> {
+  const db = getDB();
+
+  await db.transaction(
+    'rw',
+    [db.rewardTemplates, db.rewardPurchases, db.pointsHistory],
+    async () => {
+      const purchase = await db.rewardPurchases.get(id);
+      if (!purchase) {
+        return;
+      }
+
+      await db.rewardPurchases.delete(id);
+
+      await db.pointsHistory
+        .where('userId')
+        .equals(purchase.userId)
+        .filter((record) => record.relatedInstanceId === id && record.type === 'reward_exchange')
+        .delete();
+
+      const template = await db.rewardTemplates.get(purchase.templateId);
+      if (template && template.replenishmentMode !== 'none') {
+        const restored = (template.currentStock ?? 0) + purchase.quantity;
+        const limited =
+          template.replenishmentLimit !== undefined
+            ? Math.min(restored, template.replenishmentLimit)
+            : restored;
+        await db.rewardTemplates.update(template.id, {
+          currentStock: limited,
+          updatedAt: new Date().toISOString(),
+        });
+      }
+    }
+  );
+}
+
+// ==================== 消费统计 ====================
+
+/** 按商品聚合的消费统计 */
+export interface PurchaseTemplateBucket {
+  templateId: string;
+  title: string;
+  icon: RewardIconName;
+  iconColor?: RewardIconColor;
+  /** 笔数 */
+  count: number;
+  /** 件数 */
+  quantity: number;
+  pointsSpent: number;
+  moneyAmount: number;
+}
+
+export interface RewardPurchaseStats {
+  pointsSpent: number;
+  moneyAmount: number;
+  /** 笔数 */
+  count: number;
+  /** 件数 */
+  quantity: number;
+  /** 按积分消耗倒序 */
+  byTemplate: PurchaseTemplateBucket[];
+  /** 区间内明细，按时间倒序 */
+  purchases: RewardPurchase[];
+}
+
+/**
+ * 统计指定时间窗内的消费
+ * @param startISO 起始 ISO 时间（含）
+ * @param endExclusiveISO 结束 ISO 时间（不含）
+ */
+export async function getRewardPurchaseStats(
+  userId: number,
+  startISO: string,
+  endExclusiveISO: string
+): Promise<RewardPurchaseStats> {
+  const db = getDB();
+
+  const all = await db.rewardPurchases.where('userId').equals(userId).toArray();
+  const purchases = all
+    .filter((p) => p.createdAt >= startISO && p.createdAt < endExclusiveISO)
+    .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+
+  const bucketMap = new Map<string, PurchaseTemplateBucket>();
+  let pointsSpent = 0;
+  let moneyAmount = 0;
+  let quantity = 0;
+
+  for (const purchase of purchases) {
+    pointsSpent += purchase.pointsSpent;
+    moneyAmount += purchase.moneyAmount;
+    quantity += purchase.quantity;
+
+    const existing = bucketMap.get(purchase.templateId);
+    if (existing) {
+      existing.count += 1;
+      existing.quantity += purchase.quantity;
+      existing.pointsSpent += purchase.pointsSpent;
+      existing.moneyAmount += purchase.moneyAmount;
+    } else {
+      // purchases 已按时间倒序，首条即该商品最近的快照
+      bucketMap.set(purchase.templateId, {
+        templateId: purchase.templateId,
+        title: purchase.template.title,
+        icon: purchase.template.icon,
+        iconColor: purchase.template.iconColor,
+        count: 1,
+        quantity: purchase.quantity,
+        pointsSpent: purchase.pointsSpent,
+        moneyAmount: purchase.moneyAmount,
       });
     }
-
-    // 检查积分是否足够
-    const totalCost = template.pointsCost * quantity;
-    const pointsRecords = await db.pointsHistory.where('userId').equals(userId).toArray();
-    const currentPoints = pointsRecords.reduce((sum, record) => sum + record.amount, 0);
-
-    if (currentPoints < totalCost) {
-      throw new Error(`积分不足。需要: ${totalCost}, 当前: ${currentPoints}`);
-    }
-
-    // 批量创建奖励实例
-    const expiresAt = template.validDuration > 0
-      ? new Date(Date.now() + template.validDuration * 1000).toISOString()
-      : undefined;
-
-    const now = new Date().toISOString();
-    const newInstances: Omit<RewardInstance, 'id'>[] = Array.from(
-      { length: quantity },
-      () => ({
-        templateId,
-        template: { ...template }, // 保存完整的模板快照
-        userId,
-        status: 'available',
-        createdAt: now,
-        expiresAt,
-      })
-    );
-
-    const ids = await createRewardInstances(newInstances);
-    return ids;
-  });
-}
-
-/**
- * 批量创建奖励实例
- */
-export async function createRewardInstances(
-  instances: Omit<RewardInstance, 'id' | 'createdAt'>[]
-): Promise<string[]> {
-  const db = getDB();
-
-  const now = new Date().toISOString();
-  const newInstances: RewardInstance[] = instances.map((instance) => ({
-    ...instance,
-    id: '' as string, // Dexie auto-generates
-    createdAt: now,
-  }));
-
-  return db.rewardInstances.bulkAdd(newInstances as unknown as RewardInstance[], { allKeys: true });
-}
-
-/**
- * 获取所有奖励实例
- */
-export async function getAllRewardInstances(userId?: number): Promise<RewardInstance[]> {
-  const db = getDB();
-
-  if (userId !== undefined) {
-    return db.rewardInstances.where('userId').equals(userId).toArray();
-  }
-  return db.rewardInstances.toArray();
-}
-
-/**
- * 根据ID获取奖励实例
- */
-export async function getRewardInstanceById(id: string): Promise<RewardInstance | undefined> {
-  const db = getDB();
-  return db.rewardInstances.get(id);
-}
-
-export async function getRewardInstancesByTemplateId(templateId: string): Promise<RewardInstance[]> {
-  const db = getDB();
-  return db.rewardInstances.where('templateId').equals(templateId).toArray();
-}
-
-/**
- * 根据状态获取奖励实例
- */
-export async function getRewardInstancesByStatus(
-  status: RewardStatus,
-  userId?: number
-): Promise<RewardInstance[]> {
-  const db = getDB();
-
-  if (userId !== undefined) {
-    const instances = await db.rewardInstances.where('userId').equals(userId).toArray();
-    return instances.filter(i => i.status === status);
-  }
-  return db.rewardInstances.where('status').equals(status).toArray();
-}
-
-/**
- * 更新奖励实例
- */
-export async function updateRewardInstance(
-  id: string,
-  updates: Partial<Omit<RewardInstance, 'id'>>
-): Promise<number> {
-  const db = getDB();
-  return db.rewardInstances.update(id, updates);
-}
-
-export async function useRewardInstance(id: string): Promise<number> {
-  const db = getDB();
-
-  const instance = await db.rewardInstances.get(id);
-  if (!instance) {
-    throw new Error('Reward instance not found');
   }
 
-  if (instance.status === 'used') {
-    throw new Error('Reward instance already used');
-  }
+  const byTemplate = Array.from(bucketMap.values()).sort(
+    (a, b) => b.pointsSpent - a.pointsSpent
+  );
 
-  if (instance.status === 'expired') {
-    throw new Error('Reward instance has expired');
-  }
-
-  // 检查是否过期
-  if (instance.expiresAt && new Date(instance.expiresAt) < new Date()) {
-    await db.rewardInstances.update(id, { status: 'expired' });
-    throw new Error('Reward instance has expired');
-  }
-
-  return db.rewardInstances.update(id, {
-    status: 'used',
-    usedAt: new Date().toISOString(),
-  });
+  return {
+    pointsSpent,
+    moneyAmount: Math.round(moneyAmount * 100) / 100,
+    count: purchases.length,
+    quantity,
+    byTemplate,
+    purchases,
+  };
 }
+
+// ==================== 商店查询 ====================
 
 /**
- * 批量使用奖励实例
- * 按创建时间排序（FIFO），过滤掉已过期/已使用的实例
- * @param ids 实例ID数组
- * @param quantity 要使用数量，默认为全部
- * @returns 实际使用的数量
- */
-export async function useRewardInstances(
-  ids: string[],
-  quantity?: number
-): Promise<number> {
-  const db = getDB();
-  const now = new Date().toISOString();
-
-  return db.transaction('rw', db.rewardInstances, async () => {
-    // 获取所有实例
-    const instances = await db.rewardInstances.bulkGet(ids);
-
-    // 过滤有效实例（available + 未过期）
-    const validInstances = instances
-      .filter((instance): instance is NonNullable<typeof instance> => {
-        if (!instance) return false;
-        if (instance.status !== 'available') return false;
-        if (instance.expiresAt && instance.expiresAt < now) return false;
-        return true;
-      })
-      // 按创建时间排序（FIFO）
-      .sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
-
-    if (validInstances.length === 0) {
-      throw new Error('No valid reward instances found');
-    }
-
-    // 确定实际使用数量
-    const useCount = quantity !== undefined
-      ? Math.min(quantity, validInstances.length)
-      : validInstances.length;
-
-    // 取前 useCount 个实例
-    const instancesToUse = validInstances.slice(0, useCount);
-
-    // 批量更新
-    const updates = instancesToUse.map((instance) => ({
-      key: instance.id!,
-      changes: {
-        status: 'used' as const,
-        usedAt: now,
-      },
-    }));
-
-    await db.rewardInstances.bulkUpdate(updates);
-
-    return useCount;
-  });
-}
-
-/**
- * 检查并更新过期状态
- */
-export async function checkAndUpdateExpiredRewards(userId?: number): Promise<number> {
-  const db = getDB();
-
-  const now = new Date().toISOString();
-  let instances: RewardInstance[];
-
-  if (userId !== undefined) {
-    instances = await db.rewardInstances
-      .where('userId')
-      .equals(userId)
-      .and(i => i.status === 'available')
-      .toArray();
-  } else {
-    instances = await db.rewardInstances
-      .where('status')
-      .equals('available')
-      .toArray();
-  }
-
-  const expiredIds = instances
-    .filter(i => i.expiresAt && i.expiresAt < now)
-    .map(i => i.id!);
-
-  if (expiredIds.length > 0) {
-    await db.rewardInstances.bulkUpdate(
-      expiredIds.map(id => ({ key: id, changes: { status: 'expired' } }))
-    );
-  }
-
-  return expiredIds.length;
-}
-
-/**
- * 删除奖励实例
- */
-export async function deleteRewardInstance(id: string): Promise<void> {
-  const db = getDB();
-  return db.rewardInstances.delete(id);
-}
-
-export async function deleteRewardInstances(ids: string[]): Promise<void> {
-  const db = getDB();
-  return db.rewardInstances.bulkDelete(ids);
-}
-
-export async function deleteRewardInstancesByTemplateId(templateId: string): Promise<number> {
-  const db = getDB();
-  return db.rewardInstances.where('templateId').equals(templateId).delete();
-}
-
-// ==================== 复合查询 ====================
-
-/**
- * 获取奖励实例及其模板信息
- * 使用实例中保存的 template 快照
- */
-export async function getRewardInstanceWithTemplate(
-  instanceId: string
-): Promise<{ instance: RewardInstance; template: RewardTemplate } | undefined> {
-  const db = getDB();
-
-  const instance = await db.rewardInstances.get(instanceId);
-  if (!instance) {
-    return undefined;
-  }
-
-  // 使用快照中的模板
-  return { instance, template: instance.template };
-}
-
-/**
- * 获取用户的可用奖励实例（包含模板信息）
- * 优先使用实例中保存的 template 快照
- */
-export async function getAvailableRewardInstances(
-  userId: number
-): Promise<Array<{ instance: RewardInstance; template: RewardTemplate }>> {
-  const db = getDB();
-
-  // 先检查并更新过期状态
-  await checkAndUpdateExpiredRewards(userId);
-
-  const instances = await db.rewardInstances
-    .where('userId')
-    .equals(userId)
-    .and(i => i.status === 'available')
-    .toArray();
-
-  const result: Array<{ instance: RewardInstance; template: RewardTemplate }> = [];
-
-  for (const instance of instances) {
-    // 使用快照中的模板
-    result.push({ instance, template: instance.template });
-  }
-
-  return result;
-}
-
-/**
- * 获取用户的背包（所有奖励实例，包含模板信息）
- * 使用实例中保存的 template 快照
- */
-export async function getUserBackpack(
-  userId: number
-): Promise<Array<{ instance: RewardInstance; template: RewardTemplate }>> {
-  const db = getDB();
-
-  // 先检查并更新过期状态
-  await checkAndUpdateExpiredRewards(userId);
-
-  const instances = await db.rewardInstances
-    .where('userId')
-    .equals(userId)
-    .toArray();
-
-  const result: Array<{ instance: RewardInstance; template: RewardTemplate }> = [];
-
-  for (const instance of instances) {
-    // 使用快照中的模板
-    result.push({ instance, template: instance.template });
-  }
-
-  return result;
-}
-
-/**
- * 获取商店的奖励模板（启用的模板，包含库存数量）
- * 修改：使用 currentStock 而不是实例数量
+ * 获取商店的奖励模板（启用的模板，包含剩余额度）
  */
 export async function getStoreRewardTemplates(
   userId: number
@@ -533,32 +428,6 @@ export async function getStoreRewardTemplates(
   }
 
   return result;
-}
-
-/**
- * 获取奖励统计信息
- */
-export async function getRewardStatistics(
-  userId: number
-): Promise<{
-  total: number;
-  available: number;
-  used: number;
-  expired: number;
-}> {
-  const db = getDB();
-
-  // 先检查并更新过期状态
-  await checkAndUpdateExpiredRewards(userId);
-
-  const instances = await db.rewardInstances.where('userId').equals(userId).toArray();
-
-  return {
-    total: instances.length,
-    available: instances.filter(i => i.status === 'available').length,
-    used: instances.filter(i => i.status === 'used').length,
-    expired: instances.filter(i => i.status === 'expired').length,
-  };
 }
 
 // ==================== 补货相关 ====================

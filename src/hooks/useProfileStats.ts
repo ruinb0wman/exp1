@@ -3,7 +3,7 @@ import { getDB } from '@/db';
 import type { PointsHistory } from '@/db/types';
 import { getPointsStats } from '@/db/services/pointsHistoryService';
 import { getTaskStatistics } from '@/db/services/taskService';
-import { getRewardStatistics } from '@/db/services/rewardService';
+import { getRewardPurchaseCount } from '@/db/services/rewardService';
 
 export interface ProfileStats {
   totalPointsEarned: number;
@@ -125,8 +125,8 @@ export function useProfileStats(userId: number | null): UseProfileStatsReturn {
       // 获取任务统计
       const taskStats = await getTaskStatistics(userId);
 
-      // 获取奖励统计
-      const rewardStats = await getRewardStatistics(userId);
+      // 获取消费笔数
+      const purchaseCount = await getRewardPurchaseCount(userId);
 
       // 计算连续天数
       const streak = await calculateStreak(userId);
@@ -134,7 +134,7 @@ export function useProfileStats(userId: number | null): UseProfileStatsReturn {
       setStats({
         totalPointsEarned: pointsStats.income,
         tasksCompleted: taskStats.completed,
-        itemsRedeemed: rewardStats.used,
+        itemsRedeemed: purchaseCount,
         currentStreak: streak,
       });
 

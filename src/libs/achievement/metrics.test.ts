@@ -3,7 +3,7 @@ import type {
   AchievementCondition,
   PomoSession,
   PointsHistory,
-  RewardInstance,
+  RewardPurchase,
   TaskInstance,
   TaskTemplate,
 } from '@/db/types';
@@ -73,8 +73,8 @@ function session(
   };
 }
 
-function reward(id: string): RewardInstance {
-  return { id, userId: 1, templateId: 'r1', status: 'available' } as unknown as RewardInstance;
+function purchase(id: string): RewardPurchase {
+  return { id, userId: 1, templateId: 'r1' } as unknown as RewardPurchase;
 }
 
 function sources(partial: Partial<AchievementSources> = {}): AchievementSources {
@@ -82,7 +82,7 @@ function sources(partial: Partial<AchievementSources> = {}): AchievementSources 
     instances: [],
     sessions: [],
     pointsRecords: [],
-    rewardInstances: [],
+    rewardPurchases: [],
     ...partial,
   };
 }
@@ -214,8 +214,8 @@ describe('computeRawMetric', () => {
     expect(computeRawMetric(condition('daily_task_count', 1), data, '2026-05-02')).toBe(3);
   });
 
-  it('reward_redeem_count 统计兑换记录数', () => {
-    const data = sources({ rewardInstances: [reward('r1'), reward('r2')] });
+  it('reward_redeem_count 统计消费记录数', () => {
+    const data = sources({ rewardPurchases: [purchase('r1'), purchase('r2')] });
     expect(computeRawMetric(condition('reward_redeem_count', 1), data)).toBe(2);
   });
 });

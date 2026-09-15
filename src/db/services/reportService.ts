@@ -18,12 +18,12 @@ const APP_VERSION = '0.1.0';
 export async function loadReportSources(userId: number): Promise<ReportSources> {
 	const db = getDB();
 
-	const [instances, sessions, pointsRecords, rewardInstances, achievements, templates, user] =
+	const [instances, sessions, pointsRecords, rewardPurchases, achievements, templates, user] =
 		await Promise.all([
 			db.taskInstances.where('userId').equals(userId).toArray(),
 			db.pomoSessions.where('userId').equals(userId).toArray(),
 			db.pointsHistory.where('userId').equals(userId).toArray(),
-			db.rewardInstances.where('userId').equals(userId).toArray(),
+			db.rewardPurchases.where('userId').equals(userId).toArray(),
 			db.achievements.where('userId').equals(userId).toArray(),
 			db.taskTemplates.where('userId').equals(userId).toArray(),
 			db.users.get(userId),
@@ -37,7 +37,7 @@ export async function loadReportSources(userId: number): Promise<ReportSources> 
 		instances,
 		sessions,
 		pointsRecords,
-		rewardInstances,
+		rewardPurchases,
 		achievements,
 		templates,
 		user,
