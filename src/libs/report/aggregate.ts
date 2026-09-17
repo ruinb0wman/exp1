@@ -5,6 +5,7 @@ import type {
 	TaskInstance,
 } from '@/db/types';
 import { calculateExpiredAtByInstanceDate, getUserWeekday, toUserDateString } from '@/libs/time';
+import { isCountedInConsumption } from '@/libs/reward';
 import {
 	enumerateUserDays,
 	enumerateWeekBuckets,
@@ -492,8 +493,12 @@ function computeExtras(
 		achievementsUnlocked: sources.achievements.filter((achievement) =>
 			inWindow(achievement.unlockedAt)
 		).length,
-		rewardsRedeemed: sources.rewardPurchases.filter((purchase) => inWindow(purchase.createdAt))
-			.length,
+		rewardsRedeemed: sources.rewardPurchases.filter(
+			(purchase) =>
+				inWindow(purchase.createdAt) &&
+				// 「消费笔数」口径与消费统计页一致：不计入消费统计的购买不算
+				isCountedInConsumption(purchase.template.countInConsumption)
+		).length,
 	};
 }
 

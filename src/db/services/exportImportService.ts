@@ -3,7 +3,7 @@ import type { TaskTemplate, TaskInstance } from '../types/task';
 import type { RewardTemplate, RewardPurchase, ReplenishmentRecord } from '../types/reward';
 import type { User, PointsHistory } from '../types/user';
 import type { Achievement } from '../types/achievement';
-import { normalizeRatio } from '@/libs/reward';
+import { normalizeRatio, isCountedInConsumption } from '@/libs/reward';
 
 // 备份文件格式版本
 const BACKUP_VERSION = '1.1';
@@ -239,11 +239,12 @@ async function importWithOverwrite(data: ExportData['data']): Promise<ImportResu
         await Promise.all([
           db.taskTemplates.bulkPut(data.taskTemplates as TaskTemplate[]),
           db.taskInstances.bulkPut(data.taskInstances as TaskInstance[]),
-          // 旧备份没有 pointsPerYuan，导入时归一化兜底为 1
+          // 旧备份没有 pointsPerYuan / countInConsumption，导入时归一化兜底（比例 1、计入统计）
           db.rewardTemplates.bulkPut(
             (data.rewardTemplates as RewardTemplate[]).map((template) => ({
               ...template,
               pointsPerYuan: normalizeRatio(template.pointsPerYuan),
+              countInConsumption: isCountedInConsumption(template.countInConsumption),
             }))
           ),
           db.rewardPurchases.bulkPut(rewardPurchases as RewardPurchase[]),
