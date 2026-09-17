@@ -11,7 +11,12 @@ import type {
 } from '../types';
 import { getUserCurrentDate } from '@/libs/time';
 import { generateUUID } from '@/libs/id';
-import { pointsToMoney, normalizeRatio, isCountedInConsumption } from '@/libs/reward';
+import { roundMoney, isValidMoneyCost, isCountedInConsumption } from '@/libs/reward';
+
+/** 单件金额归一化：非法值兜底为 0（不记金额） */
+function normalizeMoneyCost(moneyCost: number | undefined): number {
+  return isValidMoneyCost(moneyCost as number) ? roundMoney(moneyCost as number) : 0;
+}
 
 // ==================== RewardTemplate CRUD ====================
 
@@ -28,7 +33,7 @@ export async function createRewardTemplate(
 
 	const newTemplate: RewardTemplate = {
 		...template,
-		pointsPerYuan: normalizeRatio(template.pointsPerYuan),
+		moneyCost: normalizeMoneyCost(template.moneyCost),
 		countInConsumption: isCountedInConsumption(template.countInConsumption),
 		id: '' as string,
 		createdAt: now,
@@ -98,8 +103,8 @@ export async function updateRewardTemplate(
 
   const updateData = {
     ...updates,
-    ...(updates.pointsPerYuan !== undefined
-      ? { pointsPerYuan: normalizeRatio(updates.pointsPerYuan) }
+    ...(updates.moneyCost !== undefined
+      ? { moneyCost: normalizeMoneyCost(updates.moneyCost) }
       : {}),
     updatedAt: new Date().toISOString(),
   };
@@ -152,7 +157,7 @@ function toPurchaseSnapshot(template: RewardTemplate): RewardPurchaseSnapshot {
     icon: template.icon,
     iconColor: template.iconColor,
     pointsCost: template.pointsCost,
-    pointsPerYuan: normalizeRatio(template.pointsPerYuan),
+    moneyCost: normalizeMoneyCost(template.moneyCost),
     countInConsumption: isCountedInConsumption(template.countInConsumption),
   };
 }
@@ -186,13 +191,14 @@ export async function purchaseReward(
         throw new Error('商品已下架');
       }
 
-      const ratio = normalizeRatio(template.pointsPerYuan);
-      // 关闭积分货币比例的奖品：不折合金额，也不计入消费统计
+      // 关闭「计入消费统计」的奖品：不写金额，也不计入消费统计
       const counted = isCountedInConsumption(template.countInConsumption);
       const pointsCost = template.pointsCost;
-      if (!Number.isFinite(pointsCost) || pointsCost <= 0) {
+      // 0 积分是合法值（如每日免费额度），只拒绝负数与非法值
+      if (!Number.isFinite(pointsCost) || pointsCost < 0) {
         throw new Error('商品积分价格无效');
       }
+      const moneyCost = normalizeMoneyCost(template.moneyCost);
 
       // 消费额度检查（补货模式即额度模式）
       const hasQuota = template.replenishmentMode !== 'none';
@@ -221,22 +227,25 @@ export async function purchaseReward(
         quantity,
         pointsCost,
         pointsSpent: totalCost,
-        moneyAmount: counted ? pointsToMoney(totalCost, ratio) : undefined,
+        moneyAmount: counted ? roundMoney(moneyCost * quantity) : undefined,
         createdAt: now,
       };
       await db.rewardPurchases.add(purchase);
 
       // 积分扣减与消费记录同事务写入，避免出现「扣了积分没有记录」
-      const spendRecord: PointsHistory = {
-        id: generateUUID(),
-        userId,
-        amount: -totalCost,
-        type: 'reward_exchange',
-        relatedInstanceId: purchaseId,
-        description: `购买 ${template.title} ×${quantity}`,
-        createdAt: now,
-      };
-      await db.pointsHistory.add(spendRecord);
+      // 0 积分的免费额度不写 0 分流水，避免刷屏积分明细
+      if (totalCost > 0) {
+        const spendRecord: PointsHistory = {
+          id: generateUUID(),
+          userId,
+          amount: -totalCost,
+          type: 'reward_exchange',
+          relatedInstanceId: purchaseId,
+          description: `购买 ${template.title} ×${quantity}`,
+          createdAt: now,
+        };
+        await db.pointsHistory.add(spendRecord);
+      }
 
       if (hasQuota) {
         await db.rewardTemplates.update(templateId, {

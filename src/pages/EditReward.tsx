@@ -10,7 +10,7 @@ import { Package, Sparkles, Scale } from "lucide-react";
 import { NumberInput } from "@/components/NumberInput";
 import type { RewardTemplate, RewardIconName, RewardIconColor, ReplenishmentMode } from "@/db/types";
 import { REWARD_ICON_COLORS } from "@/db/types";
-import { isValidRatio, pointsToMoney, formatMoney } from "@/libs/reward";
+import { isValidMoneyCost, formatMoney } from "@/libs/reward";
 import { useRewardTemplate, useRewardTemplateActions } from "@/hooks/useRewards";
 import { useUserStore } from "@/store";
 
@@ -49,8 +49,8 @@ export function EditReward() {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [pointsCost, setPointsCost] = useState(100);
-  // 积分货币比例：每 ¥1 折合多少积分
-  const [pointsPerYuan, setPointsPerYuan] = useState(1);
+  // 单件折合金额（元）：与积分价互相独立，消费金额 = 单件金额 × 数量
+  const [moneyCost, setMoneyCost] = useState(100);
   // 是否折合金额并计入消费统计：关闭后不折合金额，之后的购买不计入消费统计
   const [countInConsumption, setCountInConsumption] = useState(true);
   const [enabled, setEnabled] = useState(true);
@@ -75,7 +75,7 @@ export function EditReward() {
       setTitle(template.title);
       setDescription(template.description ?? "");
       setPointsCost(template.pointsCost);
-      setPointsPerYuan(template.pointsPerYuan ?? 1);
+      setMoneyCost(template.moneyCost ?? 0);
       setCountInConsumption(template.countInConsumption !== false);
       setEnabled(template.enabled);
       setSelectedIcon(template.icon);
@@ -111,9 +111,9 @@ export function EditReward() {
   const handleSubmit = async () => {
     if (!user?.id) return;
 
-    // 关闭比例时不需要校验比例值（该值仅保留，便于重新打开）
-    if (countInConsumption && !isValidRatio(pointsPerYuan)) {
-      alert(t("editReward.invalidRatio"));
+    // 关闭统计时不需要校验金额（金额仅保留，便于重新打开）
+    if (countInConsumption && !isValidMoneyCost(moneyCost)) {
+      alert(t("editReward.invalidMoneyCost"));
       return;
     }
 
@@ -122,7 +122,7 @@ export function EditReward() {
       title,
       description: description || undefined,
       pointsCost,
-      pointsPerYuan,
+      moneyCost,
       countInConsumption,
       enabled,
       replenishmentMode: restockValues[restockIndex],
@@ -258,11 +258,11 @@ export function EditReward() {
           </div>
         </div>
 
-        {/* Points / Money Ratio Section */}
+        {/* Unit Value Section：单件金额与积分价互相独立 */}
         <div>
           <div className="flex items-center justify-between gap-4 px-2 pb-2 pt-4">
             <h3 className="text-text-primary text-lg font-bold leading-tight tracking-[-0.015em]">
-              {t("editReward.pointsPerYuan")}
+              {t("editReward.moneyCost")}
             </h3>
             <button
               role="switch"
@@ -289,37 +289,35 @@ export function EditReward() {
                       <Scale className="w-5 h-5" />
                     </div>
                     <p className="text-text-primary text-base font-normal leading-normal">
-                      {t("editReward.pointsPerYuanLabel")}
+                      {t("editReward.moneyCostLabel")}
                     </p>
                   </div>
                   <NumberInput
-                    value={pointsPerYuan}
-                    onChange={setPointsPerYuan}
-                    min={0.01}
-                    step={0.5}
+                    value={moneyCost}
+                    onChange={setMoneyCost}
+                    min={0}
+                    step={1}
                     allowDecimal
                     size="lg"
                   />
                 </div>
 
                 <p className="text-text-muted text-sm pt-2 border-t border-surface-light">
-                  {t("editReward.pointsPerYuanHint")}
+                  {t("editReward.moneyCostHint")}
                 </p>
 
                 <div className="flex items-center justify-between pt-2 border-t border-surface-light">
                   <span className="text-text-secondary text-sm">
-                    {t("editReward.ratioPreview", { cost: pointsCost })}
+                    {t("editReward.moneyCostPreview", { cost: pointsCost })}
                   </span>
                   <span className="text-green-400 font-bold">
-                    {isValidRatio(pointsPerYuan)
-                      ? formatMoney(pointsToMoney(pointsCost, pointsPerYuan))
-                      : "-"}
+                    {isValidMoneyCost(moneyCost) ? formatMoney(moneyCost) : "-"}
                   </span>
                 </div>
               </>
             ) : (
               <p className="text-text-muted text-sm">
-                {t("editReward.pointsPerYuanOffHint")}
+                {t("editReward.moneyCostOffHint")}
               </p>
             )}
           </div>

@@ -31,7 +31,7 @@ export function RewardDetailPopup({
   const { template, availableCount } = reward;
   const totalCost = template.pointsCost * redeemQuantity;
   const purchaseMoney = getPurchaseMoney(template, redeemQuantity);
-  // 关闭积分货币比例的奖品不折合金额，也不计入消费统计
+  // 关闭「计入消费统计」的奖品不折合金额，也不计入消费统计
   const counted = isCountedInConsumption(template.countInConsumption);
   const canRedeem =
     !isActionLoading &&

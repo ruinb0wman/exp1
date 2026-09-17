@@ -1,6 +1,18 @@
 import type { DB } from "../types";
 import { generateUUID } from "@/libs/id";
 import { toLocalDateString } from "@/libs/time";
+import { roundMoney } from "@/libs/reward";
+
+/** v7 之前模板上的积分货币比例（旧模型：金额 = pointsCost / pointsPerYuan） */
+type LegacyRatioField = { pointsPerYuan?: number };
+
+/** 取旧数据上可用的比例，非法值兜底为 1 */
+function readLegacyRatio(template: unknown): number {
+	const { pointsPerYuan } = template as LegacyRatioField;
+	return Number.isFinite(pointsPerYuan) && (pointsPerYuan as number) > 0
+		? (pointsPerYuan as number)
+		: 1;
+}
 
 export function migration(db: DB) {
 	db.version(1).stores({
@@ -92,7 +104,26 @@ export function migration(db: DB) {
 			changes: {
 				// Dexie：显式 undefined 会删除该字段
 				validDuration: undefined,
-				pointsPerYuan: t.pointsPerYuan ?? 1,
+				pointsPerYuan: readLegacyRatio(t),
+			},
+		}));
+		if (updates.length > 0) {
+			await d.rewardTemplates.bulkUpdate(updates);
+		}
+	});
+
+	// v7：金额与积分解耦 —— 用「单件金额」取代积分货币比例
+	// 旧模型金额 = pointsCost / pointsPerYuan，迁移时按该式逐条等值换算；
+	// 旧消费记录不动（moneyAmount 早已冻结在每条记录里）
+	db.version(7).upgrade(async (trans) => {
+		const d = trans.db as DB;
+		const templates = await d.rewardTemplates.toArray();
+		const updates = templates.map((t) => ({
+			key: t.id,
+			changes: {
+				moneyCost: roundMoney(t.pointsCost / readLegacyRatio(t)),
+				// Dexie：显式 undefined 会删除该字段
+				pointsPerYuan: undefined,
 			},
 		}));
 		if (updates.length > 0) {

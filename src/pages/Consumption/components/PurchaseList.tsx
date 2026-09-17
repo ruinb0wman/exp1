@@ -85,7 +85,14 @@ export function PurchaseList({ purchases, onDelete }: PurchaseListProps) {
 						</div>
 
 						<div className="text-right shrink-0">
-							<p className="text-primary font-bold">-{purchase.pointsSpent}</p>
+							{/* 0 积分（免费额度）不显示负号，避免出现 "-0" */}
+							<p
+								className={
+									purchase.pointsSpent > 0 ? 'text-primary font-bold' : 'text-text-muted font-bold'
+								}
+							>
+								{purchase.pointsSpent > 0 ? `-${purchase.pointsSpent}` : '0'}
+							</p>
 							{counted ? (
 								<p className="text-green-400 text-xs">
 									{formatMoney(purchase.moneyAmount ?? 0)}

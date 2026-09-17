@@ -3,7 +3,7 @@ import { Package, Sparkles } from "lucide-react";
 import { DynamicIcon } from "@/components/DynamicIcon";
 import { EmptyState } from "@/components/EmptyState";
 import type { RewardTemplate } from "@/db/types";
-import { formatMoney, pointsToMoney, isCountedInConsumption } from "@/libs/reward";
+import { formatMoney, isCountedInConsumption } from "@/libs/reward";
 
 export interface StoreReward {
   template: RewardTemplate;
@@ -68,7 +68,7 @@ export function RewardsGrid({ rewards, isLoading, onRewardClick }: RewardsGridPr
                 </p>
                 {counted && (
                   <p className="text-green-400 text-xs">
-                    {formatMoney(pointsToMoney(template.pointsCost, template.pointsPerYuan))}
+                    {formatMoney(template.moneyCost)}
                   </p>
                 )}
               </div>

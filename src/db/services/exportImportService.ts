@@ -3,7 +3,26 @@ import type { TaskTemplate, TaskInstance } from '../types/task';
 import type { RewardTemplate, RewardPurchase, ReplenishmentRecord } from '../types/reward';
 import type { User, PointsHistory } from '../types/user';
 import type { Achievement } from '../types/achievement';
-import { normalizeRatio, isCountedInConsumption } from '@/libs/reward';
+import { roundMoney, isValidMoneyCost, isCountedInConsumption } from '@/libs/reward';
+
+/** v7 之前模板上的积分货币比例（旧模型：金额 = pointsCost / pointsPerYuan） */
+type LegacyRatioField = { pointsPerYuan?: number };
+
+/** 取旧备份里可用的比例，非法值兜底为 1 */
+function readLegacyRatio(template: unknown): number {
+  const { pointsPerYuan } = template as LegacyRatioField;
+  return Number.isFinite(pointsPerYuan) && (pointsPerYuan as number) > 0
+    ? (pointsPerYuan as number)
+    : 1;
+}
+
+/** 单件金额：新备份直接用；旧备份（无 moneyCost）按 pointsCost / pointsPerYuan 换算 */
+function resolveMoneyCost(template: RewardTemplate): number {
+  if (isValidMoneyCost(template.moneyCost)) {
+    return roundMoney(template.moneyCost);
+  }
+  return roundMoney(template.pointsCost / readLegacyRatio(template));
+}
 
 // 备份文件格式版本
 const BACKUP_VERSION = '1.1';
@@ -239,11 +258,11 @@ async function importWithOverwrite(data: ExportData['data']): Promise<ImportResu
         await Promise.all([
           db.taskTemplates.bulkPut(data.taskTemplates as TaskTemplate[]),
           db.taskInstances.bulkPut(data.taskInstances as TaskInstance[]),
-          // 旧备份没有 pointsPerYuan / countInConsumption，导入时归一化兜底（比例 1、计入统计）
+          // 旧备份没有 moneyCost / countInConsumption，导入时换算并兜底（计入统计）
           db.rewardTemplates.bulkPut(
             (data.rewardTemplates as RewardTemplate[]).map((template) => ({
               ...template,
-              pointsPerYuan: normalizeRatio(template.pointsPerYuan),
+              moneyCost: resolveMoneyCost(template),
               countInConsumption: isCountedInConsumption(template.countInConsumption),
             }))
           ),

@@ -1,5 +1,5 @@
 import type { RewardTemplate } from "@/db/types";
-import { pointsToMoney } from "@/libs/reward";
+import { roundMoney } from "@/libs/reward";
 
 export interface StoreReward {
   template: RewardTemplate;
@@ -47,5 +47,5 @@ export function getPurchaseMoney(
   template: RewardTemplate,
   quantity: number
 ): number {
-  return pointsToMoney(template.pointsCost * quantity, template.pointsPerYuan);
+  return roundMoney(template.moneyCost * quantity);
 }

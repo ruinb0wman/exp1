@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { getDB } from '@/db';
 import type { RewardTemplate } from '@/db/types';
-import { pointsToMoney } from '@/libs/reward';
+import { roundMoney } from '@/libs/reward';
 import {
   purchaseReward,
   getRewardPurchases,
@@ -23,7 +23,7 @@ function template(overrides: Partial<RewardTemplate> = {}): Omit<RewardTemplate,
     userId: USER_ID,
     title: '吃饭',
     pointsCost: 100,
-    pointsPerYuan: 1,
+    moneyCost: 100,
     countInConsumption: true,
     enabled: true,
     replenishmentMode: 'none',
@@ -95,30 +95,85 @@ describe('rewardService - 购买即消费', () => {
     expect(await currentPoints()).toBe(200);
   });
 
-  it('比例换算金额：1:2 时 100 积分 = ¥50', async () => {
+  it('按单件金额累计：¥50/份 时单价不变，数量倍增金额', async () => {
     await seedPoints(300);
-    const templateId = await createRewardTemplate(template({ pointsPerYuan: 2 }));
+    const templateId = await createRewardTemplate(
+      template({ pointsCost: 20, moneyCost: 50 })
+    );
 
-    const purchaseId = await purchaseReward(templateId, USER_ID, 1);
+    const one = await getRewardPurchaseById(await purchaseReward(templateId, USER_ID, 1));
+    expect(one!.pointsSpent).toBe(20);
+    expect(one!.moneyAmount).toBe(50);
 
-    const purchase = await getRewardPurchaseById(purchaseId);
-    expect(purchase!.pointsSpent).toBe(100);
-    expect(purchase!.moneyAmount).toBe(50);
+    const three = await getRewardPurchaseById(await purchaseReward(templateId, USER_ID, 3));
+    expect(three!.pointsSpent).toBe(60);
+    expect(three!.moneyAmount).toBe(150);
   });
 
-  it('小数比例换算金额保留 2 位小数', async () => {
+  it('小数单件金额保留 2 位小数', async () => {
     await seedPoints(300);
-    const templateId = await createRewardTemplate(template({ pointsPerYuan: 1.5 }));
+    const templateId = await createRewardTemplate(
+      template({ pointsCost: 20, moneyCost: 0.5 })
+    );
 
-    const purchaseId = await purchaseReward(templateId, USER_ID, 1);
+    const purchaseId = await purchaseReward(templateId, USER_ID, 3);
 
     const purchase = await getRewardPurchaseById(purchaseId);
-    // 100 / 1.5 = 66.666... → 66.67
-    expect(purchase!.moneyAmount).toBe(66.67);
-    expect(purchase!.moneyAmount).toBe(pointsToMoney(100, 1.5));
+    // 0.5 × 3 = 1.5
+    expect(purchase!.moneyAmount).toBe(1.5);
+    expect(purchase!.moneyAmount).toBe(roundMoney(0.5 * 3));
   });
 
-  it('关闭积分货币比例：不写金额、快照标记不计入，但积分照扣', async () => {
+  it('0 积分的免费额度：可以购买、按单件金额记账、不写 0 分流水', async () => {
+    await seedPoints(100);
+    const templateId = await createRewardTemplate(
+      template({
+        title: '吃饭',
+        pointsCost: 0,
+        moneyCost: 1,
+        replenishmentMode: 'daily',
+        replenishmentNum: 25,
+      })
+    );
+    await db.rewardTemplates.update(templateId, { currentStock: 25 });
+
+    const purchaseId = await purchaseReward(templateId, USER_ID, 25);
+
+    const purchase = await getRewardPurchaseById(purchaseId);
+    expect(purchase!.pointsSpent).toBe(0);
+    expect(purchase!.moneyAmount).toBe(25);
+    expect(purchase!.template.moneyCost).toBe(1);
+    // 额度被扣减
+    expect((await db.rewardTemplates.get(templateId))!.currentStock).toBe(0);
+    // 积分余额不变，且没有 0 分的 reward_exchange 流水
+    expect(await currentPoints()).toBe(100);
+    const spendRecords = await db.pointsHistory
+      .where('userId')
+      .equals(USER_ID)
+      .filter((record) => record.type === 'reward_exchange')
+      .toArray();
+    expect(spendRecords).toHaveLength(0);
+  });
+
+  it('0 积分但额度不足时仍抛错', async () => {
+    await seedPoints(100);
+    const templateId = await createRewardTemplate(
+      template({ pointsCost: 0, moneyCost: 1, replenishmentMode: 'daily', replenishmentNum: 2 })
+    );
+    await db.rewardTemplates.update(templateId, { currentStock: 2 });
+
+    await expect(purchaseReward(templateId, USER_ID, 3)).rejects.toThrow('消费额度不足');
+    expect(await db.rewardPurchases.count()).toBe(0);
+  });
+
+  it('负数积分价被视为无效', async () => {
+    await seedPoints(300);
+    const templateId = await createRewardTemplate(template({ pointsCost: -1 }));
+
+    await expect(purchaseReward(templateId, USER_ID, 1)).rejects.toThrow('商品积分价格无效');
+  });
+
+  it('关闭统计：不写金额、快照标记不计入，但积分照扣', async () => {
     await seedPoints(300);
     const templateId = await createRewardTemplate(template({ countInConsumption: false }));
 
@@ -301,7 +356,7 @@ describe('rewardService - 消费统计', () => {
         id: 'p1',
         userId: USER_ID,
         templateId: 't1',
-        template: { templateId: 't1', title: '吃饭', icon: 'Pizza', pointsCost: 100, pointsPerYuan: 1 },
+        template: { templateId: 't1', title: '吃饭', icon: 'Pizza', pointsCost: 100, moneyCost: 100 },
         quantity: 2,
         pointsCost: 100,
         pointsSpent: 200,
@@ -312,7 +367,7 @@ describe('rewardService - 消费统计', () => {
         id: 'p2',
         userId: USER_ID,
         templateId: 't2',
-        template: { templateId: 't2', title: '香烟', icon: 'Cigarette', pointsCost: 20, pointsPerYuan: 2 },
+        template: { templateId: 't2', title: '香烟', icon: 'Cigarette', pointsCost: 20, moneyCost: 10 },
         quantity: 1,
         pointsCost: 20,
         pointsSpent: 20,
@@ -323,7 +378,7 @@ describe('rewardService - 消费统计', () => {
         id: 'p3',
         userId: USER_ID,
         templateId: 't2',
-        template: { templateId: 't2', title: '香烟', icon: 'Cigarette', pointsCost: 20, pointsPerYuan: 2 },
+        template: { templateId: 't2', title: '香烟', icon: 'Cigarette', pointsCost: 20, moneyCost: 10 },
         quantity: 1,
         pointsCost: 20,
         pointsSpent: 20,
@@ -335,7 +390,7 @@ describe('rewardService - 消费统计', () => {
         id: 'p4',
         userId: 2,
         templateId: 't1',
-        template: { templateId: 't1', title: '吃饭', icon: 'Pizza', pointsCost: 100, pointsPerYuan: 1 },
+        template: { templateId: 't1', title: '吃饭', icon: 'Pizza', pointsCost: 100, moneyCost: 100 },
         quantity: 1,
         pointsCost: 100,
         pointsSpent: 100,
@@ -398,7 +453,7 @@ describe('rewardService - 消费统计', () => {
         id: 'p1',
         userId: USER_ID,
         templateId: 't1',
-        template: { templateId: 't1', title: '旧名字', icon: 'Pizza', pointsCost: 10, pointsPerYuan: 1 },
+        template: { templateId: 't1', title: '旧名字', icon: 'Pizza', pointsCost: 10, moneyCost: 10 },
         quantity: 1,
         pointsCost: 10,
         pointsSpent: 10,
@@ -409,7 +464,7 @@ describe('rewardService - 消费统计', () => {
         id: 'p2',
         userId: USER_ID,
         templateId: 't1',
-        template: { templateId: 't1', title: '新名字', icon: 'Pizza', pointsCost: 10, pointsPerYuan: 1 },
+        template: { templateId: 't1', title: '新名字', icon: 'Pizza', pointsCost: 10, moneyCost: 10 },
         quantity: 1,
         pointsCost: 10,
         pointsSpent: 10,
@@ -440,7 +495,7 @@ describe('rewardService - 消费统计', () => {
           title: '吃饭',
           icon: 'Pizza',
           pointsCost: 100,
-          pointsPerYuan: 1,
+          moneyCost: 100,
           countInConsumption: true,
         },
         quantity: 2,
@@ -458,7 +513,7 @@ describe('rewardService - 消费统计', () => {
           title: '看电影',
           icon: 'Film',
           pointsCost: 50,
-          pointsPerYuan: 1,
+          moneyCost: 50,
           countInConsumption: false,
         },
         quantity: 1,
@@ -515,7 +570,7 @@ describe('rewardService - 消费统计', () => {
         id: 'p1',
         userId: USER_ID,
         templateId: 't1',
-        template: { templateId: 't1', title: '旧奖品', icon: 'Gift', pointsCost: 10, pointsPerYuan: 2 },
+        template: { templateId: 't1', title: '旧奖品', icon: 'Gift', pointsCost: 10, moneyCost: 5 },
         quantity: 1,
         pointsCost: 10,
         pointsSpent: 10,
@@ -540,7 +595,7 @@ describe('rewardService - 消费统计', () => {
         id: 'p1',
         userId: USER_ID,
         templateId: 't1',
-        template: { templateId: 't1', title: 'A', icon: 'Gift', pointsCost: 1, pointsPerYuan: 1 },
+        template: { templateId: 't1', title: 'A', icon: 'Gift', pointsCost: 1, moneyCost: 1 },
         quantity: 1,
         pointsCost: 1,
         pointsSpent: 1,
@@ -551,7 +606,7 @@ describe('rewardService - 消费统计', () => {
         id: 'p2',
         userId: 2,
         templateId: 't1',
-        template: { templateId: 't1', title: 'A', icon: 'Gift', pointsCost: 1, pointsPerYuan: 1 },
+        template: { templateId: 't1', title: 'A', icon: 'Gift', pointsCost: 1, moneyCost: 1 },
         quantity: 1,
         pointsCost: 1,
         pointsSpent: 1,

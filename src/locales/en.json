@@ -372,13 +372,13 @@
     "title": "Edit Reward",
     "createTitle": "Create Reward",
     "saveFailed": "Failed to save",
-    "pointsPerYuan": "Points / Money Ratio",
+    "moneyCost": "Unit Value",
     "countInConsumption": "Count in spending",
-    "pointsPerYuanLabel": "Points per ¥1",
-    "pointsPerYuanHint": "E.g. 1 for meals (1 point = ¥1), 2 for cigarettes (2 points = ¥1). Decimals allowed.",
-    "pointsPerYuanOffHint": "No money value — excluded from spending stats",
-    "ratioPreview": "{cost} points equals",
-    "invalidRatio": "Ratio must be a number greater than 0"
+    "moneyCostLabel": "Unit value (¥)",
+    "moneyCostHint": "Money value of one item. Free rewards with 0 point cost (e.g. a daily free quota) are recorded with it, e.g. ¥1 each.",
+    "moneyCostPreview": "{cost} points / item equals",
+    "moneyCostOffHint": "No money value — excluded from spending stats",
+    "invalidMoneyCost": "Unit value must be a number greater than or equal to 0"
   },
   "popup": {
     "close": "Close"

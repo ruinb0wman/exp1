@@ -3,16 +3,16 @@ import Dexie from 'dexie';
 import { getDB } from '../index';
 
 /**
- * v6 迁移：购买即消费
- * - 删除 rewardInstances（背包）表
- * - 新增 rewardPurchases 表
- * - 清除模板上的 validDuration，并给缺失的模板补 pointsPerYuan = 1
+ * v6 + v7 迁移（老用户升级时会连续跑）
+ * - v6：删除 rewardInstances（背包）表、新增 rewardPurchases 表、
+ *   清除模板上的 validDuration、并给缺失的模板补 pointsPerYuan = 1
+ * - v7：金额与积分解耦 —— moneyCost = pointsCost / pointsPerYuan，删除 pointsPerYuan
  *
  * 这里刻意先用 v5 打开同一个库写入旧数据，再用 getDB() 触发真实升级路径，
- * 确保老用户升级后模板仍可读、比例有兜底、背包表被移除。
+ * 确保老用户升级后模板仍可读、金额等值换算、旧表被移除。
  */
-describe('migration v6 - 购买即消费', () => {
-  it('老库升级后补齐比例、清除有效期、移除背包表', async () => {
+describe('migration v6+v7 - 购买即消费 + 单件金额', () => {
+  it('老库升级后换算出单件金额、清除旧字段、移除背包表', async () => {
     const DB_NAME = 'exp-v7';
 
     // 1. 以 v5 结构建库并写入旧数据
@@ -54,6 +54,18 @@ describe('migration v6 - 购买即消费', () => {
         icon: 'Cigarette',
         createdAt: '2026-01-01T00:00:00.000Z',
       },
+      {
+        // 积分价为 0 的免费额度：旧公式算出来只能是 ¥0，升级后需手动填金额
+        id: 't-free',
+        userId: 1,
+        title: '吃饭额度',
+        pointsCost: 0,
+        pointsPerYuan: 1,
+        enabled: true,
+        replenishmentMode: 'daily',
+        icon: 'Pizza',
+        createdAt: '2026-01-01T00:00:00.000Z',
+      },
     ]);
     await legacy.table('rewardInstances').add({
       id: 'i1',
@@ -72,21 +84,28 @@ describe('migration v6 - 购买即消费', () => {
     expect(tables).toContain('rewardPurchases');
     expect(tables).not.toContain('rewardInstances');
 
-    // 3. 老模板补齐比例（1），已有比例不被覆盖；有效期字段被清除
+    // 3. 老模板：v6 补的比例被 v7 换成单件金额，旧字段被清除
     const oldTemplate = await db.rewardTemplates.get('t-old');
-    expect(oldTemplate!.pointsPerYuan).toBe(1);
+    expect(oldTemplate!.moneyCost).toBe(100); // 100 积分 / 比例 1
+    expect('pointsPerYuan' in oldTemplate!).toBe(false);
     expect('validDuration' in oldTemplate!).toBe(false);
 
     const newTemplate = await db.rewardTemplates.get('t-new');
-    expect(newTemplate!.pointsPerYuan).toBe(2);
+    expect(newTemplate!.moneyCost).toBe(10); // 20 积分 / 比例 2
+    expect('pointsPerYuan' in newTemplate!).toBe(false);
     expect('validDuration' in newTemplate!).toBe(false);
+
+    // 积分价为 0 的免费额度只能迁移成 ¥0，需用户手动填单件金额
+    const freeTemplate = await db.rewardTemplates.get('t-free');
+    expect(freeTemplate!.moneyCost).toBe(0);
+    expect('pointsPerYuan' in freeTemplate!).toBe(false);
 
     // 4. 新表可用
     await db.rewardPurchases.add({
       id: 'p1',
       userId: 1,
       templateId: 't-old',
-      template: { templateId: 't-old', title: '吃饭', icon: 'Pizza', pointsCost: 100, pointsPerYuan: 1 },
+      template: { templateId: 't-old', title: '吃饭', icon: 'Pizza', pointsCost: 100, moneyCost: 100 },
       quantity: 1,
       pointsCost: 100,
       pointsSpent: 100,

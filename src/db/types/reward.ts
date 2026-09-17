@@ -55,14 +55,13 @@ export interface RewardTemplate {
   userId: number;
   title: string;
   description?: string;
-  /** 单个商品所需积分 */
+  /** 单个商品所需积分；0 = 不花积分（如每日免费额度） */
   pointsCost: number;
   /**
-   * 积分货币比例：每 ¥1 折合多少积分（吃饭 = 1，香烟 = 2）
-   * 必须为有限正数，允许小数；金额换算为 pointsCost / pointsPerYuan
-   * 关闭（countInConsumption === false）时该值仍保留，重新打开即可复用
+   * 单件折合金额（元，2 位小数）；0 = 不记金额
+   * 消费记录金额 = moneyCost × 数量，与积分价互不换算
    */
-  pointsPerYuan: number;
+  moneyCost: number;
   /**
    * 是否折合金额并计入消费统计；缺省（旧数据）视为 true
    */
@@ -89,7 +88,8 @@ export interface RewardPurchaseSnapshot {
   icon: RewardIconName;
   iconColor?: RewardIconColor;
   pointsCost: number;
-  pointsPerYuan: number;
+  /** 购买时的单件金额快照（元） */
+  moneyCost: number;
   /** 购买那一刻的「计入消费统计」设置，统计与明细标注都按它判定 */
   countInConsumption?: boolean;
 }
@@ -107,8 +107,8 @@ export interface RewardPurchase {
   /** 实际扣除积分 = pointsCost * quantity */
   pointsSpent: number;
   /**
-   * 折合金额 = pointsSpent / pointsPerYuan，保留 2 位小数
-   * 关闭比例的购买不写该字段（undefined = 不计入消费统计），避免 0 被误读成真实金额
+   * 折合金额 = moneyCost × quantity，保留 2 位小数
+   * 关闭统计的购买不写该字段（undefined = 不计入消费统计），避免 0 被误读成真实金额
    */
   moneyAmount?: number;
   createdAt: string;

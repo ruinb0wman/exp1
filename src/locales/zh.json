@@ -372,13 +372,13 @@
     "title": "编辑奖励",
     "createTitle": "创建奖励",
     "saveFailed": "保存失败",
-    "pointsPerYuan": "积分货币比例",
+    "moneyCost": "单件金额",
     "countInConsumption": "计入消费统计",
-    "pointsPerYuanLabel": "每 ¥1 需要积分",
-    "pointsPerYuanHint": "例如吃饭填 1（1 积分抵 ¥1），香烟填 2（2 积分抵 ¥1）。允许小数。",
-    "pointsPerYuanOffHint": "不折合金额，不计入消费统计",
-    "ratioPreview": "{cost} 积分折合",
-    "invalidRatio": "积分货币比例必须是大于 0 的数字"
+    "moneyCostLabel": "单件金额（¥）",
+    "moneyCostHint": "单件折合金额。积分价为 0 的免费额度（如每日送的份数）也按它记账，例如 ¥1/份。",
+    "moneyCostPreview": "{cost} 积分 / 份 折合",
+    "moneyCostOffHint": "不折合金额，不计入消费统计",
+    "invalidMoneyCost": "单件金额必须是大于或等于 0 的数字"
   },
   "popup": {
     "close": "关闭"

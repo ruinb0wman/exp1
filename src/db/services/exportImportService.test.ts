@@ -132,12 +132,12 @@ describe('exportImportService - achievements', () => {
     expect(await db.rewardPurchases.count()).toBe(0);
   });
 
-  it('消费记录可导出并完整还原，旧模板缺少比例时兜底为 1', async () => {
+  it('消费记录可导出并完整还原，旧模板缺少单件金额时按积分货币比例兜底', async () => {
     await db.rewardPurchases.add({
       id: 'p1',
       userId: 1,
       templateId: 't1',
-      template: { templateId: 't1', title: '吃饭', icon: 'Pizza', pointsCost: 100, pointsPerYuan: 1 },
+      template: { templateId: 't1', title: '吃饭', icon: 'Pizza', pointsCost: 100, moneyCost: 100 },
       quantity: 2,
       pointsCost: 100,
       pointsSpent: 200,
@@ -153,7 +153,7 @@ describe('exportImportService - achievements', () => {
 
     await db.rewardPurchases.clear();
     await db.rewardTemplates.clear();
-    // 模拟旧备份里的模板：没有 pointsPerYuan 字段
+    // 模拟旧备份里的模板：没有 moneyCost，只有旧的 pointsPerYuan
     const exportedWithLegacyTemplate = {
       ...exported,
       data: {
@@ -164,6 +164,8 @@ describe('exportImportService - achievements', () => {
             userId: 1,
             title: '吃饭',
             pointsCost: 100,
+            // 旧备份遗留的比例字段：金额 = pointsCost / pointsPerYuan = ¥50
+            pointsPerYuan: 2,
             enabled: true,
             replenishmentMode: 'none' as const,
             icon: 'Pizza' as const,
@@ -177,6 +179,6 @@ describe('exportImportService - achievements', () => {
     expect(result.success).toBe(true);
     expect(result.stats?.rewardPurchases).toBe(1);
     expect(await db.rewardPurchases.count()).toBe(1);
-    expect((await db.rewardTemplates.get('t1'))?.pointsPerYuan).toBe(1);
+    expect((await db.rewardTemplates.get('t1'))?.moneyCost).toBe(50);
   });
 });

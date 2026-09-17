@@ -1,47 +1,43 @@
 /**
- * 奖品积分/金额换算工具
+ * 奖品计价工具
  *
- * 商品按积分定价（pointsCost），积分货币比例（pointsPerYuan）表示每 ¥1 折合多少积分：
- *   金额(元) = 积分 / pointsPerYuan
- * 例如 吃饭 pointsPerYuan = 1（1 积分 = ¥1），香烟 pointsPerYuan = 2（2 积分 = ¥1）。
+ * 一个奖品有两个彼此独立的维度：
+ *   pointsCost —— 单件所需积分（0 = 不花积分，如每日免费额度）
+ *   moneyCost  —— 单件折合金额（元，0 = 不记金额）
  *
- * 比例可以关闭（countInConsumption === false）：关闭后不折合金额，该奖品之后的购买
- * 也不计入消费统计。
+ * 一条消费记录的金额 = moneyCost × 数量（2 位小数）。两者不做任何换算：
+ * 「0 积分但有金额」的奖品（吃饭 25 份/天 = ¥25）在这个模型下才有解。
+ *
+ * 「计入消费统计」开关（countInConsumption === false）关闭后不写金额、该奖品之后的
+ * 购买也不计入消费统计。
  */
 
 /** 金额保留小数位 */
 const MONEY_DECIMALS = 2;
 
+const MONEY_FACTOR = 10 ** MONEY_DECIMALS;
+
 /**
  * 该奖品 / 该笔购买是否折合金额并计入消费统计
  *
- * 缺省（v7 之前写入的旧数据没有这个字段）视为计入。
+ * 缺省（旧数据没有这个字段）视为计入。
  * 全仓库「是否计入」的判断只走这一个函数，不要另开真值来源。
  */
 export function isCountedInConsumption(countInConsumption?: boolean): boolean {
   return countInConsumption !== false;
 }
 
-/** 比例是否合法：有限正数 */
-export function isValidRatio(pointsPerYuan: number): boolean {
-  return Number.isFinite(pointsPerYuan) && pointsPerYuan > 0;
+/** 单件金额是否合法：有限且非负（0 表示不记金额） */
+export function isValidMoneyCost(moneyCost: number): boolean {
+  return Number.isFinite(moneyCost) && moneyCost >= 0;
 }
 
 /**
- * 取用于换算的可用比例，非法值兜底为 1，避免除零
+ * 金额取整到 2 位小数（写入消费记录前统一走这里）
  */
-export function normalizeRatio(pointsPerYuan: number | undefined): number {
-  return isValidRatio(pointsPerYuan as number) ? (pointsPerYuan as number) : 1;
-}
-
-/**
- * 积分 → 金额（元），保留 2 位小数
- */
-export function pointsToMoney(points: number, pointsPerYuan: number): number {
-  const ratio = normalizeRatio(pointsPerYuan);
-  if (!Number.isFinite(points)) return 0;
-  const factor = 10 ** MONEY_DECIMALS;
-  return Math.round((points / ratio) * factor) / factor;
+export function roundMoney(amount: number): number {
+  if (!Number.isFinite(amount)) return 0;
+  return Math.round(amount * MONEY_FACTOR) / MONEY_FACTOR;
 }
 
 /**
@@ -49,14 +45,6 @@ export function pointsToMoney(points: number, pointsPerYuan: number): number {
  */
 export function formatMoney(amount: number): string {
   if (!Number.isFinite(amount)) return '¥0';
-  const rounded = Math.round(amount * 10 ** MONEY_DECIMALS) / 10 ** MONEY_DECIMALS;
+  const rounded = Math.round(amount * MONEY_FACTOR) / MONEY_FACTOR;
   return `¥${Number(rounded.toFixed(MONEY_DECIMALS))}`;
-}
-
-/**
- * 比例展示，如 1:2（1 积分 = ¥0.5）时返回 "1:2"
- * 注意：调用前需自行确认该奖品「计入消费统计」（isCountedInConsumption）
- */
-export function formatRatio(pointsPerYuan: number): string {
-  return `1:${Number(normalizeRatio(pointsPerYuan).toFixed(2))}`;
 }

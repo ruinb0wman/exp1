@@ -260,7 +260,7 @@ const rewardPurchases: RewardPurchase[] = [
 	{
 		id: 'r1',
 		templateId: 'rt1',
-		template: { templateId: 'rt1', title: '测试奖励', icon: 'Gift', pointsCost: 10, pointsPerYuan: 1 },
+		template: { templateId: 'rt1', title: '测试奖励', icon: 'Gift', pointsCost: 10, moneyCost: 10 },
 		userId: 1,
 		quantity: 1,
 		pointsCost: 10,
