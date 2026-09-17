@@ -346,7 +346,7 @@ export interface RewardPurchaseStats {
   count: number;
   /** 件数（仅计入消费统计的记录） */
   quantity: number;
-  /** 按积分消耗倒序（仅计入消费统计的记录） */
+  /** 按金额倒序（仅计入消费统计的记录）：商品占比与排名都以金额为准 */
   byTemplate: PurchaseTemplateBucket[];
   /** 区间内明细，按时间倒序；**含**不计入消费统计的记录（明细保留撤销入口） */
   purchases: RewardPurchase[];
@@ -412,7 +412,7 @@ export async function getRewardPurchaseStats(
   }
 
   const byTemplate = Array.from(bucketMap.values()).sort(
-    (a, b) => b.pointsSpent - a.pointsSpent
+    (a, b) => b.moneyAmount - a.moneyAmount
   );
 
   return {

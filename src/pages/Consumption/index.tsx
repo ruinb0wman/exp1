@@ -108,7 +108,10 @@ export function Consumption() {
 									<h2 className="text-text-primary font-bold mb-3">
 										{t('consumption.breakdown.title')}
 									</h2>
-									<TemplateBreakdown buckets={stats.byTemplate} />
+									<TemplateBreakdown
+										buckets={stats.byTemplate}
+										totalMoney={stats.moneyAmount}
+									/>
 								</section>
 
 								<section>

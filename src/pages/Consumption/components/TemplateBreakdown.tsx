@@ -4,16 +4,18 @@ import { DynamicIcon } from '@/components/DynamicIcon';
 import { EmptyState } from '@/components/EmptyState';
 import type { PurchaseTemplateBucket } from '@/db/services';
 import { formatMoney } from '@/libs/reward';
-import { getMaxPoints } from '../lib';
+import { formatPercent, getMoneySharePercent } from '../lib';
 
 interface TemplateBreakdownProps {
 	buckets: PurchaseTemplateBucket[];
+	/** 周期内计入统计的消费总额（元），作为占比分母 */
+	totalMoney: number;
 }
 
 /**
- * 按商品聚合的消费占比
+ * 按商品聚合的消费占比：排名、百分比与占比条都按金额计算
  */
-export function TemplateBreakdown({ buckets }: TemplateBreakdownProps) {
+export function TemplateBreakdown({ buckets, totalMoney }: TemplateBreakdownProps) {
 	const { t } = useTranslation();
 
 	if (buckets.length === 0) {
@@ -25,13 +27,11 @@ export function TemplateBreakdown({ buckets }: TemplateBreakdownProps) {
 		);
 	}
 
-	const maxPoints = getMaxPoints(buckets);
-
 	return (
 		<div className="rounded-xl bg-surface p-4 border border-border space-y-4">
 			{buckets.map((bucket) => {
 				const color = bucket.iconColor ?? '#f56565';
-				const percent = maxPoints > 0 ? (bucket.pointsSpent / maxPoints) * 100 : 0;
+				const percent = getMoneySharePercent(bucket.moneyAmount, totalMoney);
 				return (
 					<div key={bucket.templateId} className="space-y-2">
 						<div className="flex items-center gap-3">
@@ -56,8 +56,13 @@ export function TemplateBreakdown({ buckets }: TemplateBreakdownProps) {
 								<p className="text-primary font-bold">
 									{bucket.pointsSpent.toLocaleString()}
 								</p>
-								<p className="text-green-400 text-xs">
-									{formatMoney(bucket.moneyAmount)}
+								<p className="text-xs">
+									<span className="text-green-400">
+										{formatMoney(bucket.moneyAmount)}
+									</span>
+									<span className="text-text-secondary ml-2">
+										{formatPercent(percent)}
+									</span>
 								</p>
 							</div>
 						</div>

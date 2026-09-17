@@ -1,4 +1,3 @@
-import type { PurchaseTemplateBucket } from '@/db/services';
 import type { PurchaseScope } from '@/hooks/useRewardPurchases';
 import { formatLocalDate } from '@/libs/time';
 
@@ -36,9 +35,23 @@ export function shiftAnchor(scope: PurchaseScope, anchor: Date, delta: number): 
 	}
 }
 
-/** 占比条的分母：最大商品的积分消耗 */
-export function getMaxPoints(buckets: PurchaseTemplateBucket[]): number {
-	return buckets.reduce((max, bucket) => Math.max(max, bucket.pointsSpent), 0);
+/**
+ * 商品金额占总额的百分比（商品占比与排名都以金额为准）
+ * 总额为 0（全是不记金额的奖品）时返回 0，不产生 NaN
+ */
+export function getMoneySharePercent(moneyAmount: number, totalMoney: number): number {
+	if (!Number.isFinite(moneyAmount) || !Number.isFinite(totalMoney) || totalMoney <= 0) {
+		return 0;
+	}
+	return (moneyAmount / totalMoney) * 100;
+}
+
+/**
+ * 占比文案：10% 及以上取整（41%），10% 以下保留 1 位小数（3.4%），避免小项全部显示成 0%
+ */
+export function formatPercent(percent: number): string {
+	if (!Number.isFinite(percent) || percent <= 0) return '0%';
+	return percent >= 10 ? `${Math.round(percent)}%` : `${percent.toFixed(1)}%`;
 }
 
 /**

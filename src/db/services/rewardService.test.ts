@@ -589,6 +589,59 @@ describe('rewardService - 消费统计', () => {
     expect(stats.moneyAmount).toBe(5);
   });
 
+  it('商品占比与排名按金额倒序（与积分序不一致时以金额为准）', async () => {
+    await db.rewardPurchases.bulkAdd([
+      {
+        id: 'p1',
+        userId: USER_ID,
+        templateId: 'points-heavy',
+        template: {
+          templateId: 'points-heavy',
+          title: '积分王',
+          icon: 'Crown',
+          pointsCost: 1000,
+          moneyCost: 1,
+        },
+        quantity: 1,
+        pointsCost: 1000,
+        pointsSpent: 1000,
+        moneyAmount: 1,
+        createdAt: '2026-09-02T00:00:00.000Z',
+      },
+      {
+        id: 'p2',
+        userId: USER_ID,
+        templateId: 'money-heavy',
+        template: {
+          templateId: 'money-heavy',
+          title: '小钱多',
+          icon: 'Gift',
+          pointsCost: 10,
+          moneyCost: 50,
+        },
+        quantity: 1,
+        pointsCost: 10,
+        pointsSpent: 10,
+        moneyAmount: 50,
+        createdAt: '2026-09-03T00:00:00.000Z',
+      },
+    ] as never);
+
+    const stats = await getRewardPurchaseStats(
+      USER_ID,
+      '2026-09-01T00:00:00.000Z',
+      '2026-10-01T00:00:00.000Z'
+    );
+
+    // 金额多的在前；若改成按积分排序会得到 ['points-heavy', 'money-heavy']
+    expect(stats.byTemplate.map((bucket) => bucket.templateId)).toEqual([
+      'money-heavy',
+      'points-heavy',
+    ]);
+    expect(stats.byTemplate[0].moneyAmount).toBe(50);
+    expect(stats.byTemplate[1].moneyAmount).toBe(1);
+  });
+
   it('getRewardPurchaseCount 只统计当前用户', async () => {
     await db.rewardPurchases.bulkAdd([
       {
