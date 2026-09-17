@@ -11,7 +11,7 @@ import type {
 } from '../types';
 import { getUserCurrentDate } from '@/libs/time';
 import { generateUUID } from '@/libs/id';
-import { pointsToMoney, normalizeRatio } from '@/libs/reward';
+import { pointsToMoney, normalizeRatio, isCountedInConsumption } from '@/libs/reward';
 
 // ==================== RewardTemplate CRUD ====================
 
@@ -29,6 +29,7 @@ export async function createRewardTemplate(
 	const newTemplate: RewardTemplate = {
 		...template,
 		pointsPerYuan: normalizeRatio(template.pointsPerYuan),
+		countInConsumption: isCountedInConsumption(template.countInConsumption),
 		id: '' as string,
 		createdAt: now,
 		currentStock: shouldReplenish ? 0 : undefined,
@@ -152,6 +153,7 @@ function toPurchaseSnapshot(template: RewardTemplate): RewardPurchaseSnapshot {
     iconColor: template.iconColor,
     pointsCost: template.pointsCost,
     pointsPerYuan: normalizeRatio(template.pointsPerYuan),
+    countInConsumption: isCountedInConsumption(template.countInConsumption),
   };
 }
 
@@ -185,6 +187,8 @@ export async function purchaseReward(
       }
 
       const ratio = normalizeRatio(template.pointsPerYuan);
+      // 关闭积分货币比例的奖品：不折合金额，也不计入消费统计
+      const counted = isCountedInConsumption(template.countInConsumption);
       const pointsCost = template.pointsCost;
       if (!Number.isFinite(pointsCost) || pointsCost <= 0) {
         throw new Error('商品积分价格无效');
@@ -217,7 +221,7 @@ export async function purchaseReward(
         quantity,
         pointsCost,
         pointsSpent: totalCost,
-        moneyAmount: pointsToMoney(totalCost, ratio),
+        moneyAmount: counted ? pointsToMoney(totalCost, ratio) : undefined,
         createdAt: now,
       };
       await db.rewardPurchases.add(purchase);
@@ -329,18 +333,24 @@ export interface PurchaseTemplateBucket {
 export interface RewardPurchaseStats {
   pointsSpent: number;
   moneyAmount: number;
-  /** 笔数 */
+  /** 笔数（仅计入消费统计的记录） */
   count: number;
-  /** 件数 */
+  /** 件数（仅计入消费统计的记录） */
   quantity: number;
-  /** 按积分消耗倒序 */
+  /** 按积分消耗倒序（仅计入消费统计的记录） */
   byTemplate: PurchaseTemplateBucket[];
-  /** 区间内明细，按时间倒序 */
+  /** 区间内明细，按时间倒序；**含**不计入消费统计的记录（明细保留撤销入口） */
   purchases: RewardPurchase[];
 }
 
 /**
  * 统计指定时间窗内的消费
+ *
+ * 汇总（积分 / 金额 / 笔数 / 件数 / 商品占比）只累加「计入消费统计」的记录；
+ * 「是否计入」按购买时的快照判定（`purchase.template.countInConsumption`），
+ * 因此事后关闭奖品比例不会回算历史统计。
+ * 明细 `purchases` 仍返回窗口内全部记录，由 UI 标注不计入的行。
+ *
  * @param startISO 起始 ISO 时间（含）
  * @param endExclusiveISO 结束 ISO 时间（不含）
  */
@@ -356,14 +366,19 @@ export async function getRewardPurchaseStats(
     .filter((p) => p.createdAt >= startISO && p.createdAt < endExclusiveISO)
     .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
 
+  // 明细保留全部，汇总与占比只算计入统计的
+  const counted = purchases.filter((purchase) =>
+    isCountedInConsumption(purchase.template.countInConsumption)
+  );
+
   const bucketMap = new Map<string, PurchaseTemplateBucket>();
   let pointsSpent = 0;
   let moneyAmount = 0;
   let quantity = 0;
 
-  for (const purchase of purchases) {
+  for (const purchase of counted) {
     pointsSpent += purchase.pointsSpent;
-    moneyAmount += purchase.moneyAmount;
+    moneyAmount += purchase.moneyAmount ?? 0;
     quantity += purchase.quantity;
 
     const existing = bucketMap.get(purchase.templateId);
@@ -371,7 +386,7 @@ export async function getRewardPurchaseStats(
       existing.count += 1;
       existing.quantity += purchase.quantity;
       existing.pointsSpent += purchase.pointsSpent;
-      existing.moneyAmount += purchase.moneyAmount;
+      existing.moneyAmount += purchase.moneyAmount ?? 0;
     } else {
       // purchases 已按时间倒序，首条即该商品最近的快照
       bucketMap.set(purchase.templateId, {
@@ -382,7 +397,7 @@ export async function getRewardPurchaseStats(
         count: 1,
         quantity: purchase.quantity,
         pointsSpent: purchase.pointsSpent,
-        moneyAmount: purchase.moneyAmount,
+        moneyAmount: purchase.moneyAmount ?? 0,
       });
     }
   }
@@ -394,7 +409,7 @@ export async function getRewardPurchaseStats(
   return {
     pointsSpent,
     moneyAmount: Math.round(moneyAmount * 100) / 100,
-    count: purchases.length,
+    count: counted.length,
     quantity,
     byTemplate,
     purchases,

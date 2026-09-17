@@ -5,7 +5,7 @@ import { DynamicIcon } from '@/components/DynamicIcon';
 import { EmptyState } from '@/components/EmptyState';
 import { useConfirm } from '@/hooks/useConfirm';
 import type { RewardPurchase } from '@/db/types';
-import { formatMoney } from '@/libs/reward';
+import { formatMoney, isCountedInConsumption } from '@/libs/reward';
 import { formatPurchaseDateTime } from '../lib';
 
 interface PurchaseListProps {
@@ -15,6 +15,7 @@ interface PurchaseListProps {
 
 /**
  * 消费明细：支持删除记录（回滚积分与消费额度）
+ * 不计入消费统计的购买仍然列出（否则没有地方可以撤销），只把金额换成标注
  */
 export function PurchaseList({ purchases, onDelete }: PurchaseListProps) {
 	const { t } = useTranslation();
@@ -55,6 +56,7 @@ export function PurchaseList({ purchases, onDelete }: PurchaseListProps) {
 			{purchases.map((purchase) => {
 				const color = purchase.template.iconColor ?? '#f56565';
 				const isDeleting = deletingId === purchase.id;
+				const counted = isCountedInConsumption(purchase.template.countInConsumption);
 				return (
 					<div
 						key={purchase.id}
@@ -84,9 +86,15 @@ export function PurchaseList({ purchases, onDelete }: PurchaseListProps) {
 
 						<div className="text-right shrink-0">
 							<p className="text-primary font-bold">-{purchase.pointsSpent}</p>
-							<p className="text-green-400 text-xs">
-								{formatMoney(purchase.moneyAmount)}
-							</p>
+							{counted ? (
+								<p className="text-green-400 text-xs">
+									{formatMoney(purchase.moneyAmount ?? 0)}
+								</p>
+							) : (
+								<p className="text-text-muted text-xs">
+									{t('consumption.detail.notCounted')}
+								</p>
+							)}
 						</div>
 
 						<button

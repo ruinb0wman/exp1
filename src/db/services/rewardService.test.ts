@@ -24,6 +24,7 @@ function template(overrides: Partial<RewardTemplate> = {}): Omit<RewardTemplate,
     title: '吃饭',
     pointsCost: 100,
     pointsPerYuan: 1,
+    countInConsumption: true,
     enabled: true,
     replenishmentMode: 'none',
     icon: 'Pizza',
@@ -115,6 +116,27 @@ describe('rewardService - 购买即消费', () => {
     // 100 / 1.5 = 66.666... → 66.67
     expect(purchase!.moneyAmount).toBe(66.67);
     expect(purchase!.moneyAmount).toBe(pointsToMoney(100, 1.5));
+  });
+
+  it('关闭积分货币比例：不写金额、快照标记不计入，但积分照扣', async () => {
+    await seedPoints(300);
+    const templateId = await createRewardTemplate(template({ countInConsumption: false }));
+
+    const purchaseId = await purchaseReward(templateId, USER_ID, 1);
+
+    const purchase = await getRewardPurchaseById(purchaseId);
+    expect(purchase!.moneyAmount).toBeUndefined();
+    expect(purchase!.template.countInConsumption).toBe(false);
+    expect(purchase!.pointsSpent).toBe(100);
+    expect(await currentPoints()).toBe(200);
+
+    // 积分流水照常写入：积分明细与消费统计是两回事
+    const spendRecords = await db.pointsHistory
+      .where('userId')
+      .equals(USER_ID)
+      .filter((record) => record.type === 'reward_exchange')
+      .toArray();
+    expect(spendRecords).toHaveLength(1);
   });
 
   it('积分不足时抛出错误，且不产生任何消费记录或积分流水', async () => {
@@ -405,6 +427,111 @@ describe('rewardService - 消费统计', () => {
     expect(stats.byTemplate).toHaveLength(1);
     expect(stats.byTemplate[0].title).toBe('新名字');
     expect(stats.byTemplate[0].count).toBe(2);
+  });
+
+  it('不计入统计的购买：汇总与商品占比不含，但明细仍保留', async () => {
+    await db.rewardPurchases.bulkAdd([
+      {
+        id: 'p1',
+        userId: USER_ID,
+        templateId: 't1',
+        template: {
+          templateId: 't1',
+          title: '吃饭',
+          icon: 'Pizza',
+          pointsCost: 100,
+          pointsPerYuan: 1,
+          countInConsumption: true,
+        },
+        quantity: 2,
+        pointsCost: 100,
+        pointsSpent: 200,
+        moneyAmount: 200,
+        createdAt: '2026-09-02T00:00:00.000Z',
+      },
+      {
+        id: 'p2',
+        userId: USER_ID,
+        templateId: 't2',
+        template: {
+          templateId: 't2',
+          title: '看电影',
+          icon: 'Film',
+          pointsCost: 50,
+          pointsPerYuan: 1,
+          countInConsumption: false,
+        },
+        quantity: 1,
+        pointsCost: 50,
+        pointsSpent: 50,
+        createdAt: '2026-09-03T00:00:00.000Z',
+      },
+    ] as never);
+
+    const stats = await getRewardPurchaseStats(
+      USER_ID,
+      '2026-09-01T00:00:00.000Z',
+      '2026-10-01T00:00:00.000Z'
+    );
+
+    expect(stats.count).toBe(1);
+    expect(stats.quantity).toBe(2);
+    expect(stats.pointsSpent).toBe(200);
+    expect(stats.moneyAmount).toBe(200);
+    expect(stats.byTemplate).toHaveLength(1);
+    expect(stats.byTemplate[0].templateId).toBe('t1');
+
+    // 明细保留全部（含不计入统计的那条），否则就没了撤销入口
+    expect(stats.purchases.map((purchase) => purchase.id)).toEqual(['p2', 'p1']);
+  });
+
+  it('快照口径：关闭比例只影响之后的购买，历史统计不回算', async () => {
+    await seedPoints(1000);
+    const templateId = await createRewardTemplate(template());
+
+    await purchaseReward(templateId, USER_ID, 1);
+    await db.rewardTemplates.update(templateId, { countInConsumption: false });
+    await purchaseReward(templateId, USER_ID, 1);
+
+    const now = Date.now();
+    const stats = await getRewardPurchaseStats(
+      USER_ID,
+      new Date(now - 24 * 60 * 60 * 1000).toISOString(),
+      new Date(now + 24 * 60 * 60 * 1000).toISOString()
+    );
+
+    // 两笔都在明细里，只有关闭前那笔计入统计
+    expect(stats.purchases).toHaveLength(2);
+    expect(stats.count).toBe(1);
+    expect(stats.pointsSpent).toBe(100);
+    expect(stats.moneyAmount).toBe(100);
+    expect(stats.byTemplate).toHaveLength(1);
+    expect(stats.byTemplate[0].count).toBe(1);
+  });
+
+  it('旧记录没有 countInConsumption 字段时视为计入统计', async () => {
+    await db.rewardPurchases.bulkAdd([
+      {
+        id: 'p1',
+        userId: USER_ID,
+        templateId: 't1',
+        template: { templateId: 't1', title: '旧奖品', icon: 'Gift', pointsCost: 10, pointsPerYuan: 2 },
+        quantity: 1,
+        pointsCost: 10,
+        pointsSpent: 10,
+        moneyAmount: 5,
+        createdAt: '2026-09-05T00:00:00.000Z',
+      },
+    ] as never);
+
+    const stats = await getRewardPurchaseStats(
+      USER_ID,
+      '2026-09-01T00:00:00.000Z',
+      '2026-10-01T00:00:00.000Z'
+    );
+
+    expect(stats.count).toBe(1);
+    expect(stats.moneyAmount).toBe(5);
   });
 
   it('getRewardPurchaseCount 只统计当前用户', async () => {

@@ -2,7 +2,7 @@ import { useTranslation } from "react-i18next";
 import { Sparkles, Banknote } from "lucide-react";
 import { NumberInput } from "@/components/NumberInput";
 import { DynamicIcon } from "@/components/DynamicIcon";
-import { formatMoney } from "@/libs/reward";
+import { formatMoney, isCountedInConsumption } from "@/libs/reward";
 import type { StoreReward } from "./RewardsGrid";
 import { getPurchaseMoney } from "../lib";
 
@@ -31,6 +31,8 @@ export function RewardDetailPopup({
   const { template, availableCount } = reward;
   const totalCost = template.pointsCost * redeemQuantity;
   const purchaseMoney = getPurchaseMoney(template, redeemQuantity);
+  // 关闭积分货币比例的奖品不折合金额，也不计入消费统计
+  const counted = isCountedInConsumption(template.countInConsumption);
   const canRedeem =
     !isActionLoading &&
     currentPoints >= totalCost &&
@@ -61,7 +63,7 @@ export function RewardDetailPopup({
         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-3">
+      <div className={`grid gap-3 ${counted ? "grid-cols-2" : "grid-cols-1"}`}>
         <div className="bg-surface rounded-xl p-4 text-center">
           <div className="flex items-center justify-center gap-1 text-primary mb-1">
             <Sparkles className="w-4 h-4" />
@@ -69,13 +71,15 @@ export function RewardDetailPopup({
           </div>
           <p className="text-text-muted text-xs">{t("common.exp")}</p>
         </div>
-        <div className="bg-surface rounded-xl p-4 text-center">
-          <div className="flex items-center justify-center gap-1 text-green-400 mb-1">
-            <Banknote className="w-4 h-4" />
-            <span className="text-lg font-bold">{formatMoney(purchaseMoney)}</span>
+        {counted && (
+          <div className="bg-surface rounded-xl p-4 text-center">
+            <div className="flex items-center justify-center gap-1 text-green-400 mb-1">
+              <Banknote className="w-4 h-4" />
+              <span className="text-lg font-bold">{formatMoney(purchaseMoney)}</span>
+            </div>
+            <p className="text-text-muted text-xs">{t("store.moneyValue")}</p>
           </div>
-          <p className="text-text-muted text-xs">{t("store.moneyValue")}</p>
-        </div>
+        )}
       </div>
 
       {template.replenishmentMode !== 'none' && (
@@ -112,9 +116,11 @@ export function RewardDetailPopup({
           <span className="text-text-secondary text-sm">{t("store.total")}</span>
           <span className="text-primary font-bold text-lg">
             {totalCost.toLocaleString()} {t("common.exp")}
-            <span className="text-text-secondary font-normal text-sm ml-2">
-              ≈ {formatMoney(purchaseMoney)}
-            </span>
+            {counted && (
+              <span className="text-text-secondary font-normal text-sm ml-2">
+                ≈ {formatMoney(purchaseMoney)}
+              </span>
+            )}
           </span>
         </div>
       </div>

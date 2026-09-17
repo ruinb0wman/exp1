@@ -3,7 +3,7 @@ import { Package, Sparkles } from "lucide-react";
 import { DynamicIcon } from "@/components/DynamicIcon";
 import { EmptyState } from "@/components/EmptyState";
 import type { RewardTemplate } from "@/db/types";
-import { formatMoney, pointsToMoney } from "@/libs/reward";
+import { formatMoney, pointsToMoney, isCountedInConsumption } from "@/libs/reward";
 
 export interface StoreReward {
   template: RewardTemplate;
@@ -39,43 +39,48 @@ export function RewardsGrid({ rewards, isLoading, onRewardClick }: RewardsGridPr
 
   return (
     <div className="grid gap-3 grid-cols-[repeat(auto-fill,minmax(100px,1fr))]">
-      {rewards.map(({ template, availableCount }) => (
-        <button
-          key={template.id}
-          onClick={() => onRewardClick({ template, availableCount })}
-          className="flex flex-col gap-2 text-left group"
-        >
-          <div
-            className="w-full aspect-square rounded-xl flex items-center justify-center transition-transform group-active:scale-95"
-            style={{ backgroundColor: `${template.iconColor ?? '#f56565'}20` }}
+      {rewards.map(({ template, availableCount }) => {
+        const counted = isCountedInConsumption(template.countInConsumption);
+        return (
+          <button
+            key={template.id}
+            onClick={() => onRewardClick({ template, availableCount })}
+            className="flex flex-col gap-2 text-left group"
           >
-            <DynamicIcon
-              name={template.icon}
-              color={template.iconColor ?? '#f56565'}
-              className="w-16 h-16"
-            />
-          </div>
-          <div>
-            <p className="text-text-primary text-base font-medium truncate">
-              {template.title}
-            </p>
-            <div className="flex items-center gap-2">
-              <Sparkles className="w-3 h-3 text-primary" />
-              <p className="text-text-secondary text-sm">
-                {template.pointsCost} exp
-              </p>
-              <p className="text-green-400 text-xs">
-                {formatMoney(pointsToMoney(template.pointsCost, template.pointsPerYuan))}
-              </p>
+            <div
+              className="w-full aspect-square rounded-xl flex items-center justify-center transition-transform group-active:scale-95"
+              style={{ backgroundColor: `${template.iconColor ?? '#f56565'}20` }}
+            >
+              <DynamicIcon
+                name={template.icon}
+                color={template.iconColor ?? '#f56565'}
+                className="w-16 h-16"
+              />
             </div>
-            {template.replenishmentMode !== 'none' && availableCount > 0 && (
-              <p className="text-text-muted text-xs mt-0.5">
-                {t("store.remainingQuota", { count: availableCount })}
+            <div>
+              <p className="text-text-primary text-base font-medium truncate">
+                {template.title}
               </p>
-            )}
-          </div>
-        </button>
-      ))}
+              <div className="flex items-center gap-2">
+                <Sparkles className="w-3 h-3 text-primary" />
+                <p className="text-text-secondary text-sm">
+                  {template.pointsCost} exp
+                </p>
+                {counted && (
+                  <p className="text-green-400 text-xs">
+                    {formatMoney(pointsToMoney(template.pointsCost, template.pointsPerYuan))}
+                  </p>
+                )}
+              </div>
+              {template.replenishmentMode !== 'none' && availableCount > 0 && (
+                <p className="text-text-muted text-xs mt-0.5">
+                  {t("store.remainingQuota", { count: availableCount })}
+                </p>
+              )}
+            </div>
+          </button>
+        );
+      })}
     </div>
   );
 }

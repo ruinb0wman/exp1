@@ -314,6 +314,7 @@
     "detail": {
       "title": "Details",
       "empty": "No spending in this period",
+      "notCounted": "Not counted",
       "delete": "Delete",
       "confirmDelete": "Delete the \"{title}\" purchase? {points} points and the matching quota will be refunded."
     }
@@ -372,8 +373,10 @@
     "createTitle": "Create Reward",
     "saveFailed": "Failed to save",
     "pointsPerYuan": "Points / Money Ratio",
+    "countInConsumption": "Count in spending",
     "pointsPerYuanLabel": "Points per ¥1",
     "pointsPerYuanHint": "E.g. 1 for meals (1 point = ¥1), 2 for cigarettes (2 points = ¥1). Decimals allowed.",
+    "pointsPerYuanOffHint": "No money value — excluded from spending stats",
     "ratioPreview": "{cost} points equals",
     "invalidRatio": "Ratio must be a number greater than 0"
   },

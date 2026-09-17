@@ -60,8 +60,13 @@ export interface RewardTemplate {
   /**
    * 积分货币比例：每 ¥1 折合多少积分（吃饭 = 1，香烟 = 2）
    * 必须为有限正数，允许小数；金额换算为 pointsCost / pointsPerYuan
+   * 关闭（countInConsumption === false）时该值仍保留，重新打开即可复用
    */
   pointsPerYuan: number;
+  /**
+   * 是否折合金额并计入消费统计；缺省（旧数据）视为 true
+   */
+  countInConsumption?: boolean;
   enabled: boolean;
   replenishmentMode: ReplenishmentMode;
   repeatInterval?: number;
@@ -85,6 +90,8 @@ export interface RewardPurchaseSnapshot {
   iconColor?: RewardIconColor;
   pointsCost: number;
   pointsPerYuan: number;
+  /** 购买那一刻的「计入消费统计」设置，统计与明细标注都按它判定 */
+  countInConsumption?: boolean;
 }
 
 /** 消费记录：购买即消费，没有中间态 */
@@ -99,8 +106,11 @@ export interface RewardPurchase {
   pointsCost: number;
   /** 实际扣除积分 = pointsCost * quantity */
   pointsSpent: number;
-  /** 折合金额 = pointsSpent / pointsPerYuan，保留 2 位小数 */
-  moneyAmount: number;
+  /**
+   * 折合金额 = pointsSpent / pointsPerYuan，保留 2 位小数
+   * 关闭比例的购买不写该字段（undefined = 不计入消费统计），避免 0 被误读成真实金额
+   */
+  moneyAmount?: number;
   createdAt: string;
   updatedAt?: string;
 }

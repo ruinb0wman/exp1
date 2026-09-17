@@ -314,6 +314,7 @@
     "detail": {
       "title": "消费明细",
       "empty": "本周期暂无消费",
+      "notCounted": "不计入统计",
       "delete": "删除",
       "confirmDelete": "删除「{title}」这条消费记录？将返还 {points} 积分与对应消费额度。"
     }
@@ -372,8 +373,10 @@
     "createTitle": "创建奖励",
     "saveFailed": "保存失败",
     "pointsPerYuan": "积分货币比例",
+    "countInConsumption": "计入消费统计",
     "pointsPerYuanLabel": "每 ¥1 需要积分",
     "pointsPerYuanHint": "例如吃饭填 1（1 积分抵 ¥1），香烟填 2（2 积分抵 ¥1）。允许小数。",
+    "pointsPerYuanOffHint": "不折合金额，不计入消费统计",
     "ratioPreview": "{cost} 积分折合",
     "invalidRatio": "积分货币比例必须是大于 0 的数字"
   },
