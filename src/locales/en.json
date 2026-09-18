@@ -528,7 +528,8 @@
       "item3": "Overdue = still pending within the period and past the template's configured expire days.",
       "item4": "Trend and completion rate are attributed by the task's scheduled date (instanceDate); streaks, active days and peak hours are attributed by actual completion time.",
       "item5": "Undated tasks are excluded from the completion-rate denominator; completions in this period whose scheduled date is earlier are counted as carried over.",
-      "item6": "Focus minutes only count completed pomodoro sessions, floored to minutes per session; points income/spending are attributed by record creation time."
+      "item6": "Focus minutes only count completed pomodoro sessions, floored to minutes per session; points income/spending are attributed by record creation time.",
+      "item7": "By-level table: the level is the task's current level setting (changing it recomputes past reports too); completion rate = completed instances ÷ planned instances; cleared days = days where every planned instance of that level was completed (skips do not count), survival rate = cleared days ÷ days with tasks; instances without a date are excluded."
     },
     "section": {
       "overview": "Overview",
@@ -538,6 +539,7 @@
       "points": "Points",
       "insights": "Habit insights",
       "extras": "Extras",
+      "levels": "By level",
       "prompt": "Analysis prompt"
     },
     "col": {
@@ -587,6 +589,17 @@
         "completionRate": "Rate",
         "points": "Points",
         "focusMinutes": "Focus min"
+      }
+    },
+    "levels": {
+      "col": {
+        "level": "Level",
+        "planned": "Planned",
+        "completed": "Completed",
+        "completionRate": "Completion rate",
+        "activeDays": "Days with tasks",
+        "clearedDays": "Cleared days",
+        "survivalRate": "Survival rate"
       }
     },
     "pomo": {
@@ -663,7 +676,8 @@
       "requirement1": "1. Only rely on the data in the report and journal; never make things up, and state clearly what is missing when data is insufficient.",
       "requirement2": "2. Focus on: days/tasks with abnormal completion rates, tasks that are consistently delayed or repeatedly skipped, mismatches between focus time and output, and trend inflection points or sustained decline.",
       "requirement3": "3. Give at most one actionable suggestion per problem, then propose 1-3 concrete, verifiable adjustments for next week.",
-      "requirement4": "4. Output structure: conclusion summary / evidence (cite specific dates and numbers) / suggestions. Answer in English."
+      "requirement4": "4. Output structure: conclusion summary / evidence (cite specific dates and numbers) / suggestions. Answer in English.",
+      "requirement5": "5. Compare completion and survival rates across levels: call out first when the low level (L1) was not held, and say whether it squeezed execution at higher levels."
     }
   }
 }

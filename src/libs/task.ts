@@ -396,13 +396,20 @@ export function getTotalPointsEarned(instance: TaskInstance): number {
 
 // ==================== 模板执行等级 ====================
 
+/**
+ * 执行等级是否合法（正整数）
+ *
+ * 排序（缺失排到最后）与报表按等级分组（缺失兜底 1）共用这一个判据。
+ */
+export function isValidLevel(level: unknown): level is number {
+  return typeof level === 'number' && Number.isFinite(level) && level > 0;
+}
+
 /** 缺失/非法 level 时排到最后（旧数据/手工构造对象） */
 const MISSING_LEVEL = Number.MAX_SAFE_INTEGER;
 
 function resolveLevel(template: TaskTemplate): number {
-  return typeof template.level === 'number' && Number.isFinite(template.level) && template.level > 0
-    ? template.level
-    : MISSING_LEVEL;
+  return isValidLevel(template.level) ? template.level : MISSING_LEVEL;
 }
 
 /**

@@ -447,6 +447,135 @@ describe('aggregateReport - 任务明细与洞察', () => {
 	});
 });
 
+describe('aggregateReport - 按等级', () => {
+	const l1a = makeTemplate('l1a', 'L1 遛狗', { level: 1 });
+	const l1b = makeTemplate('l1b', 'L1 日记', { level: 1 });
+	const l2a = makeTemplate('l2a', 'L2 健身', { level: 2 });
+	const l4 = makeTemplate('l4', 'L4 研究', { level: 4 });
+	// 实时模板表里是 4 级，但实例快照里是 3 级
+	const live4 = makeTemplate('live4', 'L4 众包', { level: 4 });
+
+	const levelInstances: TaskInstance[] = [
+		// L1：03-16 两个都完成（全清）、03-17 一个跳过（未全清）、03-20 完成
+		makeInstance({ id: 'l1-1', template: l1a, instanceDate: '2026-03-16', status: 'completed', completedAt: localISO(2026, 3, 16, 9) }),
+		makeInstance({ id: 'l1-2', template: l1b, instanceDate: '2026-03-16', status: 'completed', completedAt: localISO(2026, 3, 16, 10) }),
+		makeInstance({ id: 'l1-3', template: l1a, instanceDate: '2026-03-17', status: 'completed', completedAt: localISO(2026, 3, 17, 9) }),
+		makeInstance({ id: 'l1-4', template: l1b, instanceDate: '2026-03-17', status: 'skipped' }),
+		makeInstance({ id: 'l1-5', template: l1a, instanceDate: '2026-03-20', status: 'completed', completedAt: localISO(2026, 3, 20, 9) }),
+		// L2：03-18 全清、03-19 待办（未全清）
+		makeInstance({ id: 'l2-1', template: l2a, instanceDate: '2026-03-18', status: 'completed', completedAt: localISO(2026, 3, 18, 9) }),
+		makeInstance({ id: 'l2-2', template: l2a, instanceDate: '2026-03-19', status: 'pending' }),
+		// 无日期实例：不进 periodInstances，所以按等级统计也不含它
+		makeInstance({ id: 'nodate-1', template: l4, instanceDate: '', status: 'completed', completedAt: localISO(2026, 3, 19, 9) }),
+		// 实时等级 4、快照等级 3 → 应归到 L4
+		makeInstance({ id: 'live-1', template: { ...live4, level: 3 }, instanceDate: '2026-03-21', status: 'completed', completedAt: localISO(2026, 3, 21, 9) }),
+		// 模板已删除（不在实时表里）→ 只能回退快照的 2 级
+		makeInstance({ id: 'gone-1', template: { ...l2a, id: 'gone' }, instanceDate: '2026-03-22', status: 'pending' }),
+		// 上期：一条 L1 完成
+		makeInstance({ id: 'prev-1', template: l1a, instanceDate: '2026-03-10', status: 'completed', completedAt: localISO(2026, 3, 10, 9) }),
+	];
+
+	const levelSources: ReportSources = {
+		...sources,
+		instances: levelInstances,
+		sessions: [],
+		pointsRecords: [],
+		rewardPurchases: [],
+		achievements: [],
+		templates: [l1a, l1b, l2a, l4, live4],
+	};
+
+	const report = aggregateReport({
+		period: weekPeriod,
+		previousPeriod: previousWeekPeriod,
+		sources: levelSources,
+		dayEndTime: '00:00',
+		appVersion: '0.1.0',
+		now: NOW,
+	});
+
+	const byLevel = (level: number) => report.levels.find((bucket) => bucket.level === level)!;
+
+	it('按等级升序，且已配置的等级都在表里', () => {
+		expect(report.levels.map((bucket) => bucket.level)).toEqual([1, 2, 4]);
+	});
+
+	it('统计各等级的计划/完成/跳过/完成率', () => {
+		const l1 = byLevel(1);
+		expect(l1.planned).toBe(5);
+		expect(l1.completed).toBe(4);
+		expect(l1.skipped).toBe(1);
+		expect(l1.completionRate).toBeCloseTo(0.8);
+
+		const l2 = byLevel(2);
+		expect(l2.planned).toBe(3); // 含已删除模板回退到快照的那一条
+		expect(l2.completed).toBe(1);
+		expect(l2.pending).toBe(2);
+		expect(l2.completionRate).toBeCloseTo(1 / 3);
+	});
+
+	it('统计全清天数与存活率（跳过不算清完）', () => {
+		const l1 = byLevel(1);
+		expect(l1.activeDays).toBe(3); // 03-16 / 17 / 20
+		expect(l1.clearedDays).toBe(2); // 03-16、03-20；03-17 有一个 skipped
+		expect(l1.survivalRate).toBeCloseTo(2 / 3);
+
+		const l2 = byLevel(2);
+		expect(l2.activeDays).toBe(3); // 03-18 / 19 / 22
+		expect(l2.clearedDays).toBe(1);
+		expect(l2.survivalRate).toBeCloseTo(1 / 3);
+	});
+
+	it('无日期实例不参与按等级统计（与不计入完成率分母同口径）', () => {
+		const l4 = byLevel(4);
+		expect(l4.planned).toBe(1); // 只有 03-21 那条；无日期那条不在 periodInstances 里
+		expect(l4.completed).toBe(1);
+		expect(l4.completionRate).toBe(1);
+		expect(l4.activeDays).toBe(1);
+		expect(l4.clearedDays).toBe(1);
+		expect(l4.survivalRate).toBe(1);
+	});
+
+	it('等级取当前模板表，而不是实例快照', () => {
+		// 快照是 3 级，但实时模板是 4 级 → 不应出现 3 级这一行
+		expect(report.levels.map((bucket) => bucket.level)).not.toContain(3);
+	});
+
+	it('已配置但本期没有任务的等级也会出现，比率为 null', () => {
+		const emptyPeriod = resolvePeriod({
+			scope: 'week',
+			anchor: '2026-01-07',
+			today: '2026-03-30',
+		});
+		const emptyReport = aggregateReport({
+			period: emptyPeriod,
+			previousPeriod: resolvePreviousPeriod(emptyPeriod),
+			sources: levelSources,
+			dayEndTime: '00:00',
+			appVersion: '0.1.0',
+			now: NOW,
+		});
+
+		expect(emptyReport.levels.map((bucket) => bucket.level)).toEqual([1, 2, 4]);
+		for (const bucket of emptyReport.levels) {
+			expect(bucket.planned).toBe(0);
+			expect(bucket.completionRate).toBeNull();
+			expect(bucket.survivalRate).toBeNull();
+		}
+	});
+
+	it('上期等级表按上期数据计算', () => {
+		const prevL1 = report.previousLevels.find((bucket) => bucket.level === 1)!;
+		expect(prevL1.planned).toBe(1);
+		expect(prevL1.completed).toBe(1);
+		expect(prevL1.completionRate).toBe(1);
+
+		const prevL2 = report.previousLevels.find((bucket) => bucket.level === 2)!;
+		expect(prevL2.planned).toBe(0);
+		expect(prevL2.completionRate).toBeNull();
+	});
+});
+
 describe('aggregateReport - 空数据与天界', () => {
 	it('无任何数据时不产生 NaN 并且完成率为 null', () => {
 		const emptySources: ReportSources = {

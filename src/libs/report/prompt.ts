@@ -9,7 +9,7 @@ export type ReportTranslate = (key: string, options?: Record<string, unknown>) =
 export function buildAnalysisPrompt(model: ReportModel, t: ReportTranslate): string {
 	const { period } = model;
 	const lines = [
-		`## 8. ${t('reports.section.prompt')}`,
+		`## 9. ${t('reports.section.prompt')}`,
 		'',
 		`> ${t('reports.prompt.hint', { start: period.start, end: period.end })}`,
 		'',
@@ -20,6 +20,7 @@ export function buildAnalysisPrompt(model: ReportModel, t: ReportTranslate): str
 		t('reports.prompt.requirement2'),
 		t('reports.prompt.requirement3'),
 		t('reports.prompt.requirement4'),
+		t('reports.prompt.requirement5'),
 	];
 	return lines.join('\n');
 }

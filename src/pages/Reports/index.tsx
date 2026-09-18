@@ -14,6 +14,7 @@ import { PeriodSelector } from './components/PeriodSelector';
 import { SummaryCards } from './components/SummaryCards';
 import { TrendChart } from './components/TrendChart';
 import { TemplateTable } from './components/TemplateTable';
+import { LevelTable } from './components/LevelTable';
 import { ExportActions } from './components/ExportActions';
 
 /**
@@ -120,6 +121,15 @@ export function Reports() {
 									</h2>
 									<div className="rounded-xl bg-surface p-4 border border-border">
 										<TemplateTable templates={model.templates} />
+									</div>
+								</section>
+
+								<section>
+									<h2 className="text-text-primary font-bold mb-3">
+										{t('reports.section.levels')}
+									</h2>
+									<div className="rounded-xl bg-surface p-4 border border-border">
+										<LevelTable levels={model.levels} />
 									</div>
 								</section>
 

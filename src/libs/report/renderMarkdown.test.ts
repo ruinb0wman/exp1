@@ -89,6 +89,8 @@ function makeModel(overrides: Partial<ReportModel> = {}): ReportModel {
 		metrics: metrics(),
 		trend: [],
 		templates: [],
+		levels: [],
+		previousLevels: [],
 		pomo: { byMode: [] },
 		points: { byType: [], topEarn: [], topSpend: [] },
 		insights: {
@@ -156,6 +158,47 @@ const fullModel = makeModel({
 	pomo: {
 		byMode: [{ mode: 'focus', sessions: 2, minutes: 49, interruptions: 2 }],
 	},
+	levels: [
+		{
+			level: 1,
+			planned: 4,
+			completed: 3,
+			skipped: 1,
+			pending: 0,
+			overdue: 0,
+			completionRate: 0.75,
+			activeDays: 4,
+			clearedDays: 3,
+			survivalRate: 0.75,
+		},
+		// 已配置但本期没有任务的等级：比率为 null
+		{
+			level: 3,
+			planned: 0,
+			completed: 0,
+			skipped: 0,
+			pending: 0,
+			overdue: 0,
+			completionRate: null,
+			activeDays: 0,
+			clearedDays: 0,
+			survivalRate: null,
+		},
+	],
+	previousLevels: [
+		{
+			level: 1,
+			planned: 3,
+			completed: 2,
+			skipped: 0,
+			pending: 1,
+			overdue: 0,
+			completionRate: 2 / 3,
+			activeDays: 3,
+			clearedDays: 2,
+			survivalRate: 2 / 3,
+		},
+	],
 	points: {
 		byType: [{ type: 'task_stage', amount: 25, count: 1 }],
 		topEarn: [
@@ -203,7 +246,19 @@ describe('renderReportMarkdown', () => {
 		expect(markdown).toContain('## 5. 积分收支');
 		expect(markdown).toContain('## 6. 习惯洞察');
 		expect(markdown).toContain('## 7. 其他');
-		expect(markdown).toContain('## 8. 分析提示词');
+		// 按等级追加在末尾，1~7 节编号保持不变（知识库按节号引用这份报告）
+		expect(markdown).toContain('## 8. 按等级');
+		expect(markdown).toContain('## 9. 分析提示词');
+	});
+
+	it('渲染按等级表（含本期无任务的等级）', () => {
+		expect(markdown).toContain('| 等级 | 计划 | 完成 | 完成率 | 有任务天数 | 全清天数 | 存活率 |');
+		expect(markdown).toContain('| L1 | 4 | 3 | 75% | 4 | 3 | 75% |');
+		expect(markdown).toContain('| L3 | 0 | 0 | — | 0 | 0 | — |');
+	});
+
+	it('提示词要求对比等级差异', () => {
+		expect(markdown).toContain('对比各等级的完成率与存活率');
 	});
 
 	it('渲染口径说明与数据说明', () => {
@@ -243,7 +298,8 @@ describe('renderReportMarkdown', () => {
 
 	it('可以通过开关关闭分析提示词', () => {
 		const withoutPrompt = renderReportMarkdown(fullModel, t, { includePrompt: false });
-		expect(withoutPrompt).not.toContain('## 8. 分析提示词');
+		expect(withoutPrompt).not.toContain('## 9. 分析提示词');
+		expect(withoutPrompt).toContain('## 8. 按等级');
 		expect(withoutPrompt).toContain('## 7. 其他');
 	});
 
@@ -263,6 +319,7 @@ describe('renderReportMarkdown', () => {
 		const english = renderReportMarkdown(fullModel, tEn);
 		expect(english).toContain('# Task Review · 2026-W12 (2026-03-16 ~ 2026-03-22)');
 		expect(english).toContain('## 1. Overview');
-		expect(english).toContain('## 8. Analysis prompt');
+		expect(english).toContain('## 8. By level');
+		expect(english).toContain('## 9. Analysis prompt');
 	});
 });

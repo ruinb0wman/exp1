@@ -4,6 +4,20 @@ import { formatLocalDate } from '@/libs/time';
 
 export const REPORT_SCOPES: readonly ReportScope[] = ['week', 'month', 'year', 'custom'];
 
+/** 比率格式化（完成率/存活率共用）：null → — */
+export function formatRate(rate: number | null): string {
+	if (rate === null) return '—';
+	return `${Math.round(rate * 100)}%`;
+}
+
+/** 比率配色：>=80% 绿、>=50% 常规、其余 primary（任务明细表与按等级表共用） */
+export function rateClass(rate: number | null): string {
+	if (rate === null) return 'text-text-muted';
+	if (rate >= 0.8) return 'text-emerald-400';
+	if (rate >= 0.5) return 'text-text-primary';
+	return 'text-primary';
+}
+
 /**
  * 锚点日期在当前周期下的展示标签（周报显示 ISO 周，月报显示年月，年报显示年份）
  */

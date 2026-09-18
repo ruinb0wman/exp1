@@ -219,6 +219,21 @@ function renderTemplates(model: ReportModel, t: ReportTranslate): string {
 	return [header, divider, ...body].join('\n');
 }
 
+/** 渲染按等级小节 */
+function renderLevels(model: ReportModel, t: ReportTranslate): string {
+	if (model.levels.length === 0) return t('reports.empty');
+
+	const header = `| ${t('reports.levels.col.level')} | ${t('reports.levels.col.planned')} | ${t('reports.levels.col.completed')} | ${t('reports.levels.col.completionRate')} | ${t('reports.levels.col.activeDays')} | ${t('reports.levels.col.clearedDays')} | ${t('reports.levels.col.survivalRate')} |`;
+	const divider = '| --- | ---: | ---: | ---: | ---: | ---: | ---: |';
+	// 「L{level}」与列表页卡片上的徽标一致，不做 i18n
+	const body = model.levels.map(
+		(bucket) =>
+			`| L${bucket.level} | ${bucket.planned} | ${bucket.completed} | ${formatRate(bucket.completionRate)} | ${bucket.activeDays} | ${bucket.clearedDays} | ${formatRate(bucket.survivalRate)} |`
+	);
+
+	return [header, divider, ...body].join('\n');
+}
+
 /** 渲染番茄钟小节 */
 function renderPomo(model: ReportModel, t: ReportTranslate): string {
 	const totalSessions = model.pomo.byMode.reduce((sum, bucket) => sum + bucket.sessions, 0);
@@ -384,6 +399,7 @@ export function renderReportMarkdown(
 			t('reports.caliber.item4'),
 			t('reports.caliber.item5'),
 			t('reports.caliber.item6'),
+			t('reports.caliber.item7'),
 		]
 			.map((line) => `- ${line}`)
 			.join('\n')
@@ -429,6 +445,13 @@ export function renderReportMarkdown(
 			`- ${t('reports.extras.rewardsRedeemed')}: ${model.extras.rewardsRedeemed}`,
 		].join('\n')
 	);
+	sections.push('');
+
+	// 追加在末尾（而不是插在趋势之后）：知识库里的年报模板按节号引用 1/2/4/6/7 节，
+	// 追加不会打破那些引用。
+	sections.push(`## 8. ${t('reports.section.levels')}`);
+	sections.push('');
+	sections.push(renderLevels(model, t));
 	sections.push('');
 
 	if (includePrompt) {

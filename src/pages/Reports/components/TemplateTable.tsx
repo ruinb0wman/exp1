@@ -1,13 +1,9 @@
 import { useTranslation } from 'react-i18next';
 import type { TemplateBucket } from '@/libs/report/types';
+import { formatRate, rateClass } from '../lib';
 
 interface TemplateTableProps {
 	templates: TemplateBucket[];
-}
-
-function formatRate(rate: number | null): string {
-	if (rate === null) return '—';
-	return `${Math.round(rate * 100)}%`;
 }
 
 /**
@@ -51,14 +47,7 @@ export function TemplateTable({ templates }: TemplateTableProps) {
 				<tbody>
 					{templates.map((bucket) => {
 						const rate = bucket.completionRate;
-						const rateClass =
-							rate === null
-								? 'text-text-muted'
-								: rate >= 0.8
-									? 'text-emerald-400'
-									: rate >= 0.5
-										? 'text-text-primary'
-										: 'text-primary';
+						const rateClassName = rateClass(rate);
 
 						return (
 							<tr key={bucket.templateId} className="border-t border-border">
@@ -77,7 +66,7 @@ export function TemplateTable({ templates }: TemplateTableProps) {
 								<td className="py-2 px-2 text-right text-text-secondary">
 									{bucket.overdue}
 								</td>
-								<td className={`py-2 px-2 text-right font-medium ${rateClass}`}>
+								<td className={`py-2 px-2 text-right font-medium ${rateClassName}`}>
 									{formatRate(rate)}
 								</td>
 								<td className="py-2 pl-2 text-right text-text-secondary">

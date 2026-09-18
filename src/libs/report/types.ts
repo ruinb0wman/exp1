@@ -87,6 +87,29 @@ export interface TemplateBucket {
 	focusMinutes: number;
 }
 
+/**
+ * 按执行等级聚合
+ *
+ * 等级取**当前模板表**的 level（改等级后历史一起重算），拿不到时回退实例快照，
+ * 最后兜底 1；已配置的等级即使本期没有任务也会出现在结果里（便于跨周期对比）。
+ */
+export interface LevelBucket {
+	level: number;
+	planned: number;
+	completed: number;
+	skipped: number;
+	pending: number;
+	overdue: number;
+	/** 完成率 = completed ÷ planned，分母为 0 时为 null */
+	completionRate: number | null;
+	/** 该等级有计划实例的用户日数 */
+	activeDays: number;
+	/** 该等级当天全部计划实例都完成的天数（跳过不算清完） */
+	clearedDays: number;
+	/** 存活率 = clearedDays ÷ activeDays，分母为 0 时为 null */
+	survivalRate: number | null;
+}
+
 /** 番茄钟按模式聚合 */
 export interface PomoModeBucket {
 	mode: PomoMode;
@@ -141,6 +164,8 @@ export interface ReportModel {
 	metrics: MetricSet;
 	trend: TrendBucket[];
 	templates: TemplateBucket[];
+	levels: LevelBucket[];
+	previousLevels: LevelBucket[];
 	pomo: { byMode: PomoModeBucket[] };
 	points: {
 		byType: PointsTypeBucket[];

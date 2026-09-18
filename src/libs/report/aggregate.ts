@@ -6,6 +6,7 @@ import type {
 } from '@/db/types';
 import { calculateExpiredAtByInstanceDate, getUserWeekday, toUserDateString } from '@/libs/time';
 import { isCountedInConsumption } from '@/libs/reward';
+import { isValidLevel } from '@/libs/task';
 import {
 	enumerateUserDays,
 	enumerateWeekBuckets,
@@ -13,6 +14,7 @@ import {
 } from './period';
 import type {
 	HabitInsights,
+	LevelBucket,
 	MetricSet,
 	PomoModeBucket,
 	PointsTypeBucket,
@@ -33,6 +35,7 @@ interface PeriodAggregate {
 	metrics: MetricSet;
 	trend: TrendBucket[];
 	templates: TemplateBucket[];
+	levels: LevelBucket[];
 	pomo: { byMode: PomoModeBucket[] };
 	points: {
 		byType: PointsTypeBucket[];
@@ -373,6 +376,85 @@ function computePeriodAggregate(args: {
 		(a, b) => b.completed - a.completed || b.planned - a.planned || a.title.localeCompare(b.title)
 	);
 
+	// ===== 按执行等级聚合 =====
+	const levelByTemplateId = new Map<string, number>();
+	for (const template of sources.templates) {
+		if (template.id && isValidLevel(template.level)) {
+			levelByTemplateId.set(template.id, template.level);
+		}
+	}
+
+	/** 实例所属等级：优先当前模板表（改等级后历史一起重算），回退实例快照，最后兜底 1 */
+	const resolveInstanceLevel = (instance: TaskInstance): number => {
+		const live = levelByTemplateId.get(instance.templateId);
+		if (isValidLevel(live)) return live;
+		const snapshot = instance.template?.level;
+		return isValidLevel(snapshot) ? snapshot : 1;
+	};
+
+	const levelBuckets = new Map<number, LevelBucket>();
+	const ensureLevel = (level: number): LevelBucket => {
+		const existing = levelBuckets.get(level);
+		if (existing) return existing;
+		const created: LevelBucket = {
+			level,
+			planned: 0,
+			completed: 0,
+			skipped: 0,
+			pending: 0,
+			overdue: 0,
+			completionRate: null,
+			activeDays: 0,
+			clearedDays: 0,
+			survivalRate: null,
+		};
+		levelBuckets.set(level, created);
+		return created;
+	};
+
+	// 先建出所有「已配置」的等级：本期没有任务的等级也会出现（planned=0、比率为 null），
+	// 这样周报/月报/年报的等级行数一致，可以直接对比。
+	for (const level of levelByTemplateId.values()) ensureLevel(level);
+
+	/** level → (用户日 → 当天该等级的计划/完成数)，用于「全清天数」 */
+	const levelDayStats = new Map<number, Map<string, { planned: number; completed: number }>>();
+
+	for (const instance of periodInstances) {
+		const level = resolveInstanceLevel(instance);
+		const bucket = ensureLevel(level);
+		bucket.planned += 1;
+		if (instance.status === 'completed') bucket.completed += 1;
+		else if (instance.status === 'skipped') bucket.skipped += 1;
+		else bucket.pending += 1;
+		if (isInstanceOverdue(instance, dayEndTime, nowMs)) bucket.overdue += 1;
+
+		// 无日期实例没有「天」，不进全清/存活统计（与「无日期任务不计入完成率分母」同口径）
+		if (!instance.instanceDate) continue;
+		let byDay = levelDayStats.get(level);
+		if (!byDay) {
+			byDay = new Map();
+			levelDayStats.set(level, byDay);
+		}
+		const day = byDay.get(instance.instanceDate) ?? { planned: 0, completed: 0 };
+		day.planned += 1;
+		if (instance.status === 'completed') day.completed += 1;
+		byDay.set(instance.instanceDate, day);
+	}
+
+	for (const [level, byDay] of levelDayStats) {
+		const bucket = ensureLevel(level);
+		bucket.activeDays = byDay.size;
+		bucket.clearedDays = Array.from(byDay.values()).filter(
+			(day) => day.planned > 0 && day.completed === day.planned
+		).length;
+	}
+
+	const levels = Array.from(levelBuckets.values()).sort((a, b) => a.level - b.level);
+	for (const bucket of levels) {
+		bucket.completionRate = bucket.planned > 0 ? bucket.completed / bucket.planned : null;
+		bucket.survivalRate = bucket.activeDays > 0 ? bucket.clearedDays / bucket.activeDays : null;
+	}
+
 	// ===== 习惯洞察 =====
 	const weekdayCounts = new Map<number, number>();
 	const hourCounts = new Map<number, number>();
@@ -444,6 +526,7 @@ function computePeriodAggregate(args: {
 		metrics,
 		trend,
 		templates,
+		levels,
 		pomo: { byMode },
 		points: {
 			byType: Array.from(pointsByType.values()).sort(
@@ -590,6 +673,8 @@ export function aggregateReport(args: {
 		metrics: current.metrics,
 		trend: current.trend,
 		templates: current.templates,
+		levels: current.levels,
+		previousLevels: previous.levels,
 		pomo: current.pomo,
 		points: current.points,
 		insights: current.insights,
