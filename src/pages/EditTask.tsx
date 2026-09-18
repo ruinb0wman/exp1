@@ -656,27 +656,13 @@ export function EditTask() {
 
             <div className={`flex items-center gap-4 pt-4 border-t border-surface-light ${!isScheduleEnabled ? 'opacity-50 pointer-events-none' : ''}`}>
               <p className="text-text-secondary text-sm min-w-[80px]">Expire after</p>
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => setCompleteExpireDays(Math.max(0, completeExpireDays - 1))}
-                  className="text-base font-medium flex h-7 w-7 items-center justify-center rounded-full bg-surface-light hover:bg-surface-light/80 transition-colors"
-                >
-                  -
-                </button>
-                <input
-                  type="number"
-                  min={0}
-                  value={completeExpireDays}
-                  onChange={(e) => setCompleteExpireDays(Math.max(0, parseInt(e.target.value) || 0))}
-                  className="text-base font-medium w-14 p-0 text-center bg-transparent focus:outline-none focus:ring-0 border-none [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
-                />
-                <button
-                  onClick={() => setCompleteExpireDays(completeExpireDays + 1)}
-                  className="text-base font-medium flex h-7 w-7 items-center justify-center rounded-full bg-surface-light hover:bg-surface-light/80 transition-colors"
-                >
-                  +
-                </button>
-              </div>
+              <NumberInput
+                value={completeExpireDays}
+                onChange={setCompleteExpireDays}
+                min={0}
+                size="md"
+                inputWidth="w-14"
+              />
               <p className="text-text-secondary text-sm">days (0 = never)</p>
             </div>
             {!isScheduleEnabled && (
@@ -707,27 +693,13 @@ export function EditTask() {
             {repeatMode !== "none" && (
               <div className="flex items-center gap-4 pt-2 border-t border-surface-light">
                 <p className="text-text-secondary text-sm">Every</p>
-                <div className="flex items-center gap-2">
-                  <button
-                    onClick={() => setRepeatInterval(Math.max(1, repeatInterval - 1))}
-                    className="text-base font-medium flex h-7 w-7 items-center justify-center rounded-full bg-surface-light hover:bg-surface-light/80 transition-colors"
-                  >
-                    -
-                  </button>
-                  <input
-                    type="number"
-                    min={1}
-                    value={repeatInterval}
-                    onChange={(e) => setRepeatInterval(Math.max(1, parseInt(e.target.value) || 1))}
-                    className="text-base font-medium w-10 p-0 text-center bg-transparent focus:outline-none focus:ring-0 border-none [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
-                  />
-                  <button
-                    onClick={() => setRepeatInterval(repeatInterval + 1)}
-                    className="text-base font-medium flex h-7 w-7 items-center justify-center rounded-full bg-surface-light hover:bg-surface-light/80 transition-colors"
-                  >
-                    +
-                  </button>
-                </div>
+                <NumberInput
+                  value={repeatInterval}
+                  onChange={setRepeatInterval}
+                  min={1}
+                  size="md"
+                  inputWidth="w-10"
+                />
                 <p className="text-text-secondary text-sm">
                   {repeatMode === "daily" && "days"}
                   {repeatMode === "weekly" && "weeks"}
@@ -795,27 +767,13 @@ export function EditTask() {
                 {endCondition === "times" && (
                   <div className="flex items-center gap-4 pt-2 border-t border-surface-light">
                     <p className="text-text-secondary text-sm">After</p>
-                    <div className="flex items-center gap-2">
-                      <button
-                        onClick={() => setEndValue(String(Math.max(1, (parseInt(endValue) || 1) - 1)))}
-                        className="text-base font-medium flex h-7 w-7 items-center justify-center rounded-full bg-surface-light hover:bg-surface-light/80 transition-colors"
-                      >
-                        -
-                      </button>
-                      <input
-                        type="number"
-                        min={1}
-                        value={endValue}
-                        onChange={(e) => setEndValue(e.target.value)}
-                        className="text-base font-medium w-12 p-0 text-center bg-transparent focus:outline-none focus:ring-0 border-none [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
-                      />
-                      <button
-                        onClick={() => setEndValue(String((parseInt(endValue) || 0) + 1))}
-                        className="text-base font-medium flex h-7 w-7 items-center justify-center rounded-full bg-surface-light hover:bg-surface-light/80 transition-colors"
-                      >
-                        +
-                      </button>
-                    </div>
+                    <NumberInput
+                      value={parseInt(endValue, 10) || 1}
+                      onChange={(value) => setEndValue(String(value))}
+                      min={1}
+                      size="md"
+                      inputWidth="w-12"
+                    />
                     <p className="text-text-secondary text-sm">times</p>
                   </div>
                 )}

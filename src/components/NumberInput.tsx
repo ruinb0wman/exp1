@@ -1,4 +1,12 @@
+import { useEffect, useRef, useState } from "react";
 import { Minus, Plus } from "lucide-react";
+import {
+  applyBounds,
+  isTextAllowed,
+  resolveBlurValue,
+  textToNumber,
+  valueToText,
+} from "@/libs/numberInput";
 
 interface NumberInputProps {
   value: number;
@@ -14,14 +22,6 @@ interface NumberInputProps {
   className?: string;
   /** 允许输入小数（默认关闭，保持既有调用点行为不变） */
   allowDecimal?: boolean;
-}
-
-/** 小数模式下保留的位数 */
-const DECIMAL_PLACES = 2;
-
-function roundTo(value: number, places: number): number {
-  const factor = 10 ** places;
-  return Math.round(value * factor) / factor;
 }
 
 const sizeConfig = {
@@ -61,33 +61,69 @@ export function NumberInput({
 }: NumberInputProps) {
   const config = sizeConfig[size];
 
+  // 输入框由本地文本态驱动：聚焦时可以删到空，失焦时再兜底归一
+  const [text, setText] = useState(() => valueToText(value));
+  const isFocusedRef = useRef(false);
+
+  // 外部 value 变化时同步文本；聚焦中不同步，避免打断正在进行的输入
+  useEffect(() => {
+    if (!isFocusedRef.current) setText(valueToText(value));
+  }, [value]);
+
+  const commit = (next: number) => {
+    onChange(applyBounds(next, min, max, allowDecimal));
+  };
+
   const handleDecrease = () => {
     if (disabled) return;
-    const newValue = value - step;
-    onChange(Math.max(min, allowDecimal ? roundTo(newValue, DECIMAL_PLACES) : newValue));
+    commit(value - step);
   };
 
   const handleIncrease = () => {
     if (disabled) return;
-    const newValue = value + step;
-    onChange(Math.min(max, allowDecimal ? roundTo(newValue, DECIMAL_PLACES) : newValue));
+    commit(value + step);
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (disabled) return;
-    const inputValue = e.target.value;
+    // 小数键盘在部分区域设置下输出逗号，先归一为小数点
+    const raw = allowDecimal ? e.target.value.replace(",", ".") : e.target.value;
 
-    // 允许空值，但不做处理
-    if (inputValue === "") return;
+    // 非法字符：忽略本次输入，保留上一次文本
+    if (!isTextAllowed(raw, allowDecimal, min < 0)) return;
 
-    const num = allowDecimal
-      ? parseFloat(inputValue)
-      : parseInt(inputValue, 10);
-    if (isNaN(num)) return;
+    setText(raw);
 
-    // 限制在 min 和 max 之间
-    const clampedValue = Math.max(min, Math.min(max, num));
-    onChange(allowDecimal ? roundTo(clampedValue, DECIMAL_PLACES) : clampedValue);
+    // "" / "-" / "." 这类中间态只改文本，不写回父组件，否则会立刻被夹取成 min 而删不干净
+    const num = textToNumber(raw, allowDecimal);
+    if (num !== null) commit(num);
+  };
+
+  const handleFocus = () => {
+    isFocusedRef.current = true;
+  };
+
+  const handleBlur = () => {
+    isFocusedRef.current = false;
+    const next = resolveBlurValue(text, min, max, allowDecimal);
+    setText(valueToText(next));
+    commit(next);
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter") {
+      e.currentTarget.blur();
+      return;
+    }
+    if (e.key === "ArrowUp") {
+      e.preventDefault();
+      handleIncrease();
+      return;
+    }
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+      handleDecrease();
+    }
   };
 
   const isMinReached = value <= min;
@@ -106,14 +142,15 @@ export function NumberInput({
         <Minus className={config.icon} />
       </button>
       <input
-        type="number"
-        min={min}
-        max={max}
-        step={allowDecimal ? step : 1}
-        value={value}
+        type="text"
+        inputMode={allowDecimal ? "decimal" : "numeric"}
+        value={text}
         onChange={handleInputChange}
+        onFocus={handleFocus}
+        onBlur={handleBlur}
+        onKeyDown={handleKeyDown}
         disabled={disabled}
-        className={`${config.input} ${inputWidth || ""} p-0 text-center bg-transparent focus:outline-none focus:ring-0 border-none [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none text-text-primary font-medium disabled:opacity-50`}
+        className={`${config.input} ${inputWidth || ""} p-0 text-center bg-transparent focus:outline-none focus:ring-0 border-none text-text-primary font-medium disabled:opacity-50`}
       />
       <button
         onClick={handleIncrease}
