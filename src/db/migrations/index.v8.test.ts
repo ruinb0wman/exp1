@@ -8,6 +8,9 @@ import { getDB } from '../index';
  * 单独一个文件：上面的 index.test.ts 已经先打开过 getDB() 单例（升到 v8），
  * 同文件内再模拟「v7 → v8」拿不到真实的升级路径（单例已缓存且库已是 v8）。
  * vitest 按文件隔离模块，这里能拿到全新的 fake-indexeddb 与全新单例。
+ *
+ * 注意：本文件用 enabled:false 回避了升级期间的实例生成检查；
+ * 「enabled:true 时中间件的补生成行为」由 index.v8.middleware.test.ts 覆盖。
  */
 describe('migration v8 - 模板 sortOrder 回填', () => {
   it('按 createdAt 顺序为每个用户的模板编号 0..n-1', async () => {
@@ -34,7 +37,7 @@ describe('migration v8 - 模板 sortOrder 回填', () => {
       title: id,
       repeatMode: 'daily',
       endCondition: 'manual',
-      enabled: false, // 避免升级期间的实例生成检查
+      enabled: false, // 避免升级期间的实例生成检查（该路径见 index.v8.middleware.test.ts）
       subtasks: [],
       createdAt,
     });
