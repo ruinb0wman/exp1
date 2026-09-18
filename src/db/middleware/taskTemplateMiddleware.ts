@@ -24,6 +24,13 @@ function parseLocalDateStr(dateStr: string): Date {
 /**
  * 检查指定模板在今天是否需要生成实例，如果需要则生成
  */
+/** 是否为「唯一键已存在」类错误（Dexie 可能把它包在 inner 里） */
+function isConstraintError(error: unknown): boolean {
+  if (!error || typeof error !== 'object') return false;
+  const { name, inner } = error as { name?: string; inner?: { name?: string } };
+  return name === 'ConstraintError' || inner?.name === 'ConstraintError';
+}
+
 export async function checkAndGenerateForTemplate(
   db: DB,
   template: TaskTemplate
@@ -88,10 +95,18 @@ export async function checkAndGenerateForTemplate(
   const instanceData = generateTaskInstance(template, today, dayEndTime);
 
   const now = new Date().toISOString();
-  await db.taskInstances.add({
-    ...instanceData,
-    createdAt: now,
-  } as TaskInstance);
+  try {
+    await db.taskInstances.add({
+      ...instanceData,
+      createdAt: now,
+    } as TaskInstance);
+  } catch (error) {
+    // 同一模板可能被并发检查两次（迁移/回填期间每次 bulkUpdate 各跑一轮）：
+    // 双方都读到「还没有今日实例」→ 算出同一个实例 id → 后写入者撞唯一键。
+    // 说明实例已被另一轮生成，按「未生成」返回即可，不要把拒绝抛成 unhandled rejection。
+    if (isConstraintError(error)) return false;
+    throw error;
+  }
 
   return true;
 }
