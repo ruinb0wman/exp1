@@ -13,7 +13,6 @@ interface TaskListProps {
   onRefresh: () => void;
   onEdit: (id: string) => void;
   onToggleEnabled: (id: string, currentEnabled: boolean) => void;
-  onMove: (id: string, direction: -1 | 1) => void;
 }
 
 export function TaskList({
@@ -25,7 +24,6 @@ export function TaskList({
   onRefresh,
   onEdit,
   onToggleEnabled,
-  onMove,
 }: TaskListProps) {
   if (isLoading) {
     return <LoadingState message="Loading tasks..." />;
@@ -54,31 +52,22 @@ export function TaskList({
 
   return (
     <div className="flex flex-col gap-3">
-      {templates.map((template, index) => (
+      {templates.map((template) => (
         <TaskTemplateCard
           key={template.id}
           id={template.id!}
           title={template.title}
           description={template.description}
+          level={template.level}
           repeatMode={template.repeatMode}
           enabled={template.enabled}
           completeRule={template.completeRule}
           subtasks={template.subtasks}
           isActionLoading={isActionLoading}
-          canMoveUp={index > 0}
-          canMoveDown={index < templates.length - 1}
           onClick={() => onEdit(template.id!)}
           onToggleEnabled={(e) => {
             e.stopPropagation();
             onToggleEnabled(template.id!, template.enabled);
-          }}
-          onMoveUp={(e) => {
-            e.stopPropagation();
-            onMove(template.id!, -1);
-          }}
-          onMoveDown={(e) => {
-            e.stopPropagation();
-            onMove(template.id!, 1);
           }}
         />
       ))}

@@ -64,6 +64,7 @@
       "deleteConfirm": "确定删除该任务实例吗？其积分记录将一并移除，下次进入页面时会按最新模板重新生成。",
       "description": "描述",
       "repeat": "重复",
+      "level": "等级",
       "date": "日期",
       "progress": "完成进度",
       "subtasks": "子任务",
@@ -367,8 +368,7 @@
   "allTasks": {
     "title": "全部任务",
     "taskHistory": "任务历史",
-    "moveUp": "上移",
-    "moveDown": "下移"
+    "level": "等级"
   },
   "editReward": {
     "title": "编辑奖励",
@@ -401,7 +401,9 @@
     "completeAllSubtasks": "完成所有子任务",
     "completeCount": "完成指定数量",
     "complete": "完成",
-    "itemsSufficient": "项即可"
+    "itemsSufficient": "项即可",
+    "level": "执行等级",
+    "levelHint": "数字越小越先做"
   },
   "achievement": {
     "title": "成就",

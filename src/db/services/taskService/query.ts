@@ -1,9 +1,18 @@
 import { getDB } from '../../index';
 import type { TaskInstance, TaskTemplate } from '../../types';
 import { getUserCurrentDate } from '@/libs/time';
-import { buildTemplateOrderMap, sortDisplayTasks } from '@/libs/task';
+import { buildTemplateLevelMap, sortDisplayTasks } from '@/libs/task';
 
 export type TaskHistoryFilterStatus = 'all' | 'pending' | 'completed' | 'skipped';
+
+/**
+ * 实例里的 template 是快照（历史语义：不随模板编辑而变），
+ * 但 level 只用于排序与徽标，必须覆盖为实时模板值，否则改了等级当天列表会不跟随。
+ */
+function withLiveLevel(template: TaskTemplate, levelMap: Map<string, number>): TaskTemplate {
+  const liveLevel = levelMap.get(template.id);
+  return liveLevel === undefined ? template : { ...template, level: liveLevel };
+}
 
 export interface TaskHistoryItem {
   instance: TaskInstance;
@@ -42,16 +51,16 @@ export async function getTodayTaskInstances(
     )
     .toArray();
 
-  // 顺序取实时模板表（实例里的 template 是快照，不随模板重排更新）
+  // 顺序取实时模板表（实例里的 template 是快照，不随模板编辑更新）
   const templates = await db.taskTemplates.where('userId').equals(userId).toArray();
-  const orderMap = buildTemplateOrderMap(templates);
+  const levelMap = buildTemplateLevelMap(templates);
 
   return sortDisplayTasks(
     instances.map((instance) => ({
       instance,
-      template: instance.template!,
+      template: withLiveLevel(instance.template!, levelMap),
     })),
-    orderMap
+    levelMap
   );
 }
 
@@ -68,16 +77,16 @@ export async function getNoDateTaskInstances(
   const noDateInstances = instances.filter((instance) => !instance.instanceDate);
 
   const templates = await db.taskTemplates.where('userId').equals(userId).toArray();
-  const orderMap = buildTemplateOrderMap(templates);
+  const levelMap = buildTemplateLevelMap(templates);
 
   return sortDisplayTasks(
     noDateInstances
       .filter((instance) => instance.template)
       .map((instance) => ({
         instance,
-        template: instance.template,
+        template: withLiveLevel(instance.template, levelMap),
       })),
-    orderMap
+    levelMap
   );
 }
 

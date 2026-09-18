@@ -58,7 +58,7 @@ function legacyBackup(): ExportData {
   };
 }
 
-/** 模拟旧备份里的模板：没有 sortOrder 字段 */
+/** 模拟旧备份里的模板：没有 level 字段 */
 function legacyTemplate(id: string, createdAt: string): TaskTemplate {
   return {
     id,
@@ -90,7 +90,7 @@ describe('exportImportService - achievements', () => {
 
     const exported = await exportAllData();
 
-    expect(exported.version).toBe('1.2');
+    expect(exported.version).toBe('1.3');
     expect(exported.data.achievements).toHaveLength(1);
     expect(exported.data.achievements[0].title).toBe('测试成就');
 
@@ -99,7 +99,7 @@ describe('exportImportService - achievements', () => {
     expect(serialized).not.toContain('api_key');
   });
 
-  it('导入旧备份（模板无 sortOrder）后按 createdAt 顺序补全 sortOrder', async () => {
+  it('导入旧备份（模板无 level）后统一补为等级 1', async () => {
     const legacy = legacyBackup();
     legacy.data.taskTemplates = [
       legacyTemplate('t-late', '2026-03-01T00:00:00.000Z'),
@@ -111,10 +111,10 @@ describe('exportImportService - achievements', () => {
     expect(result.success).toBe(true);
 
     const restored = await db.taskTemplates.toArray();
-    const byId = new Map(restored.map((t) => [t.id, t.sortOrder]));
-    expect(byId.get('t-early')).toBe(0);
+    const byId = new Map(restored.map((t) => [t.id, t.level]));
+    expect(byId.get('t-early')).toBe(1);
     expect(byId.get('t-mid')).toBe(1);
-    expect(byId.get('t-late')).toBe(2);
+    expect(byId.get('t-late')).toBe(1);
   });
 
   it('导出后清空再导入，成就可完整还原', async () => {

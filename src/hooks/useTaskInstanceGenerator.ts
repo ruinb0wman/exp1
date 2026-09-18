@@ -10,7 +10,7 @@ import {
   generateTaskInstances,
   toUserDateString,
   toInUserDay,
-  buildTemplateOrderMap,
+  buildTemplateLevelMap,
   sortDisplayTasks,
 } from '@/libs/task';
 import { useUserStore } from '@/store';
@@ -135,7 +135,7 @@ export function useTaskInstanceGenerator(options: UseTaskInstanceGeneratorOption
     const inDayDate = toInUserDay(date, dayEndTime);
     const userDateStr = toUserDateString(inDayDate, dayEndTime);
 
-    // getEnabledTaskTemplates 已按 sortOrder 排序
+    // getEnabledTaskTemplates 已按 level 排序
     const templates = await getEnabledTaskTemplates(userId);
     const allInstances = await getAllTaskInstances(userId);
 
@@ -169,7 +169,7 @@ export function useTaskInstanceGenerator(options: UseTaskInstanceGeneratorOption
       }
     }
 
-    return sortDisplayTasks(result, buildTemplateOrderMap(templates));
+    return sortDisplayTasks(result, buildTemplateLevelMap(templates));
   }, [userId, user?.dayEndTime]);
 
   /**

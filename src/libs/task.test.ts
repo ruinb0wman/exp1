@@ -8,8 +8,7 @@ import {
   toUserDateString,
   toInUserDay,
   sortTaskTemplates,
-  computeSortOrderUpdates,
-  buildTemplateOrderMap,
+  buildTemplateLevelMap,
   sortDisplayTasks,
 } from "@/libs/task";
 import { toLocalDateString, daysBetweenLocal, monthsBetweenLocal } from "@/libs/time";
@@ -26,7 +25,7 @@ function createTemplate(overrides?: Partial<TaskTemplate>): TaskTemplate {
     endCondition: "manual",
     endValue: undefined,
     enabled: true,
-    sortOrder: 0,
+    level: 1,
     subtasks: [],
     createdAt: "2026-05-01T00:00:00.000Z",
     startAt: "2026-05-01T00:00:00.000Z",
@@ -546,78 +545,54 @@ describe("calendar-day semantics", () => {
 });
 
 // ============================================================
-// 模板显示顺序（sortTaskTemplates / computeSortOrderUpdates / sortDisplayTasks）
+// 模板执行等级（sortTaskTemplates / buildTemplateLevelMap / sortDisplayTasks）
 // ============================================================
 
 describe("sortTaskTemplates", () => {
-  it("按 sortOrder 升序", () => {
+  it("按 level 升序", () => {
     const templates = [
-      createTemplate({ id: "c", sortOrder: 2 }),
-      createTemplate({ id: "a", sortOrder: 0 }),
-      createTemplate({ id: "b", sortOrder: 1 }),
+      createTemplate({ id: "c", level: 3 }),
+      createTemplate({ id: "a", level: 1 }),
+      createTemplate({ id: "b", level: 2 }),
     ];
     expect(sortTaskTemplates(templates).map((t) => t.id)).toEqual(["a", "b", "c"]);
   });
 
-  it("缺失 sortOrder 的旧数据排到最后", () => {
+  it("缺失 level 的旧数据排到最后", () => {
     const legacy = createTemplate({ id: "legacy" });
-    delete (legacy as Partial<TaskTemplate>).sortOrder;
-    const templates = [legacy, createTemplate({ id: "first", sortOrder: 5 })];
+    delete (legacy as Partial<TaskTemplate>).level;
+    const templates = [legacy, createTemplate({ id: "first", level: 5 })];
     expect(sortTaskTemplates(templates).map((t) => t.id)).toEqual(["first", "legacy"]);
   });
 
-  it("sortOrder 相同时按 createdAt、再按 id 兜底（稳定全序）", () => {
+  it("level 相同时按 createdAt、再按 id 兜底（稳定全序）", () => {
     const templates = [
-      createTemplate({ id: "b", sortOrder: 0, createdAt: "2026-01-02T00:00:00.000Z" }),
-      createTemplate({ id: "a", sortOrder: 0, createdAt: "2026-01-01T00:00:00.000Z" }),
-      createTemplate({ id: "c", sortOrder: 0, createdAt: "2026-01-01T00:00:00.000Z" }),
+      createTemplate({ id: "b", level: 2, createdAt: "2026-01-02T00:00:00.000Z" }),
+      createTemplate({ id: "a", level: 2, createdAt: "2026-01-01T00:00:00.000Z" }),
+      createTemplate({ id: "c", level: 2, createdAt: "2026-01-01T00:00:00.000Z" }),
     ];
     expect(sortTaskTemplates(templates).map((t) => t.id)).toEqual(["a", "c", "b"]);
   });
 
   it("不改动原数组", () => {
     const templates = [
-      createTemplate({ id: "b", sortOrder: 1 }),
-      createTemplate({ id: "a", sortOrder: 0 }),
+      createTemplate({ id: "b", level: 2 }),
+      createTemplate({ id: "a", level: 1 }),
     ];
     sortTaskTemplates(templates);
     expect(templates.map((t) => t.id)).toEqual(["b", "a"]);
   });
 });
 
-describe("computeSortOrderUpdates", () => {
-  it("按 createdAt 顺序为同一用户重编号 0..n-1", () => {
-    const templates = [
-      createTemplate({ id: "late", sortOrder: undefined as unknown as number, createdAt: "2026-03-01T00:00:00.000Z" }),
-      createTemplate({ id: "early", sortOrder: undefined as unknown as number, createdAt: "2026-01-01T00:00:00.000Z" }),
-    ];
-    const updates = computeSortOrderUpdates(templates);
-    expect(updates).toEqual([
-      { id: "early", sortOrder: 0 },
-      { id: "late", sortOrder: 1 },
+describe("buildTemplateLevelMap", () => {
+  it("建立 templateId → level 映射", () => {
+    const map = buildTemplateLevelMap([
+      createTemplate({ id: "a", level: 1 }),
+      createTemplate({ id: "b", level: 3 }),
     ]);
-  });
-
-  it("已规范化的数据返回空数组（幂等）", () => {
-    const templates = [
-      createTemplate({ id: "a", sortOrder: 0 }),
-      createTemplate({ id: "b", sortOrder: 1 }),
-    ];
-    expect(computeSortOrderUpdates(templates)).toEqual([]);
-  });
-
-  it("不同用户各自从 0 开始编号", () => {
-    const templates = [
-      createTemplate({ id: "u1-a", userId: 1, createdAt: "2026-01-01T00:00:00.000Z", sortOrder: undefined as unknown as number }),
-      createTemplate({ id: "u1-b", userId: 1, createdAt: "2026-01-02T00:00:00.000Z", sortOrder: undefined as unknown as number }),
-      createTemplate({ id: "u2-a", userId: 2, createdAt: "2026-01-03T00:00:00.000Z", sortOrder: undefined as unknown as number }),
-    ];
-    const updates = computeSortOrderUpdates(templates);
-    expect(updates).toEqual([
-      { id: "u1-a", sortOrder: 0 },
-      { id: "u1-b", sortOrder: 1 },
-      { id: "u2-a", sortOrder: 0 },
-    ]);
+    expect(map.get("a")).toBe(1);
+    expect(map.get("b")).toBe(3);
+    expect(map.get("missing")).toBeUndefined();
   });
 });
 
@@ -625,50 +600,50 @@ describe("sortDisplayTasks", () => {
   const displayItem = (
     templateId: string,
     status: TaskStatus,
-    sortOrder: number | undefined
+    level: number | undefined
   ) => {
-    const template = createTemplate({ id: templateId, sortOrder: sortOrder as number });
+    const template = createTemplate({ id: templateId, level: level as number });
     return {
       template,
       instance: createInstance({ id: `inst-${templateId}`, templateId, template, status }),
     };
   };
 
-  it("未完成在前，已完成在后；组内按模板顺序", () => {
+  it("未完成在前，已完成在后；组内按等级升序", () => {
     const items = [
-      displayItem("t1", "completed", 0),
-      displayItem("t2", "pending", 1),
-      displayItem("t3", "pending", 2),
-      displayItem("t4", "completed", 3),
+      displayItem("t1", "completed", 1),
+      displayItem("t2", "pending", 2),
+      displayItem("t3", "pending", 3),
+      displayItem("t4", "completed", 2),
     ];
     expect(sortDisplayTasks(items).map((i) => i.template.id)).toEqual(["t2", "t3", "t1", "t4"]);
   });
 
   it("skipped 与 completed 同权重（都排到未完成之后）", () => {
     const items = [
-      displayItem("t1", "skipped", 0),
-      displayItem("t2", "pending", 1),
+      displayItem("t1", "skipped", 1),
+      displayItem("t2", "pending", 5),
     ];
     expect(sortDisplayTasks(items).map((i) => i.template.id)).toEqual(["t2", "t1"]);
   });
 
-  it("优先用实时模板顺序表，而不是实例里的陈旧快照", () => {
-    // 快照里的顺序是 0/1，但用户已经把 t2 排到前面
+  it("优先用实时等级表，而不是实例里的陈旧快照", () => {
+    // 快照里的等级是 1/2，但用户已经把 t2 改成了等级 1
     const items = [
-      displayItem("t1", "pending", 0),
-      displayItem("t2", "pending", 1),
+      displayItem("t1", "pending", 1),
+      displayItem("t2", "pending", 2),
     ];
-    const liveOrder = buildTemplateOrderMap([
-      createTemplate({ id: "t2", sortOrder: 0 }),
-      createTemplate({ id: "t1", sortOrder: 1 }),
+    const liveLevels = buildTemplateLevelMap([
+      createTemplate({ id: "t2", level: 1 }),
+      createTemplate({ id: "t1", level: 3 }),
     ]);
-    expect(sortDisplayTasks(items, liveOrder).map((i) => i.template.id)).toEqual(["t2", "t1"]);
+    expect(sortDisplayTasks(items, liveLevels).map((i) => i.template.id)).toEqual(["t2", "t1"]);
   });
 
   it("没有 instance 的预览项视为未完成", () => {
-    const preview = { template: createTemplate({ id: "preview", sortOrder: 1 }) };
+    const preview = { template: createTemplate({ id: "preview", level: 2 }) };
     const items = [
-      displayItem("t1", "completed", 0),
+      displayItem("t1", "completed", 1),
       preview,
     ];
     expect(sortDisplayTasks(items).map((i) => i.template.id)).toEqual(["preview", "t1"]);

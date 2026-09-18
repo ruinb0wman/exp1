@@ -62,6 +62,7 @@ export function EditTask() {
   const [endIndex, setEndIndex] = useState(0);
   const [endValue, setEndValue] = useState("");
   const [enabled, setEnabled] = useState(true);
+  const [level, setLevel] = useState(1);
   const [subtasks, setSubtasks] = useState<string[]>([]);
   const [newSubtask, setNewSubtask] = useState("");
 
@@ -98,6 +99,7 @@ export function EditTask() {
       
       setEndValue(formatToDateStr(existingTemplate.endValue));
       setEnabled(existingTemplate.enabled);
+      setLevel(existingTemplate.level && existingTemplate.level > 0 ? existingTemplate.level : 1);
       setSubtasks(existingTemplate.subtasks ?? []);
       
       // 加载新的完成规则
@@ -219,10 +221,12 @@ export function EditTask() {
             completionPoints
           };
 
-    const taskData: Omit<TaskTemplate, "id" | "createdAt" | "updatedAt" | "sortOrder"> = {
+    const taskData: Omit<TaskTemplate, "id" | "createdAt" | "updatedAt"> = {
       userId: user.id,
       title,
       description: description || undefined,
+
+      level,
 
       repeatMode: repeatValues[repeatIndex],
       repeatInterval: repeatValues[repeatIndex] !== "none" ? repeatInterval : undefined,
@@ -318,6 +322,23 @@ export function EditTask() {
               className="flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-lg text-text-primary focus:outline-none focus:ring-2 focus:ring-primary border-transparent bg-surface-light min-h-24 placeholder:text-text-muted p-4 text-base font-normal leading-normal"
             />
           </label>
+
+          {/* Level */}
+          <div className="flex items-center gap-4 min-h-14 justify-between pt-2 border-t border-surface-light">
+            <div>
+              <p className="text-text-primary text-base font-normal leading-normal">
+                {t("editTask.level")}
+              </p>
+              <p className="text-text-muted text-xs mt-0.5">{t("editTask.levelHint")}</p>
+            </div>
+            <NumberInput
+              value={level}
+              onChange={setLevel}
+              min={1}
+              size="md"
+              inputWidth="w-12"
+            />
+          </div>
 
           {/* Enabled Toggle */}
           <div className="flex items-center gap-4 min-h-14 justify-between pt-2">

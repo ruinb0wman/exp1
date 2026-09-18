@@ -64,6 +64,7 @@
       "deleteConfirm": "Delete this task instance? Its points records will also be removed. It will be regenerated with the latest template on your next page visit.",
       "description": "Description",
       "repeat": "Repeat",
+      "level": "Level",
       "date": "Date",
       "progress": "Progress",
       "subtasks": "Subtasks",
@@ -367,8 +368,7 @@
   "allTasks": {
     "title": "All Tasks",
     "taskHistory": "Task History",
-    "moveUp": "Move up",
-    "moveDown": "Move down"
+    "level": "Level"
   },
   "editReward": {
     "title": "Edit Reward",
@@ -401,7 +401,9 @@
     "completeAllSubtasks": "Complete all subtasks",
     "completeCount": "Complete specified count",
     "complete": "Complete",
-    "itemsSufficient": "items to complete"
+    "itemsSufficient": "items to complete",
+    "level": "Level",
+    "levelHint": "Lower runs first"
   },
   "achievement": {
     "title": "Achievements",

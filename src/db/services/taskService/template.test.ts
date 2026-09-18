@@ -1,11 +1,7 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import { getDB } from "../../index";
 import type { TaskTemplate } from "../../types";
-import {
-  createTaskTemplate,
-  getAllTaskTemplates,
-  reorderTaskTemplates,
-} from "./template";
+import { createTaskTemplate, getAllTaskTemplates } from "./template";
 
 const db = getDB();
 
@@ -15,11 +11,13 @@ const db = getDB();
  */
 function newTemplate(
   userId: number,
-  title: string
-): Omit<TaskTemplate, "id" | "createdAt" | "updatedAt" | "sortOrder"> {
+  title: string,
+  level = 1
+): Omit<TaskTemplate, "id" | "createdAt" | "updatedAt"> {
   return {
     userId,
     title,
+    level,
     repeatMode: "daily",
     endCondition: "manual",
     enabled: false,
@@ -28,61 +26,47 @@ function newTemplate(
   };
 }
 
-describe("taskService/template - 模板显示顺序", () => {
+describe("taskService/template - 模板执行等级", () => {
   beforeEach(async () => {
     await db.taskTemplates.clear();
   });
 
-  it("createTaskTemplate 把新模板追加到末尾（sortOrder = max + 1）", async () => {
-    await createTaskTemplate(newTemplate(1, "a"));
-    await createTaskTemplate(newTemplate(1, "b"));
-    await createTaskTemplate(newTemplate(1, "c"));
+  it("createTaskTemplate 保留传入的 level，不覆盖也不改写", async () => {
+    const idA = await createTaskTemplate(newTemplate(1, "a", 3));
+    const idB = await createTaskTemplate(newTemplate(1, "b", 1));
+
+    expect((await db.taskTemplates.get(idA))!.level).toBe(3);
+    expect((await db.taskTemplates.get(idB))!.level).toBe(1);
+  });
+
+  it("getAllTaskTemplates 按 level 升序（与写入顺序无关）", async () => {
+    await createTaskTemplate(newTemplate(1, "c", 3));
+    await createTaskTemplate(newTemplate(1, "a", 1));
+    await createTaskTemplate(newTemplate(1, "b", 2));
 
     const templates = await getAllTaskTemplates(1);
     expect(templates.map((t) => t.title)).toEqual(["a", "b", "c"]);
-    expect(templates.map((t) => t.sortOrder)).toEqual([0, 1, 2]);
+    expect(templates.map((t) => t.level)).toEqual([1, 2, 3]);
   });
 
-  it("getAllTaskTemplates 按 sortOrder 排序（与写入顺序无关）", async () => {
-    const idA = await createTaskTemplate(newTemplate(1, "a"));
-    const idB = await createTaskTemplate(newTemplate(1, "b"));
-    const idC = await createTaskTemplate(newTemplate(1, "c"));
-
-    await reorderTaskTemplates([idC, idA, idB]);
+  it("同等级的模板按创建先后排列", async () => {
+    await createTaskTemplate(newTemplate(1, "first", 2));
+    await createTaskTemplate(newTemplate(1, "second", 2));
 
     const templates = await getAllTaskTemplates(1);
-    expect(templates.map((t) => t.title)).toEqual(["c", "a", "b"]);
-    expect(templates.map((t) => t.sortOrder)).toEqual([0, 1, 2]);
+    expect(templates.map((t) => t.title)).toEqual(["first", "second"]);
   });
 
-  it("reorderTaskTemplates 按数组下标重写 sortOrder", async () => {
-    const idA = await createTaskTemplate(newTemplate(1, "a"));
-    const idB = await createTaskTemplate(newTemplate(1, "b"));
-
-    await reorderTaskTemplates([idB, idA]);
-
-    expect((await db.taskTemplates.get(idB))!.sortOrder).toBe(0);
-    expect((await db.taskTemplates.get(idA))!.sortOrder).toBe(1);
-  });
-
-  it("不同用户的顺序互不影响", async () => {
-    await createTaskTemplate(newTemplate(1, "u1-a"));
-    const u2a = await createTaskTemplate(newTemplate(2, "u2-a"));
-    const u2b = await createTaskTemplate(newTemplate(2, "u2-b"));
-
-    await reorderTaskTemplates([u2b, u2a]);
+  it("不同用户各自按自己的 level 排序", async () => {
+    await createTaskTemplate(newTemplate(1, "u1-a", 3));
+    await createTaskTemplate(newTemplate(2, "u2-a", 2));
+    await createTaskTemplate(newTemplate(2, "u2-b", 1));
 
     const user1 = await getAllTaskTemplates(1);
     const user2 = await getAllTaskTemplates(2);
     expect(user1.map((t) => t.title)).toEqual(["u1-a"]);
-    expect(user1.map((t) => t.sortOrder)).toEqual([0]);
+    expect(user1.map((t) => t.level)).toEqual([3]);
     expect(user2.map((t) => t.title)).toEqual(["u2-b", "u2-a"]);
-    expect(user2.map((t) => t.sortOrder)).toEqual([0, 1]);
-  });
-
-  it("空数组是 no-op", async () => {
-    const idA = await createTaskTemplate(newTemplate(1, "a"));
-    await reorderTaskTemplates([]);
-    expect((await db.taskTemplates.get(idA))!.sortOrder).toBe(0);
+    expect(user2.map((t) => t.level)).toEqual([1, 2]);
   });
 });

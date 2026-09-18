@@ -4,16 +4,15 @@ import { getDB } from '../index';
 import { toUserDateString } from '@/libs/task';
 
 /**
- * v8 升级期间会触发 taskTemplateMiddleware
+ * 升级期间会触发 taskTemplateMiddleware
  *
- * `index.v8.test.ts` 的用例刻意把模板设为 `enabled: false`（注释写着「避免升级期间的实例生成检查」），
- * 所以「升级时中间件真的会跑」这条路径一直没有被覆盖 —— 而 v8 的 `bulkUpdate` 会为**每个**
- * enabled 模板注册一次 `trans.on('complete')` → `checkAndGenerateForTemplate`。
+ * v8（模板顺序）与 v9（执行等级）都是通过 `bulkUpdate` 改模板的迁移，而 `bulkUpdate` 会为
+ * **每个** enabled 模板注册一次 `trans.on('complete')` → `checkAndGenerateForTemplate`。
  *
  * 这里专门覆盖它：用 `enabled: true` 的模板 + 一条已存在的「今天」实例建 v7 库，
- * 再走真实升级路径，断言「实例不丢 + 中间件照跑 + 幂等」。
+ * 再走真实升级路径（v8 → v9），断言「实例不丢 + 中间件照跑 + 幂等 + level 已回填」。
  *
- * 仍然是单独文件：`getDB()` 是单例，同文件内模拟两次 v7 → v8 拿不到真实升级路径。
+ * 仍然是单独文件：`getDB()` 是单例，同文件内模拟两次 v7 → 最新版拿不到真实升级路径。
  */
 const DB_NAME = 'exp-v7'; // 必须是同一个库名才能触发真实升级路径
 
@@ -31,7 +30,7 @@ const V7_STORES = {
 	rewardPurchases: 'id, userId, templateId, createdAt, [userId+createdAt]',
 };
 
-/** 旧结构模板（无 sortOrder；enabled 为 true 以触发中间件） */
+/** 旧结构模板（无 level；enabled 为 true 以触发中间件） */
 function legacyTemplate(id: string, createdAt: string) {
 	return {
 		id,
@@ -61,7 +60,7 @@ async function waitFor<T>(read: () => Promise<T>, done: (value: T) => boolean, t
 	return value;
 }
 
-describe('migration v8 - 升级期间的中间件行为（enabled 模板）', () => {
+describe('migration v8/v9 - 升级期间的中间件行为（enabled 模板）', () => {
 	it('保留已存在的今日实例，并为缺实例的 enabled 模板补生成且不重复', async () => {
 		const legacy = new Dexie(DB_NAME);
 		legacy.version(7).stores(V7_STORES);
@@ -94,13 +93,13 @@ describe('migration v8 - 升级期间的中间件行为（enabled 模板）', ()
 		]);
 		await legacy.close();
 
-		// 用当前 schema 打开 → 触发 v8 升级（其 bulkUpdate 会触发中间件的 updating 钩子）
+		// 用当前 schema 打开 → 触发 v8/v9 升级（其 bulkUpdate 会触发中间件的 updating 钩子）
 		const db = getDB();
 		await db.open();
 
-		// sortOrder 回填与中间件无关，先断言
-		expect((await db.taskTemplates.get('t-early'))!.sortOrder).toBe(0);
-		expect((await db.taskTemplates.get('t-late'))!.sortOrder).toBe(1);
+		// level 回填与中间件无关，先断言
+		expect((await db.taskTemplates.get('t-early'))!.level).toBe(1);
+		expect((await db.taskTemplates.get('t-late'))!.level).toBe(1);
 
 		// 中间件的 trans.on('complete') 是异步 fire-and-forget，轮询等它落地
 		const todayInstances = await waitFor(

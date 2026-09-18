@@ -2,7 +2,6 @@ import type { DB } from "../types";
 import { generateUUID } from "@/libs/id";
 import { toLocalDateString } from "@/libs/time";
 import { roundMoney } from "@/libs/reward";
-import { computeSortOrderUpdates } from "@/libs/task";
 
 /** v7 之前模板上的积分货币比例（旧模型：金额 = pointsCost / pointsPerYuan） */
 type LegacyRatioField = { pointsPerYuan?: number };
@@ -133,13 +132,83 @@ export function migration(db: DB) {
 	});
 
 	// v8：模板自定义显示顺序 —— 按「现有 sortOrder → createdAt → id」为每个用户回填 0..n-1
+	// 注意：该字段已被 v9 删除，本块只为「v7 及更早的库」保留历史上的升级路径，
+	// 因此排序逻辑冻结在这里，不随业务排序（现在按 level）变化。
 	db.version(8).upgrade(async (trans) => {
 		const d = trans.db as DB;
-		const updates = computeSortOrderUpdates(await d.taskTemplates.toArray());
+		const updates = computeLegacySortOrderUpdates(await d.taskTemplates.toArray());
 		if (updates.length > 0) {
 			await d.taskTemplates.bulkUpdate(
 				updates.map(({ id, sortOrder }) => ({ key: id, changes: { sortOrder } }))
 			);
 		}
 	});
+
+	// v9：执行等级 —— 旧模板统一 level=1（保持原 createdAt 相对顺序不变），并清掉废弃的 sortOrder 列
+	db.version(9).upgrade(async (trans) => {
+		const d = trans.db as DB;
+		const templates = await d.taskTemplates.toArray();
+		const updates = templates.map((t) => {
+			const legacyLevel = (t as { level?: number }).level;
+			const level =
+				Number.isFinite(legacyLevel) && (legacyLevel as number) > 0
+					? (legacyLevel as number)
+					: 1;
+			// Dexie：显式 undefined 会删除该字段
+			return { key: t.id, changes: { level, sortOrder: undefined } };
+		});
+		if (updates.length > 0) {
+			await d.taskTemplates.bulkUpdate(updates);
+		}
+	});
+}
+
+/** v8 之前的模板顺序字段（已废弃；仅 v8 迁移用于回填） */
+type LegacySortOrderTemplate = {
+	id: string;
+	userId: number;
+	createdAt?: string;
+	sortOrder?: number;
+};
+
+function resolveLegacySortOrder(template: LegacySortOrderTemplate): number {
+	return typeof template.sortOrder === 'number' && Number.isFinite(template.sortOrder)
+		? template.sortOrder
+		: Number.MAX_SAFE_INTEGER;
+}
+
+/**
+ * 计算每个用户模板在 v8 时应有的 sortOrder（按「现有 sortOrder → createdAt → id」排序后重编号 0..n-1）
+ *
+ * 历史逻辑，已被 v9 取代，不要再被新代码复用。
+ */
+function computeLegacySortOrderUpdates(
+	templates: LegacySortOrderTemplate[]
+): Array<{ id: string; sortOrder: number }> {
+	const byUser = new Map<number, LegacySortOrderTemplate[]>();
+	for (const template of templates) {
+		const list = byUser.get(template.userId);
+		if (list) list.push(template);
+		else byUser.set(template.userId, [template]);
+	}
+
+	const updates: Array<{ id: string; sortOrder: number }> = [];
+	for (const list of byUser.values()) {
+		list
+			.sort((a, b) => {
+				const byOrder = resolveLegacySortOrder(a) - resolveLegacySortOrder(b);
+				if (byOrder !== 0) return byOrder;
+
+				const byCreatedAt = (a.createdAt || '').localeCompare(b.createdAt || '');
+				if (byCreatedAt !== 0) return byCreatedAt;
+
+				return String(a.id).localeCompare(String(b.id));
+			})
+			.forEach((template, index) => {
+				if (template.sortOrder !== index) {
+					updates.push({ id: template.id, sortOrder: index });
+				}
+			});
+	}
+	return updates;
 }

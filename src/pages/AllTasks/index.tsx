@@ -11,7 +11,6 @@ import {
   type Category,
   filterTemplatesByCategory,
   getTaskStats,
-  moveTemplateOrder,
 } from "./lib";
 import { TaskList } from "./components/TaskList";
 import { StatsSummary } from "./components/StatsSummary";
@@ -22,7 +21,7 @@ export function AllTasks() {
   const navigate = useNavigate();
   const { user } = useUserStore();
   const { templates, isLoading, error, refresh } = useTaskTemplates(user?.id);
-  const { toggleEnabled, reorder, isLoading: isActionLoading } = useTaskTemplateActions();
+  const { toggleEnabled, isLoading: isActionLoading } = useTaskTemplateActions();
   const [filter, setFilter] = useState<Category>("All");
 
   // 筛选任务
@@ -38,23 +37,7 @@ export function AllTasks() {
     }
   };
 
-  // 上移/下移任务（与可见的邻居交换，筛选视图下会跳过被隐藏的模板）
-  const handleMove = async (id: string, direction: -1 | 1) => {
-    const next = moveTemplateOrder(
-      templates.map((t) => t.id!),
-      filteredTemplates.map((t) => t.id!),
-      id,
-      direction
-    );
-    if (!next) return;
-
-    try {
-      await reorder(next);
-      await refresh();
-    } catch (error) {
-      console.error("Failed to reorder task:", error);
-    }
-  };
+  // 上移/下移任务已移除：列表顺序完全由模板的 level（执行等级）决定
 
   const { enabledCount, totalCount } = getTaskStats(templates);
 
@@ -98,7 +81,6 @@ export function AllTasks() {
           onRefresh={refresh}
           onEdit={(id) => navigate(`/tasks/${id}`)}
           onToggleEnabled={handleToggleEnabled}
-          onMove={handleMove}
         />
       </main>
 

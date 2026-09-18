@@ -6,7 +6,7 @@ import type { TaskTemplate, TaskInstance } from "@/db/types";
 import { getTaskProgressPercent, getTotalPointsEarned } from "@/db/services";
 import { useUserStore } from "@/store";
 import { isExpiredByInstanceDate, getExpireTimeTextByInstanceDate, type ExpireTimeResult } from "@/libs/time";
-import { repeatModeMap, repeatModeColorMap } from "@/pages/AllTasks/lib";
+import { repeatModeMap, repeatModeColorMap, levelBadgeClass } from "@/pages/AllTasks/lib";
 import {
   getStatusIcon,
   getStatusStyle,
@@ -157,6 +157,9 @@ export function TaskInstanceCard({
           <p className="text-text-primary font-medium truncate">
             {template.title}
           </p>
+          <span className={`text-xs px-2 py-0.5 rounded-full ${levelBadgeClass(template.level)}`}>
+            L{template.level}
+          </span>
           <span
             className={`text-xs px-2 py-0.5 rounded-full ${repeatModeColorMap[template.repeatMode]}`}
           >

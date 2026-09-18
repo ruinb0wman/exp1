@@ -4,7 +4,6 @@ import type { RewardTemplate, RewardPurchase, ReplenishmentRecord } from '../typ
 import type { User, PointsHistory } from '../types/user';
 import type { Achievement } from '../types/achievement';
 import { roundMoney, isValidMoneyCost, isCountedInConsumption } from '@/libs/reward';
-import { computeSortOrderUpdates } from '@/libs/task';
 
 /** v7 之前模板上的积分货币比例（旧模型：金额 = pointsCost / pointsPerYuan） */
 type LegacyRatioField = { pointsPerYuan?: number };
@@ -26,7 +25,7 @@ function resolveMoneyCost(template: RewardTemplate): number {
 }
 
 // 备份文件格式版本
-const BACKUP_VERSION = '1.2';
+const BACKUP_VERSION = '1.3';
 
 // 导出数据接口
 export interface ExportData {
@@ -280,12 +279,12 @@ async function importWithOverwrite(data: ExportData['data']): Promise<ImportResu
             ? [db.achievements.bulkPut(data.achievements as Achievement[])]
             : []),
         ]);
-        // 旧备份里的模板没有 sortOrder：按 createdAt 顺序归一化为 0..n-1
-        const orderUpdates = computeSortOrderUpdates(await db.taskTemplates.toArray());
-        if (orderUpdates.length > 0) {
-          await db.taskTemplates.bulkUpdate(
-            orderUpdates.map(({ id, sortOrder }) => ({ key: id, changes: { sortOrder } }))
-          );
+        // 旧备份里的模板没有 level：统一补 1（保持 createdAt 的相对顺序不变）
+        const levelUpdates = (await db.taskTemplates.toArray())
+          .filter((t) => !Number.isFinite((t as { level?: number }).level))
+          .map((t) => ({ key: t.id, changes: { level: 1 } }));
+        if (levelUpdates.length > 0) {
+          await db.taskTemplates.bulkUpdate(levelUpdates);
         }
       }
     );

@@ -36,7 +36,7 @@ function makeTemplate(id: string, title: string, overrides: Partial<TaskTemplate
 		repeatMode: 'daily',
 		endCondition: 'manual',
 		enabled: true,
-		sortOrder: 0,
+		level: 1,
 		subtasks: [],
 		createdAt: localISO(2026, 1, 1),
 		completeExpireDays: 1,

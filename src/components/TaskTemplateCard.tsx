@@ -1,13 +1,14 @@
 import { useTranslation } from "react-i18next";
-import { ChevronDown, ChevronRight, ChevronUp, Power } from "lucide-react";
+import { ChevronRight, Power } from "lucide-react";
 import type { RepeatMode, CompleteRule } from "@/db/types";
 import { calculateMaxPoints } from "@/db/types/task";
-import { repeatModeMap, repeatModeColorMap } from "@/pages/AllTasks/lib";
+import { levelBadgeClass, repeatModeMap, repeatModeColorMap } from "@/pages/AllTasks/lib";
 
 interface TaskTemplateCardProps {
   id: string;
   title: string;
   description?: string;
+  level: number;
   repeatMode: RepeatMode;
   enabled: boolean;
   completeRule?: CompleteRule;
@@ -15,16 +16,12 @@ interface TaskTemplateCardProps {
   isActionLoading: boolean;
   onClick: () => void;
   onToggleEnabled: (e: React.MouseEvent) => void;
-  /** 传了才渲染排序按钮 */
-  onMoveUp?: (e: React.MouseEvent) => void;
-  onMoveDown?: (e: React.MouseEvent) => void;
-  canMoveUp?: boolean;
-  canMoveDown?: boolean;
 }
 
 export function TaskTemplateCard({
   title,
   description,
+  level,
   repeatMode,
   enabled,
   completeRule,
@@ -32,10 +29,6 @@ export function TaskTemplateCard({
   isActionLoading,
   onClick,
   onToggleEnabled,
-  onMoveUp,
-  onMoveDown,
-  canMoveUp = false,
-  canMoveDown = false,
 }: TaskTemplateCardProps) {
   const { t } = useTranslation();
   const maxPoints = completeRule ? calculateMaxPoints(completeRule) : 0;
@@ -58,6 +51,9 @@ export function TaskTemplateCard({
             >
               {title}
             </p>
+            <span className={`text-xs px-2 py-0.5 rounded-full ${levelBadgeClass(level)}`}>
+              L{level}
+            </span>
             <span
               className={`text-xs px-2 py-0.5 rounded-full ${repeatModeColorMap[repeatMode]}`}
             >
@@ -81,30 +77,6 @@ export function TaskTemplateCard({
 
       {/* Actions */}
       <div className="shrink-0 flex items-center gap-2">
-        {/* Reorder Buttons */}
-        {onMoveUp && onMoveDown && (
-          <div className="flex items-center">
-            <button
-              onClick={onMoveUp}
-              disabled={!canMoveUp || isActionLoading}
-              className="p-1.5 rounded-lg text-text-muted transition-colors hover:bg-surface-light disabled:opacity-30 disabled:hover:bg-transparent"
-              title={t("allTasks.moveUp")}
-              aria-label={t("allTasks.moveUp")}
-            >
-              <ChevronUp className="w-4 h-4" />
-            </button>
-            <button
-              onClick={onMoveDown}
-              disabled={!canMoveDown || isActionLoading}
-              className="p-1.5 rounded-lg text-text-muted transition-colors hover:bg-surface-light disabled:opacity-30 disabled:hover:bg-transparent"
-              title={t("allTasks.moveDown")}
-              aria-label={t("allTasks.moveDown")}
-            >
-              <ChevronDown className="w-4 h-4" />
-            </button>
-          </div>
-        )}
-
         {/* Enable/Disable Toggle */}
         <button
           onClick={onToggleEnabled}

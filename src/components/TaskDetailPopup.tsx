@@ -2,7 +2,7 @@ import { useNavigate } from "react-router";
 import { useState, useCallback } from "react";
 import { useTranslation } from "react-i18next";
 import i18n from "i18next";
-import { CheckCircle2, XCircle, Clock, RefreshCw, Calendar, AlignLeft, Pencil, CheckSquare, Square, Timer, ChevronRight, Trash2 } from "lucide-react";
+import { CheckCircle2, XCircle, Clock, RefreshCw, Calendar, AlignLeft, Layers, Pencil, CheckSquare, Square, Timer, ChevronRight, Trash2 } from "lucide-react";
 import { Popup } from "./Popup";
 import { TaskContributionGraph } from "./TaskContributionGraph";
 import { useConfirm } from "@/hooks/useConfirm";
@@ -352,6 +352,14 @@ function TaskDetailContent({
             </div>
           </div>
         )}
+
+        <div className="flex items-center gap-3">
+          <Layers className="w-4 h-4 text-text-muted shrink-0" />
+          <div>
+            <p className="text-xs text-text-muted">{t('home.detail.level')}</p>
+            <p className="text-sm text-text-primary mt-0.5">L{template.level}</p>
+          </div>
+        </div>
 
         <div className="flex items-center gap-3">
           <RefreshCw className="w-4 h-4 text-text-muted shrink-0" />
