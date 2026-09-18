@@ -219,7 +219,7 @@ export function EditTask() {
             completionPoints
           };
 
-    const taskData: Omit<TaskTemplate, "id" | "createdAt" | "updatedAt"> = {
+    const taskData: Omit<TaskTemplate, "id" | "createdAt" | "updatedAt" | "sortOrder"> = {
       userId: user.id,
       title,
       description: description || undefined,

@@ -31,6 +31,7 @@ function makeTemplate(userId: number, id: string, createdAt: string): TaskTempla
 		repeatMode: 'daily',
 		endCondition: 'manual',
 		enabled: true,
+		sortOrder: 0,
 		subtasks: [],
 		createdAt,
 		completeExpireDays: 1,

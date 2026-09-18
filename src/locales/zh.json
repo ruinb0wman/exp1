@@ -366,7 +366,9 @@
   },
   "allTasks": {
     "title": "全部任务",
-    "taskHistory": "任务历史"
+    "taskHistory": "任务历史",
+    "moveUp": "上移",
+    "moveDown": "下移"
   },
   "editReward": {
     "title": "编辑奖励",

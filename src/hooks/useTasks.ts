@@ -8,6 +8,7 @@ import {
   updateTaskTemplate,
   disableTaskTemplate,
   toggleTaskTemplateEnabled,
+  reorderTaskTemplates,
   getTaskInstancesByDate,
   completeTaskInstance,
   skipTaskInstance,
@@ -82,7 +83,7 @@ export function useTaskTemplateActions() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const create = useCallback(async (template: Omit<TaskTemplate, 'id' | 'createdAt' | 'updatedAt'>) => {
+  const create = useCallback(async (template: Omit<TaskTemplate, 'id' | 'createdAt' | 'updatedAt' | 'sortOrder'>) => {
     setIsLoading(true);
     setError(null);
     try {
@@ -135,7 +136,23 @@ export function useTaskTemplateActions() {
     }
   }, []);
 
-  return { create, update, disable, toggleEnabled, isLoading, error };
+  /**
+   * 按传入顺序（完整 id 列表）重写模板显示顺序
+   */
+  const reorder = useCallback(async (orderedIds: string[]) => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      await reorderTaskTemplates(orderedIds);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to reorder tasks');
+      throw err;
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  return { create, update, disable, toggleEnabled, reorder, isLoading, error };
 }
 
 // ==================== TaskInstance Hooks ====================

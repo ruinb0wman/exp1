@@ -52,6 +52,8 @@ export interface TaskTemplate {
   endCondition: EndCondition;
   endValue?: string;
   enabled: boolean;
+  /** 用户自定义显示顺序（同 userId 内升序，由「全部任务」页的上下箭头维护） */
+  sortOrder: number;
   subtasks: string[];
   createdAt: string;
   updatedAt?: string;

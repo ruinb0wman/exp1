@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { getDB } from '@/db';
-import type { Achievement, RewardPurchase, RewardTemplate, User } from '@/db/types';
+import type { Achievement, RewardPurchase, RewardTemplate, TaskTemplate, User } from '@/db/types';
 import {
   exportAllData,
   importData,
@@ -58,6 +58,21 @@ function legacyBackup(): ExportData {
   };
 }
 
+/** 模拟旧备份里的模板：没有 sortOrder 字段 */
+function legacyTemplate(id: string, createdAt: string): TaskTemplate {
+  return {
+    id,
+    userId: 1,
+    title: id,
+    repeatMode: 'daily',
+    endCondition: 'manual',
+    enabled: true,
+    subtasks: [],
+    createdAt,
+    completeRule: { type: 'simple', stages: [], completionPoints: 10 },
+  } as unknown as TaskTemplate;
+}
+
 describe('exportImportService - achievements', () => {
   beforeEach(async () => {
     await db.users.clear();
@@ -75,13 +90,31 @@ describe('exportImportService - achievements', () => {
 
     const exported = await exportAllData();
 
-    expect(exported.version).toBe('1.1');
+    expect(exported.version).toBe('1.2');
     expect(exported.data.achievements).toHaveLength(1);
     expect(exported.data.achievements[0].title).toBe('测试成就');
 
     const serialized = JSON.stringify(exported);
     expect(serialized).not.toContain('apiKey');
     expect(serialized).not.toContain('api_key');
+  });
+
+  it('导入旧备份（模板无 sortOrder）后按 createdAt 顺序补全 sortOrder', async () => {
+    const legacy = legacyBackup();
+    legacy.data.taskTemplates = [
+      legacyTemplate('t-late', '2026-03-01T00:00:00.000Z'),
+      legacyTemplate('t-early', '2026-01-01T00:00:00.000Z'),
+      legacyTemplate('t-mid', '2026-02-01T00:00:00.000Z'),
+    ];
+
+    const result = await importData(legacy);
+    expect(result.success).toBe(true);
+
+    const restored = await db.taskTemplates.toArray();
+    const byId = new Map(restored.map((t) => [t.id, t.sortOrder]));
+    expect(byId.get('t-early')).toBe(0);
+    expect(byId.get('t-mid')).toBe(1);
+    expect(byId.get('t-late')).toBe(2);
   });
 
   it('导出后清空再导入，成就可完整还原', async () => {

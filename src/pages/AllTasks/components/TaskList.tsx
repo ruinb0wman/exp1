@@ -8,26 +8,24 @@ interface TaskListProps {
   templates: TaskTemplate[];
   isLoading: boolean;
   error: string | null;
-  deletingId: string | null;
   isActionLoading: boolean;
   filter: string;
   onRefresh: () => void;
   onEdit: (id: string) => void;
   onToggleEnabled: (id: string, currentEnabled: boolean) => void;
-  onDelete: (id: string, title: string) => void;
+  onMove: (id: string, direction: -1 | 1) => void;
 }
 
 export function TaskList({
   templates,
   isLoading,
   error,
-  deletingId,
   isActionLoading,
   filter,
   onRefresh,
   onEdit,
   onToggleEnabled,
-  onDelete,
+  onMove,
 }: TaskListProps) {
   if (isLoading) {
     return <LoadingState message="Loading tasks..." />;
@@ -56,7 +54,7 @@ export function TaskList({
 
   return (
     <div className="flex flex-col gap-3">
-      {templates.map((template) => (
+      {templates.map((template, index) => (
         <TaskTemplateCard
           key={template.id}
           id={template.id!}
@@ -66,16 +64,21 @@ export function TaskList({
           enabled={template.enabled}
           completeRule={template.completeRule}
           subtasks={template.subtasks}
-          isDeleting={deletingId === template.id}
           isActionLoading={isActionLoading}
+          canMoveUp={index > 0}
+          canMoveDown={index < templates.length - 1}
           onClick={() => onEdit(template.id!)}
           onToggleEnabled={(e) => {
             e.stopPropagation();
             onToggleEnabled(template.id!, template.enabled);
           }}
-          onDelete={(e) => {
+          onMoveUp={(e) => {
             e.stopPropagation();
-            onDelete(template.id!, template.title);
+            onMove(template.id!, -1);
+          }}
+          onMoveDown={(e) => {
+            e.stopPropagation();
+            onMove(template.id!, 1);
           }}
         />
       ))}

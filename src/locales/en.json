@@ -366,7 +366,9 @@
   },
   "allTasks": {
     "title": "All Tasks",
-    "taskHistory": "Task History"
+    "taskHistory": "Task History",
+    "moveUp": "Move up",
+    "moveDown": "Move down"
   },
   "editReward": {
     "title": "Edit Reward",

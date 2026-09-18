@@ -1,6 +1,7 @@
 import { getDB } from '../../index';
 import type { TaskInstance, TaskTemplate } from '../../types';
 import { getUserCurrentDate } from '@/libs/time';
+import { buildTemplateOrderMap, sortDisplayTasks } from '@/libs/task';
 
 export type TaskHistoryFilterStatus = 'all' | 'pending' | 'completed' | 'skipped';
 
@@ -41,10 +42,17 @@ export async function getTodayTaskInstances(
     )
     .toArray();
 
-  return instances.map((instance) => ({
-    instance,
-    template: instance.template!,
-  }));
+  // 顺序取实时模板表（实例里的 template 是快照，不随模板重排更新）
+  const templates = await db.taskTemplates.where('userId').equals(userId).toArray();
+  const orderMap = buildTemplateOrderMap(templates);
+
+  return sortDisplayTasks(
+    instances.map((instance) => ({
+      instance,
+      template: instance.template!,
+    })),
+    orderMap
+  );
 }
 
 export async function getNoDateTaskInstances(
@@ -59,12 +67,18 @@ export async function getNoDateTaskInstances(
 
   const noDateInstances = instances.filter((instance) => !instance.instanceDate);
 
-  return noDateInstances
-    .filter((instance) => instance.template)
-    .map((instance) => ({
-      instance,
-      template: instance.template,
-    }));
+  const templates = await db.taskTemplates.where('userId').equals(userId).toArray();
+  const orderMap = buildTemplateOrderMap(templates);
+
+  return sortDisplayTasks(
+    noDateInstances
+      .filter((instance) => instance.template)
+      .map((instance) => ({
+        instance,
+        template: instance.template,
+      })),
+    orderMap
+  );
 }
 
 export async function getTaskStatistics(

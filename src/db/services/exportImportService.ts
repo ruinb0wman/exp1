@@ -4,6 +4,7 @@ import type { RewardTemplate, RewardPurchase, ReplenishmentRecord } from '../typ
 import type { User, PointsHistory } from '../types/user';
 import type { Achievement } from '../types/achievement';
 import { roundMoney, isValidMoneyCost, isCountedInConsumption } from '@/libs/reward';
+import { computeSortOrderUpdates } from '@/libs/task';
 
 /** v7 之前模板上的积分货币比例（旧模型：金额 = pointsCost / pointsPerYuan） */
 type LegacyRatioField = { pointsPerYuan?: number };
@@ -25,7 +26,7 @@ function resolveMoneyCost(template: RewardTemplate): number {
 }
 
 // 备份文件格式版本
-const BACKUP_VERSION = '1.1';
+const BACKUP_VERSION = '1.2';
 
 // 导出数据接口
 export interface ExportData {
@@ -279,6 +280,13 @@ async function importWithOverwrite(data: ExportData['data']): Promise<ImportResu
             ? [db.achievements.bulkPut(data.achievements as Achievement[])]
             : []),
         ]);
+        // 旧备份里的模板没有 sortOrder：按 createdAt 顺序归一化为 0..n-1
+        const orderUpdates = computeSortOrderUpdates(await db.taskTemplates.toArray());
+        if (orderUpdates.length > 0) {
+          await db.taskTemplates.bulkUpdate(
+            orderUpdates.map(({ id, sortOrder }) => ({ key: id, changes: { sortOrder } }))
+          );
+        }
       }
     );
 

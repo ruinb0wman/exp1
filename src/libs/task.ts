@@ -393,3 +393,102 @@ export function getNextStage(instance: TaskInstance): import('@/db/types').Stage
 export function getTotalPointsEarned(instance: TaskInstance): number {
   return (instance.stagePointsEarned || 0) + (instance.completionPointsEarned || 0);
 }
+
+// ==================== 模板显示顺序 ====================
+
+/** 缺失 sortOrder 时排到最后（旧数据/手工构造对象） */
+const MISSING_SORT_ORDER = Number.MAX_SAFE_INTEGER;
+
+function resolveSortOrder(template: TaskTemplate): number {
+  return typeof template.sortOrder === 'number' && Number.isFinite(template.sortOrder)
+    ? template.sortOrder
+    : MISSING_SORT_ORDER;
+}
+
+/**
+ * 模板顺序比较器：sortOrder 升序 → createdAt → id
+ * （后两级兜底保证旧数据也能得到稳定的全序）
+ */
+export function compareTemplateOrder(a: TaskTemplate, b: TaskTemplate): number {
+  const byOrder = resolveSortOrder(a) - resolveSortOrder(b);
+  if (byOrder !== 0) return byOrder;
+
+  const byCreatedAt = (a.createdAt || '').localeCompare(b.createdAt || '');
+  if (byCreatedAt !== 0) return byCreatedAt;
+
+  return String(a.id).localeCompare(String(b.id));
+}
+
+/** 按模板显示顺序排序（返回副本，不改原数组） */
+export function sortTaskTemplates<T extends TaskTemplate>(templates: T[]): T[] {
+  return [...templates].sort(compareTemplateOrder);
+}
+
+/**
+ * 计算每个模板应有的 sortOrder（每个用户按「现有 sortOrder → createdAt → id」排序后重编号 0..n-1）
+ *
+ * 用途：v8 迁移回填、旧备份导入兜底。
+ * 对已经规范化的数据返回空数组，因此可重复执行。
+ */
+export function computeSortOrderUpdates(
+  templates: TaskTemplate[]
+): Array<{ id: string; sortOrder: number }> {
+  const byUser = new Map<number, TaskTemplate[]>();
+  for (const template of templates) {
+    const list = byUser.get(template.userId);
+    if (list) list.push(template);
+    else byUser.set(template.userId, [template]);
+  }
+
+  const updates: Array<{ id: string; sortOrder: number }> = [];
+  for (const list of byUser.values()) {
+    list.sort(compareTemplateOrder).forEach((template, index) => {
+      if (template.sortOrder !== index) {
+        updates.push({ id: template.id, sortOrder: index });
+      }
+    });
+  }
+  return updates;
+}
+
+/** 实时模板顺序表：templateId → sortOrder */
+export function buildTemplateOrderMap(templates: TaskTemplate[]): Map<string, number> {
+  const map = new Map<string, number>();
+  for (const template of templates) {
+    if (template.id) map.set(template.id, resolveSortOrder(template));
+  }
+  return map;
+}
+
+/** 任务状态权重：未完成在前，已完成/已跳过在后 */
+const STATUS_WEIGHT: Record<string, number> = {
+  pending: 0,
+  completed: 1,
+  skipped: 1,
+};
+
+/**
+ * 任务列表顺序：未完成在前，其次按模板显示顺序。
+ *
+ * 实例里存的是模板快照，快照不会随模板编辑/重排更新，因此排序优先用
+ * 实时模板顺序表（orderByTemplateId），拿不到时才回退到快照上的 sortOrder。
+ * 没有 instance 的项（日历预览）视为未完成。
+ */
+export function sortDisplayTasks<T extends { instance?: TaskInstance; template: TaskTemplate }>(
+  items: T[],
+  orderByTemplateId?: Map<string, number>
+): T[] {
+  return [...items].sort((a, b) => {
+    const aWeight = a.instance ? (STATUS_WEIGHT[a.instance.status] ?? 0) : 0;
+    const bWeight = b.instance ? (STATUS_WEIGHT[b.instance.status] ?? 0) : 0;
+    const byStatus = aWeight - bWeight;
+    if (byStatus !== 0) return byStatus;
+
+    const aOrder = orderByTemplateId?.get(a.template.id) ?? resolveSortOrder(a.template);
+    const bOrder = orderByTemplateId?.get(b.template.id) ?? resolveSortOrder(b.template);
+    const byOrder = aOrder - bOrder;
+    if (byOrder !== 0) return byOrder;
+
+    return compareTemplateOrder(a.template, b.template);
+  });
+}

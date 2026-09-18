@@ -2,6 +2,7 @@ import type { DB } from "../types";
 import { generateUUID } from "@/libs/id";
 import { toLocalDateString } from "@/libs/time";
 import { roundMoney } from "@/libs/reward";
+import { computeSortOrderUpdates } from "@/libs/task";
 
 /** v7 之前模板上的积分货币比例（旧模型：金额 = pointsCost / pointsPerYuan） */
 type LegacyRatioField = { pointsPerYuan?: number };
@@ -128,6 +129,17 @@ export function migration(db: DB) {
 		}));
 		if (updates.length > 0) {
 			await d.rewardTemplates.bulkUpdate(updates);
+		}
+	});
+
+	// v8：模板自定义显示顺序 —— 按「现有 sortOrder → createdAt → id」为每个用户回填 0..n-1
+	db.version(8).upgrade(async (trans) => {
+		const d = trans.db as DB;
+		const updates = computeSortOrderUpdates(await d.taskTemplates.toArray());
+		if (updates.length > 0) {
+			await d.taskTemplates.bulkUpdate(
+				updates.map(({ id, sortOrder }) => ({ key: id, changes: { sortOrder } }))
+			);
 		}
 	});
 }

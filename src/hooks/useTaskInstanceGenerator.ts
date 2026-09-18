@@ -10,6 +10,8 @@ import {
   generateTaskInstances,
   toUserDateString,
   toInUserDay,
+  buildTemplateOrderMap,
+  sortDisplayTasks,
 } from '@/libs/task';
 import { useUserStore } from '@/store';
 
@@ -133,6 +135,7 @@ export function useTaskInstanceGenerator(options: UseTaskInstanceGeneratorOption
     const inDayDate = toInUserDay(date, dayEndTime);
     const userDateStr = toUserDateString(inDayDate, dayEndTime);
 
+    // getEnabledTaskTemplates 已按 sortOrder 排序
     const templates = await getEnabledTaskTemplates(userId);
     const allInstances = await getAllTaskInstances(userId);
 
@@ -152,23 +155,21 @@ export function useTaskInstanceGenerator(options: UseTaskInstanceGeneratorOption
       inDayDate,
       dayEndTime
     );
+    const needingIds = new Set(templatesNeedingInstances.map(t => t.id));
 
+    // 按模板顺序遍历：命中实例就用实例，否则（需要生成）出预览项。
+    // 不再把「已有实例」和「预览」拼成两段，两者混排在同一模板顺序里。
     const result: Array<{ template: TaskTemplate; instance?: TaskInstance; isPreview: boolean }> = [];
-
-    for (const [templateId, instance] of templateInstanceMap) {
-      const template = templates.find(t => t.id === templateId);
-      if (template) {
+    for (const template of templates) {
+      const instance = templateInstanceMap.get(template.id!);
+      if (instance) {
         result.push({ template, instance, isPreview: false });
-      }
-    }
-
-    for (const template of templatesNeedingInstances) {
-      if (!templateInstanceMap.has(template.id!)) {
+      } else if (needingIds.has(template.id)) {
         result.push({ template, isPreview: true });
       }
     }
 
-    return result;
+    return sortDisplayTasks(result, buildTemplateOrderMap(templates));
   }, [userId, user?.dayEndTime]);
 
   /**

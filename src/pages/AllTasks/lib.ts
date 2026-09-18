@@ -48,3 +48,41 @@ export function getTaskStats<T extends { enabled: boolean }>(templates: T[]) {
   const totalCount = templates.length;
   return { enabledCount, totalCount };
 }
+
+/**
+ * 计算交换顺序后的完整 id 列表
+ *
+ * 只与**可见**的邻居交换，因此在「Daily」等筛选视图里上移时会跳过被隐藏的模板，
+ * 隐藏模板之间的相对顺序保持不变。
+ *
+ * @param orderedIds 当前全量顺序（含被筛选隐藏的模板）
+ * @param visibleIds 当前筛选后可见的模板
+ * @param movingId 被移动的模板
+ * @param direction -1 上移 / 1 下移
+ * @returns 交换后的完整顺序；没有可交换的可见邻居时返回 null
+ */
+export function moveTemplateOrder(
+  orderedIds: string[],
+  visibleIds: string[],
+  movingId: string,
+  direction: -1 | 1
+): string[] | null {
+  const from = orderedIds.indexOf(movingId);
+  if (from === -1) return null;
+
+  const visible = new Set(visibleIds);
+  if (!visible.has(movingId)) return null;
+
+  let target = -1;
+  for (let i = from + direction; i >= 0 && i < orderedIds.length; i += direction) {
+    if (visible.has(orderedIds[i])) {
+      target = i;
+      break;
+    }
+  }
+  if (target === -1) return null;
+
+  const next = [...orderedIds];
+  [next[from], next[target]] = [next[target], next[from]];
+  return next;
+}

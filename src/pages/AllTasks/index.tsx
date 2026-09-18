@@ -4,7 +4,6 @@ import { useNavigate } from "react-router";
 import { History } from "lucide-react";
 import { Header, HeaderActionButton } from "@/components/Header";
 import { FilterTabs } from "@/components/FilterTabs";
-import { useConfirm } from "@/hooks/useConfirm";
 import { useTaskTemplates, useTaskTemplateActions } from "@/hooks/useTasks";
 import { useUserStore } from "@/store";
 import {
@@ -12,6 +11,7 @@ import {
   type Category,
   filterTemplatesByCategory,
   getTaskStats,
+  moveTemplateOrder,
 } from "./lib";
 import { TaskList } from "./components/TaskList";
 import { StatsSummary } from "./components/StatsSummary";
@@ -22,10 +22,8 @@ export function AllTasks() {
   const navigate = useNavigate();
   const { user } = useUserStore();
   const { templates, isLoading, error, refresh } = useTaskTemplates(user?.id);
-  const { disable, toggleEnabled, isLoading: isActionLoading } = useTaskTemplateActions();
-  const confirm = useConfirm();
+  const { toggleEnabled, reorder, isLoading: isActionLoading } = useTaskTemplateActions();
   const [filter, setFilter] = useState<Category>("All");
-  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   // 筛选任务
   const filteredTemplates = filterTemplatesByCategory(templates, filter);
@@ -40,26 +38,21 @@ export function AllTasks() {
     }
   };
 
-  // 停用任务
-  const handleDisable = async (id: string, title: string) => {
-    const confirmed = await confirm({
-      title: "Disable Task",
-      message: `Are you sure you want to disable "${title}"? This task will no longer generate new instances.`,
-      confirmLabel: "Disable",
-      cancelLabel: "Cancel",
-      variant: "warning",
-    });
+  // 上移/下移任务（与可见的邻居交换，筛选视图下会跳过被隐藏的模板）
+  const handleMove = async (id: string, direction: -1 | 1) => {
+    const next = moveTemplateOrder(
+      templates.map((t) => t.id!),
+      filteredTemplates.map((t) => t.id!),
+      id,
+      direction
+    );
+    if (!next) return;
 
-    if (!confirmed) return;
-
-    setDeletingId(id);
     try {
-      await disable(id);
-      refresh();
+      await reorder(next);
+      await refresh();
     } catch (error) {
-      console.error("Failed to disable task:", error);
-    } finally {
-      setDeletingId(null);
+      console.error("Failed to reorder task:", error);
     }
   };
 
@@ -100,13 +93,12 @@ export function AllTasks() {
           templates={filteredTemplates}
           isLoading={isLoading}
           error={error}
-          deletingId={deletingId}
           isActionLoading={isActionLoading}
           filter={filter}
           onRefresh={refresh}
           onEdit={(id) => navigate(`/tasks/${id}`)}
           onToggleEnabled={handleToggleEnabled}
-          onDelete={handleDisable}
+          onMove={handleMove}
         />
       </main>
 

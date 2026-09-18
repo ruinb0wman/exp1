@@ -20,7 +20,7 @@ function createInstance(
     subtasks: [],
     createdAt: "2026-01-01T00:00:00.000Z",
     startAt: "2026-01-01T00:00:00.000Z",
-  } as TaskTemplate;
+  } as unknown as TaskTemplate;
 
   return {
     id: instanceId,

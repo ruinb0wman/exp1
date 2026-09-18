@@ -1,5 +1,5 @@
 import { useTranslation } from "react-i18next";
-import { ChevronRight, Power, Trash2 } from "lucide-react";
+import { ChevronDown, ChevronRight, ChevronUp, Power } from "lucide-react";
 import type { RepeatMode, CompleteRule } from "@/db/types";
 import { calculateMaxPoints } from "@/db/types/task";
 import { repeatModeMap, repeatModeColorMap } from "@/pages/AllTasks/lib";
@@ -12,11 +12,14 @@ interface TaskTemplateCardProps {
   enabled: boolean;
   completeRule?: CompleteRule;
   subtasks: string[];
-  isDeleting: boolean;
   isActionLoading: boolean;
   onClick: () => void;
   onToggleEnabled: (e: React.MouseEvent) => void;
-  onDelete: (e: React.MouseEvent) => void;
+  /** 传了才渲染排序按钮 */
+  onMoveUp?: (e: React.MouseEvent) => void;
+  onMoveDown?: (e: React.MouseEvent) => void;
+  canMoveUp?: boolean;
+  canMoveDown?: boolean;
 }
 
 export function TaskTemplateCard({
@@ -26,11 +29,13 @@ export function TaskTemplateCard({
   enabled,
   completeRule,
   subtasks,
-  isDeleting,
   isActionLoading,
   onClick,
   onToggleEnabled,
-  onDelete,
+  onMoveUp,
+  onMoveDown,
+  canMoveUp = false,
+  canMoveDown = false,
 }: TaskTemplateCardProps) {
   const { t } = useTranslation();
   const maxPoints = completeRule ? calculateMaxPoints(completeRule) : 0;
@@ -76,6 +81,30 @@ export function TaskTemplateCard({
 
       {/* Actions */}
       <div className="shrink-0 flex items-center gap-2">
+        {/* Reorder Buttons */}
+        {onMoveUp && onMoveDown && (
+          <div className="flex items-center">
+            <button
+              onClick={onMoveUp}
+              disabled={!canMoveUp || isActionLoading}
+              className="p-1.5 rounded-lg text-text-muted transition-colors hover:bg-surface-light disabled:opacity-30 disabled:hover:bg-transparent"
+              title={t("allTasks.moveUp")}
+              aria-label={t("allTasks.moveUp")}
+            >
+              <ChevronUp className="w-4 h-4" />
+            </button>
+            <button
+              onClick={onMoveDown}
+              disabled={!canMoveDown || isActionLoading}
+              className="p-1.5 rounded-lg text-text-muted transition-colors hover:bg-surface-light disabled:opacity-30 disabled:hover:bg-transparent"
+              title={t("allTasks.moveDown")}
+              aria-label={t("allTasks.moveDown")}
+            >
+              <ChevronDown className="w-4 h-4" />
+            </button>
+          </div>
+        )}
+
         {/* Enable/Disable Toggle */}
         <button
           onClick={onToggleEnabled}
@@ -88,20 +117,6 @@ export function TaskTemplateCard({
           title={enabled ? "Disable" : "Enable"}
         >
           <Power className="w-4 h-4" />
-        </button>
-
-        {/* Delete Button */}
-        <button
-          onClick={onDelete}
-          disabled={isDeleting || isActionLoading}
-          className="p-2 rounded-lg text-text-muted hover:text-red-400 hover:bg-red-400/10 transition-colors"
-          title="Delete"
-        >
-          {isDeleting ? (
-            <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
-          ) : (
-            <Trash2 className="w-4 h-4" />
-          )}
         </button>
 
         <ChevronRight className="w-5 h-5 text-text-muted" />
