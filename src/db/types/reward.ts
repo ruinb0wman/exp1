@@ -111,6 +111,12 @@ export interface RewardPurchase {
    * 关闭统计的购买不写该字段（undefined = 不计入消费统计），避免 0 被误读成真实金额
    */
   moneyAmount?: number;
+  /**
+   * 兑换时填写的一次性备注（整单一条）；缺省 = 未填
+   *
+   * 只读展示：不提供事后编辑入口，填错请删除该消费记录后重兑。
+   */
+  note?: string;
   createdAt: string;
   updatedAt?: string;
 }

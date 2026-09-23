@@ -196,7 +196,9 @@
     "total": "总计",
     "stockShortage": "消费额度不足",
     "pointsShortage": "积分不足",
-    "buyCount": "购买 {count} 个"
+    "buyCount": "购买 {count} 个",
+    "noteLabel": "备注（可选）",
+    "notePlaceholder": "例如：和朋友一起 / 周末奖励自己"
   },
   "points": {
     "taskReward": "任务奖励",

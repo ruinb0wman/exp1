@@ -12,6 +12,8 @@
  * 购买也不计入消费统计。
  */
 
+import type { RewardTemplate } from '@/db/types';
+
 /** 金额保留小数位 */
 const MONEY_DECIMALS = 2;
 
@@ -40,6 +42,22 @@ export function roundMoney(amount: number): number {
   return Math.round(amount * MONEY_FACTOR) / MONEY_FACTOR;
 }
 
+/** 兑换备注最大长度（与兑换弹层 textarea 的 maxLength 保持一致） */
+export const MAX_PURCHASE_NOTE_LENGTH = 200;
+
+/**
+ * 归一化兑换备注：去首尾空白、超长截断
+ *
+ * 空串 / 纯空白 / 非字符串一律返回 undefined（= 未填），调用方据此决定是否写字段。
+ * 内部换行保留（消费明细按多行展示），需要单行时由调用方自行压平。
+ */
+export function normalizePurchaseNote(note?: string): string | undefined {
+  if (typeof note !== 'string') return undefined;
+  const trimmed = note.trim();
+  if (!trimmed) return undefined;
+  return trimmed.slice(0, MAX_PURCHASE_NOTE_LENGTH);
+}
+
 /**
  * 金额展示：去掉多余的 0，如 ¥12 / ¥12.5 / ¥12.34
  */
@@ -47,4 +65,33 @@ export function formatMoney(amount: number): string {
   if (!Number.isFinite(amount)) return '¥0';
   const rounded = Math.round(amount * MONEY_FACTOR) / MONEY_FACTOR;
   return `¥${Number(rounded.toFixed(MONEY_DECIMALS))}`;
+}
+
+/** 非法/缺失 pointsCost（坏备份、手工构造对象）时排到最后 */
+const MISSING_POINTS_COST = Number.MAX_SAFE_INTEGER;
+
+function resolvePointsCost(template: RewardTemplate): number {
+  const cost = template.pointsCost;
+  return Number.isFinite(cost) ? cost : MISSING_POINTS_COST;
+}
+
+/**
+ * 商品比较器：pointsCost 升序 → createdAt → id
+ *
+ * 0 积分的免费额度排在最前；后两级兜底保证同价商品也有稳定的全序
+ * （与任务模板的 compareTemplateOrder 同一取舍）。
+ */
+export function compareRewardOrder(a: RewardTemplate, b: RewardTemplate): number {
+  const byCost = resolvePointsCost(a) - resolvePointsCost(b);
+  if (byCost !== 0) return byCost;
+
+  const byCreatedAt = (a.createdAt || '').localeCompare(b.createdAt || '');
+  if (byCreatedAt !== 0) return byCreatedAt;
+
+  return String(a.id).localeCompare(String(b.id));
+}
+
+/** 按积分升序排序（返回副本，不改原数组） */
+export function sortRewardTemplates<T extends RewardTemplate>(templates: T[]): T[] {
+  return [...templates].sort(compareRewardOrder);
 }

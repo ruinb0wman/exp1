@@ -11,7 +11,7 @@ import type {
 } from '../types';
 import { getUserCurrentDate } from '@/libs/time';
 import { generateUUID } from '@/libs/id';
-import { roundMoney, isValidMoneyCost, isCountedInConsumption } from '@/libs/reward';
+import { roundMoney, isValidMoneyCost, isCountedInConsumption, sortRewardTemplates, normalizePurchaseNote } from '@/libs/reward';
 
 /** 单件金额归一化：非法值兜底为 0（不记金额） */
 function normalizeMoneyCost(moneyCost: number | undefined): number {
@@ -44,28 +44,28 @@ export async function createRewardTemplate(
 }
 
 /**
- * 获取所有奖励模板
+ * 获取所有奖励模板（按积分升序）
  */
 export async function getAllRewardTemplates(userId?: number): Promise<RewardTemplate[]> {
   const db = getDB();
 
   if (userId !== undefined) {
-    return db.rewardTemplates.where('userId').equals(userId).toArray();
+    return sortRewardTemplates(await db.rewardTemplates.where('userId').equals(userId).toArray());
   }
-  return db.rewardTemplates.toArray();
+  return sortRewardTemplates(await db.rewardTemplates.toArray());
 }
 
 /**
- * 获取启用的奖励模板
+ * 获取启用的奖励模板（按积分升序）
  */
 export async function getEnabledRewardTemplates(userId?: number): Promise<RewardTemplate[]> {
   const db = getDB();
 
   if (userId !== undefined) {
     const templates = await db.rewardTemplates.where('userId').equals(userId).toArray();
-    return templates.filter(t => t.enabled);
+    return sortRewardTemplates(templates.filter(t => t.enabled));
   }
-  return db.rewardTemplates.filter(t => t.enabled).toArray();
+  return sortRewardTemplates(await db.rewardTemplates.filter(t => t.enabled).toArray());
 }
 
 /**
@@ -77,7 +77,7 @@ export async function getRewardTemplateById(id: string): Promise<RewardTemplate 
 }
 
 /**
- * 根据补货模式获取奖励模板
+ * 根据补货模式获取奖励模板（按积分升序）
  */
 export async function getRewardTemplatesByReplenishmentMode(
   mode: ReplenishmentMode,
@@ -87,9 +87,9 @@ export async function getRewardTemplatesByReplenishmentMode(
 
   if (userId !== undefined) {
     const templates = await db.rewardTemplates.where('userId').equals(userId).toArray();
-    return templates.filter(t => t.replenishmentMode === mode);
+    return sortRewardTemplates(templates.filter(t => t.replenishmentMode === mode));
   }
-  return db.rewardTemplates.where('replenishmentMode').equals(mode).toArray();
+  return sortRewardTemplates(await db.rewardTemplates.where('replenishmentMode').equals(mode).toArray());
 }
 
 /**
@@ -166,18 +166,25 @@ function toPurchaseSnapshot(template: RewardTemplate): RewardPurchaseSnapshot {
  * 购买奖励：一次性扣除积分并写入消费记录（购买即消费，无中间态）
  *
  * 事务内完成：额度校验与扣减、积分校验、写消费记录、写积分流水
+ *
+ * @param note 兑换时填写的可选备注（整单一条）；空/空白视为未填。会原样存在
+ *   消费记录上，并拼进积分流水描述（积分明细/报告据此展示）
  * @returns 消费记录 ID
  */
 export async function purchaseReward(
   templateId: string,
   userId: number,
-  quantity: number = 1
+  quantity: number = 1,
+  note?: string
 ): Promise<string> {
   const db = getDB();
 
   if (!Number.isInteger(quantity) || quantity <= 0) {
     throw new Error('数量不合法');
   }
+
+  // 归一化放在事务外：纯函数、与校验无关，失败也不该占用事务
+  const normalizedNote = normalizePurchaseNote(note);
 
   return db.transaction(
     'rw',
@@ -228,6 +235,7 @@ export async function purchaseReward(
         pointsCost,
         pointsSpent: totalCost,
         moneyAmount: counted ? roundMoney(moneyCost * quantity) : undefined,
+        note: normalizedNote,
         createdAt: now,
       };
       await db.rewardPurchases.add(purchase);
@@ -235,13 +243,20 @@ export async function purchaseReward(
       // 积分扣减与消费记录同事务写入，避免出现「扣了积分没有记录」
       // 0 积分的免费额度不写 0 分流水，避免刷屏积分明细
       if (totalCost > 0) {
+        // 备注写进流水描述，积分明细与报告无需额外查询即可展示
+        // （换行压成空格，保持描述是单行文本）
+        const purchaseLabel = `购买 ${template.title} ×${quantity}`;
+        const description = normalizedNote
+          ? `${purchaseLabel} · ${normalizedNote.replace(/\s+/g, ' ')}`
+          : purchaseLabel;
+
         const spendRecord: PointsHistory = {
           id: generateUUID(),
           userId,
           amount: -totalCost,
           type: 'reward_exchange',
           relatedInstanceId: purchaseId,
-          description: `购买 ${template.title} ×${quantity}`,
+          description,
           createdAt: now,
         };
         await db.pointsHistory.add(spendRecord);
@@ -428,7 +443,7 @@ export async function getRewardPurchaseStats(
 // ==================== 商店查询 ====================
 
 /**
- * 获取商店的奖励模板（启用的模板，包含剩余额度）
+ * 获取商店的奖励模板（启用的模板，包含剩余额度；按积分升序，0 积分的免费额度在最前）
  */
 export async function getStoreRewardTemplates(
   userId: number
@@ -443,7 +458,7 @@ export async function getStoreRewardTemplates(
 
   const result: Array<{ template: RewardTemplate; availableCount: number }> = [];
 
-  for (const template of templates) {
+  for (const template of sortRewardTemplates(templates)) {
     // 对不自动补货的奖品，库存为无限；否则使用 currentStock
     const availableCount = template.replenishmentMode === 'none'
       ? Infinity

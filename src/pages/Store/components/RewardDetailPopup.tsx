@@ -2,7 +2,7 @@ import { useTranslation } from "react-i18next";
 import { Sparkles, Banknote } from "lucide-react";
 import { NumberInput } from "@/components/NumberInput";
 import { DynamicIcon } from "@/components/DynamicIcon";
-import { formatMoney, isCountedInConsumption } from "@/libs/reward";
+import { formatMoney, isCountedInConsumption, MAX_PURCHASE_NOTE_LENGTH } from "@/libs/reward";
 import type { StoreReward } from "./RewardsGrid";
 import { getPurchaseMoney } from "../lib";
 
@@ -10,6 +10,8 @@ interface RewardDetailPopupProps {
   reward: StoreReward;
   redeemQuantity: number;
   onQuantityChange: (quantity: number) => void;
+  note: string;
+  onNoteChange: (note: string) => void;
   maxQuantity: number;
   currentPoints: number;
   isActionLoading: boolean;
@@ -21,6 +23,8 @@ export function RewardDetailPopup({
   reward,
   redeemQuantity,
   onQuantityChange,
+  note,
+  onNoteChange,
   maxQuantity,
   currentPoints,
   isActionLoading,
@@ -123,6 +127,23 @@ export function RewardDetailPopup({
             )}
           </span>
         </div>
+      </div>
+
+      <div className="bg-surface rounded-xl p-4">
+        <div className="flex items-center justify-between pb-2">
+          <span className="text-text-secondary text-sm">{t("store.noteLabel")}</span>
+          <span className="text-text-muted text-xs">
+            {note.length}/{MAX_PURCHASE_NOTE_LENGTH}
+          </span>
+        </div>
+        <textarea
+          value={note}
+          onChange={(e) => onNoteChange(e.target.value)}
+          maxLength={MAX_PURCHASE_NOTE_LENGTH}
+          rows={2}
+          placeholder={t("store.notePlaceholder")}
+          className="w-full min-w-0 resize-none rounded-lg text-text-primary placeholder:text-text-muted bg-surface-light p-3 text-base font-normal leading-normal focus:outline-none focus:ring-2 focus:ring-primary"
+        />
       </div>
 
       {redeemError && (

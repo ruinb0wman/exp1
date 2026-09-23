@@ -11,6 +11,8 @@ import {
   deleteRewardPurchase,
   deleteRewardTemplate,
   createRewardTemplate,
+  getStoreRewardTemplates,
+  toggleRewardTemplateEnabled,
 } from './rewardService';
 
 const db = getDB();
@@ -263,6 +265,99 @@ describe('rewardService - 购买即消费', () => {
     const purchases = await getRewardPurchases(USER_ID);
     expect(purchases).toHaveLength(2);
     expect(purchases[0].createdAt >= purchases[1].createdAt).toBe(true);
+  });
+
+  it('带备注兑换：备注落在消费记录上，并拼进积分流水描述', async () => {
+    await seedPoints(300);
+    const templateId = await createRewardTemplate(template());
+
+    const purchaseId = await purchaseReward(templateId, USER_ID, 1, '  和朋友一起  ');
+
+    const purchase = await getRewardPurchaseById(purchaseId);
+    expect(purchase!.note).toBe('和朋友一起');
+
+    const spendRecord = await db.pointsHistory
+      .where('userId')
+      .equals(USER_ID)
+      .filter((record) => record.type === 'reward_exchange')
+      .first();
+    expect(spendRecord!.description).toBe('购买 吃饭 ×1 · 和朋友一起');
+  });
+
+  it('不带备注时保持旧文案，且不写 note 字段', async () => {
+    await seedPoints(300);
+    const templateId = await createRewardTemplate(template());
+
+    const purchaseId = await purchaseReward(templateId, USER_ID, 1);
+
+    const purchase = await getRewardPurchaseById(purchaseId);
+    expect(purchase!.note).toBeUndefined();
+
+    const spendRecord = await db.pointsHistory
+      .where('userId')
+      .equals(USER_ID)
+      .filter((record) => record.type === 'reward_exchange')
+      .first();
+    expect(spendRecord!.description).toBe('购买 吃饭 ×1');
+  });
+
+  it('空白备注视为未填（不写 note、文案不变）', async () => {
+    await seedPoints(300);
+    const templateId = await createRewardTemplate(template());
+
+    const purchaseId = await purchaseReward(templateId, USER_ID, 1, '   \n  ');
+
+    const purchase = await getRewardPurchaseById(purchaseId);
+    expect(purchase!.note).toBeUndefined();
+    const spendRecord = await db.pointsHistory
+      .where('userId')
+      .equals(USER_ID)
+      .filter((record) => record.type === 'reward_exchange')
+      .first();
+    expect(spendRecord!.description).toBe('购买 吃饭 ×1');
+  });
+
+  it('备注里的换行在流水描述里压成空格，但消费记录原样保留', async () => {
+    await seedPoints(300);
+    const templateId = await createRewardTemplate(template());
+
+    const purchaseId = await purchaseReward(templateId, USER_ID, 2, '第一行\n第二行');
+
+    const purchase = await getRewardPurchaseById(purchaseId);
+    expect(purchase!.note).toBe('第一行\n第二行');
+
+    const spendRecord = await db.pointsHistory
+      .where('userId')
+      .equals(USER_ID)
+      .filter((record) => record.type === 'reward_exchange')
+      .first();
+    expect(spendRecord!.description).toBe('购买 吃饭 ×2 · 第一行 第二行');
+  });
+
+  it('0 积分免费额度：备注只存消费记录，不产生积分流水', async () => {
+    const templateId = await createRewardTemplate(template({ pointsCost: 0 }));
+
+    const purchaseId = await purchaseReward(templateId, USER_ID, 1, '免费的那一份');
+
+    const purchase = await getRewardPurchaseById(purchaseId);
+    expect(purchase!.note).toBe('免费的那一份');
+    expect(await currentPoints()).toBe(0);
+    const spendRecords = await db.pointsHistory
+      .where('userId')
+      .equals(USER_ID)
+      .filter((record) => record.type === 'reward_exchange')
+      .toArray();
+    expect(spendRecords).toHaveLength(0);
+  });
+
+  it('超长备注截断到 200 字符', async () => {
+    await seedPoints(300);
+    const templateId = await createRewardTemplate(template());
+
+    const purchaseId = await purchaseReward(templateId, USER_ID, 1, 'a'.repeat(250));
+
+    const purchase = await getRewardPurchaseById(purchaseId);
+    expect(purchase!.note).toHaveLength(200);
   });
 });
 
@@ -669,5 +764,49 @@ describe('rewardService - 消费统计', () => {
     ] as never);
 
     expect(await getRewardPurchaseCount(USER_ID)).toBe(1);
+  });
+});
+
+describe('rewardService - 商店列表顺序', () => {
+  beforeEach(async () => {
+    await db.rewardTemplates.clear();
+  });
+
+  it('按积分升序返回：0 积分的免费额度在最前，且只含当前用户', async () => {
+    await createRewardTemplate(template({ title: '大餐', pointsCost: 100 }));
+    await createRewardTemplate(template({ title: '免费额度', pointsCost: 0 }));
+    await createRewardTemplate(template({ title: '咖啡', pointsCost: 10 }));
+    await createRewardTemplate(template({ userId: 2, title: '别人的' , pointsCost: 1 }));
+
+    const store = await getStoreRewardTemplates(USER_ID);
+
+    expect(store.map(({ template: t }) => t.title)).toEqual(['免费额度', '咖啡', '大餐']);
+    expect(store.map(({ template: t }) => t.pointsCost)).toEqual([0, 10, 100]);
+  });
+
+  it('停用的商品不出现，其余商品的相对顺序不变', async () => {
+    const coffeeId = await createRewardTemplate(template({ title: '咖啡', pointsCost: 10 }));
+    await createRewardTemplate(template({ title: '大餐', pointsCost: 100 }));
+    await createRewardTemplate(template({ title: '免费额度', pointsCost: 0 }));
+
+    await toggleRewardTemplateEnabled(coffeeId, false);
+
+    const store = await getStoreRewardTemplates(USER_ID);
+
+    expect(store.map(({ template: t }) => t.title)).toEqual(['免费额度', '大餐']);
+  });
+
+  it('排序不影响 availableCount 的计算', async () => {
+    const coffeeId = await createRewardTemplate(
+      template({ title: '咖啡', pointsCost: 10, replenishmentMode: 'daily', replenishmentNum: 2 })
+    );
+    await createRewardTemplate(template({ title: '免费额度', pointsCost: 0 }));
+    await db.rewardTemplates.update(coffeeId, { currentStock: 3 });
+
+    const store = await getStoreRewardTemplates(USER_ID);
+
+    expect(store.map(({ template: t }) => t.title)).toEqual(['免费额度', '咖啡']);
+    expect(store[0].availableCount).toBe(Infinity);
+    expect(store[1].availableCount).toBe(3);
   });
 });

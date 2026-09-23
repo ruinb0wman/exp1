@@ -61,11 +61,11 @@ export function useRewardPurchaseActions() {
   const [error, setError] = useState<string | null>(null);
 
   const purchase = useCallback(
-    async (templateId: string, userId: number, quantity: number = 1) => {
+    async (templateId: string, userId: number, quantity: number = 1, note?: string) => {
       setIsLoading(true);
       setError(null);
       try {
-        return await purchaseReward(templateId, userId, quantity);
+        return await purchaseReward(templateId, userId, quantity, note);
       } catch (err) {
         setError(err instanceof Error ? err.message : '购买失败');
         throw err;

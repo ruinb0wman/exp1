@@ -310,6 +310,32 @@ describe('renderReportMarkdown', () => {
 		expect(empty).toContain('- 最活跃任务: 无');
 	});
 
+	it('兑换备注（含竖线与换行）写进积分描述时不会破坏表格', () => {
+		// 备注是用户自由输入，可能带竖线/换行；积分描述现在会拼上备注
+		const noted: ReportModel = {
+			...fullModel,
+			points: {
+				...fullModel.points,
+				topSpend: [
+					{
+						id: 'p-note',
+						userId: 1,
+						amount: -10,
+						type: 'reward_exchange',
+						description: '购买 看电影 ×1 · 和朋友一起|周末\n第二行',
+						createdAt: '2026-03-16T05:00:00.000Z',
+					},
+				],
+			},
+		};
+
+		const rendered = renderReportMarkdown(noted, t);
+
+		// 竖线转义、换行压成空格，整行仍是一条合法表格行
+		expect(rendered).toContain('购买 看电影 ×1 · 和朋友一起\\|周末 第二行');
+		expect(rendered).not.toContain('和朋友一起|周末');
+	});
+
 	it('提示词段引用了本期区间', () => {
 		expect(markdown).toContain('Logseq 中 2026-03-16 ~ 2026-03-22 的日志');
 		expect(markdown).toContain('exp1 任务应用里 2026-W12');

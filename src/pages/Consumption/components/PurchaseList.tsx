@@ -82,6 +82,11 @@ export function PurchaseList({ purchases, onDelete }: PurchaseListProps) {
 							<p className="text-text-muted text-xs">
 								{formatPurchaseDateTime(purchase.createdAt)}
 							</p>
+							{purchase.note && (
+								<p className="text-text-secondary text-xs mt-0.5 whitespace-pre-line break-words">
+									{purchase.note}
+								</p>
+							)}
 						</div>
 
 						<div className="text-right shrink-0">

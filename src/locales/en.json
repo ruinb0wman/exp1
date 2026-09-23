@@ -196,7 +196,9 @@
     "total": "Total",
     "stockShortage": "Not enough quota",
     "pointsShortage": "Not enough points",
-    "buyCount": "Buy {count}"
+    "buyCount": "Buy {count}",
+    "noteLabel": "Note (optional)",
+    "notePlaceholder": "e.g. with friends / weekend treat"
   },
   "points": {
     "taskReward": "Task Reward",

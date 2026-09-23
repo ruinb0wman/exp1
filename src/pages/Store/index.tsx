@@ -63,6 +63,7 @@ export function Store() {
   const [isPopupOpen, setIsPopupOpen] = useState(false);
   const [redeemError, setRedeemError] = useState<string | null>(null);
   const [redeemQuantity, setRedeemQuantity] = useState(1);
+  const [redeemNote, setRedeemNote] = useState("");
 
   // 搜索过滤
   const filteredRewards = filterRewardsBySearch(rewards, searchQuery);
@@ -72,6 +73,7 @@ export function Store() {
     setSelectedReward(reward);
     setRedeemError(null);
     setRedeemQuantity(1);
+    setRedeemNote("");
     setIsPopupOpen(true);
   };
 
@@ -99,7 +101,7 @@ export function Store() {
 
     try {
       // 扣积分、写消费记录、扣额度在服务层同一事务内完成
-      await purchase(template.id!, user.id, redeemQuantity);
+      await purchase(template.id!, user.id, redeemQuantity, redeemNote);
 
       // 刷新商店列表（额度已变化）与积分余额
       await refresh();
@@ -109,10 +111,11 @@ export function Store() {
       setIsPopupOpen(false);
       setSelectedReward(null);
       setRedeemQuantity(1);
+      setRedeemNote("");
     } catch (err) {
       setRedeemError(err instanceof Error ? err.message : t("common.error"));
     }
-  }, [selectedReward, user, purchase, refresh, calculatePoints, currentPoints, redeemQuantity, t]);
+  }, [selectedReward, user, purchase, refresh, calculatePoints, currentPoints, redeemQuantity, redeemNote, t]);
 
   return (
     <div className="min-h-screen pb-24 bg-background">
@@ -201,6 +204,8 @@ export function Store() {
             reward={selectedReward}
             redeemQuantity={redeemQuantity}
             onQuantityChange={setRedeemQuantity}
+            note={redeemNote}
+            onNoteChange={setRedeemNote}
             maxQuantity={maxQuantity}
             currentPoints={currentPoints}
             isActionLoading={isActionLoading}
