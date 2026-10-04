@@ -434,7 +434,8 @@ function TaskDetailContent({
           <button
             onClick={() => {
               usePomoStore.getState().setSelectedTask(instance.id!);
-              navigate('/pomo');
+              // tab 页用 replace：返回手势直接退出，不会退回 Home
+              navigate('/pomo', { replace: true });
             }}
             disabled={isExpired || disabled || isLoading}
             className="flex-1 py-3 px-4 bg-surface hover:bg-surface-light disabled:opacity-50 disabled:cursor-not-allowed text-text-primary rounded-xl font-medium transition-colors flex items-center justify-center gap-2"

@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Search, X } from 'lucide-react';
 import { DynamicIcon } from './DynamicIcon';
+import { useBackButtonHandler } from '@/hooks/useBackButtonHandler';
 import {
   REWARD_ICONS,
   REWARD_ICON_COLORS,
@@ -44,6 +45,9 @@ export function IconPicker({
     setSearchQuery('');
     onClose();
   };
+
+  // Android 返回手势 = 取消（与 X / 遮罩一致，含 temp 态重置）
+  useBackButtonHandler(isOpen, handleCancel);
 
   if (!isOpen) return null;
 

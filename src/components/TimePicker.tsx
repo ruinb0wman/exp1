@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { parseTimeString, formatTimeString } from '@/libs/time';
 import { X, Check } from 'lucide-react';
+import { useBackButtonHandler } from '@/hooks/useBackButtonHandler';
 
 interface TimePickerProps {
   isOpen: boolean;
@@ -43,6 +44,9 @@ export function TimePicker({
   const minutes = Array.from({ length: 60 / minuteInterval }, (_, i) => i * minuteInterval);
 
   const displayTitle = title ?? t("timePicker.selectTime");
+
+  // Android 返回手势关浮层
+  useBackButtonHandler(isOpen, onClose);
 
   if (!isOpen) return null;
 

@@ -1,6 +1,7 @@
 import { useEffect, useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { X } from 'lucide-react';
+import { useBackButtonHandler } from '@/hooks/useBackButtonHandler';
 
 export interface PopupProps {
   /** 控制显示 */
@@ -94,6 +95,10 @@ export function Popup({
     document.addEventListener('keydown', handleKeyDown);
     return () => document.removeEventListener('keydown', handleKeyDown);
   }, [handleKeyDown]);
+
+  // Android 返回手势关浮层（不看 maskClosable，与 ESC 语义一致；
+  // 用 isOpen 而不是 animationState，避免开/关动画里反复注册-注销监听）
+  useBackButtonHandler(isOpen, onClose);
 
   // 遮罩点击
   const handleMaskClick = () => {

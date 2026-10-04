@@ -1,5 +1,6 @@
 import { useEffect } from "react";
 import { AlertTriangle, X } from "lucide-react";
+import { useBackButtonHandler } from "@/hooks/useBackButtonHandler";
 
 interface ConfirmDialogProps {
   isOpen: boolean;
@@ -35,6 +36,9 @@ export function ConfirmDialog({
     document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);
   }, [isOpen, onCancel]);
+
+  // Android 返回手势 = 取消
+  useBackButtonHandler(isOpen, onCancel);
 
   if (!isOpen) return null;
 

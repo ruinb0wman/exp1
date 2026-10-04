@@ -10,8 +10,10 @@ interface NavItemProps {
 
 function NavItem({ to, icon, activeIcon, label }: NavItemProps) {
   return (
+    // replace：底部 tab 页不参与返回手势的历史（否则 Home → Profile 再按返回会回到 Home）
     <NavLink
       to={to}
+      replace
       className={({ isActive }) =>
         `flex flex-col landscape:flex-row landscape:w-full landscape:px-4 landscape:py-3 landscape:rounded-lg landscape:gap-3 items-center gap-1 w-16 transition-colors ${
           isActive
