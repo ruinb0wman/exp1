@@ -41,6 +41,9 @@ import {
   CalendarCheck,
   TrendingUp,
   Sparkles,
+  PawPrint,
+  Wifi,
+  SoapDispenserDroplet,
 } from 'lucide-react';
 import type { RewardIconName, RewardIconColor, AchievementIconName } from '@/db/types';
 
@@ -87,6 +90,9 @@ const iconMap: Record<string, React.ComponentType<LucideProps>> = {
   CalendarCheck,
   TrendingUp,
   Sparkles,
+  PawPrint,
+  Wifi,
+  SoapDispenserDroplet,
 };
 
 export type DynamicIconName = RewardIconName | AchievementIconName | (string & {});

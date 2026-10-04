@@ -30,6 +30,9 @@ export const REWARD_ICONS = [
   'Zap',
   'Trophy',
   'Crown',
+  'PawPrint',
+  'Wifi',
+  'SoapDispenserDroplet',
 ] as const;
 
 export type RewardIconName = (typeof REWARD_ICONS)[number];
