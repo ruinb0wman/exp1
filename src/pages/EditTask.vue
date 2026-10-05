@@ -21,6 +21,7 @@ import type {
 } from "@/db/types/task";
 import { toLocalDateString } from "@/libs/time";
 import { toPlain } from "@/libs/plain";
+import { useAlert } from "@/composables/useConfirm";
 
 const repeatOptions = ["None", "Daily", "Weekly", "Monthly"];
 const repeatValues: RepeatMode[] = ["none", "daily", "weekly", "monthly"];
@@ -69,6 +70,9 @@ const {
 	update,
 	isLoading: isSubmitting,
 } = useTaskTemplateActions();
+
+// 不用原生 alert()：Android WebView 会静默丢弃、Electron 里会阻塞渲染进程
+const alertDialog = useAlert();
 
 // 表单状态
 const title = ref("");
@@ -215,7 +219,7 @@ function removeStage(index: number) {
 
 async function handleSubmit() {
 	if (!user.value?.id) {
-		alert("User not initialized");
+		await alertDialog({ title: "Error", message: "User not initialized", confirmLabel: "OK" });
 		return;
 	}
 
@@ -288,7 +292,12 @@ async function handleSubmit() {
 		router.back();
 	} catch (error) {
 		console.error("Failed to save task:", error);
-		alert(error instanceof Error ? error.message : "Failed to save task");
+		await alertDialog({
+			title: "Save Failed",
+			message:
+				error instanceof Error ? error.message : "Failed to save task",
+			confirmLabel: "OK",
+		});
 	}
 }
 

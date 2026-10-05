@@ -188,3 +188,54 @@ async function handleComplete() {
 
 - §4 里另外 6 处 `alert()`：**等用户选 A/B**，本次没动。
 - 真机上「按钮有反应」：`adb devices` 仍为空，已与其它真机项一起记在 scratchpad。
+
+---
+
+# §4 执行记录：6 处 alert() 改用应用内提示框（选了 A）（2026-10-05）
+
+## 实现
+
+- `useConfirm.ts`：`ConfirmOptions` 加 `alertOnly?: boolean`；新增 `AlertOptions` 与
+  `showAlert()` / `useAlert()`。**语义要点**：alert 没有「取消」，所以按钮 / X / 遮罩 / Esc /
+  Android 返回手势**任何一条关闭路径都 resolve**（否则调用方 `await` 会被挂死）。
+- `ConfirmDialog.vue`：加 `alertOnly?: boolean` prop，Cancel 按钮 `v-if="!alertOnly"`。
+  确认模式下 confirm 按钮已经在 `flex-1` 容器里，隐藏 Cancel 后自然铺满，不需要额外样式。
+- `App.vue`：`:alert-only="confirmState.options?.alertOnly"`。
+- 6 处 `alert(...)` → `await alertDialog({ title, message, confirmLabel: "OK" })`：
+  `EditTask.vue`（User not initialized / Save Failed）、`EditReward.vue`
+  （Invalid Value / Save Failed / Delete Failed）、`DataImportExport.vue`（Export Failed）。
+  6 处都在 async 函数里，`await` 直接可用。标题按语义分：Error / Save Failed / Invalid Value /
+  Delete Failed / Export Failed，variant 全用默认的 danger（AlertTriangle 红图标正是「出错了」）。
+  唯一文案变化：`alert(\`Export failed: ${msg}\`)` 把前缀挪进标题，message 只留 `msg`。
+
+## 新增测试 `src/components/ConfirmDialog.test.ts`（6 例）
+
+一个 `Host` 组件复刻 App.vue 的接线，把 composable 与对话框连起来测：
+
+- 默认模式渲染 Cancel + Confirm；点确认 emit confirm
+- `alertOnly` 模式 **0 个 Cancel、1 个按钮**（+ 右上角 X）
+- `useAlert()`：**点掉之前不 resolve**，点掉后 resolve 并消失
+- `useAlert()`：走「X / 遮罩」这条取消路径**也会 resolve**（不会把调用方挂死）
+- `useConfirm()` 回归：确认返回 true、取消返回 false
+
+**变异验证**：删掉 ConfirmDialog 里的 `v-if="!alertOnly"` → 正好那 2 个 alertOnly 用例 FAILED，
+还原后全绿 ⇒ 断言不是空转。
+
+## 验证结果
+
+| 项 | 结果 |
+|---|---|
+| `bunx vue-tsc --noEmit` | 0 错 |
+| `bunx vitest run` | **26 文件 / 325 例全绿**（迁移后是 25/319，本次 +1 文件 +6 例） |
+| `bunx vite build` | 通过 |
+| `grep -rn "alert(\|confirm(" src` | 0 处原生调用（只剩解释性注释与 `alertDialog`/`confirmDialog`） |
+| 真浏览器：alert 形态 | 从 dev server 动态 `import()` 同一个 composable 模块来驱动 **真实的 App 接线**（不是造一个测试壳）：弹窗显示 title+message、**0 个 Cancel / 1 个 OK**、点 OK 前 promise 未 resolve、点后 resolve 且弹窗消失 |
+| 真浏览器：confirm 回归 | Pomo 的 Give Up 仍是 Cancel + Give Up 两个按钮，点 Cancel 后计时继续跑 ⇒ `alertOnly:false` 路径没被改坏 |
+
+**没能真浏览器触发的一条**：`DataImportExport` 的导出失败在浏览器里不可达 —— `fileSystem`
+检测非 Tauri 环境后会走浏览器下载兜底，不抛错。它的提示框形态由上面的动态 import 用例覆盖。
+
+## 结论
+
+「原生 alert/confirm」这个坑至此清零。Android 上不再有静默失效的按钮与看不见的错误提示，
+自动化里也不再有能卡住渲染进程的原生模态框。

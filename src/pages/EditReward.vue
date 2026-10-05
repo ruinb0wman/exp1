@@ -20,7 +20,7 @@ import { REWARD_ICON_COLORS } from "@/db/types";
 import { isValidMoneyCost, formatMoney } from "@/libs/reward";
 import { toPlain } from "@/libs/plain";
 import { useRewardTemplate, useRewardTemplateActions } from "@/composables/useRewards";
-import { useConfirm } from "@/composables/useConfirm";
+import { useAlert, useConfirm } from "@/composables/useConfirm";
 import { useUserStore } from "@/store";
 
 const restockOptions = ["None", "Daily", "Weekly", "Monthly"];
@@ -66,6 +66,9 @@ const {
 	isLoading: isSubmitting,
 } = useRewardTemplateActions();
 const confirmDialog = useConfirm();
+
+// 不用原生 alert()：Android WebView 会静默丢弃、Electron 里会阻塞渲染进程
+const alertDialog = useAlert();
 
 // Basic Info
 const title = ref("");
@@ -138,7 +141,11 @@ async function handleSubmit() {
 
 	// 关闭统计时不需要校验金额（金额仅保留，便于重新打开）
 	if (countInConsumption.value && !isValidMoneyCost(moneyCost.value)) {
-		alert("Unit value must be a number greater than or equal to 0");
+		await alertDialog({
+			title: "Invalid Value",
+			message: "Unit value must be a number greater than or equal to 0",
+			confirmLabel: "OK",
+		});
 		return;
 	}
 
@@ -184,7 +191,11 @@ async function handleSubmit() {
 		router.back();
 	} catch (err) {
 		console.error("Failed to save reward:", err);
-		alert(err instanceof Error ? err.message : "Failed to save");
+		await alertDialog({
+			title: "Save Failed",
+			message: err instanceof Error ? err.message : "Failed to save",
+			confirmLabel: "OK",
+		});
 	}
 }
 
@@ -218,7 +229,11 @@ async function handleDelete() {
 		await remove(rewardId.value);
 		router.back();
 	} catch (err) {
-		alert(err instanceof Error ? err.message : "Failed to delete");
+		await alertDialog({
+			title: "Delete Failed",
+			message: err instanceof Error ? err.message : "Failed to delete",
+			confirmLabel: "OK",
+		});
 	}
 }
 </script>

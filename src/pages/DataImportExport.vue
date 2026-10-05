@@ -11,6 +11,7 @@ import Header from "@/components/Header.vue";
 import Popup from "@/components/Popup.vue";
 import { fileSystem } from "@/libs/fileSystem";
 import { toPlain } from "@/libs/plain";
+import { useAlert } from "@/composables/useConfirm";
 import { useUserStore } from "@/store/userStore";
 import {
 	exportAllData,
@@ -34,6 +35,9 @@ const showStrategyDialog = ref(false);
 const importResult = ref<ImportResult | null>(null);
 const showResultDialog = ref(false);
 
+// 不用原生 alert()：Android WebView 会静默丢弃、Electron 里会阻塞渲染进程
+const alertDialog = useAlert();
+
 async function handleExport() {
 	try {
 		isExporting.value = true;
@@ -56,7 +60,11 @@ async function handleExport() {
 		}
 	} catch (error) {
 		console.error("Export failed:", error);
-		alert(`Export failed: ${error instanceof Error ? error.message : "Error"}`);
+		await alertDialog({
+			title: "Export Failed",
+			message: error instanceof Error ? error.message : "Error",
+			confirmLabel: "OK",
+		});
 	} finally {
 		isExporting.value = false;
 	}

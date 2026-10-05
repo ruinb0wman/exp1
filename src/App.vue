@@ -21,6 +21,7 @@ const confirmState = useConfirmState();
 		:confirm-label="confirmState.options?.confirmLabel"
 		:cancel-label="confirmState.options?.cancelLabel"
 		:variant="confirmState.options?.variant"
+		:alert-only="confirmState.options?.alertOnly"
 		@confirm="resolveConfirm(true)"
 		@cancel="resolveConfirm(false)"
 	/>

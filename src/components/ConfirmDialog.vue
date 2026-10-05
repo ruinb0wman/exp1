@@ -11,12 +11,15 @@ const props = withDefaults(
 		confirmLabel?: string;
 		cancelLabel?: string;
 		variant?: "danger" | "warning" | "info";
+		/** 只显示一个按钮（useAlert 用），不渲染 Cancel */
+		alertOnly?: boolean;
 	}>(),
 	{
 		title: "Confirm",
 		confirmLabel: "Confirm",
 		cancelLabel: "Cancel",
 		variant: "danger",
+		alertOnly: false,
 	},
 );
 
@@ -99,6 +102,7 @@ useBackButtonHandler(
 			<!-- Actions -->
 			<div class="flex items-center gap-3">
 				<button
+					v-if="!alertOnly"
 					class="flex-1 px-4 py-2.5 rounded-xl bg-surface-light text-text-primary font-medium hover:bg-surface-light/80 transition-colors"
 					@click="emit('cancel')"
 				>
