@@ -1,4 +1,3 @@
-import { useTranslation } from 'react-i18next';
 import { Check, X } from 'lucide-react';
 import type { Achievement } from '@/db/types';
 import { DynamicIcon } from '@/components/DynamicIcon';
@@ -17,10 +16,8 @@ export function AchievementProposalCard({
   onAccept,
   onDismiss,
 }: AchievementProposalCardProps) {
-  const { t } = useTranslation();
   const conditionText = formatCondition(
     achievement.condition,
-    t,
     templateTitle ?? achievement.templateTitleSnapshot
   );
 
@@ -41,7 +38,7 @@ export function AchievementProposalCard({
           <p className="text-text-muted text-xs mt-1">{conditionText}</p>
           {achievement.orphaned && (
             <p className="text-yellow-500 text-xs mt-1">
-              {t('achievement.orphaned')}
+              The bound task was deleted, this achievement is frozen
             </p>
           )}
         </div>
@@ -50,7 +47,7 @@ export function AchievementProposalCard({
           <p className="text-primary font-bold text-sm">
             +{achievement.rewardPoints}
           </p>
-          <p className="text-text-muted text-xs">{t('common.exp')}</p>
+          <p className="text-text-muted text-xs">exp</p>
         </div>
       </div>
 
@@ -60,14 +57,14 @@ export function AchievementProposalCard({
           className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm text-text-secondary hover:text-text-primary hover:bg-surface-light transition-colors"
         >
           <X className="w-4 h-4" />
-          {t('achievement.dismiss')}
+          Dismiss
         </button>
         <button
           onClick={onAccept}
           className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium bg-primary text-white hover:bg-primary-dark transition-colors"
         >
           <Check className="w-4 h-4" />
-          {t('achievement.accept')}
+          Accept
         </button>
       </div>
     </div>

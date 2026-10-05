@@ -1,7 +1,5 @@
 import { useNavigate } from "react-router";
 import { useState, useCallback } from "react";
-import { useTranslation } from "react-i18next";
-import i18n from "i18next";
 import { CheckCircle2, XCircle, Clock, RefreshCw, Calendar, AlignLeft, Layers, Pencil, CheckSquare, Square, Timer, ChevronRight, Trash2 } from "lucide-react";
 import { Popup } from "./Popup";
 import { TaskContributionGraph } from "./TaskContributionGraph";
@@ -12,6 +10,9 @@ import { getTaskProgressPercent, getNextStage, getTotalPointsEarned } from "@/db
 import { calculateMaxPoints } from "@/db/types";
 import { useUserStore } from "@/store";
 import { usePomoStore } from "@/store/pomoStore";
+
+/** 周重复的星期缩写（下标 = Date.getDay()） */
+const DAY_NAMES = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
 export interface TaskDetailPopupProps {
   isOpen: boolean;
@@ -41,7 +42,6 @@ export function TaskDetailPopup({
   isLoading = false,
   disabled = false,
 }: TaskDetailPopupProps) {
-  const { t } = useTranslation();
   const navigate = useNavigate();
   const confirm = useConfirm();
   const [isDeleting, setIsDeleting] = useState(false);
@@ -58,10 +58,10 @@ export function TaskDetailPopup({
     if (!template) return;
 
     const confirmed = await confirm({
-      title: t('home.detail.delete'),
-      message: t('home.detail.deleteConfirm'),
-      confirmLabel: t('home.detail.delete'),
-      cancelLabel: t('common.cancel'),
+      title: "Delete",
+      message: "Delete this task instance? Its points records will also be removed. It will be regenerated with the latest template on your next page visit.",
+      confirmLabel: "Delete",
+      cancelLabel: "Cancel",
       variant: 'danger',
     });
 
@@ -73,7 +73,7 @@ export function TaskDetailPopup({
     } finally {
       setIsDeleting(false);
     }
-  }, [template, confirm, t, onDelete]);
+  }, [template, confirm, onDelete]);
 
   const busy = isLoading || isDeleting;
 
@@ -82,7 +82,7 @@ export function TaskDetailPopup({
       isOpen={isOpen}
       onClose={onClose}
       position="bottom"
-      title={t('home.detail.taskDetail')}
+      title="Task Detail"
       maskClosable={true}
       maxHeight="80vh"
       headerRight={(
@@ -92,20 +92,20 @@ export function TaskDetailPopup({
               onClick={handleDelete}
               disabled={busy}
               className="flex items-center gap-1 px-2 py-1 text-xs text-text-secondary hover:text-red-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-              title={t('home.detail.delete')}
+              title="Delete"
             >
               <Trash2 className="w-3.5 h-3.5" />
-              <span>{t('home.detail.delete')}</span>
+              <span>Delete</span>
             </button>
           )}
           <button
             onClick={handleEdit}
             disabled={busy}
             className="flex items-center gap-1 px-2 py-1 text-xs text-text-secondary hover:text-primary disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-            title={t('home.detail.editTask')}
+            title="Edit Task"
           >
             <Pencil className="w-3.5 h-3.5" />
-            <span>{t('home.detail.edit')}</span>
+            <span>Edit</span>
           </button>
         </div>
       )}
@@ -123,7 +123,7 @@ export function TaskDetailPopup({
           disabled={disabled}
         />
       ) : (
-        <div className="py-8 text-center text-text-secondary">{t('home.detail.loading')}</div>
+        <div className="py-8 text-center text-text-secondary">Loading...</div>
       )}
     </Popup>
   );
@@ -152,7 +152,6 @@ function TaskDetailContent({
   isLoading,
   disabled,
 }: TaskDetailContentProps) {
-  const { t } = useTranslation();
   const navigate = useNavigate();
   const { user } = useUserStore();
   const dayEndTime = user?.dayEndTime ?? "00:00";
@@ -191,12 +190,12 @@ function TaskDetailContent({
       const targetCount = config?.mode === 'all' 
         ? instance.subtasks.length 
         : (config?.requiredCount || 1);
-      return `${completedCount}/${targetCount} ${t('home.units.items')}`;
+      return `${completedCount}/${targetCount} items`;
     }
 
     const progress = instance.completeProgress ?? 0;
     const maxThreshold = rule?.stages.length ? Math.max(...rule.stages.map(s => s.threshold)) : 0;
-    const unit = rule?.type === "time" ? t('home.units.minutes') : t('home.units.times');
+    const unit = rule?.type === "time" ? "min" : "times";
     return `${progress}/${maxThreshold} ${unit}`;
   };
 
@@ -208,58 +207,58 @@ function TaskDetailContent({
 
     const progress = instance.completeProgress ?? 0;
     const remaining = nextStage.threshold - progress;
-    const unit = rule.type === 'time' ? t('home.units.minutes') : t('home.units.times');
+    const unit = rule.type === 'time' ? "min" : "times";
     
-    return t('home.hint.nextStage', { remaining, unit, points: nextStage.points });
+    return `${remaining} more ${unit} to earn +${nextStage.points} exp`;
   };
 
   const getRepeatText = () => {
     switch (template.repeatMode) {
       case "daily":
         return template.repeatInterval && template.repeatInterval > 1
-          ? `${t('home.repeat.daily')} (${template.repeatInterval})`
-          : t('home.repeat.daily');
+          ? `Daily (${template.repeatInterval})`
+          : "Daily";
       case "weekly":
         if (template.repeatDaysOfWeek && template.repeatDaysOfWeek.length > 0) {
-          const dayKeys = ['time.sunday', 'time.monday', 'time.tuesday', 'time.wednesday', 'time.thursday', 'time.friday', 'time.saturday'];
-          const dayNames = template.repeatDaysOfWeek.map((d) => t(`home.${dayKeys[d]}`)).join(', ');
+          const dayNames = template.repeatDaysOfWeek.map((d) => DAY_NAMES[d]).join(', ');
           return template.repeatInterval && template.repeatInterval > 1
-            ? `${t('home.repeat.weekly')} (${template.repeatInterval}) ${dayNames}`
-            : `${t('home.repeat.weekly')} ${dayNames}`;
+            ? `Weekly (${template.repeatInterval}) ${dayNames}`
+            : `Weekly ${dayNames}`;
         }
-        return t('home.repeat.weekly');
+        return "Weekly";
       case "monthly":
         if (template.repeatDaysOfMonth && template.repeatDaysOfMonth.length > 0) {
           const days = template.repeatDaysOfMonth.map((d) => `${d}`).join(', ');
           return template.repeatInterval && template.repeatInterval > 1
-            ? `${t('home.repeat.monthly')} (${template.repeatInterval}) ${days}`
-            : `${t('home.repeat.monthly')} ${days}`;
+            ? `Monthly (${template.repeatInterval}) ${days}`
+            : `Monthly ${days}`;
         }
-        return t('home.repeat.monthly');
+        return "Monthly";
       default:
-        return t('home.repeat.oneTime');
+        return "One-time";
     }
   };
 
   const renderExpireTime = (result: ExpireTimeResult) => {
     switch (result.type) {
       case "expired":
-        return t('home.time.expired');
+        return "Expired";
       case "expiresInDays":
-        return i18n.language === 'zh' ? `${result.value}天后过期` : `Expires in ${result.value} days`;
-      case "expiresInHours":
-        const hoursText = i18n.language === 'zh' ? `${result.hours}小时后过期` : `Expires in ${result.hours} hours`;
-        const minsText = result.minutes > 0 ? (i18n.language === 'zh' ? ` ${result.minutes}分钟后` : ` ${result.minutes} min`) : '';
+        return `Expires in ${result.value} days`;
+      case "expiresInHours": {
+        const hoursText = `Expires in ${result.hours} hours`;
+        const minsText = result.minutes > 0 ? ` ${result.minutes} min` : '';
         return hoursText + minsText;
+      }
       case "expiresInMinutes":
-        return i18n.language === 'zh' ? `${result.value}分钟后过期` : `Expires in ${result.value} minutes`;
+        return `Expires in ${result.value} minutes`;
     }
   };
 
   const getStatusText = () => {
-    if (isCompleted) return t('home.status.completed');
-    if (isExpired) return t('home.status.expired');
-    return t('home.status.inProgress');
+    if (isCompleted) return "Completed";
+    if (isExpired) return "Expired";
+    return "In Progress";
   };
 
   const renderSubtasks = () => {
@@ -270,7 +269,7 @@ function TaskDetailContent({
 
     return (
       <div className="bg-surface rounded-lg p-3 space-y-2">
-        <p className="text-xs text-text-muted mb-2">{t('home.detail.subtasks')}</p>
+        <p className="text-xs text-text-muted mb-2">Subtasks</p>
         {instance.subtasks.map((subtask, index) => {
           const isCompleted = completedSubtasks[index];
           const points = pointsPerSubtask[index] || 0;
@@ -336,7 +335,7 @@ function TaskDetailContent({
           <span className="text-lg font-bold text-primary">
             +{earnedPoints}{expectedPoints > 0 && <span className="text-sm text-text-muted font-normal">/{expectedPoints}</span>}
           </span>
-          <p className="text-xs text-text-muted">{t('home.time.exp')}</p>
+          <p className="text-xs text-text-muted">exp</p>
         </div>
       </div>
 
@@ -347,7 +346,7 @@ function TaskDetailContent({
           <div className="flex items-start gap-3">
             <AlignLeft className="w-4 h-4 text-text-muted mt-0.5 shrink-0" />
             <div>
-              <p className="text-xs text-text-muted">{t('home.detail.description')}</p>
+              <p className="text-xs text-text-muted">Description</p>
               <p className="text-sm text-text-primary mt-0.5">{template.description}</p>
             </div>
           </div>
@@ -356,7 +355,7 @@ function TaskDetailContent({
         <div className="flex items-center gap-3">
           <Layers className="w-4 h-4 text-text-muted shrink-0" />
           <div>
-            <p className="text-xs text-text-muted">{t('home.detail.level')}</p>
+            <p className="text-xs text-text-muted">Level</p>
             <p className="text-sm text-text-primary mt-0.5">L{template.level}</p>
           </div>
         </div>
@@ -364,7 +363,7 @@ function TaskDetailContent({
         <div className="flex items-center gap-3">
           <RefreshCw className="w-4 h-4 text-text-muted shrink-0" />
           <div>
-            <p className="text-xs text-text-muted">{t('home.detail.repeat')}</p>
+            <p className="text-xs text-text-muted">Repeat</p>
             <p className="text-sm text-text-primary mt-0.5">{getRepeatText()}</p>
           </div>
         </div>
@@ -373,7 +372,7 @@ function TaskDetailContent({
           <div className="flex items-center gap-3">
             <Calendar className="w-4 h-4 text-text-muted shrink-0" />
             <div>
-              <p className="text-xs text-text-muted">{t('home.detail.date')}</p>
+              <p className="text-xs text-text-muted">Date</p>
               <p className="text-sm text-text-primary mt-0.5">
                 {new Date(instance.instanceDate).toLocaleDateString()}
               </p>
@@ -385,7 +384,7 @@ function TaskDetailContent({
       {hasCompleteRule && (
         <div className="bg-surface rounded-xl p-3">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-sm text-text-secondary">{t('home.detail.progress')}</span>
+            <span className="text-sm text-text-secondary">Progress</span>
             <span className="text-sm font-medium text-primary">{getProgressText()}</span>
           </div>
           <div className="h-2 bg-surface-light rounded-full overflow-hidden">
@@ -409,7 +408,7 @@ function TaskDetailContent({
         <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-3">
           <p className="text-sm text-red-500 flex items-center gap-2">
             <XCircle className="w-4 h-4" />
-            {t('home.detail.taskExpired')}
+            This task has expired
           </p>
         </div>
       )}
@@ -428,7 +427,7 @@ function TaskDetailContent({
             disabled={disabled || isLoading}
             className="flex-1 py-3 px-4 bg-surface hover:bg-surface-light disabled:opacity-50 disabled:cursor-not-allowed text-text-primary rounded-xl font-medium transition-colors"
           >
-            {isLoading ? t('home.detail.processing') : t('home.detail.markIncomplete')}
+            {isLoading ? "Processing..." : "Mark as Incomplete"}
           </button>
         ) : isTimeRule ? (
           <button
@@ -441,7 +440,7 @@ function TaskDetailContent({
             className="flex-1 py-3 px-4 bg-surface hover:bg-surface-light disabled:opacity-50 disabled:cursor-not-allowed text-text-primary rounded-xl font-medium transition-colors flex items-center justify-center gap-2"
           >
             <Timer className="w-4 h-4" />
-            <span>{isLoading ? t('home.detail.processing') : isExpired ? t('home.status.expired') : t('home.detail.usePomodoro')}</span>
+            <span>{isLoading ? "Processing..." : isExpired ? "Expired" : "Use Pomodoro"}</span>
             <ChevronRight className="w-4 h-4" />
           </button>
         ) : isCountRule && onIncrementCount ? (
@@ -450,11 +449,11 @@ function TaskDetailContent({
             disabled={isExpired || disabled || isLoading}
             className="flex-1 py-3 px-4 bg-primary hover:bg-primary-light disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-xl font-medium transition-colors"
           >
-            {isLoading ? t('home.detail.processing') : isExpired ? t('home.status.expired') : t('home.detail.completeOne')}
+            {isLoading ? "Processing..." : isExpired ? "Expired" : "Complete One"}
           </button>
         ) : isSubtaskRule ? (
           <div className="flex-1 py-3 px-4 bg-surface rounded-xl text-center">
-            <p className="text-sm text-text-secondary">{t('home.detail.clickSubtasks')}</p>
+            <p className="text-sm text-text-secondary">Click subtasks above to complete</p>
           </div>
         ) : (
           <button
@@ -462,7 +461,7 @@ function TaskDetailContent({
             disabled={isExpired || disabled || isLoading}
             className="flex-1 py-3 px-4 bg-primary hover:bg-primary-light disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-xl font-medium transition-colors"
           >
-            {isLoading ? t('home.detail.processing') : isExpired ? t('home.status.expired') : t('home.detail.completeTask')}
+            {isLoading ? "Processing..." : isExpired ? "Expired" : "Complete Task"}
           </button>
         )}
         <button
@@ -470,7 +469,7 @@ function TaskDetailContent({
           disabled={isLoading}
           className="py-3 px-6 bg-surface hover:bg-surface-light disabled:opacity-50 text-text-secondary rounded-xl font-medium transition-colors"
         >
-          {t('home.detail.close')}
+          Close
         </button>
       </div>
     </div>

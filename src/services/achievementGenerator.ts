@@ -122,14 +122,11 @@ export async function buildContext(userId: number): Promise<AchievementContext> 
 /** 构造提示词 */
 export function buildPrompt(
   context: AchievementContext,
-  locale: 'zh' | 'en',
   feedback?: string
 ): LlmChatMessage[] {
-  const language = locale === 'en' ? 'English' : '简体中文';
-
   const system = [
     'You design in-game achievement quests for a gamified task-management app.',
-    `Write title and description in ${language}.`,
+    'Write title and description in English.',
     '',
     'Return ONLY a JSON object shaped exactly like:',
     '{"achievements":[{"title":string,"description":string,"icon":string,"condition":{"type":string,"target":number,"templateId"?:string,"taskType"?:string,"mode"?:string},"rewardPoints":number}]}',
@@ -204,8 +201,7 @@ export interface GenerateAchievementsResult {
  * - 网络/鉴权错误直接抛出，不做重试
  */
 export async function generateAchievements(
-  userId: number,
-  locale: 'zh' | 'en' = 'zh'
+  userId: number
 ): Promise<GenerateAchievementsResult> {
   const context = await buildContext(userId);
   const validTemplateIds = new Set(context.tasks.map((task) => task.id));
@@ -214,7 +210,7 @@ export async function generateAchievements(
   let lastError = '';
 
   for (let attempt = 0; attempt < 2; attempt++) {
-    const messages = buildPrompt(context, locale, attempt === 0 ? undefined : lastError);
+    const messages = buildPrompt(context, attempt === 0 ? undefined : lastError);
     const response = await llmChat(messages, { temperature: 0.7, jsonMode: true });
 
     try {
@@ -240,7 +236,7 @@ export async function generateAchievements(
     }
   }
 
-  throw new Error(`模型返回的成就格式无法解析（${lastError}）`);
+  throw new Error(`Could not parse achievements from the model response (${lastError})`);
 }
 
 /** 未配置 API Key 或生成失败时的兜底：内置推荐成就 */

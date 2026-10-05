@@ -1,4 +1,3 @@
-import { useTranslation } from 'react-i18next';
 import { Package } from 'lucide-react';
 import { DynamicIcon } from '@/components/DynamicIcon';
 import { EmptyState } from '@/components/EmptyState';
@@ -16,13 +15,12 @@ interface TemplateBreakdownProps {
  * 按商品聚合的消费占比：排名、百分比与占比条都按金额计算
  */
 export function TemplateBreakdown({ buckets, totalMoney }: TemplateBreakdownProps) {
-	const { t } = useTranslation();
 
 	if (buckets.length === 0) {
 		return (
 			<EmptyState
 				icon={<Package className="w-8 h-8" />}
-				title={t('consumption.breakdown.empty')}
+				title="No spending in this period"
 			/>
 		);
 	}
@@ -46,10 +44,7 @@ export function TemplateBreakdown({ buckets, totalMoney }: TemplateBreakdownProp
 									{bucket.title}
 								</p>
 								<p className="text-text-muted text-xs">
-									{t('consumption.breakdown.meta', {
-										count: bucket.count,
-										quantity: bucket.quantity,
-									})}
+									{`${bucket.count} purchases · ${bucket.quantity} items`}
 								</p>
 							</div>
 							<div className="text-right shrink-0">

@@ -1,9 +1,6 @@
-import { useEffect } from "react";
 import { BrowserRouter, Routes, Route } from "react-router";
-import { useTranslation } from "react-i18next";
 import { ConfirmProvider } from "@/hooks/useConfirm";
 import { useAppBootstrap } from "@/hooks/useAppBootstrap";
-import { useUserStore } from "@/store";
 import { Home } from "@/pages/Home";
 import { AllTasks } from "@/pages/AllTasks";
 import { EditTask } from "@/pages/EditTask";
@@ -22,19 +19,8 @@ import { Settings } from "@/pages/Settings";
 import { DataImportExport } from "@/pages/DataImportExport";
 import { MainLayout, SimpleLayout } from "@/components/layouts";
 import { AchievementUnlockDialog } from "@/pages/Achievements/components/AchievementUnlockDialog";
-import "@/libs/i18n";
 
 function App() {
-  const { user } = useUserStore();
-  const { i18n } = useTranslation();
-
-  // 同步用户语言设置到 i18n
-  useEffect(() => {
-    if (user?.language) {
-      i18n.changeLanguage(user.language);
-    }
-  }, [user?.language, i18n]);
-
   // 应用启动初始化
   useAppBootstrap();
 

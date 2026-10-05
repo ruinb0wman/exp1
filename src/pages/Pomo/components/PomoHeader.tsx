@@ -1,5 +1,3 @@
-import { useTranslation } from 'react-i18next';
-import i18n from 'i18next';
 import { Timer, Volume2, VolumeX, Settings } from 'lucide-react';
 
 interface PomoHeaderProps {
@@ -23,7 +21,6 @@ export function PomoHeader({
   onToggleSound,
   onOpenSettings,
 }: PomoHeaderProps) {
-  const { t } = useTranslation();
   return (
     <header className="px-4 pb-4 flex items-center justify-between">
       <div className="flex items-center gap-2">
@@ -31,8 +28,8 @@ export function PomoHeader({
           <Timer className="w-5 h-5 text-primary" />
         </div>
         <div>
-          <h1 className="text-xl font-bold text-white">{t('pomo.title')}</h1>
-          <p className="text-xs text-text-secondary">{i18n.language === 'zh' ? `今日完成 ${todayCount} 个` : `${todayCount} completed today`}</p>
+          <h1 className="text-xl font-bold text-white">Pomodoro</h1>
+          <p className="text-xs text-text-secondary">{`${todayCount} completed today`}</p>
         </div>
       </div>
       <div className="flex items-center gap-2">

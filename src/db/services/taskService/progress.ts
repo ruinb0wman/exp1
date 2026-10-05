@@ -27,6 +27,8 @@ export async function updateTaskProgress(
 
       const currentProgress = instance.completeProgress ?? 0;
       const completedStages = instance.completedStages || [];
+      // 进度单位（阶段阈值后缀）
+      const unit = rule.type === 'time' ? ' minutes' : ' times';
       
       const result: ProgressUpdateResult = {
         stagesCompleted: [],
@@ -48,7 +50,7 @@ export async function updateTaskProgress(
               instance.userId,
               instanceId,
               completed.points,
-              `阶段回退：${stage.threshold}${rule.type === 'time' ? '分钟' : '次'} → ${newProgress}${rule.type === 'time' ? '分钟' : '次'}`
+              `Stage reverted: ${stage.threshold}${unit} → ${newProgress}${unit}`
             );
 
             result.stagesReverted.push(completed.stageId);
@@ -72,7 +74,7 @@ export async function updateTaskProgress(
               instance.userId,
               instanceId,
               rule.completionPoints,
-              '任务完成状态回退'
+              'Completion status reverted'
             );
             
             result.pointsDeducted += rule.completionPoints;
@@ -94,7 +96,7 @@ export async function updateTaskProgress(
               instanceId,
               stage.points,
               'task_stage',
-              `完成阶段：${stage.threshold}${rule.type === 'time' ? '分钟' : '次'}`,
+              `Stage completed: ${stage.threshold}${unit}`,
               stage.id
             );
 
@@ -120,7 +122,7 @@ export async function updateTaskProgress(
             instanceId,
             rule.completionPoints,
             'task_completion',
-            '任务全部完成'
+            'All stages completed'
           );
 
           result.pointsEarned += rule.completionPoints;
@@ -237,7 +239,7 @@ export async function completeSubtask(
           instanceId,
           subtaskPoints,
           'task_stage',
-          `完成子任务：${instance.subtasks[subtaskIndex]}`,
+          `Subtask completed: ${instance.subtasks[subtaskIndex]}`,
           String(subtaskIndex)
         );
 
@@ -249,7 +251,7 @@ export async function completeSubtask(
           instance.userId,
           instanceId,
           subtaskPoints,
-          `取消子任务：${instance.subtasks[subtaskIndex]}`
+          `Subtask unchecked: ${instance.subtasks[subtaskIndex]}`
         );
 
         currentStagePoints = Math.max(0, currentStagePoints - subtaskPoints);
@@ -270,7 +272,7 @@ export async function completeSubtask(
           instanceId,
           rule.completionPoints,
           'task_completion',
-          '子任务全部完成'
+          'All subtasks completed'
         );
 
         currentCompletionPoints += rule.completionPoints;
@@ -282,7 +284,7 @@ export async function completeSubtask(
           instance.userId,
           instanceId,
           rule.completionPoints,
-          '子任务完成度不足'
+          'Not enough subtasks completed'
         );
 
         currentCompletionPoints = Math.max(0, currentCompletionPoints - rule.completionPoints);

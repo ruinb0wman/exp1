@@ -67,7 +67,7 @@ sequenceDiagram
     PS->>DB: createPomoSession()
     PS-->>PS: isRunning=true, sessionId=xxx
     PS->>UGPT: state 变化触发 sync effect
-    UGPT->>BS: ensureBackgroundService("番茄钟 25:00")
+    UGPT->>BS: ensureBackgroundService("Pomodoro 25:00")
     BS->>BS: startService → 前台服务启动
     UGPT->>CMD: invoke start_pomo_timer
     CMD->>PTM: start_timer(mode, duration, sessionId)
@@ -101,7 +101,7 @@ sequenceDiagram
     PTM->>EVT: emit pomo:state-changed
     EVT->>UGPT: listen → 同步前端
 
-    Note over BS: 下一 tick 读到 Paused\n通知更新为"已暂停"
+    Note over BS: 下一 tick 读到 Paused\n通知更新为 "Paused"
 
     U->>PS: 点击「恢复」
     PS->>PS: resumeTimer() → isPaused=false
@@ -219,26 +219,26 @@ sequenceDiagram
     participant DATA as Arc RwLock PomoTimerData
     participant NOTIF as 前台通知 ID=9001
 
-    FE->>BS: startService({ serviceLabel: "番茄钟 25:00" })
+    FE->>BS: startService({ serviceLabel: "Pomodoro 25:00" })
     BS->>BS: run() 启动 1s ticker
     loop 每秒
         BS->>DATA: try_state → 读取
         alt data.state == Running
-            BS->>NOTIF: .id(9001).title("番茄钟").body("剩余 15:32")
+            BS->>NOTIF: .id(9001).title("Pomodoro").body("Remaining 15:32")
             BS->>BS: last_state = Running
         else data.state == Paused && != last_state
-            BS->>NOTIF: .id(9001).body("已暂停")
+            BS->>NOTIF: .id(9001).body("Paused")
             BS->>BS: last_state = Paused
         else data.state == Idle && != last_state
             alt data.is_completed
                 BS->>BS: match mode
                 alt Focus
-                    BS->>NOTIF: .body("🍅 专注完成！")
+                    BS->>NOTIF: .body("🍅 Focus complete!")
                 else ShortBreak / LongBreak
-                    BS->>NOTIF: .body("☕ 休息结束")
+                    BS->>NOTIF: .body("☕ Break over")
                 end
             else
-                BS->>NOTIF: .body("已停止")
+                BS->>NOTIF: .body("Stopped")
             end
             BS->>BS: last_state = Idle
         end

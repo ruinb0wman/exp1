@@ -1,4 +1,3 @@
-import { useTranslation } from "react-i18next";
 import type { TaskHistoryFilterStatus } from "@/hooks/useTaskHistory";
 import { filterTabs } from "../lib";
 
@@ -9,8 +8,6 @@ interface FilterBarProps {
 }
 
 export function FilterBar({ filterStatus, total, onFilterChange }: FilterBarProps) {
-  const { t } = useTranslation();
-
   return (
     <div className="px-4 py-2 flex items-center justify-between sticky top-[var(--spacing-header)] bg-background z-10 shrink-0">
       {/* Filter Tabs */}
@@ -25,7 +22,7 @@ export function FilterBar({ filterStatus, total, onFilterChange }: FilterBarProp
                 : "text-text-secondary hover:text-text-primary"
             }`}
           >
-            {t(tab.labelKey)}
+            {tab.label}
           </button>
         ))}
       </div>

@@ -1,9 +1,15 @@
-import { useTranslation } from 'react-i18next';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { DatePicker } from '@/components/DatePicker';
 import { FilterTabs } from '@/components/FilterTabs';
 import type { ReportScope } from '@/libs/report/types';
 import { REPORT_SCOPES, formatAnchorLabel, shiftAnchor } from '../lib';
+
+const SCOPE_LABEL: Record<ReportScope, string> = {
+	week: 'Weekly',
+	month: 'Monthly',
+	year: 'Yearly',
+	custom: 'Custom',
+};
 
 interface PeriodSelectorProps {
 	scope: ReportScope;
@@ -28,22 +34,20 @@ export function PeriodSelector({
 	customEnd,
 	onCustomRangeChange,
 }: PeriodSelectorProps) {
-	const { t } = useTranslation();
-
 	return (
 		<div className="mb-4">
 			<FilterTabs
 				options={REPORT_SCOPES}
 				activeFilter={scope}
 				onFilterChange={onScopeChange}
-				renderLabel={(option) => t(`reports.scope.${option}`)}
+				renderLabel={(option) => SCOPE_LABEL[option]}
 			/>
 
 			{scope === 'custom' ? (
 				<div className="flex items-center gap-3">
 					<div className="flex-1">
 						<p className="text-text-secondary text-xs mb-1">
-							{t('reports.anchor.customStart')}
+							Start date
 						</p>
 						<DatePicker
 							value={customStart}
@@ -54,7 +58,7 @@ export function PeriodSelector({
 					</div>
 					<div className="flex-1">
 						<p className="text-text-secondary text-xs mb-1">
-							{t('reports.anchor.customEnd')}
+							End date
 						</p>
 						<DatePicker
 							value={customEnd}
@@ -68,7 +72,7 @@ export function PeriodSelector({
 				<div className="flex items-center justify-between gap-2">
 					<button
 						onClick={() => onAnchorChange(shiftAnchor(scope, anchor, -1))}
-						aria-label={t('reports.anchor.prev')}
+						aria-label="Previous"
 						className="w-10 h-10 flex items-center justify-center rounded-lg bg-surface border border-border text-text-secondary hover:text-text-primary hover:bg-surface-light transition-colors"
 					>
 						<ChevronLeft className="w-5 h-5" />
@@ -82,13 +86,13 @@ export function PeriodSelector({
 							{formatAnchorLabel(scope, anchor)}
 						</button>
 						<p className="text-text-muted text-xs mt-0.5">
-							{t('reports.anchor.today')}
+							Today
 						</p>
 					</div>
 
 					<button
 						onClick={() => onAnchorChange(shiftAnchor(scope, anchor, 1))}
-						aria-label={t('reports.anchor.next')}
+						aria-label="Next"
 						className="w-10 h-10 flex items-center justify-center rounded-lg bg-surface border border-border text-text-secondary hover:text-text-primary hover:bg-surface-light transition-colors"
 					>
 						<ChevronRight className="w-5 h-5" />

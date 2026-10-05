@@ -1,7 +1,5 @@
 import type { PomoSettings } from "./pomo";
 
-export type SupportedLanguage = "zh" | "en";
-
 export type PointsHistoryType = 
   | 'task_undo'       // 任务撤销
   | 'task_stage'      // 任务阶段完成
@@ -20,7 +18,6 @@ export interface User {
   totalPoints: number; // 总积分
   dayEndTime?: string; // 一天结束时间，"HH:mm" 格式，默认 "00:00"
   pomoSettings?: PomoSettings; // 番茄钟设置
-  language?: SupportedLanguage; // 语言偏好
 }
 
 export interface PointsHistory {

@@ -1,6 +1,5 @@
 import { useEffect, useMemo } from "react";
 import { useNavigate } from "react-router";
-import { useTranslation } from "react-i18next";
 import { Settings } from "lucide-react";
 import { Header, HeaderActionButton } from "@/components/Header";
 import { useUserStore } from "@/store";
@@ -17,7 +16,6 @@ import { RecentHistoryList } from "./components/RecentHistoryList";
 
 export function Profile() {
   const navigate = useNavigate();
-  const { t } = useTranslation();
   const { user, currentPoints, isLoading: userLoading, calculatePoints } = useUserStore();
 
   useEffect(() => {
@@ -49,12 +47,12 @@ export function Profile() {
   return (
     <div className="min-h-screen pb-24 bg-background">
       <Header
-        title={t("profile.title")}
+        title="My Profile"
         rightSlot={
           <HeaderActionButton
             icon={Settings}
             side="end"
-            label={t("settings.title")}
+            label="Settings"
             onClick={() => navigate("/settings")}
           />
         }

@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router";
 import { History } from "lucide-react";
 import { Header, HeaderActionButton } from "@/components/Header";
@@ -17,7 +16,6 @@ import { StatsSummary } from "./components/StatsSummary";
 import { FloatingAddButton } from "./components/FloatingAddButton";
 
 export function AllTasks() {
-  const { t } = useTranslation();
   const navigate = useNavigate();
   const { user } = useUserStore();
   const { templates, isLoading, error, refresh } = useTaskTemplates(user?.id);
@@ -44,13 +42,13 @@ export function AllTasks() {
   return (
     <div className="min-h-screen pb-24 bg-background">
       <Header
-        title={t("allTasks.title")}
+        title="All Tasks"
         back
         rightSlot={
           <HeaderActionButton
             icon={History}
             side="end"
-            label={t("allTasks.taskHistory")}
+            label="Task History"
             onClick={() => navigate("/task-history")}
           />
         }

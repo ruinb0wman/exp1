@@ -1,4 +1,3 @@
-import { useTranslation } from "react-i18next";
 import { ChevronRight, Power, Trash2 } from "lucide-react";
 import type { RepeatMode, CompleteRule } from "@/db/types";
 import { calculateMaxPoints } from "@/db/types/task";
@@ -34,7 +33,6 @@ export function TaskCard({
   onToggleEnabled,
   onDelete,
 }: TaskCardProps) {
-  const { t } = useTranslation();
   const maxPoints = completeRule ? calculateMaxPoints(completeRule) : 0;
   return (
     <div
@@ -66,12 +64,12 @@ export function TaskCard({
               enabled ? "text-text-secondary" : "text-text-muted"
             }`}
           >
-            {description || (maxPoints > 0 ? `+${maxPoints} ${t("common.exp")}` : t("task.simpleTask"))}
+            {description || (maxPoints > 0 ? `+${maxPoints} exp` : "Simple task")}
           </p>
           {subtasks.length > 0 && (
             <p className="text-xs text-text-muted mt-1">
               {subtasks.length} checklist item{subtasks.length > 1 ? "s" : ""}
-              {isRandomSubtask && t("task.randomSubtask")}
+              {isRandomSubtask && " (random)"}
             </p>
           )}
         </div>

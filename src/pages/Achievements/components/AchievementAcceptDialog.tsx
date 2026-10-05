@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react';
-import { useTranslation } from 'react-i18next';
 import { Loader2 } from 'lucide-react';
 import { ACHIEVEMENT_ICONS, type Achievement, type AchievementIconName } from '@/db/types';
 import type { AcceptAchievementOverrides } from '@/db/services';
@@ -23,7 +22,6 @@ export function AchievementAcceptDialog({
   onClose,
   onConfirm,
 }: AchievementAcceptDialogProps) {
-  const { t } = useTranslation();
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [icon, setIcon] = useState<AchievementIconName>('Trophy');
@@ -44,7 +42,6 @@ export function AchievementAcceptDialog({
 
   const conditionText = formatCondition(
     achievement.condition,
-    t,
     templateTitle ?? achievement.templateTitleSnapshot
   );
 
@@ -68,7 +65,7 @@ export function AchievementAcceptDialog({
       isOpen={isOpen}
       onClose={onClose}
       position="bottom"
-      title={t('achievement.acceptTitle')}
+      title="Accept Achievement"
       maxHeight="85vh"
       footer={
         <button
@@ -77,23 +74,23 @@ export function AchievementAcceptDialog({
           className="w-full py-3 rounded-xl bg-primary text-white font-medium hover:bg-primary-dark transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
         >
           {isSaving && <Loader2 className="w-4 h-4 animate-spin" />}
-          {t('achievement.acceptConfirm')}
+          Accept
         </button>
       }
     >
       <div className="pb-2">
         <div className="rounded-xl bg-surface-light p-3 mb-4">
           <p className="text-text-secondary text-xs mb-1">
-            {t('achievement.condition')}
+            Condition
           </p>
           <p className="text-text-primary text-sm font-medium">{conditionText}</p>
           <p className="text-text-muted text-xs mt-1">
-            {t('achievement.progressHint')}
+            Progress starts counting from now. You can adjust the reward points.
           </p>
         </div>
 
         <label className="block text-text-secondary text-sm mb-2">
-          {t('achievement.fieldTitle')}
+          Title
         </label>
         <input
           value={title}
@@ -102,7 +99,7 @@ export function AchievementAcceptDialog({
         />
 
         <label className="block text-text-secondary text-sm mb-2">
-          {t('achievement.fieldDescription')}
+          Description
         </label>
         <textarea
           value={description}
@@ -112,7 +109,7 @@ export function AchievementAcceptDialog({
         />
 
         <label className="block text-text-secondary text-sm mb-2">
-          {t('achievement.fieldIcon')}
+          Icon
         </label>
         <div className="grid grid-cols-8 gap-2 mb-4">
           {ACHIEVEMENT_ICONS.map((name) => (
@@ -132,7 +129,7 @@ export function AchievementAcceptDialog({
         </div>
 
         <label className="block text-text-secondary text-sm mb-2">
-          {t('achievement.fieldReward')}
+          Reward Points
         </label>
         <NumberInput
           value={rewardPoints}

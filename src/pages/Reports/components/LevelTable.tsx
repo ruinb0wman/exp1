@@ -1,4 +1,3 @@
-import { useTranslation } from 'react-i18next';
 import type { LevelBucket } from '@/libs/report/types';
 import { levelBadgeClass } from '@/pages/AllTasks/lib';
 import { formatRate, rateClass } from '../lib';
@@ -14,10 +13,9 @@ interface LevelTableProps {
  * （跳过不算），存活率 = 全清天数 ÷ 有任务天数。
  */
 export function LevelTable({ levels }: LevelTableProps) {
-	const { t } = useTranslation();
 
 	if (levels.length === 0) {
-		return <p className="text-text-muted text-sm py-6 text-center">{t('reports.empty')}</p>;
+		return <p className="text-text-muted text-sm py-6 text-center">No data for this period</p>;
 	}
 
 	return (
@@ -26,25 +24,25 @@ export function LevelTable({ levels }: LevelTableProps) {
 				<thead>
 					<tr className="text-text-secondary text-xs">
 						<th className="text-left font-medium py-2 pr-2">
-							{t('reports.levels.col.level')}
+							Level
 						</th>
 						<th className="text-right font-medium py-2 px-2">
-							{t('reports.levels.col.planned')}
+							Planned
 						</th>
 						<th className="text-right font-medium py-2 px-2">
-							{t('reports.levels.col.completed')}
+							Completed
 						</th>
 						<th className="text-right font-medium py-2 px-2">
-							{t('reports.levels.col.completionRate')}
+							Completion rate
 						</th>
 						<th className="text-right font-medium py-2 px-2">
-							{t('reports.levels.col.activeDays')}
+							Days with tasks
 						</th>
 						<th className="text-right font-medium py-2 px-2">
-							{t('reports.levels.col.clearedDays')}
+							Cleared days
 						</th>
 						<th className="text-right font-medium py-2 pl-2">
-							{t('reports.levels.col.survivalRate')}
+							Survival rate
 						</th>
 					</tr>
 				</thead>

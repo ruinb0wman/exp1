@@ -1,4 +1,3 @@
-import { useTranslation } from 'react-i18next';
 import type { MetricSet, ReportModel } from '@/libs/report/types';
 
 interface SummaryCardsProps {
@@ -46,7 +45,6 @@ function toneOf(delta: string, goodWhenPositive: boolean): CardItem['tone'] {
  * 总览指标卡片（含与上期的环比）
  */
 export function SummaryCards({ model }: SummaryCardsProps) {
-	const { t } = useTranslation();
 	const { metrics, previousMetrics } = model;
 	const hasPrev = hasPreviousData(previousMetrics);
 
@@ -61,13 +59,13 @@ export function SummaryCards({ model }: SummaryCardsProps) {
 
 	const items: CardItem[] = [
 		{
-			label: t('reports.metric.completionRate'),
+			label: "Completion rate",
 			value: formatRate(metrics.completionRate),
 			delta: rateDelta,
 			tone: toneOf(rateDelta, true),
 		},
 		{
-			label: t('reports.metric.completed'),
+			label: "Completed tasks",
 			value: `${metrics.completedCount} / ${metrics.plannedCount}`,
 			delta: countDelta(metrics.completedCount, previousMetrics.completedCount, hasPrev),
 			tone: toneOf(
@@ -76,7 +74,7 @@ export function SummaryCards({ model }: SummaryCardsProps) {
 			),
 		},
 		{
-			label: t('reports.metric.focusMinutes'),
+			label: "Focus minutes",
 			value: String(metrics.pomoFocusMinutes),
 			delta: countDelta(metrics.pomoFocusMinutes, previousMetrics.pomoFocusMinutes, hasPrev),
 			tone: toneOf(
@@ -85,13 +83,13 @@ export function SummaryCards({ model }: SummaryCardsProps) {
 			),
 		},
 		{
-			label: t('reports.metric.pointsNet'),
+			label: "Points net",
 			value: String(metrics.pointsNet),
 			delta: countDelta(metrics.pointsNet, previousMetrics.pointsNet, hasPrev),
 			tone: toneOf(countDelta(metrics.pointsNet, previousMetrics.pointsNet, hasPrev), true),
 		},
 		{
-			label: t('reports.metric.longestStreak'),
+			label: "Longest streak",
 			value: String(metrics.longestStreak),
 			delta: countDelta(metrics.longestStreak, previousMetrics.longestStreak, hasPrev),
 			tone: toneOf(
@@ -100,19 +98,19 @@ export function SummaryCards({ model }: SummaryCardsProps) {
 			),
 		},
 		{
-			label: t('reports.metric.activeDays'),
+			label: "Active days",
 			value: String(metrics.activeDays),
 			delta: countDelta(metrics.activeDays, previousMetrics.activeDays, hasPrev),
 			tone: 'neutral',
 		},
 		{
-			label: t('reports.metric.skipped'),
+			label: "Skipped tasks",
 			value: String(metrics.skippedCount),
 			delta: countDelta(metrics.skippedCount, previousMetrics.skippedCount, hasPrev),
 			tone: toneOf(countDelta(metrics.skippedCount, previousMetrics.skippedCount, hasPrev), false),
 		},
 		{
-			label: t('reports.metric.overdue'),
+			label: "Overdue tasks",
 			value: String(metrics.overdueCount),
 			delta: countDelta(metrics.overdueCount, previousMetrics.overdueCount, hasPrev),
 			tone: toneOf(countDelta(metrics.overdueCount, previousMetrics.overdueCount, hasPrev), false),
@@ -135,7 +133,7 @@ export function SummaryCards({ model }: SummaryCardsProps) {
 					<p className="text-text-secondary text-xs mb-1">{item.label}</p>
 					<p className="text-text-primary text-xl font-bold">{item.value}</p>
 					<p className={`text-xs mt-1 ${toneClass(item.tone)}`}>
-						{item.delta} · {t('reports.col.previous')}
+						{item.delta} · {"Previous"}
 					</p>
 				</div>
 			))}

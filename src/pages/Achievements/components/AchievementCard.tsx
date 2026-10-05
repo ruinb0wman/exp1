@@ -1,4 +1,3 @@
-import { useTranslation } from 'react-i18next';
 import { CheckCircle2, Sparkles, Trash2 } from 'lucide-react';
 import type { Achievement } from '@/db/types';
 import { DynamicIcon } from '@/components/DynamicIcon';
@@ -16,14 +15,12 @@ export function AchievementCard({
   templateTitle,
   onAbandon,
 }: AchievementCardProps) {
-  const { t } = useTranslation();
   const isUnlocked = achievement.status === 'unlocked';
   const target = achievement.condition.target;
   const progress = Math.min(achievement.progress, target);
   const percent = target > 0 ? Math.round((progress / target) * 100) : 0;
   const conditionText = formatCondition(
     achievement.condition,
-    t,
     templateTitle ?? achievement.templateTitleSnapshot
   );
 
@@ -64,7 +61,7 @@ export function AchievementCard({
 
           {achievement.orphaned && (
             <p className="text-yellow-500 text-xs mt-1">
-              {t('achievement.orphaned')}
+              The bound task was deleted, this achievement is frozen
             </p>
           )}
         </div>
@@ -73,7 +70,7 @@ export function AchievementCard({
           <p className="text-primary font-bold text-sm">
             +{achievement.rewardPoints}
           </p>
-          <p className="text-text-muted text-xs">{t('common.exp')}</p>
+          <p className="text-text-muted text-xs">exp</p>
         </div>
       </div>
 
@@ -81,7 +78,7 @@ export function AchievementCard({
         <div className="mt-3">
           <div className="flex items-center justify-between mb-1">
             <span className="text-text-secondary text-xs">
-              {t('achievement.progress')}
+              Progress
             </span>
             <span className="text-text-primary text-xs font-medium">
               {progress} / {target}
@@ -99,7 +96,7 @@ export function AchievementCard({
       {isUnlocked && achievement.unlockedAt && (
         <div className="mt-3 flex items-center gap-1.5 text-text-muted text-xs">
           <Sparkles className="w-3.5 h-3.5" />
-          {t('achievement.unlockedAt', { time: formatUnlockTime(achievement.unlockedAt) })}
+          {`Unlocked at ${formatUnlockTime(achievement.unlockedAt)}`}
         </div>
       )}
 
@@ -110,7 +107,7 @@ export function AchievementCard({
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm text-text-secondary hover:text-primary hover:bg-surface-light transition-colors"
           >
             <Trash2 className="w-4 h-4" />
-            {t('achievement.abandon')}
+            Abandon
           </button>
         </div>
       )}

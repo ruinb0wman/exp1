@@ -32,7 +32,7 @@ async fn start_pomo_timer(
         "focus" => PomoMode::Focus,
         "shortBreak" => PomoMode::ShortBreak,
         "longBreak" => PomoMode::LongBreak,
-        _ => return Err("无效的模式".to_string()),
+        _ => return Err("Invalid mode".to_string()),
     };
     let manager = pomo_timer::get_timer_manager(&app);
     manager

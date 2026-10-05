@@ -1,6 +1,5 @@
 import { ChevronLeft, type LucideIcon } from "lucide-react";
 import { useNavigate } from "react-router";
-import { useTranslation } from "react-i18next";
 
 interface HeaderProps {
   title: string;
@@ -35,7 +34,6 @@ export function Header({
   onBack,
 }: HeaderProps) {
   const navigate = useNavigate();
-  const { t } = useTranslation();
 
   const handleBack = () => {
     if (onBack) {
@@ -53,7 +51,7 @@ export function Header({
           <button
             type="button"
             onClick={handleBack}
-            aria-label={t("common.back")}
+            aria-label="Back"
             className="flex size-11 items-center justify-start text-text-primary hover:text-primary transition-colors"
           >
             <ChevronLeft className="w-6 h-6" />

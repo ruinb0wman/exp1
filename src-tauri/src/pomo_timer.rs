@@ -94,6 +94,23 @@ pub enum TimerState {
     Paused,
 }
 
+/// 番茄钟通知的固定标题（前台服务通知与到点提醒共用）。
+pub const NOTIFICATION_TITLE: &str = "Pomodoro";
+
+/// 状态切换时前台服务通知的正文。
+/// `None` 表示该状态不需要单独更新通知（运行中每秒刷新倒计时，走另一条分支）。
+pub fn state_body(state: TimerState, is_completed: bool, mode: PomoMode) -> Option<&'static str> {
+    match state {
+        TimerState::Paused => Some("Paused"),
+        TimerState::Idle if is_completed => Some(match mode {
+            PomoMode::Focus => "\u{1f345} Focus complete!",
+            _ => "\u{2615} Break over",
+        }),
+        TimerState::Idle => Some("Stopped"),
+        _ => None,
+    }
+}
+
 /// 番茄钟计时器数据
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -228,7 +245,7 @@ impl PomoTimerManager {
         {
             let mut data = self.data.write().await;
             if data.state != TimerState::Running {
-                return Err("计时器未在运行".to_string());
+                return Err("Timer is not running".to_string());
             }
             // 先把截止时间换算成剩余秒数再清空：暂停期间不需要唤醒锁
             sync_time_left(&mut data, now_ms());
@@ -251,7 +268,7 @@ impl PomoTimerManager {
         let (remaining, ends_at_ms, session_id, task_id, mode, total_time) = {
             let mut data = self.data.write().await;
             if data.state != TimerState::Paused {
-                return Err("计时器未暂停".to_string());
+                return Err("Timer is not paused".to_string());
             }
             data.state = TimerState::Running;
             data.ends_at_ms = Some(now_ms() + data.time_left.max(0) as u64 * 1000);
@@ -424,6 +441,42 @@ pub fn get_timer_manager(app_handle: &AppHandle) -> Arc<PomoTimerManager> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    /// 通知文案必须是英文：历史上这里用 `\u{...}` 转义藏过中文，普通 grep 抓不到。
+    fn assert_no_cjk(text: &str) {
+        assert!(
+            !text.chars().any(|c| ('\u{4e00}'..='\u{9fff}').contains(&c)),
+            "通知文案不应含中文: {text}"
+        );
+    }
+
+    #[test]
+    fn notification_title_is_english() {
+        assert_eq!(NOTIFICATION_TITLE, "Pomodoro");
+        assert_no_cjk(NOTIFICATION_TITLE);
+    }
+
+    #[test]
+    fn state_body_is_english() {
+        let paused = state_body(TimerState::Paused, false, PomoMode::Focus).unwrap();
+        let stopped = state_body(TimerState::Idle, false, PomoMode::Focus).unwrap();
+        let done = state_body(TimerState::Idle, true, PomoMode::Focus).unwrap();
+        let break_done = state_body(TimerState::Idle, true, PomoMode::ShortBreak).unwrap();
+
+        assert_eq!(paused, "Paused");
+        assert_eq!(stopped, "Stopped");
+        assert_eq!(done, "\u{1f345} Focus complete!");
+        assert_eq!(break_done, "\u{2615} Break over");
+        for text in [paused, stopped, done, break_done] {
+            assert_no_cjk(text);
+        }
+    }
+
+    #[test]
+    fn running_state_does_not_push_a_one_off_update() {
+        assert_eq!(state_body(TimerState::Running, false, PomoMode::Focus), None);
+        assert_eq!(state_body(TimerState::Running, true, PomoMode::Focus), None);
+    }
 
     fn data(state: TimerState, time_left: i64, total_time: i64, ends_at_ms: Option<u64>) -> PomoTimerData {
         PomoTimerData {

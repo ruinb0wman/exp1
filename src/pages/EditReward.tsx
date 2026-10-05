@@ -1,5 +1,4 @@
 import { useState, useEffect } from "react";
-import { useTranslation } from "react-i18next";
 import { useParams, useNavigate } from "react-router";
 import { Header, HeaderActionButton } from "@/components/Header";
 import { RadioGroup } from "@/components/RadioGroup";
@@ -34,7 +33,6 @@ const monthDays = Array.from({ length: 31 }, (_, i) => ({
 }));
 
 export function EditReward() {
-  const { t } = useTranslation();
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { user } = useUserStore();
@@ -115,7 +113,7 @@ export function EditReward() {
 
     // 关闭统计时不需要校验金额（金额仅保留，便于重新打开）
     if (countInConsumption && !isValidMoneyCost(moneyCost)) {
-      alert(t("editReward.invalidMoneyCost"));
+      alert("Unit value must be a number greater than or equal to 0");
       return;
     }
 
@@ -147,7 +145,7 @@ export function EditReward() {
       navigate(-1);
     } catch (err) {
       console.error("Failed to save reward:", err);
-      alert(err instanceof Error ? err.message : t("editReward.saveFailed"));
+      alert(err instanceof Error ? err.message : "Failed to save");
     }
   };
 
@@ -158,9 +156,9 @@ export function EditReward() {
     if (!rewardId || !template) return;
 
     const ok = await confirm({
-      title: t("common.delete"),
-      message: t("editReward.confirmDelete", { title: template.title }),
-      confirmLabel: t("common.delete"),
+      title: "Delete",
+      message: `Delete "${template.title}"? Spending records will be kept; restock history will be deleted.`,
+      confirmLabel: "Delete",
       variant: "danger",
     });
     if (!ok) return;
@@ -169,7 +167,7 @@ export function EditReward() {
       await remove(rewardId);
       navigate(-1);
     } catch (err) {
-      alert(err instanceof Error ? err.message : t("editReward.deleteFailed"));
+      alert(err instanceof Error ? err.message : "Failed to delete");
     }
   };
 
@@ -185,14 +183,14 @@ export function EditReward() {
   return (
     <div className="relative min-h-screen bg-background pb-32">
       <Header
-        title={isEditing ? t("editReward.title") : t("editReward.createTitle")}
+        title={isEditing ? "Edit Reward" : "Create Reward"}
         back
         rightSlot={
           isEditing ? (
             <HeaderActionButton
               icon={Trash2}
               side="end"
-              label={t("common.delete")}
+              label="Delete"
               onClick={handleDelete}
             />
           ) : null
@@ -218,7 +216,7 @@ export function EditReward() {
                 />
               </div>
               <div className="flex items-center gap-2 text-text-secondary text-sm">
-                <span>点击更换图标</span>
+                <span>Tap to change icon</span>
               </div>
             </button>
           </div>
@@ -294,12 +292,12 @@ export function EditReward() {
         <div>
           <div className="flex items-center justify-between gap-4 px-2 pb-2 pt-4">
             <h3 className="text-text-primary text-lg font-bold leading-tight tracking-[-0.015em]">
-              {t("editReward.moneyCost")}
+              Unit Value
             </h3>
             <button
               role="switch"
               aria-checked={countInConsumption}
-              aria-label={t("editReward.countInConsumption")}
+              aria-label="Count in spending"
               onClick={() => setCountInConsumption(!countInConsumption)}
               className={`relative inline-flex h-7 w-12 shrink-0 items-center rounded-full transition-colors ${
                 countInConsumption ? "bg-primary" : "bg-surface-light"
@@ -321,7 +319,7 @@ export function EditReward() {
                       <Scale className="w-5 h-5" />
                     </div>
                     <p className="text-text-primary text-base font-normal leading-normal">
-                      {t("editReward.moneyCostLabel")}
+                      Unit value (¥)
                     </p>
                   </div>
                   <NumberInput
@@ -335,12 +333,12 @@ export function EditReward() {
                 </div>
 
                 <p className="text-text-muted text-sm pt-2 border-t border-surface-light">
-                  {t("editReward.moneyCostHint")}
+                  Money value of one item. Free rewards with 0 point cost (e.g. a daily free quota) are recorded with it, e.g. ¥1 each.
                 </p>
 
                 <div className="flex items-center justify-between pt-2 border-t border-surface-light">
                   <span className="text-text-secondary text-sm">
-                    {t("editReward.moneyCostPreview", { cost: pointsCost })}
+                    {`${pointsCost} points / item equals`}
                   </span>
                   <span className="text-green-400 font-bold">
                     {isValidMoneyCost(moneyCost) ? formatMoney(moneyCost) : "-"}
@@ -349,7 +347,7 @@ export function EditReward() {
               </>
             ) : (
               <p className="text-text-muted text-sm">
-                {t("editReward.moneyCostOffHint")}
+                No money value — excluded from spending stats
               </p>
             )}
           </div>

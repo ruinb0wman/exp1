@@ -1,5 +1,4 @@
 import { useCallback, useMemo, useState } from 'react';
-import { useTranslation } from 'react-i18next';
 import { BarChart3 } from 'lucide-react';
 import { Header } from '@/components/Header';
 import { EmptyState } from '@/components/EmptyState';
@@ -7,7 +6,7 @@ import { ErrorState } from '@/components/ErrorState';
 import { LoadingState } from '@/components/LoadingState';
 import { useUserStore } from '@/store/userStore';
 import { useReport } from '@/hooks/useReport';
-import type { ReportTranslate } from '@/libs/report/prompt';
+import { noteText } from '@/libs/report/renderMarkdown';
 import type { ReportScope } from '@/libs/report/types';
 import { formatLocalDate } from '@/libs/time';
 import { PeriodSelector } from './components/PeriodSelector';
@@ -22,7 +21,6 @@ import { ExportActions } from './components/ExportActions';
  * 报告为纯确定性统计，不调用 LLM
  */
 export function Reports() {
-	const { t } = useTranslation();
 	const { user } = useUserStore();
 
 	const [scope, setScope] = useState<ReportScope>('week');
@@ -47,11 +45,6 @@ export function Reports() {
 		customEnd: customEndStr,
 	});
 
-	const translate = useCallback<ReportTranslate>(
-		(key, options) => String(t(key, options as never)),
-		[t]
-	);
-
 	const handleCustomRangeChange = useCallback((start: Date, end: Date) => {
 		setCustomStart(start);
 		setCustomEnd(end);
@@ -60,24 +53,24 @@ export function Reports() {
 	const rangeText = useMemo(() => {
 		if (!model) return '';
 		const partial = model.period.isPartial
-			? t('reports.meta.partialSuffix', { date: model.period.end })
+			? ` (as of ${model.period.end})`
 			: '';
 		return `${model.period.start} ~ ${model.period.end}${partial}`;
-	}, [model, t]);
+	}, [model]);
 
 	return (
 		<div className="min-h-screen bg-background">
-			<Header title={t('reports.page.title')} back />
+			<Header title="Reports" back />
 
 			<main className="px-4 pb-24">
 				{!user ? (
 					<EmptyState
 						icon={<BarChart3 className="w-8 h-8" />}
-						title={t('reports.page.title')}
+						title="Reports"
 					/>
 				) : (
 					<>
-						<p className="text-text-muted text-xs mb-4">{t('reports.page.subtitle')}</p>
+						<p className="text-text-muted text-xs mb-4">Export weekly/monthly/yearly task data to feed an LLM alongside your Logseq journal</p>
 
 						<PeriodSelector
 							scope={scope}
@@ -90,17 +83,17 @@ export function Reports() {
 						/>
 
 						{isLoading && !model ? (
-							<LoadingState message={t('reports.page.loading')} />
+							<LoadingState message="Generating report…" />
 						) : error ? (
 							<ErrorState
 								title={error}
-								retryLabel={t('reports.page.retry')}
+								retryLabel="Retry"
 								onRetry={() => void refresh()}
 							/>
 						) : model ? (
 							<div className="space-y-6">
 								<p className="text-text-secondary text-sm">
-									<span className="text-text-muted mr-2">{t('reports.summary.range')}</span>
+									<span className="text-text-muted mr-2">Range</span>
 									{rangeText}
 								</p>
 
@@ -108,7 +101,7 @@ export function Reports() {
 
 								<section>
 									<h2 className="text-text-primary font-bold mb-3">
-										{t('reports.section.trend')}
+										Trend
 									</h2>
 									<div className="rounded-xl bg-surface p-4 border border-border">
 										<TrendChart trend={model.trend} />
@@ -117,7 +110,7 @@ export function Reports() {
 
 								<section>
 									<h2 className="text-text-primary font-bold mb-3">
-										{t('reports.section.tasks')}
+										Task breakdown
 									</h2>
 									<div className="rounded-xl bg-surface p-4 border border-border">
 										<TemplateTable templates={model.templates} />
@@ -126,7 +119,7 @@ export function Reports() {
 
 								<section>
 									<h2 className="text-text-primary font-bold mb-3">
-										{t('reports.section.levels')}
+										By level
 									</h2>
 									<div className="rounded-xl bg-surface p-4 border border-border">
 										<LevelTable levels={model.levels} />
@@ -141,7 +134,7 @@ export function Reports() {
 													key={note.code}
 													className="text-text-secondary text-xs"
 												>
-													· {t(`reports.notes.${note.code}`, note.params)}
+													· {noteText(note)}
 												</li>
 											))}
 										</ul>
@@ -150,7 +143,6 @@ export function Reports() {
 
 								<ExportActions
 									model={model}
-									translate={translate}
 									includePrompt={includePrompt}
 									onIncludePromptChange={setIncludePrompt}
 								/>

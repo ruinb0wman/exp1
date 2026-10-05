@@ -1,4 +1,3 @@
-import { useTranslation } from "react-i18next";
 import { Package, Sparkles } from "lucide-react";
 import { DynamicIcon } from "@/components/DynamicIcon";
 import { EmptyState } from "@/components/EmptyState";
@@ -17,7 +16,6 @@ interface RewardsGridProps {
 }
 
 export function RewardsGrid({ rewards, isLoading, onRewardClick }: RewardsGridProps) {
-  const { t } = useTranslation();
 
   if (isLoading) {
     return (
@@ -31,8 +29,8 @@ export function RewardsGrid({ rewards, isLoading, onRewardClick }: RewardsGridPr
     return (
       <EmptyState
         icon={<Package className="w-8 h-8" />}
-        title={t("store.noRewards")}
-        description={t("store.createReward")}
+        title="No Rewards"
+        description="Tap + to create a new reward"
       />
     );
   }
@@ -74,7 +72,7 @@ export function RewardsGrid({ rewards, isLoading, onRewardClick }: RewardsGridPr
               </div>
               {template.replenishmentMode !== 'none' && availableCount > 0 && (
                 <p className="text-text-muted text-xs mt-0.5">
-                  {t("store.remainingQuota", { count: availableCount })}
+                  {`${availableCount} left`}
                 </p>
               )}
             </div>

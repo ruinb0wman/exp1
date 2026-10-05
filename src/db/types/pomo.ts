@@ -53,23 +53,33 @@ export const DEFAULT_POMO_SETTINGS: PomoSettings = {
 
 // 每种模式的显示配置
 export const POMO_MODE_CONFIG: Record<PomoMode, {
-  label: string;
   color: string;
   gradient: string;
 }> = {
   focus: {
-    label: 'focus',
     color: '#f56565',
     gradient: 'from-primary to-primary-light',
   },
   shortBreak: {
-    label: 'shortBreak',
     color: '#48bb78',
     gradient: 'from-green-400 to-green-500',
   },
   longBreak: {
-    label: 'longBreak',
     color: '#4299e1',
     gradient: 'from-blue-400 to-blue-500',
   },
+};
+
+/** 模式文案 */
+export const POMO_MODE_LABEL: Record<PomoMode, string> = {
+  focus: 'Focus',
+  shortBreak: 'Short Break',
+  longBreak: 'Long Break',
+};
+
+/** 计时进行中时的模式文案 */
+export const POMO_MODE_RUNNING_LABEL: Record<PomoMode, string> = {
+  focus: 'Focusing',
+  shortBreak: 'Short Break',
+  longBreak: 'Long Break',
 };

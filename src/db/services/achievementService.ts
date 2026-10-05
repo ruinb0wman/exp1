@@ -153,7 +153,7 @@ export async function acceptAchievement(
   const db = getDB();
   const achievement = await db.achievements.get(id);
   if (!achievement) {
-    throw new Error('成就不存在');
+    throw new Error('Achievement not found');
   }
   if (achievement.status === 'active') return;
 
@@ -274,7 +274,7 @@ async function unlockAchievement(achievement: Achievement): Promise<Achievement 
           amount: fresh.rewardPoints,
           type: 'achievement',
           relatedInstanceId: fresh.id,
-          description: `成就达成：${fresh.title}`,
+          description: `Achievement unlocked: ${fresh.title}`,
           createdAt: now,
         } as unknown as PointsHistory);
 

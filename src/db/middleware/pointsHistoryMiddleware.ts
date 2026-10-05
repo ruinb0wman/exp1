@@ -41,7 +41,7 @@ export function createPointsHistoryMiddleware() {
                   amount: rewardPoints,
                   type: 'task_completion',
                   relatedInstanceId: primKey as string,
-                  description: '任务完成',
+                  description: 'Task completed',
                   createdAt: now,
                 } as unknown as PointsHistory);
 
@@ -71,7 +71,7 @@ export function createPointsHistoryMiddleware() {
                   amount: -rewardPoints,
                   type: 'task_undo',
                   relatedInstanceId: primKey as string,
-                  description: '撤销简单任务',
+                  description: 'Simple task undone',
                   createdAt: now,
                 } as unknown as PointsHistory);
 

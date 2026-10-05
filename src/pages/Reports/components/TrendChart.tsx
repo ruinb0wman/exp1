@@ -1,4 +1,3 @@
-import { useTranslation } from 'react-i18next';
 import type { TrendBucket } from '@/libs/report/types';
 
 interface TrendChartProps {
@@ -10,10 +9,9 @@ interface TrendChartProps {
  * 背景条 = 计划数，前景条 = 完成数
  */
 export function TrendChart({ trend }: TrendChartProps) {
-	const { t } = useTranslation();
 
 	if (trend.length === 0) {
-		return <p className="text-text-muted text-sm py-6 text-center">{t('reports.empty')}</p>;
+		return <p className="text-text-muted text-sm py-6 text-center">No data for this period</p>;
 	}
 
 	const maxPlanned = Math.max(...trend.map((bucket) => bucket.planned), 1);

@@ -17,9 +17,6 @@ export type ReportScope = 'week' | 'month' | 'year' | 'custom';
 /** 趋势粒度：周的粒度是「天」，年的粒度是「周」 */
 export type TrendGranularity = 'day' | 'week';
 
-/** 报告语言 */
-export type ReportLocale = 'zh' | 'en';
-
 /** 一个报告周期（全部使用用户日 YYYY-MM-DD） */
 export interface ReportPeriod {
 	scope: ReportScope;

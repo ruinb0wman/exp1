@@ -1,16 +1,12 @@
 import { useState } from 'react';
-import { useTranslation } from 'react-i18next';
 import { CheckCircle2, FileJson, FileText, Loader2 } from 'lucide-react';
 import { fileSystem } from '@/libs/fileSystem';
 import { generateReportFilename, renderReportJson } from '@/db/services';
 import { renderReportMarkdown } from '@/libs/report/renderMarkdown';
-import type { ReportTranslate } from '@/libs/report/prompt';
 import type { ReportModel } from '@/libs/report/types';
 
 interface ExportActionsProps {
 	model: ReportModel;
-	/** 翻译函数（由页面注入，便于 renderMarkdown 复用 i18n） */
-	translate: ReportTranslate;
 	includePrompt: boolean;
 	onIncludePromptChange: (value: boolean) => void;
 }
@@ -22,11 +18,9 @@ type ExportStatus = 'idle' | 'success' | 'cancelled' | 'failed';
  */
 export function ExportActions({
 	model,
-	translate,
 	includePrompt,
 	onIncludePromptChange,
 }: ExportActionsProps) {
-	const { t } = useTranslation();
 	const [exporting, setExporting] = useState<'md' | 'json' | null>(null);
 	const [status, setStatus] = useState<ExportStatus>('idle');
 
@@ -36,7 +30,7 @@ export function ExportActions({
 		try {
 			const content =
 				format === 'md'
-					? renderReportMarkdown(model, translate, { includePrompt })
+					? renderReportMarkdown(model, { includePrompt })
 					: renderReportJson(model);
 
 			const saved = await fileSystem.saveFile({
@@ -58,11 +52,11 @@ export function ExportActions({
 	const statusText = (() => {
 		switch (status) {
 			case 'success':
-				return { text: t('reports.action.success'), className: 'text-emerald-400' };
+				return { text: "Report saved", className: 'text-emerald-400' };
 			case 'cancelled':
-				return { text: t('reports.action.cancelled'), className: 'text-text-muted' };
+				return { text: "Save cancelled", className: 'text-text-muted' };
 			case 'failed':
-				return { text: t('reports.action.failed'), className: 'text-primary' };
+				return { text: "Failed to save", className: 'text-primary' };
 			default:
 				return null;
 		}
@@ -78,7 +72,7 @@ export function ExportActions({
 					className="custom-checkbox"
 				/>
 				<span className="text-text-secondary text-sm">
-					{t('reports.option.includePrompt')}
+					Append analysis prompt
 				</span>
 			</label>
 
@@ -93,7 +87,7 @@ export function ExportActions({
 					) : (
 						<FileText className="w-4 h-4" />
 					)}
-					{t('reports.action.exportMd')}
+					Export Markdown
 				</button>
 				<button
 					onClick={() => handleExport('json')}
@@ -105,13 +99,13 @@ export function ExportActions({
 					) : (
 						<FileJson className="w-4 h-4" />
 					)}
-					{t('reports.action.exportJson')}
+					Export JSON
 				</button>
 			</div>
 
 			{exporting !== null && (
 				<p className="text-text-muted text-xs mt-3 text-center">
-					{t('reports.action.exporting')}
+					Exporting…
 				</p>
 			)}
 

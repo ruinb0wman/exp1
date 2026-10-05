@@ -1,6 +1,4 @@
 import { useEffect, useState } from "react";
-import { useTranslation } from "react-i18next";
-import i18n from "i18next";
 import { BookOpen, Gift, RotateCcw, Settings, Trophy, type LucideIcon } from "lucide-react";
 import type { PointsHistory, PointsHistoryType } from "@/db/types";
 import { formatRelativeDate } from "@/libs/time";
@@ -23,37 +21,19 @@ export function getPointsHistoryIcon(type: PointsHistoryType): LucideIcon {
   }
 }
 
-export type PointsHistoryLabelKey = 
-  | "taskReward" 
-  | "taskUndo" 
-  | "taskStage" 
-  | "taskCompletion" 
-  | "taskDeduction" 
-  | "rewardExchange" 
-  | "achievement"
-  | "adminAdjustment";
+const POINTS_HISTORY_LABEL: Record<PointsHistoryType, string> = {
+  task_reward: "Task Reward",
+  task_undo: "Undo Deduction",
+  task_stage: "Stage Reward",
+  task_completion: "Completion Reward",
+  task_deduction: "Progress Reverted",
+  reward_exchange: "Purchase",
+  achievement: "Achievement Reward",
+  admin_adjustment: "Admin Adjustment",
+};
 
-export function getPointsHistoryLabelKey(type: PointsHistoryType): PointsHistoryLabelKey {
-  switch (type) {
-    case "task_reward":
-      return "taskReward";
-    case "task_undo":
-      return "taskUndo";
-    case "task_stage":
-      return "taskStage";
-    case "task_completion":
-      return "taskCompletion";
-    case "task_deduction":
-      return "taskDeduction";
-    case "reward_exchange":
-      return "rewardExchange";
-    case "achievement":
-      return "achievement";
-    case "admin_adjustment":
-      return "adminAdjustment";
-    default:
-      return "taskReward";
-  }
+export function getPointsHistoryLabel(type: PointsHistoryType): string {
+  return POINTS_HISTORY_LABEL[type] ?? POINTS_HISTORY_LABEL.task_reward;
 }
 
 export async function getRelatedEntityName(
@@ -93,12 +73,10 @@ interface PointsHistoryCardProps {
 }
 
 export function PointsHistoryCard({ item }: PointsHistoryCardProps) {
-  const { t } = useTranslation();
   const [entityName, setEntityName] = useState<string | null>(null);
   const Icon = getPointsHistoryIcon(item.type);
   const isPositive = item.amount > 0;
-  const labelKey = getPointsHistoryLabelKey(item.type);
-  const label = t(`points.${labelKey}`);
+  const label = getPointsHistoryLabel(item.type);
   const relativeDate = formatRelativeDate(item.createdAt);
 
   useEffect(() => {
@@ -116,11 +94,11 @@ export function PointsHistoryCard({ item }: PointsHistoryCardProps) {
   const getRelativeDateText = () => {
     switch (relativeDate.type) {
       case "today":
-        return `${t("common.today")} ${relativeDate.time}`;
+        return `Today ${relativeDate.time}`;
       case "yesterday":
-        return `${t("common.yesterday")} ${relativeDate.time}`;
+        return `Yesterday ${relativeDate.time}`;
       case "daysAgo":
-        return `${relativeDate.value}${i18n.language === 'zh' ? '天前' : ' days ago'} ${relativeDate.time}`;
+        return `${relativeDate.value} days ago ${relativeDate.time}`;
       case "monthDay":
         return `${relativeDate.month}/${relativeDate.day}`;
     }

@@ -25,7 +25,7 @@ export interface LlmChatOptions {
 function toError(error: unknown): Error {
   if (error instanceof Error) return error;
   if (typeof error === 'string') return new Error(error);
-  return new Error('LLM 请求失败');
+  return new Error('LLM request failed');
 }
 
 /** 读取 LLM 设置（不含 API Key） */

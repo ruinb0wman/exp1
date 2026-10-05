@@ -1,6 +1,4 @@
 import { AlertCircle, Flag, Eye } from "lucide-react";
-import { useTranslation } from "react-i18next";
-import i18n from "i18next";
 import type { TaskHistoryItem } from "@/db/services";
 import type { TaskTemplate, TaskInstance } from "@/db/types";
 import { getTaskProgressPercent, getTotalPointsEarned } from "@/db/services";
@@ -37,7 +35,6 @@ export function TaskInstanceCard({
   isPreview = false,
   onClick 
 }: TaskInstanceCardProps) {
-  const { t } = useTranslation();
   const { user } = useUserStore();
   const template = item?.template ?? propTemplate!;
   const instance = item?.instance ?? propInstance;
@@ -82,38 +79,38 @@ export function TaskInstanceCard({
       const targetCount = config?.mode === 'all' 
         ? instance?.subtasks.length || 0
         : (config?.requiredCount || 1);
-      return `${completedCount}/${targetCount} ${t('home.units.items')}`;
+      return `${completedCount}/${targetCount} items`;
     }
 
     const progress = instance?.completeProgress ?? 0;
     const maxThreshold = rule.stages.length > 0 
       ? Math.max(...rule.stages.map(s => s.threshold))
       : 0;
-    const unit = rule.type === "time" ? t('home.units.minutes') : t('home.units.times');
+    const unit = rule.type === "time" ? "min" : "times";
     return `${progress}/${maxThreshold} ${unit}`;
   };
 
   const renderExpireTime = (result: ExpireTimeResult) => {
     switch (result.type) {
       case "expired":
-        return t('home.status.expired');
+        return "Expired";
       case "expiresInDays":
-        return `${t('home.time.due')} ${result.value}d`;
+        return `Due ${result.value}d`;
       case "expiresInHours":
-        return `${t('home.time.due')} ${result.hours}h`;
+        return `Due ${result.hours}h`;
       case "expiresInMinutes":
-        return `${t('home.time.due')} ${result.value}m`;
+        return `Due ${result.value}m`;
     }
   };
 
   const renderStatusLabel = (key: StatusLabelKey) => {
     switch (key) {
       case "completed":
-        return t('home.status.completed');
+        return "Completed";
       case "skipped":
-        return t('home.status.skipped');
+        return "Skipped";
       case "pending":
-        return t('home.status.pending');
+        return "Pending";
     }
   };
 
@@ -121,11 +118,11 @@ export function TaskInstanceCard({
     if (!result) return null;
     switch (result.type) {
       case "today":
-        return `${t('home.time.today')} ${result.time}`;
+        return `Today ${result.time}`;
       case "yesterday":
-        return `${t('home.time.yesterday')} ${result.time}`;
+        return `Yesterday ${result.time}`;
       case "daysAgo":
-        return `${result.value}${i18n.language === 'zh' ? '天前' : ' days ago'} ${result.time}`;
+        return `${result.value} days ago ${result.time}`;
       case "monthDay":
         return `${result.month}/${result.day} ${result.time}`;
     }
@@ -168,7 +165,7 @@ export function TaskInstanceCard({
         </div>
         <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-text-secondary text-xs mt-1">
           {isPreview ? (
-            <span className="text-xs text-text-muted">{t('home.previewMode')}</span>
+            <span className="text-xs text-text-muted">Preview Mode</span>
           ) : (
             <>
               {expireTimeResult && (
@@ -180,11 +177,11 @@ export function TaskInstanceCard({
               {instance?.completedAt && (
                 <span className="flex items-center gap-1">
                   <Flag className="w-3 h-3 text-green-500" />
-                  {t('home.time.completed')} {renderDateTime(formatDateTime(instance.completedAt))}
+                  {"Completed"} {renderDateTime(formatDateTime(instance.completedAt))}
                 </span>
               )}
               {earnedPoints > 0 && (
-                <span className="text-green-500">+{earnedPoints} {t('home.time.exp')}</span>
+                <span className="text-green-500">+{earnedPoints} {"exp"}</span>
               )}
             </>
           )}
@@ -206,7 +203,7 @@ export function TaskInstanceCard({
       </div>
 
       <span className={`text-sm font-medium ${itemStatusStyle.color}`}>
-        {isPreview ? t('home.preview') : renderStatusLabel(getStatusLabel(instance?.status ?? "pending"))}
+        {isPreview ? "Preview" : renderStatusLabel(getStatusLabel(instance?.status ?? "pending"))}
       </span>
     </button>
   );

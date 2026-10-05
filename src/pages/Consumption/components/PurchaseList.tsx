@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { useTranslation } from 'react-i18next';
 import { ReceiptText, Trash2 } from 'lucide-react';
 import { DynamicIcon } from '@/components/DynamicIcon';
 import { EmptyState } from '@/components/EmptyState';
@@ -18,7 +17,6 @@ interface PurchaseListProps {
  * 不计入消费统计的购买仍然列出（否则没有地方可以撤销），只把金额换成标注
  */
 export function PurchaseList({ purchases, onDelete }: PurchaseListProps) {
-	const { t } = useTranslation();
 	const confirm = useConfirm();
 	const [deletingId, setDeletingId] = useState<string | null>(null);
 
@@ -26,19 +24,16 @@ export function PurchaseList({ purchases, onDelete }: PurchaseListProps) {
 		return (
 			<EmptyState
 				icon={<ReceiptText className="w-8 h-8" />}
-				title={t('consumption.detail.empty')}
+				title="No spending in this period"
 			/>
 		);
 	}
 
 	const handleDelete = async (purchase: RewardPurchase) => {
 		const ok = await confirm({
-			title: t('consumption.detail.delete'),
-			message: t('consumption.detail.confirmDelete', {
-				title: purchase.template.title,
-				points: purchase.pointsSpent,
-			}),
-			confirmLabel: t('consumption.detail.delete'),
+			title: "Delete",
+			message: `Delete the "${purchase.template.title}" purchase? ${purchase.pointsSpent} points and the matching quota will be refunded.`,
+			confirmLabel: "Delete",
 			variant: 'danger',
 		});
 		if (!ok) return;
@@ -104,7 +99,7 @@ export function PurchaseList({ purchases, onDelete }: PurchaseListProps) {
 								</p>
 							) : (
 								<p className="text-text-muted text-xs">
-									{t('consumption.detail.notCounted')}
+									Not counted
 								</p>
 							)}
 						</div>
@@ -112,7 +107,7 @@ export function PurchaseList({ purchases, onDelete }: PurchaseListProps) {
 						<button
 							onClick={() => void handleDelete(purchase)}
 							disabled={isDeleting}
-							aria-label={t('consumption.detail.delete')}
+							aria-label="Delete"
 							className="w-9 h-9 shrink-0 flex items-center justify-center rounded-lg text-text-muted hover:text-primary hover:bg-surface-light transition-colors disabled:opacity-40"
 						>
 							{isDeleting ? (

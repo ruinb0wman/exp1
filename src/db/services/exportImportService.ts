@@ -156,18 +156,18 @@ export async function exportAllData(): Promise<ExportData> {
  */
 export function validateImportData(data: unknown): ImportPreview {
   if (!data || typeof data !== 'object') {
-    return { isValid: false, error: '无效的备份文件格式' };
+    return { isValid: false, error: 'Invalid backup file format' };
   }
 
   const exportData = data as Partial<ExportData>;
 
   // 检查必要字段
   if (!exportData.version) {
-    return { isValid: false, error: '备份文件缺少版本信息' };
+    return { isValid: false, error: 'Backup file is missing version info' };
   }
 
   if (!exportData.data || typeof exportData.data !== 'object') {
-    return { isValid: false, error: '备份文件缺少数据内容' };
+    return { isValid: false, error: 'Backup file is missing data' };
   }
 
   const { data: dbData } = exportData;
@@ -183,7 +183,7 @@ export function validateImportData(data: unknown): ImportPreview {
 
   for (const key of requiredArrays) {
     if (!Array.isArray((dbData as Record<string, unknown>)[key])) {
-      return { isValid: false, error: `备份文件缺少 ${key} 数据` };
+      return { isValid: false, error: `Backup file is missing "${key}" data` };
     }
   }
 
@@ -291,7 +291,7 @@ async function importWithOverwrite(data: ExportData['data']): Promise<ImportResu
 
     return {
       success: true,
-      message: '数据导入成功（全量覆盖）',
+      message: 'Import succeeded (full overwrite)',
       userId: 1,
       stats: {
         taskTemplates: data.taskTemplates.length,
@@ -307,7 +307,7 @@ async function importWithOverwrite(data: ExportData['data']): Promise<ImportResu
   } catch (error) {
     return {
       success: false,
-      message: `导入失败: ${error instanceof Error ? error.message : '未知错误'}`,
+      message: `Import failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
     };
   }
 }

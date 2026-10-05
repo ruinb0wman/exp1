@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useState } from 'react';
-import { useTranslation } from 'react-i18next';
 import { Bot, CheckCircle2, KeyRound, Loader2, Plug } from 'lucide-react';
 import { getLlmSettings, setLlmSettings, testLlmConnection } from '@/services/llmService';
 
@@ -10,7 +9,6 @@ type TestState = { status: 'idle' } | { status: 'loading' } | { status: 'ok'; me
  * API Key 由 Rust 侧持久化，前端不保存、不导出
  */
 export function AiSettingsSection() {
-  const { t } = useTranslation();
 
   const [baseUrl, setBaseUrl] = useState('');
   const [model, setModel] = useState('');
@@ -29,11 +27,11 @@ export function AiSettingsSection() {
       setModel(settings.model);
       setHasApiKey(settings.hasApiKey);
     } catch (error) {
-      setSaveMessage(error instanceof Error ? error.message : t('common.error'));
+      setSaveMessage(error instanceof Error ? error.message : "Error");
     } finally {
       setIsLoading(false);
     }
-  }, [t]);
+  }, []);
 
   useEffect(() => {
     void load();
@@ -53,14 +51,14 @@ export function AiSettingsSection() {
         });
         setApiKey('');
         await load();
-        setSaveMessage(t('settings.ai.saved'));
+        setSaveMessage("Saved");
       } catch (error) {
-        setSaveMessage(error instanceof Error ? error.message : t('common.error'));
+        setSaveMessage(error instanceof Error ? error.message : "Error");
       } finally {
         setIsSaving(false);
       }
     },
-    [baseUrl, model, apiKey, load, t]
+    [baseUrl, model, apiKey, load]
   );
 
   const handleTest = useCallback(async () => {
@@ -69,20 +67,20 @@ export function AiSettingsSection() {
       const result = await testLlmConnection();
       setTestState({
         status: 'ok',
-        message: result.model ? `${t('settings.ai.testOk')} · ${result.model}` : t('settings.ai.testOk'),
+        message: result.model ? `Connected · ${result.model}` : "Connected",
       });
     } catch (error) {
       setTestState({
         status: 'error',
-        message: error instanceof Error ? error.message : t('common.error'),
+        message: error instanceof Error ? error.message : "Error",
       });
     }
-  }, [t]);
+  }, []);
 
   return (
     <div className="mb-6">
       <h2 className="text-text-secondary text-sm font-medium px-2 mb-3">
-        {t('settings.ai.title')}
+        AI Achievements
       </h2>
 
       <div className="rounded-xl bg-surface border border-border p-4">
@@ -91,13 +89,13 @@ export function AiSettingsSection() {
             <Bot className="w-5 h-5 text-primary" />
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-text-primary font-medium">{t('settings.ai.title')}</p>
-            <p className="text-text-secondary text-sm">{t('settings.ai.description')}</p>
+            <p className="text-text-primary font-medium">AI Achievements</p>
+            <p className="text-text-secondary text-sm">Configure an OpenAI-compatible API to generate personalized achievements</p>
           </div>
         </div>
 
         <label className="block text-text-secondary text-xs mb-1.5">
-          {t('settings.ai.baseUrl')}
+          Base URL
         </label>
         <input
           value={baseUrl}
@@ -108,7 +106,7 @@ export function AiSettingsSection() {
         />
 
         <label className="block text-text-secondary text-xs mb-1.5">
-          {t('settings.ai.model')}
+          Model
         </label>
         <input
           value={model}
@@ -119,7 +117,7 @@ export function AiSettingsSection() {
         />
 
         <label className="block text-text-secondary text-xs mb-1.5">
-          {t('settings.ai.apiKey')}
+          API Key
         </label>
         <div className="relative mb-3">
           <KeyRound className="w-4 h-4 text-text-muted absolute left-3 top-1/2 -translate-y-1/2" />
@@ -127,7 +125,7 @@ export function AiSettingsSection() {
             type="password"
             value={apiKey}
             onChange={(event) => setApiKey(event.target.value)}
-            placeholder={hasApiKey ? t('settings.ai.apiKeySaved') : 'sk-...'}
+            placeholder={hasApiKey ? "Saved (••••)" : 'sk-...'}
             disabled={isLoading || isSaving}
             className="w-full rounded-lg bg-surface-light border border-border pl-9 pr-3 py-2.5 text-text-primary text-sm focus:outline-none focus:border-primary disabled:opacity-50"
           />
@@ -140,7 +138,7 @@ export function AiSettingsSection() {
             className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg bg-primary text-white text-sm font-medium hover:bg-primary-dark transition-colors disabled:opacity-50"
           >
             {isSaving && <Loader2 className="w-4 h-4 animate-spin" />}
-            {t('common.save')}
+            Save
           </button>
           <button
             onClick={() => void handleTest()}
@@ -152,7 +150,7 @@ export function AiSettingsSection() {
             ) : (
               <Plug className="w-4 h-4" />
             )}
-            {t('settings.ai.test')}
+            Test Connection
           </button>
         </div>
 
@@ -162,7 +160,7 @@ export function AiSettingsSection() {
             disabled={isLoading || isSaving}
             className="w-full mt-2 py-2 rounded-lg text-text-secondary text-xs hover:text-primary transition-colors disabled:opacity-50"
           >
-            {t('settings.ai.clearKey')}
+            Clear API Key
           </button>
         )}
 

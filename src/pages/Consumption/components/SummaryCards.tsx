@@ -1,4 +1,3 @@
-import { useTranslation } from 'react-i18next';
 import { Sparkles, Banknote, ReceiptText } from 'lucide-react';
 import type { RewardPurchaseStats } from '@/db/services';
 import { formatMoney } from '@/libs/reward';
@@ -11,14 +10,13 @@ interface SummaryCardsProps {
  * 消费汇总：积分 / 折合金额 / 笔数
  */
 export function SummaryCards({ stats }: SummaryCardsProps) {
-	const { t } = useTranslation();
 
 	const cards = [
 		{
 			key: 'points',
 			icon: Sparkles,
 			value: stats.pointsSpent.toLocaleString(),
-			label: t('consumption.summary.points'),
+			label: "Points spent",
 			tone: 'text-primary',
 			bg: 'bg-primary/20',
 		},
@@ -26,7 +24,7 @@ export function SummaryCards({ stats }: SummaryCardsProps) {
 			key: 'money',
 			icon: Banknote,
 			value: formatMoney(stats.moneyAmount),
-			label: t('consumption.summary.money'),
+			label: "Money value",
 			tone: 'text-green-400',
 			bg: 'bg-green-500/20',
 		},
@@ -34,7 +32,7 @@ export function SummaryCards({ stats }: SummaryCardsProps) {
 			key: 'count',
 			icon: ReceiptText,
 			value: stats.count.toLocaleString(),
-			label: t('consumption.summary.count', { quantity: stats.quantity }),
+			label: `${stats.quantity} items`,
 			tone: 'text-text-primary',
 			bg: 'bg-surface-light',
 		},

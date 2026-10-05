@@ -1,6 +1,5 @@
 import { useMemo } from "react";
 import { useParams } from "react-router";
-import { useTranslation } from "react-i18next";
 import { Loader2, ArrowUpDown, Package } from "lucide-react";
 import { Header } from "@/components/Header";
 import { useRewardTemplate } from "@/hooks/useRewards";
@@ -39,7 +38,6 @@ function formatDateLabel(isoString: string | undefined) {
 }
 
 export function ReplenishmentHistory() {
-	const { t } = useTranslation();
 	const { templateId } = useParams<{ templateId: string }>();
 
 	const { template, isLoading: isLoadingTemplate } = useRewardTemplate(templateId ?? null);
@@ -58,7 +56,7 @@ export function ReplenishmentHistory() {
 		return map;
 	}, [records]);
 
-	const title = template?.title ?? t("replenishment.title");
+	const title = template?.title ?? "Replenishment History";
 
 	return (
 		<div className="min-h-screen bg-background">

@@ -35,7 +35,7 @@ export function DatePicker({
   value,
   defaultValue,
   onChange,
-  placeholder = '请选择日期',
+  placeholder = 'Select date',
   disabled = false,
   className = '',
   format = defaultFormat,
@@ -170,7 +170,7 @@ export function DatePicker({
             onClick={handleClose}
             className="flex-1 px-4 py-2.5 text-sm font-medium text-text-secondary bg-surface hover:bg-surface/80 rounded-lg transition-colors"
           >
-            取消
+            Cancel
           </button>
           <button
             type="button"
@@ -187,7 +187,7 @@ export function DatePicker({
             }}
             className="flex-1 px-4 py-2.5 text-sm font-medium text-white bg-primary hover:bg-primary/90 rounded-lg transition-colors"
           >
-            确定
+            Confirm
           </button>
         </div>
       </Popup>

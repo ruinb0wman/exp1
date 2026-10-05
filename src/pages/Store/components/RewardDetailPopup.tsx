@@ -1,4 +1,3 @@
-import { useTranslation } from "react-i18next";
 import { Sparkles, Banknote } from "lucide-react";
 import { NumberInput } from "@/components/NumberInput";
 import { DynamicIcon } from "@/components/DynamicIcon";
@@ -31,7 +30,6 @@ export function RewardDetailPopup({
   redeemError,
   onRedeem,
 }: RewardDetailPopupProps) {
-  const { t } = useTranslation();
   const { template, availableCount } = reward;
   const totalCost = template.pointsCost * redeemQuantity;
   const purchaseMoney = getPurchaseMoney(template, redeemQuantity);
@@ -73,7 +71,7 @@ export function RewardDetailPopup({
             <Sparkles className="w-4 h-4" />
             <span className="text-lg font-bold">{template.pointsCost}</span>
           </div>
-          <p className="text-text-muted text-xs">{t("common.exp")}</p>
+          <p className="text-text-muted text-xs">exp</p>
         </div>
         {counted && (
           <div className="bg-surface rounded-xl p-4 text-center">
@@ -81,7 +79,7 @@ export function RewardDetailPopup({
               <Banknote className="w-4 h-4" />
               <span className="text-lg font-bold">{formatMoney(purchaseMoney)}</span>
             </div>
-            <p className="text-text-muted text-xs">{t("store.moneyValue")}</p>
+            <p className="text-text-muted text-xs">Money value</p>
           </div>
         )}
       </div>
@@ -89,16 +87,16 @@ export function RewardDetailPopup({
       {template.replenishmentMode !== 'none' && (
         <div className="bg-surface rounded-xl p-4">
           <div className="flex items-center justify-between">
-            <span className="text-text-secondary text-sm">{t("store.currentStock")}</span>
+            <span className="text-text-secondary text-sm">Remaining quota</span>
             <span className="text-text-primary font-medium">
-              {availableCount} {t("common.items")}
+              {availableCount} {"items"}
             </span>
           </div>
           {template.replenishmentLimit !== undefined && (
             <div className="flex items-center justify-between mt-2">
-              <span className="text-text-secondary text-sm">{t("store.stockLimit")}</span>
+              <span className="text-text-secondary text-sm">Quota limit</span>
               <span className="text-text-primary font-medium">
-                {template.replenishmentLimit} {t("common.items")}
+                {template.replenishmentLimit} {"items"}
               </span>
             </div>
           )}
@@ -107,7 +105,7 @@ export function RewardDetailPopup({
 
       <div className="bg-surface rounded-xl p-4">
         <div className="flex items-center justify-between mb-3">
-          <span className="text-text-secondary text-sm">{t("store.purchaseQuantity")}</span>
+          <span className="text-text-secondary text-sm">Quantity</span>
           <NumberInput
             value={redeemQuantity}
             onChange={onQuantityChange}
@@ -117,9 +115,9 @@ export function RewardDetailPopup({
           />
         </div>
         <div className="flex items-center justify-between pt-3 border-t border-border">
-          <span className="text-text-secondary text-sm">{t("store.total")}</span>
+          <span className="text-text-secondary text-sm">Total</span>
           <span className="text-primary font-bold text-lg">
-            {totalCost.toLocaleString()} {t("common.exp")}
+            {totalCost.toLocaleString()} {"exp"}
             {counted && (
               <span className="text-text-secondary font-normal text-sm ml-2">
                 ≈ {formatMoney(purchaseMoney)}
@@ -131,7 +129,7 @@ export function RewardDetailPopup({
 
       <div className="bg-surface rounded-xl p-4">
         <div className="flex items-center justify-between pb-2">
-          <span className="text-text-secondary text-sm">{t("store.noteLabel")}</span>
+          <span className="text-text-secondary text-sm">Note (optional)</span>
           <span className="text-text-muted text-xs">
             {note.length}/{MAX_PURCHASE_NOTE_LENGTH}
           </span>
@@ -141,7 +139,7 @@ export function RewardDetailPopup({
           onChange={(e) => onNoteChange(e.target.value)}
           maxLength={MAX_PURCHASE_NOTE_LENGTH}
           rows={2}
-          placeholder={t("store.notePlaceholder")}
+          placeholder="e.g. with friends / weekend treat"
           className="w-full min-w-0 resize-none rounded-lg text-text-primary placeholder:text-text-muted bg-surface-light p-3 text-base font-normal leading-normal focus:outline-none focus:ring-2 focus:ring-primary"
         />
       </div>
@@ -158,11 +156,11 @@ export function RewardDetailPopup({
         {isActionLoading ? (
           <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin" />
         ) : template.replenishmentMode !== 'none' && availableCount < redeemQuantity ? (
-          t("store.stockShortage")
+          "Not enough quota"
         ) : currentPoints < totalCost ? (
-          t("store.pointsShortage")
+          "Not enough points"
         ) : (
-          t("store.buyCount", { count: redeemQuantity })
+          `Buy ${redeemQuantity}`
         )}
       </button>
     </div>

@@ -1,5 +1,4 @@
 import { useState, useEffect, useRef, useCallback } from "react";
-import { useTranslation } from "react-i18next";
 import { Loader2 } from "lucide-react";
 import { Header } from "@/components/Header";
 import { TaskDetailPopup } from "@/components/TaskDetailPopup";
@@ -16,7 +15,6 @@ import {
 } from "./components";
 
 export function TaskHistory() {
-  const { t } = useTranslation();
   const { user } = useUserStore();
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const loadingTriggerRef = useRef<HTMLDivElement>(null);
@@ -128,7 +126,7 @@ export function TaskHistory() {
   return (
     <div className="bg-background flex flex-col">
       {/* Header */}
-      <Header title={t("taskHistory.title")} back />
+      <Header title="Task History" back />
 
       {/* Stats Summary */}
       <StatsSummary stats={stats} isLoading={isLoading} />
@@ -155,7 +153,7 @@ export function TaskHistory() {
           </div>
         ) : list.length === 0 ? (
           <div className="text-center py-12 text-text-secondary">
-            <p>暂无记录</p>
+            <p>No records yet</p>
           </div>
         ) : (
           <div className="flex flex-col gap-4">

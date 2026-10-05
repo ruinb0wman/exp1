@@ -178,7 +178,7 @@ export async function resetTaskInstance(id: string): Promise<number> {
             id,
             -totalPointsToDeduct,
             'task_undo',
-            `撤销任务：${template.title}`
+            `Task undone: ${template.title}`
           );
         }
       } else if (rule?.type === 'simple') {
@@ -189,7 +189,7 @@ export async function resetTaskInstance(id: string): Promise<number> {
             id,
             -(rule.completionPoints || 0),
             'task_undo',
-            `撤销任务：${template.title}`
+            `Task undone: ${template.title}`
           );
         }
       } else if (rule) {
@@ -202,7 +202,7 @@ export async function resetTaskInstance(id: string): Promise<number> {
             id,
             -totalPointsToDeduct,
             'task_undo',
-            `撤销任务：${template.title}`
+            `Task undone: ${template.title}`
           );
         }
       }

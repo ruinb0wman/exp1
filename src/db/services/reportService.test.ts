@@ -196,7 +196,7 @@ describe('reportService', () => {
 	});
 
 	it('未找到用户时抛出错误', async () => {
-		await expect(loadReportSources(999)).rejects.toThrow('未找到用户数据');
+		await expect(loadReportSources(999)).rejects.toThrow('User data not found');
 	});
 
 	it('端到端生成周报且只统计本期数据', async () => {

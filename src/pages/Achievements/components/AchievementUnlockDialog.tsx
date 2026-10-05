@@ -1,4 +1,3 @@
-import { useTranslation } from 'react-i18next';
 import { Sparkles } from 'lucide-react';
 import { DynamicIcon } from '@/components/DynamicIcon';
 import { Popup } from '@/components/Popup';
@@ -6,7 +5,6 @@ import { useAchievementStore } from '@/store/achievementStore';
 
 /** 全局解锁提示：依次展示本次新解锁的成就 */
 export function AchievementUnlockDialog() {
-  const { t } = useTranslation();
   const pendingUnlocks = useAchievementStore((state) => state.pendingUnlocks);
   const shiftUnlock = useAchievementStore((state) => state.shiftUnlock);
 
@@ -33,7 +31,7 @@ export function AchievementUnlockDialog() {
 
         <div className="flex items-center gap-1.5 text-primary text-xs font-medium mb-2">
           <Sparkles className="w-3.5 h-3.5" />
-          {t('achievement.unlockedBadge')}
+          Achievement Unlocked
         </div>
 
         <h2 className="text-text-primary text-xl font-bold mb-1">
@@ -47,7 +45,7 @@ export function AchievementUnlockDialog() {
 
         <p className="text-primary text-2xl font-bold mb-6">
           +{current.rewardPoints}
-          <span className="text-sm font-medium ml-1">{t('common.exp')}</span>
+          <span className="text-sm font-medium ml-1">exp</span>
         </p>
 
         <button
@@ -55,8 +53,8 @@ export function AchievementUnlockDialog() {
           className="w-full py-3 rounded-xl bg-primary text-white font-medium hover:bg-primary-dark transition-colors"
         >
           {pendingUnlocks.length > 1
-            ? t('achievement.nextUnlock', { n: pendingUnlocks.length - 1 })
-            : t('achievement.awesome')}
+            ? `Next (${pendingUnlocks.length - 1} more)`
+            : "Awesome"}
         </button>
       </div>
     </Popup>

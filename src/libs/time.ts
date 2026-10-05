@@ -501,32 +501,6 @@ export function getUTCRangeFromLocalDate(localDateStr: string): [string, string]
   return [startUTC, endUTC];
 }
 
-export type DurationResult = 
-  | { type: "permanent" }
-  | { type: "days"; value: number }
-  | { type: "months"; value: number };
-
-export function formatDuration(seconds: number): DurationResult {
-  if (seconds <= 0) return { type: "permanent" };
-  const days = Math.floor(seconds / 86400);
-  if (days >= 30) {
-    const months = Math.floor(days / 30);
-    return { type: "months", value: months };
-  }
-  return { type: "days", value: days };
-}
-
-export function formatDurationToString(result: DurationResult): string {
-  switch (result.type) {
-    case "permanent":
-      return "永久有效";
-    case "days":
-      return `${result.value} 天`;
-    case "months":
-      return `${result.value} 个月`;
-  }
-}
-
 export type RelativeDateResult = 
   | { type: "today"; time: string }
   | { type: "yesterday"; time: string }
@@ -549,17 +523,4 @@ export function formatRelativeDate(dateStr: string): RelativeDateResult {
   } else {
     return { type: "monthDay", month: date.getMonth() + 1, day: date.getDate() };
   }
-}
-
-export function formatRelativeDateToString(result: RelativeDateResult): string {
-  switch (result.type) {
-    case "today":
-      return `今天 ${result.time}`;
-    case "yesterday":
-      return `昨天 ${result.time}`;
-    case "daysAgo":
-      return `${result.value}天前 ${result.time}`;
-    case "monthDay":
-      return `${result.month}/${result.day}`;
-   }
 }

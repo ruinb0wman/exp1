@@ -1,4 +1,3 @@
-import { useTranslation } from "react-i18next";
 import { Loader2 } from "lucide-react";
 
 interface LoadingMoreProps {
@@ -8,13 +7,12 @@ interface LoadingMoreProps {
 }
 
 export function LoadingMore({ isLoadingMore, hasMore, listLength }: LoadingMoreProps) {
-  const { t } = useTranslation();
 
   if (isLoadingMore) {
     return (
       <div className="flex items-center justify-center gap-2 text-text-secondary">
         <Loader2 className="w-4 h-4 animate-spin" />
-        <span className="text-sm">{t("loadingMore.loading")}</span>
+        <span className="text-sm">Loading...</span>
       </div>
     );
   }
@@ -25,7 +23,7 @@ export function LoadingMore({ isLoadingMore, hasMore, listLength }: LoadingMoreP
 
   if (listLength > 0) {
     return (
-      <p className="text-center text-text-muted text-sm">{t("loadingMore.noMore")}</p>
+      <p className="text-center text-text-muted text-sm">No more records</p>
     );
   }
 

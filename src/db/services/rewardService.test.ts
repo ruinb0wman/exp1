@@ -176,7 +176,7 @@ describe('rewardService - 购买即消费', () => {
     );
     await db.rewardTemplates.update(templateId, { currentStock: 2 });
 
-    await expect(purchaseReward(templateId, USER_ID, 3)).rejects.toThrow('消费额度不足');
+    await expect(purchaseReward(templateId, USER_ID, 3)).rejects.toThrow('Insufficient spending limit');
     expect(await db.rewardPurchases.count()).toBe(0);
   });
 
@@ -184,7 +184,7 @@ describe('rewardService - 购买即消费', () => {
     await seedPoints(300);
     const templateId = await createRewardTemplate(template({ pointsCost: -1 }));
 
-    await expect(purchaseReward(templateId, USER_ID, 1)).rejects.toThrow('商品积分价格无效');
+    await expect(purchaseReward(templateId, USER_ID, 1)).rejects.toThrow('Invalid reward price');
   });
 
   it('关闭统计：不写金额、快照标记不计入，但积分照扣', async () => {
@@ -212,7 +212,7 @@ describe('rewardService - 购买即消费', () => {
     await seedPoints(50);
     const templateId = await createRewardTemplate(template());
 
-    await expect(purchaseReward(templateId, USER_ID, 1)).rejects.toThrow(/积分不足/);
+    await expect(purchaseReward(templateId, USER_ID, 1)).rejects.toThrow(/Insufficient points/);
 
     expect(await db.rewardPurchases.count()).toBe(0);
     const spendRecords = await db.pointsHistory
@@ -228,15 +228,15 @@ describe('rewardService - 购买即消费', () => {
     await seedPoints(300);
     const templateId = await createRewardTemplate(template());
 
-    await expect(purchaseReward(templateId, USER_ID, 0)).rejects.toThrow('数量不合法');
-    await expect(purchaseReward(templateId, USER_ID, 1.5)).rejects.toThrow('数量不合法');
+    await expect(purchaseReward(templateId, USER_ID, 0)).rejects.toThrow('Invalid quantity');
+    await expect(purchaseReward(templateId, USER_ID, 1.5)).rejects.toThrow('Invalid quantity');
   });
 
   it('商品已下架时不能购买', async () => {
     await seedPoints(300);
     const templateId = await createRewardTemplate(template({ enabled: false }));
 
-    await expect(purchaseReward(templateId, USER_ID, 1)).rejects.toThrow('商品已下架');
+    await expect(purchaseReward(templateId, USER_ID, 1)).rejects.toThrow('Reward is no longer available');
     expect(await db.rewardPurchases.count()).toBe(0);
   });
 
@@ -248,7 +248,7 @@ describe('rewardService - 购买即消费', () => {
     // 建模板时库存恒为 0，初始额度由补货流程负责，这里直接设置
     await db.rewardTemplates.update(templateId, { currentStock: 2 });
 
-    await expect(purchaseReward(templateId, USER_ID, 3)).rejects.toThrow('消费额度不足');
+    await expect(purchaseReward(templateId, USER_ID, 3)).rejects.toThrow('Insufficient spending limit');
 
     const stored = await db.rewardTemplates.get(templateId);
     expect(stored!.currentStock).toBe(2);
@@ -293,7 +293,7 @@ describe('rewardService - 购买即消费', () => {
       .equals(USER_ID)
       .filter((record) => record.type === 'reward_exchange')
       .first();
-    expect(spendRecord!.description).toBe('购买 吃饭 ×1 · 和朋友一起');
+    expect(spendRecord!.description).toBe('Purchased 吃饭 ×1 · 和朋友一起');
   });
 
   it('不带备注时保持旧文案，且不写 note 字段', async () => {
@@ -310,7 +310,7 @@ describe('rewardService - 购买即消费', () => {
       .equals(USER_ID)
       .filter((record) => record.type === 'reward_exchange')
       .first();
-    expect(spendRecord!.description).toBe('购买 吃饭 ×1');
+    expect(spendRecord!.description).toBe('Purchased 吃饭 ×1');
   });
 
   it('空白备注视为未填（不写 note、文案不变）', async () => {
@@ -326,7 +326,7 @@ describe('rewardService - 购买即消费', () => {
       .equals(USER_ID)
       .filter((record) => record.type === 'reward_exchange')
       .first();
-    expect(spendRecord!.description).toBe('购买 吃饭 ×1');
+    expect(spendRecord!.description).toBe('Purchased 吃饭 ×1');
   });
 
   it('备注里的换行在流水描述里压成空格，但消费记录原样保留', async () => {
@@ -343,7 +343,7 @@ describe('rewardService - 购买即消费', () => {
       .equals(USER_ID)
       .filter((record) => record.type === 'reward_exchange')
       .first();
-    expect(spendRecord!.description).toBe('购买 吃饭 ×2 · 第一行 第二行');
+    expect(spendRecord!.description).toBe('Purchased 吃饭 ×2 · 第一行 第二行');
   });
 
   it('0 积分免费额度：备注只存消费记录，不产生积分流水', async () => {

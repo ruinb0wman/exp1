@@ -1,4 +1,3 @@
-import { useTranslation } from "react-i18next";
 
 interface UserInfoSectionProps {
   user: { name?: string } | null;
@@ -29,14 +28,13 @@ interface PointsCardProps {
 }
 
 export function PointsCard({ currentPoints }: PointsCardProps) {
-  const { t } = useTranslation();
   return (
     <div className="p-4">
       <div className="rounded-xl bg-primary p-6">
-        <p className="text-white/80 text-sm font-normal">{t("profile.currentExp")}</p>
-        <p className="text-white text-4xl font-bold mt-1">{currentPoints} {t("common.exp")}</p>
+        <p className="text-white/80 text-sm font-normal">CURRENT EXP</p>
+        <p className="text-white text-4xl font-bold mt-1">{currentPoints} {"exp"}</p>
         <p className="text-white/80 text-base mt-1">
-          {t("profile.greatWork")}
+          Well done! Keep up the great work.
         </p>
       </div>
     </div>

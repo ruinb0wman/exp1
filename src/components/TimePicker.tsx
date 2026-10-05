@@ -1,5 +1,4 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { useTranslation } from 'react-i18next';
 import { parseTimeString, formatTimeString } from '@/libs/time';
 import { X, Check } from 'lucide-react';
 import { useBackButtonHandler } from '@/hooks/useBackButtonHandler';
@@ -21,7 +20,6 @@ export function TimePicker({
   title,
   minuteInterval = 15,
 }: TimePickerProps) {
-  const { t } = useTranslation();
   const { hour: initialHour, minute: initialMinute } = parseTimeString(value);
   
   const [hour, setHour] = useState(initialHour);
@@ -43,7 +41,7 @@ export function TimePicker({
   const hours = Array.from({ length: 24 }, (_, i) => i);
   const minutes = Array.from({ length: 60 / minuteInterval }, (_, i) => i * minuteInterval);
 
-  const displayTitle = title ?? t("timePicker.selectTime");
+  const displayTitle = title ?? "Select Time";
 
   // Android 返回手势关浮层
   useBackButtonHandler(isOpen, onClose);
@@ -76,7 +74,7 @@ export function TimePicker({
 
         <div className="flex items-center justify-center py-6 px-8">
           <div className="flex-1 flex flex-col items-center">
-            <span className="text-text-secondary text-xs mb-2">{t("common.hours")}</span>
+            <span className="text-text-secondary text-xs mb-2">h</span>
             <WheelPicker
               options={hours}
               value={hour}
@@ -90,7 +88,7 @@ export function TimePicker({
           </div>
 
           <div className="flex-1 flex flex-col items-center">
-            <span className="text-text-secondary text-xs mb-2">{t("common.minutes")}</span>
+            <span className="text-text-secondary text-xs mb-2">m</span>
             <WheelPicker
               options={minutes}
               value={minute}
@@ -102,7 +100,7 @@ export function TimePicker({
 
         <div className="px-4 pb-4 text-center">
           <p className="text-text-secondary text-sm">
-            {t("timePicker.selected", { time: formatTimeString(hour, minute) })}
+            {`Selected: ${formatTimeString(hour, minute)}`}
           </p>
         </div>
       </div>

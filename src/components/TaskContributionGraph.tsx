@@ -1,5 +1,4 @@
 import { useEffect, useState, useCallback } from "react";
-import { useTranslation } from "react-i18next";
 import { getDB } from "@/db";
 import type { TaskInstance, TaskTemplate } from "@/db/types";
 import { formatLocalDate, formatLocalDateToYYYYMMDD, toLocalDateString } from "@/libs/time";
@@ -33,7 +32,6 @@ export function TaskContributionGraph({
   userId,
   weeks: _weeks = 26,
 }: TaskContributionGraphProps) {
-  const { t } = useTranslation();
   const [rowsData, setRowsData] = useState<RowData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [totalStats, setTotalStats] = useState({ completed: 0, total: 0 });
@@ -147,13 +145,13 @@ export function TaskContributionGraph({
     const dateText = formatLocalDate(day.date);
     switch (day.status) {
       case "completed":
-        return t("contribution.tooltip.completed", { date: dateText });
+        return `${dateText}: Completed`;
       case "skipped":
-        return t("contribution.tooltip.skipped", { date: dateText });
+        return `${dateText}: Skipped`;
       case "pending":
-        return t("contribution.tooltip.inProgress", { date: dateText });
+        return `${dateText}: In Progress`;
       default:
-        return t("contribution.tooltip.noTask", { date: dateText });
+        return `${dateText}: No task`;
     }
   };
 
@@ -172,9 +170,9 @@ export function TaskContributionGraph({
   return (
     <div className="bg-surface rounded-xl p-4">
       <div className="flex items-center justify-between mb-3">
-        <h4 className="text-sm font-medium text-text-primary">{t("contribution.title")}</h4>
+        <h4 className="text-sm font-medium text-text-primary">Completion Record</h4>
         <span className="text-xs text-text-muted">
-          {`${totalStats.completed} / ${totalStats.total} ${t('contribution.completed')}`}
+          {`${totalStats.completed} / ${totalStats.total} completed`}
         </span>
       </div>
 
@@ -195,15 +193,15 @@ export function TaskContributionGraph({
       <div className="flex items-center justify-end gap-3 mt-3 text-[10px] text-text-muted">
         <div className="flex items-center gap-1">
           <div className="w-2.5 h-2.5 rounded-sm bg-green-500" />
-          <span>{t("contribution.legend.completed")}</span>
+          <span>Completed</span>
         </div>
         <div className="flex items-center gap-1">
           <div className="w-2.5 h-2.5 rounded-sm bg-yellow-600" />
-          <span>{t("contribution.legend.skipped")}</span>
+          <span>Skipped</span>
         </div>
         <div className="flex items-center gap-1">
           <div className="w-2.5 h-2.5 rounded-sm bg-surface-light/50" />
-          <span>{t("contribution.legend.noTask")}</span>
+          <span>No task</span>
         </div>
       </div>
     </div>

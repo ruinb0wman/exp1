@@ -76,11 +76,11 @@ pub struct PendingCompletion {
 
 /// 到点提醒的文案（title, body）。
 pub fn completion_text(mode_label: &str) -> (String, String) {
-	let title = "番茄钟".to_string();
+	let title = crate::pomo_timer::NOTIFICATION_TITLE.to_string();
 	let body = if mode_label == "focus" {
-		"\u{1f345} 专注完成！".to_string()
+		"\u{1f345} Focus complete!".to_string()
 	} else {
-		"\u{2615} 休息结束".to_string()
+		"\u{2615} Break over".to_string()
 	};
 	(title, body)
 }
@@ -97,7 +97,7 @@ pub async fn acquire_wake_lock(app: &AppHandle, timeout_ms: u64) {
 		}
 
 		let Some(state) = app.try_state::<NativeHandle<tauri::Wry>>() else {
-			report_error(app, "原生插件未注册，跳过 wake lock".into());
+			report_error(app, "Native plugin not registered; skipping wake lock".into());
 			return;
 		};
 		if let Err(e) = state
@@ -105,7 +105,7 @@ pub async fn acquire_wake_lock(app: &AppHandle, timeout_ms: u64) {
 			.run_mobile_plugin_async::<()>("acquireWakeLock", Args { timeout_ms })
 			.await
 		{
-			report_error(app, format!("申请 wake lock 失败: {e}"));
+			report_error(app, format!("Failed to acquire wake lock: {e}"));
 		}
 	}
 	#[cfg(not(target_os = "android"))]
@@ -126,7 +126,7 @@ pub async fn release_wake_lock(app: &AppHandle) {
 			.run_mobile_plugin_async::<()>("releaseWakeLock", ())
 			.await
 		{
-			report_error(app, format!("释放 wake lock 失败: {e}"));
+			report_error(app, format!("Failed to release wake lock: {e}"));
 		}
 	}
 	#[cfg(not(target_os = "android"))]
@@ -155,7 +155,7 @@ pub async fn notify_completion(app: &AppHandle, title: &str, body: &str) {
 			.run_mobile_plugin_async::<()>("notifyCompletion", Args { title, body })
 			.await
 		{
-			report_error(app, format!("发送完成提醒失败: {e}"));
+			report_error(app, format!("Failed to send the completion notification: {e}"));
 		}
 	}
 	#[cfg(not(target_os = "android"))]
@@ -212,7 +212,7 @@ pub async fn set_completion_alarm(
 			.run_mobile_plugin_async::<()>("setCompletionAlarm", args)
 			.await
 		{
-			report_error(app, format!("设定到点闹钟失败: {e}"));
+			report_error(app, format!("Failed to set the completion alarm: {e}"));
 		}
 	}
 	#[cfg(not(target_os = "android"))]
@@ -233,7 +233,7 @@ pub async fn cancel_completion_alarm(app: &AppHandle) {
 			.run_mobile_plugin_async::<()>("cancelCompletionAlarm", ())
 			.await
 		{
-			report_error(app, format!("取消到点闹钟失败: {e}"));
+			report_error(app, format!("Failed to cancel the completion alarm: {e}"));
 		}
 	}
 	#[cfg(not(target_os = "android"))]
@@ -254,7 +254,7 @@ pub async fn clear_pending_completion(app: &AppHandle) {
 			.run_mobile_plugin_async::<()>("clearPendingCompletion", ())
 			.await
 		{
-			report_error(app, format!("清除待补记标记失败: {e}"));
+			report_error(app, format!("Failed to clear the pending-completion flag: {e}"));
 		}
 	}
 	#[cfg(not(target_os = "android"))]
@@ -275,7 +275,7 @@ pub async fn take_pending_completion(app: &AppHandle) -> Option<PendingCompletio
 		{
 			Ok(pending) => pending,
 			Err(e) => {
-				report_error(app, format!("读取待补记记录失败: {e}"));
+				report_error(app, format!("Failed to read the pending-completion record: {e}"));
 				None
 			}
 		}
@@ -287,3 +287,30 @@ pub async fn take_pending_completion(app: &AppHandle) -> Option<PendingCompletio
 	}
 }
 
+#[cfg(test)]
+mod tests {
+	use super::*;
+
+	/// 通知文案必须是英文：这里历史上用 `\u{...}` 转义藏过中文，普通 grep 抓不到。
+	fn assert_no_cjk(text: &str) {
+		assert!(
+			!text.chars().any(|c| ('\u{4e00}'..='\u{9fff}').contains(&c)),
+			"通知文案不应含中文: {text}"
+		);
+	}
+
+	#[test]
+	fn completion_text_is_english() {
+		let (title, focus_body) = completion_text("focus");
+		let (break_title, break_body) = completion_text("shortBreak");
+
+		assert_eq!(title, "Pomodoro");
+		assert_eq!(break_title, "Pomodoro");
+		assert_eq!(focus_body, "\u{1f345} Focus complete!");
+		assert_eq!(break_body, "\u{2615} Break over");
+
+		for text in [title, break_title, focus_body, break_body] {
+			assert_no_cjk(&text);
+		}
+	}
+}

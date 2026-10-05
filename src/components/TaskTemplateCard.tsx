@@ -1,4 +1,3 @@
-import { useTranslation } from "react-i18next";
 import { ChevronRight, Power } from "lucide-react";
 import type { RepeatMode, CompleteRule } from "@/db/types";
 import { calculateMaxPoints } from "@/db/types/task";
@@ -30,7 +29,6 @@ export function TaskTemplateCard({
   onClick,
   onToggleEnabled,
 }: TaskTemplateCardProps) {
-  const { t } = useTranslation();
   const maxPoints = completeRule ? calculateMaxPoints(completeRule) : 0;
   return (
     <div
@@ -65,7 +63,7 @@ export function TaskTemplateCard({
               enabled ? "text-text-secondary" : "text-text-muted"
             }`}
           >
-            {description || (maxPoints > 0 ? `+${maxPoints} ${t("common.exp")}` : t("task.simpleTask"))}
+            {description || (maxPoints > 0 ? `+${maxPoints} exp` : "Simple task")}
           </p>
           {subtasks.length > 0 && (
             <p className="text-xs text-text-muted mt-1">

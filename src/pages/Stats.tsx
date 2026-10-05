@@ -1,7 +1,6 @@
 import { useEffect, useState, useCallback } from "react";
 import { Plus } from "lucide-react";
 import { useNavigate } from "react-router";
-import { useTranslation } from "react-i18next";
 import { Calendar } from "../components/Calendar";
 import { Header, HeaderActionButton } from "@/components/Header";
 import { TaskInstanceCard } from "@/components/TaskInstanceCard";
@@ -24,7 +23,6 @@ function isSameDay(date1: Date, date2: Date): boolean {
 }
 
 export function Stats() {
-  const { t } = useTranslation();
   const navigate = useNavigate();
   const [selectedDate, setSelectedDate] = useState<Date | null>(new Date());
   const [tasks, setTasks] = useState<DisplayTaskItem[]>([]);
@@ -160,12 +158,12 @@ export function Stats() {
     <div className="min-h-screen pb-24 bg-background">
       {/* Header */}
       <Header
-        title={t("calendar.title")}
+        title="Calendar"
         rightSlot={
           <HeaderActionButton
             icon={Plus}
             side="end"
-            label={t("editTask.createTitle")}
+            label="Create Task"
             onClick={() => navigate("/tasks/new")}
           />
         }

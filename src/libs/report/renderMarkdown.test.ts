@@ -1,37 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import zh from '@/locales/zh.json';
-import en from '@/locales/en.json';
 import { renderReportMarkdown } from './renderMarkdown';
 import type { MetricSet, ReportModel, ReportPeriod } from './types';
-
-type Dict = Record<string, unknown>;
-
-function lookup(dict: Dict, path: string): unknown {
-	return path
-		.split('.')
-		.reduce<unknown>(
-			(acc, key) =>
-				acc && typeof acc === 'object' ? (acc as Record<string, unknown>)[key] : undefined,
-			dict
-		);
-}
-
-/** 轻量 t 实现：直接从语言包取字符串并做 {var} 插值 */
-function makeT(dict: Dict) {
-	return (key: string, options?: Record<string, unknown>): string => {
-		const raw = lookup(dict, key);
-		let text = typeof raw === 'string' ? raw : `MISSING:${key}`;
-		if (options) {
-			for (const [name, value] of Object.entries(options)) {
-				text = text.split(`{${name}}`).join(String(value));
-			}
-		}
-		return text;
-	};
-}
-
-const t = makeT(zh as Dict);
-const tEn = makeT(en as Dict);
 
 const weekPeriod: ReportPeriod = {
 	scope: 'week',
@@ -107,6 +76,7 @@ function makeModel(overrides: Partial<ReportModel> = {}): ReportModel {
 	};
 }
 
+// 任务标题是用户数据，保留中文以贴近真实数据（顺带覆盖表格转义）
 const fullModel = makeModel({
 	metrics: metrics({
 		plannedCount: 6,
@@ -207,7 +177,7 @@ const fullModel = makeModel({
 				userId: 1,
 				amount: 25,
 				type: 'task_stage',
-				description: '阶段完成',
+				description: 'Stage completed',
 				createdAt: '2026-03-16T02:00:00.000Z',
 			},
 		],
@@ -229,42 +199,55 @@ const fullModel = makeModel({
 });
 
 describe('renderReportMarkdown', () => {
-	const markdown = renderReportMarkdown(fullModel, t);
+	const markdown = renderReportMarkdown(fullModel);
 
 	it('渲染标题与元信息', () => {
-		expect(markdown).toContain('# 任务分析报告 · 2026-W12（2026-03-16 ~ 2026-03-22）');
-		expect(markdown).toContain('> 生成时间: 2026-03-23T02:00:00.000Z');
-		expect(markdown).toContain('> 统计范围: 2026-03-16 ~ 2026-03-22');
-		expect(markdown).toContain('> 时区: Asia/Shanghai');
+		expect(markdown).toContain('# Task Review · 2026-W12 (2026-03-16 ~ 2026-03-22)');
+		expect(markdown).toContain('> Generated at: 2026-03-23T02:00:00.000Z');
+		expect(markdown).toContain('> Range: 2026-03-16 ~ 2026-03-22');
+		expect(markdown).toContain('> Time zone: Asia/Shanghai');
 	});
 
 	it('渲染全部小节', () => {
-		expect(markdown).toContain('## 1. 总览指标');
-		expect(markdown).toContain('## 2. 趋势');
-		expect(markdown).toContain('## 3. 任务明细');
-		expect(markdown).toContain('## 4. 番茄钟');
-		expect(markdown).toContain('## 5. 积分收支');
-		expect(markdown).toContain('## 6. 习惯洞察');
-		expect(markdown).toContain('## 7. 其他');
+		expect(markdown).toContain('## 1. Overview');
+		expect(markdown).toContain('## 2. Trend');
+		expect(markdown).toContain('## 3. Task breakdown');
+		expect(markdown).toContain('## 4. Pomodoro');
+		expect(markdown).toContain('## 5. Points');
+		expect(markdown).toContain('## 6. Habit insights');
+		expect(markdown).toContain('## 7. Extras');
 		// 按等级追加在末尾，1~7 节编号保持不变（知识库按节号引用这份报告）
-		expect(markdown).toContain('## 8. 按等级');
-		expect(markdown).toContain('## 9. 分析提示词');
+		expect(markdown).toContain('## 8. By level');
+		expect(markdown).toContain('## 9. Analysis prompt');
 	});
 
 	it('渲染按等级表（含本期无任务的等级）', () => {
-		expect(markdown).toContain('| 等级 | 计划 | 完成 | 完成率 | 有任务天数 | 全清天数 | 存活率 |');
+		expect(markdown).toContain(
+			'| Level | Planned | Completed | Completion rate | Days with tasks | Cleared days | Survival rate |'
+		);
 		expect(markdown).toContain('| L1 | 4 | 3 | 75% | 4 | 3 | 75% |');
 		expect(markdown).toContain('| L3 | 0 | 0 | — | 0 | 0 | — |');
 	});
 
 	it('提示词要求对比等级差异', () => {
-		expect(markdown).toContain('对比各等级的完成率与存活率');
+		expect(markdown).toContain('Compare completion and survival rates across levels');
 	});
 
 	it('渲染口径说明与数据说明', () => {
-		expect(markdown).toContain('- 有 1 个任务的完成时间落在本期');
-		expect(markdown).toContain('完成率 = 完成数 ÷ 计划数');
-		expect(markdown).toContain('一天结束时间（00:00）');
+		expect(markdown).toContain('1 task(s) were completed during this period but were scheduled before 2026-03-16');
+		expect(markdown).toContain('1 undated task(s) were completed in this period');
+		expect(markdown).toContain('completion rate = completed ÷ planned');
+		expect(markdown).toContain('day end time (00:00)');
+	});
+
+	it('渲染各枚举标签', () => {
+		expect(markdown).toContain('| 阅读 \\| 深度 | simple |');
+		expect(markdown).toContain('| Focus | 2 | 49 | 2 |');
+		expect(markdown).toContain('| Task stage | 25 | 1 |');
+		expect(markdown).toContain('- Most active weekday: Tuesday (2 completions)');
+		expect(markdown).toContain('- Most active hour: 12:00 - 12:59 (2 completions)');
+		expect(markdown).toContain('### Chronically overdue');
+		expect(markdown).toContain('- 运动 (2 times)');
 	});
 
 	it('转义表格单元格中的竖线', () => {
@@ -297,21 +280,21 @@ describe('renderReportMarkdown', () => {
 	});
 
 	it('可以通过开关关闭分析提示词', () => {
-		const withoutPrompt = renderReportMarkdown(fullModel, t, { includePrompt: false });
-		expect(withoutPrompt).not.toContain('## 9. 分析提示词');
-		expect(withoutPrompt).toContain('## 8. 按等级');
-		expect(withoutPrompt).toContain('## 7. 其他');
+		const withoutPrompt = renderReportMarkdown(fullModel, { includePrompt: false });
+		expect(withoutPrompt).not.toContain('## 9. Analysis prompt');
+		expect(withoutPrompt).toContain('## 8. By level');
+		expect(withoutPrompt).toContain('## 7. Extras');
 	});
 
 	it('无数据时输出占位文案而不是空表', () => {
-		const empty = renderReportMarkdown(makeModel(), t);
-		expect(empty).toContain('| 计划任务数 | 0 | 0 | — |');
-		expect(empty).toContain('本期无数据');
-		expect(empty).toContain('- 最活跃任务: 无');
+		const empty = renderReportMarkdown(makeModel());
+		expect(empty).toContain('| Planned tasks | 0 | 0 | — |');
+		expect(empty).toContain('No data for this period');
+		expect(empty).toContain('- Most completed task: None');
 	});
 
 	it('兑换备注（含竖线与换行）写进积分描述时不会破坏表格', () => {
-		// 备注是用户自由输入，可能带竖线/换行；积分描述现在会拼上备注
+		// 备注是用户自由输入，可能带竖线/换行；积分描述会拼上备注
 		const noted: ReportModel = {
 			...fullModel,
 			points: {
@@ -322,30 +305,22 @@ describe('renderReportMarkdown', () => {
 						userId: 1,
 						amount: -10,
 						type: 'reward_exchange',
-						description: '购买 看电影 ×1 · 和朋友一起|周末\n第二行',
+						description: 'Purchased 看电影 ×1 · 和朋友一起|周末\n第二行',
 						createdAt: '2026-03-16T05:00:00.000Z',
 					},
 				],
 			},
 		};
 
-		const rendered = renderReportMarkdown(noted, t);
+		const rendered = renderReportMarkdown(noted);
 
 		// 竖线转义、换行压成空格，整行仍是一条合法表格行
-		expect(rendered).toContain('购买 看电影 ×1 · 和朋友一起\\|周末 第二行');
+		expect(rendered).toContain('Purchased 看电影 ×1 · 和朋友一起\\|周末 第二行');
 		expect(rendered).not.toContain('和朋友一起|周末');
 	});
 
 	it('提示词段引用了本期区间', () => {
-		expect(markdown).toContain('Logseq 中 2026-03-16 ~ 2026-03-22 的日志');
-		expect(markdown).toContain('exp1 任务应用里 2026-W12');
-	});
-
-	it('可以完整渲染英文报告', () => {
-		const english = renderReportMarkdown(fullModel, tEn);
-		expect(english).toContain('# Task Review · 2026-W12 (2026-03-16 ~ 2026-03-22)');
-		expect(english).toContain('## 1. Overview');
-		expect(english).toContain('## 8. By level');
-		expect(english).toContain('## 9. Analysis prompt');
+		expect(markdown).toContain('Logseq journal for 2026-03-16 ~ 2026-03-22');
+		expect(markdown).toContain('task report from the exp1 app for 2026-W12');
 	});
 });

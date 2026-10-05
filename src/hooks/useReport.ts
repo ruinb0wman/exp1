@@ -49,7 +49,7 @@ export function useReport(params: UseReportParams): UseReportReturn {
 			setModel(result);
 		} catch (loadError) {
 			if (requestId.current !== currentRequest) return;
-			setError(loadError instanceof Error ? loadError.message : '生成报告失败');
+			setError(loadError instanceof Error ? loadError.message : 'Failed to generate report');
 			setModel(null);
 		} finally {
 			if (requestId.current === currentRequest) {

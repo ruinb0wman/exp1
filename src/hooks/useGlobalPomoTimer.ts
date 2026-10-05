@@ -283,7 +283,7 @@ export function useGlobalPomoTimer() {
         if (isRunning && !isPaused && backendState.state !== 'running') {
           console.log('同步：启动后端计时器');
           // Android 端：先启动 BackgroundService 保活
-          await ensureBackgroundService(`番茄钟 ${formatTimeLabel(timeLeft)}`);
+          await ensureBackgroundService(`Pomodoro ${formatTimeLabel(timeLeft)}`);
           await invoke('start_pomo_timer', {
             mode,
             duration: timeLeft,
@@ -328,7 +328,7 @@ export function useGlobalPomoTimer() {
         console.log(`${reason} - 同步后端计时器状态:`, backendState);
         // Android 端：后端在跑就确保后台服务已启动
         if (backendState.state === 'running') {
-          await ensureBackgroundService(`番茄钟 ${formatTimeLabel(backendState.timeLeft)}`);
+          await ensureBackgroundService(`Pomodoro ${formatTimeLabel(backendState.timeLeft)}`);
         }
         usePomoStore.setState({
           isRunning: true,

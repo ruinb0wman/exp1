@@ -1,5 +1,4 @@
 import { useEffect, useCallback, useState } from 'react';
-import { useTranslation } from 'react-i18next';
 import { X } from 'lucide-react';
 import { useBackButtonHandler } from '@/hooks/useBackButtonHandler';
 
@@ -50,7 +49,6 @@ export function Popup({
   maxHeight,
   width,
 }: PopupProps) {
-  const { t } = useTranslation();
   const [animationState, setAnimationState] = useState<'entering' | 'entered' | 'exiting' | 'exited'>(
     isOpen ? 'entered' : 'exited'
   );
@@ -187,7 +185,7 @@ export function Popup({
                 <button
                   onClick={onClose}
                   className="p-2 rounded-full hover:bg-zinc-700 transition-colors"
-                  aria-label={t("popup.close")}
+                  aria-label="Close"
                 >
                   <X className="w-5 h-5 text-zinc-400" />
                 </button>

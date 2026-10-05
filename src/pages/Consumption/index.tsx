@@ -1,5 +1,4 @@
 import { useCallback, useMemo, useState } from 'react';
-import { useTranslation } from 'react-i18next';
 import { BarChart3 } from 'lucide-react';
 import { Header } from '@/components/Header';
 import { EmptyState } from '@/components/EmptyState';
@@ -18,7 +17,6 @@ import { PurchaseList } from './components/PurchaseList';
  * 购买即消费，明细可删除并回滚积分与消费额度
  */
 export function Consumption() {
-	const { t } = useTranslation();
 	const { user, calculatePoints } = useUserStore();
 
 	const [scope, setScope] = useState<PurchaseScope>('month');
@@ -61,21 +59,21 @@ export function Consumption() {
 	const rangeText = useMemo(() => {
 		if (!period) return '';
 		const partial = period.isPartial
-			? t('consumption.meta.partialSuffix', { date: period.end })
+			? ` (up to ${period.end})`
 			: '';
 		return `${period.start} ~ ${period.end}${partial}`;
-	}, [period, t]);
+	}, [period]);
 
 	return (
 		<div className="min-h-screen bg-background">
-			<Header title={t('consumption.title')} back />
+			<Header title="Spending" back />
 
 			<main className="px-4 pb-24">
 				{!user ? (
-					<EmptyState icon={<BarChart3 className="w-8 h-8" />} title={t('consumption.title')} />
+					<EmptyState icon={<BarChart3 className="w-8 h-8" />} title="Spending" />
 				) : (
 					<>
-						<p className="text-text-muted text-xs mb-4">{t('consumption.subtitle')}</p>
+						<p className="text-text-muted text-xs mb-4">Buying is spending — points and money totals by item and period</p>
 
 						<PeriodSelector
 							scope={scope}
@@ -88,17 +86,17 @@ export function Consumption() {
 						/>
 
 						{isLoading && !stats ? (
-							<LoadingState message={t('consumption.loading')} />
+							<LoadingState message="Loading..." />
 						) : error ? (
 							<ErrorState
 								title={error}
-								retryLabel={t('consumption.retry')}
+								retryLabel="Retry"
 								onRetry={() => void refresh()}
 							/>
 						) : stats ? (
 							<div className="space-y-6">
 								<p className="text-text-secondary text-sm">
-									<span className="text-text-muted mr-2">{t('consumption.meta.range')}</span>
+									<span className="text-text-muted mr-2">Range</span>
 									{rangeText}
 								</p>
 
@@ -106,7 +104,7 @@ export function Consumption() {
 
 								<section>
 									<h2 className="text-text-primary font-bold mb-3">
-										{t('consumption.breakdown.title')}
+										By item
 									</h2>
 									<TemplateBreakdown
 										buckets={stats.byTemplate}
@@ -116,7 +114,7 @@ export function Consumption() {
 
 								<section>
 									<h2 className="text-text-primary font-bold mb-3">
-										{t('consumption.detail.title')}
+										Details
 									</h2>
 									<PurchaseList purchases={stats.purchases} onDelete={handleDelete} />
 								</section>

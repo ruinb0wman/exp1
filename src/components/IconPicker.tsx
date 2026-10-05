@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { useTranslation } from 'react-i18next';
 import { Search, X } from 'lucide-react';
 import { DynamicIcon } from './DynamicIcon';
 import { useBackButtonHandler } from '@/hooks/useBackButtonHandler';
@@ -25,7 +24,6 @@ export function IconPicker({
   selectedColor,
   onSelect,
 }: IconPickerProps) {
-  const { t } = useTranslation();
   const [searchQuery, setSearchQuery] = useState('');
   const [tempIcon, setTempIcon] = useState<RewardIconName>(selectedIcon);
   const [tempColor, setTempColor] = useState<RewardIconColor>(selectedColor);
@@ -60,7 +58,7 @@ export function IconPicker({
 
       <div className="relative w-full max-w-lg bg-surface rounded-t-2xl sm:rounded-2xl max-h-[85vh] flex flex-col animate-in slide-in-from-bottom-4 duration-200">
         <div className="flex items-center justify-between px-4 py-3 border-b border-border">
-          <h3 className="text-text-primary text-lg font-bold">{t("iconPicker.title")}</h3>
+          <h3 className="text-text-primary text-lg font-bold">Select Icon</h3>
           <button
             onClick={handleCancel}
             className="p-2 rounded-lg hover:bg-surface-light transition-colors"
@@ -71,7 +69,7 @@ export function IconPicker({
 
         <div className="flex-1 overflow-y-auto p-4 space-y-6">
           <div className="flex items-center gap-4 p-4 bg-background rounded-xl">
-            <span className="text-text-secondary text-sm">{t("iconPicker.preview")}</span>
+            <span className="text-text-secondary text-sm">Preview:</span>
             <div
               className="w-14 h-14 rounded-xl flex items-center justify-center"
               style={{ backgroundColor: `${tempColor}20` }}
@@ -91,13 +89,13 @@ export function IconPicker({
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder={t("iconPicker.search")}
+              placeholder="Search icons..."
               className="w-full h-10 pl-9 pr-4 rounded-lg bg-background border border-border text-text-primary placeholder:text-text-muted focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary"
             />
           </div>
 
           <div>
-            <p className="text-text-primary text-sm font-medium mb-3">{t("iconPicker.iconColor")}</p>
+            <p className="text-text-primary text-sm font-medium mb-3">Icon Color</p>
             <div className="flex flex-wrap gap-3">
               {REWARD_ICON_COLORS.map((color) => (
                 <button
@@ -116,7 +114,7 @@ export function IconPicker({
 
           <div>
             <p className="text-text-primary text-sm font-medium mb-3">
-              {t("iconPicker.icons", { count: filteredIcons.length })}
+              {`Icons (${filteredIcons.length})`}
             </p>
             <div className="grid grid-cols-6 gap-2">
               {filteredIcons.map((iconName) => (
@@ -138,7 +136,7 @@ export function IconPicker({
               ))}
             </div>
             {filteredIcons.length === 0 && (
-              <p className="text-center text-text-muted py-8">{t("iconPicker.notFound")}</p>
+              <p className="text-center text-text-muted py-8">No matching icons found</p>
             )}
           </div>
         </div>
@@ -148,13 +146,13 @@ export function IconPicker({
             onClick={handleCancel}
             className="flex-1 h-12 rounded-xl bg-surface-light text-text-primary font-bold hover:bg-surface transition-colors"
           >
-            {t("common.cancel")}
+            Cancel
           </button>
           <button
             onClick={handleConfirm}
             className="flex-1 h-12 rounded-xl bg-primary text-white font-bold hover:bg-primary-light transition-colors shadow-lg shadow-primary/30"
           >
-            {t("common.confirm")}
+            Confirm
           </button>
         </div>
       </div>

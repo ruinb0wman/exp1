@@ -167,4 +167,4 @@ src-tauri/
 - **Tests** - Vitest with jsdom environment, co-located with source files
 - **Comments** - Codebase uses Chinese comments; follow existing patterns
 - **Header** - 页面标题栏统一使用 `src/components/Header.tsx`（槽位图标按钮用 `HeaderActionButton`）；`Home`/`Pomo` 的个性化头部（问候语 / 计时器控制）为唯一例外
-- **i18n** - UI is in Chinese; use Chinese for user-facing text
+- **Language** - English only: there is no i18n layer, so write every user-facing string (UI, notifications, DB-written descriptions, error messages) inline in English. Comments and `console.*` logs may stay Chinese.

@@ -1,4 +1,3 @@
-import { useTranslation } from 'react-i18next';
 import type { TemplateBucket } from '@/libs/report/types';
 import { formatRate, rateClass } from '../lib';
 
@@ -10,10 +9,9 @@ interface TemplateTableProps {
  * 按任务模板的执行明细表
  */
 export function TemplateTable({ templates }: TemplateTableProps) {
-	const { t } = useTranslation();
 
 	if (templates.length === 0) {
-		return <p className="text-text-muted text-sm py-6 text-center">{t('reports.empty')}</p>;
+		return <p className="text-text-muted text-sm py-6 text-center">No data for this period</p>;
 	}
 
 	return (
@@ -22,25 +20,25 @@ export function TemplateTable({ templates }: TemplateTableProps) {
 				<thead>
 					<tr className="text-text-secondary text-xs">
 						<th className="text-left font-medium py-2 pr-2">
-							{t('reports.tasks.col.title')}
+							Task
 						</th>
 						<th className="text-right font-medium py-2 px-2">
-							{t('reports.tasks.col.planned')}
+							Planned
 						</th>
 						<th className="text-right font-medium py-2 px-2">
-							{t('reports.tasks.col.completed')}
+							Completed
 						</th>
 						<th className="text-right font-medium py-2 px-2">
-							{t('reports.tasks.col.skipped')}
+							Skipped
 						</th>
 						<th className="text-right font-medium py-2 px-2">
-							{t('reports.tasks.col.overdue')}
+							Overdue
 						</th>
 						<th className="text-right font-medium py-2 px-2">
-							{t('reports.tasks.col.completionRate')}
+							Rate
 						</th>
 						<th className="text-right font-medium py-2 pl-2">
-							{t('reports.tasks.col.focusMinutes')}
+							Focus min
 						</th>
 					</tr>
 				</thead>

@@ -44,7 +44,7 @@ class PomoAlarmReceiver : BroadcastReceiver() {
     private const val KEY_ALARM_BODY = "alarm_body"
 
     const val CHANNEL_ID = "pomo_complete_v1"
-    private const val CHANNEL_NAME = "番茄钟提醒"
+    private const val CHANNEL_NAME = "Pomodoro reminders"
     const val NOTIFICATION_ID = 9010
 
     /** 记下本次计时（由 [PomoNativePlugin.setCompletionAlarm] 调用）。 */

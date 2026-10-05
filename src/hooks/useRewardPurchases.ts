@@ -37,7 +37,7 @@ export function useRewardPurchases(userId: number | null) {
       const data = await getRewardPurchases(userId);
       setPurchases(data);
     } catch (err) {
-      setError(err instanceof Error ? err.message : '加载消费记录失败');
+      setError(err instanceof Error ? err.message : 'Failed to load purchases');
     } finally {
       setIsLoading(false);
     }
@@ -67,7 +67,7 @@ export function useRewardPurchaseActions() {
       try {
         return await purchaseReward(templateId, userId, quantity, note);
       } catch (err) {
-        setError(err instanceof Error ? err.message : '购买失败');
+        setError(err instanceof Error ? err.message : 'Purchase failed');
         throw err;
       } finally {
         setIsLoading(false);
@@ -82,7 +82,7 @@ export function useRewardPurchaseActions() {
     try {
       await deleteRewardPurchase(purchaseId);
     } catch (err) {
-      setError(err instanceof Error ? err.message : '删除失败');
+      setError(err instanceof Error ? err.message : 'Failed to delete');
       throw err;
     } finally {
       setIsLoading(false);
@@ -157,7 +157,7 @@ export function useRewardPurchaseStats(
       setPeriod(resolved);
     } catch (loadError) {
       if (requestId.current !== currentRequest) return;
-      setError(loadError instanceof Error ? loadError.message : '加载消费统计失败');
+      setError(loadError instanceof Error ? loadError.message : 'Failed to load spending stats');
       setStats(null);
       setPeriod(null);
     } finally {

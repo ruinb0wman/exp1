@@ -148,7 +148,7 @@ export function useProfileStats(userId: number | null): UseProfileStatsReturn {
       const recent20 = historyRecords.slice(0, 20);
       setRecentHistory(recent20);
     } catch (err) {
-      setError(err instanceof Error ? err.message : '加载数据失败');
+      setError(err instanceof Error ? err.message : 'Failed to load data');
     } finally {
       setIsLoading(false);
     }

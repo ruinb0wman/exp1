@@ -1,6 +1,5 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router";
-import { useTranslation } from "react-i18next";
 import { Header } from "@/components/Header";
 import { RadioGroup } from "../components/RadioGroup";
 import { MultiSelectGrid } from "../components/MultiSelectGrid";
@@ -37,7 +36,6 @@ const monthDays = Array.from({ length: 31 }, (_, i) => ({
 }));
 
 export function EditTask() {
-  const { t } = useTranslation();
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
   const { user } = useUserStore();
@@ -291,7 +289,7 @@ export function EditTask() {
   return (
     <div className="min-h-screen bg-background">
       <Header
-        title={isEditMode ? t("editTask.title") : t("editTask.createTitle")}
+        title={isEditMode ? "Edit Task" : "Create Task"}
         back
       />
 
@@ -327,9 +325,9 @@ export function EditTask() {
           <div className="flex items-center gap-4 min-h-14 justify-between pt-2 border-t border-surface-light">
             <div>
               <p className="text-text-primary text-base font-normal leading-normal">
-                {t("editTask.level")}
+                Level
               </p>
-              <p className="text-text-muted text-xs mt-0.5">{t("editTask.levelHint")}</p>
+              <p className="text-text-muted text-xs mt-0.5">Lower runs first</p>
             </div>
             <NumberInput
               value={level}
@@ -384,7 +382,7 @@ export function EditTask() {
               <div className="pt-4 border-t border-surface-light">
                 <div className="flex items-center justify-between">
                   <div className="text-text-secondary text-sm">
-                    {t("editTask.completionPoints")}
+                    Completion Points
                   </div>
                   <NumberInput
                     value={completionPoints}
@@ -401,14 +399,14 @@ export function EditTask() {
               <div className="pt-4 border-t border-surface-light space-y-4">
                 <div className="flex items-center justify-between">
                   <p className="text-text-secondary text-sm">
-                    {t("editTask.stageConfig")}
+                    Stage Config (earn points on reaching goals)
                   </p>
                   <button
                     onClick={addStage}
                     className="flex items-center gap-1 text-sm text-primary hover:text-primary-light"
                   >
                     <Plus className="w-4 h-4" />
-                    {t("editTask.addStage")}
+                    Add Stage
                   </button>
                 </div>
 
@@ -427,7 +425,7 @@ export function EditTask() {
 
                     <div className="flex items-center justify-between gap-3 min-w-0">
                       <label className="flex-1 min-w-0 truncate text-xs text-text-muted">
-                        {t("editTask.reachTarget")}{taskType === 'time' ? t("editTask.minutesUnit") : t("editTask.timesUnit")}
+                        {"Reach"}{taskType === 'time' ? "(min)" : "(times)"}
                       </label>
                       <NumberInput
                         value={stage.threshold}
@@ -441,7 +439,7 @@ export function EditTask() {
 
                     <div className="flex items-center justify-between gap-3 min-w-0">
                       <label className="flex-1 min-w-0 truncate text-xs text-text-muted">
-                        {t("editTask.earnPoints")}
+                        Earn Points
                       </label>
                       <NumberInput
                         value={stage.points}
@@ -458,7 +456,7 @@ export function EditTask() {
                 {/* 完成额外积分 */}
                 <div className="flex items-center justify-between pt-2 border-t border-surface-light">
                   <div className="text-text-secondary text-sm">
-                    {t("editTask.completionBonus")}
+                    Completion Bonus
                   </div>
                   <NumberInput
                     value={completionPoints}
@@ -471,7 +469,7 @@ export function EditTask() {
 
                 {/* 积分预览 */}
                 <div className="text-sm text-text-muted pt-2">
-                  {t("editTask.maxPoints", { points: stages.reduce((sum, s) => sum + s.points, 0) + completionPoints })}
+                  {`Max points: ${stages.reduce((sum, s) => sum + s.points, 0) + completionPoints}`}
                 </div>
               </div>
             )}
@@ -482,7 +480,7 @@ export function EditTask() {
                 {/* Checklist */}
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
-                    <div className="text-text-secondary text-sm">{t("editTask.subtaskList")}</div>
+                    <div className="text-text-secondary text-sm">Subtask List</div>
                   </div>
                   {/* 添加新子任务 */}
                   <div className="flex items-center gap-3 bg-surface-light p-3 rounded-xl">
@@ -561,7 +559,7 @@ export function EditTask() {
                       onChange={() => setSubtaskMode('all')}
                       className="w-4 h-4 accent-primary"
                     />
-                    <span className="text-text-primary text-sm">{t("editTask.completeAllSubtasks")}</span>
+                    <span className="text-text-primary text-sm">Complete all subtasks</span>
                   </label>
                   <label className="flex items-center gap-2 cursor-pointer">
                     <input
@@ -570,14 +568,14 @@ export function EditTask() {
                       onChange={() => setSubtaskMode('partial')}
                       className="w-4 h-4 accent-primary"
                     />
-                    <span className="text-text-primary text-sm">{t("editTask.completeCount")}</span>
+                    <span className="text-text-primary text-sm">Complete specified count</span>
                   </label>
                 </div>
 
                 {/* Partial 模式：设置需要完成的数量 */}
                 {subtaskMode === 'partial' && (
                   <div className="flex items-center gap-2">
-                    <span className="text-text-secondary text-sm">{t("editTask.complete")}</span>
+                    <span className="text-text-secondary text-sm">Complete</span>
                     <NumberInput
                       value={requiredCount}
                       onChange={(value) => setRequiredCount(Math.min(subtasks.length, Math.max(1, value)))}
@@ -586,14 +584,14 @@ export function EditTask() {
                       size="sm"
                       inputWidth="w-14"
                     />
-                    <span className="text-text-secondary text-sm">{t("editTask.itemsSufficient")}</span>
+                    <span className="text-text-secondary text-sm">items to complete</span>
                   </div>
                 )}
 
                 {/* 完成额外积分 */}
                 <div className="flex items-center justify-between pt-2 border-t border-surface-light">
                   <div className="text-text-secondary text-sm">
-                    {t("editTask.completionBonus")}
+                    Completion Bonus
                   </div>
                   <NumberInput
                     value={completionPoints}
@@ -607,8 +605,8 @@ export function EditTask() {
                 {/* 积分预览 */}
                 <div className="text-sm text-text-muted pt-2">
                   {subtaskMode === 'all' 
-                    ? t("editTask.maxPoints", { points: pointsPerSubtask.reduce((sum, p) => sum + (p || 0), 0) + completionPoints })
-                    : t("editTask.maxPoints", { points: [...pointsPerSubtask].sort((a, b) => (b || 0) - (a || 0)).slice(0, requiredCount).reduce((sum, p) => sum + (p || 0), 0) + completionPoints })
+                    ? `Max points: ${pointsPerSubtask.reduce((sum, p) => sum + (p || 0), 0) + completionPoints}`
+                    : `Max points: ${[...pointsPerSubtask].sort((a, b) => (b || 0) - (a || 0)).slice(0, requiredCount).reduce((sum, p) => sum + (p || 0), 0) + completionPoints}`
                   }
                 </div>
               </div>

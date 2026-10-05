@@ -1,19 +1,15 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router";
-import { useTranslation } from "react-i18next";
-import { ChevronLeft, Download, Info, Clock, Globe } from "lucide-react";
+import { ChevronLeft, Download, Info, Clock } from "lucide-react";
 import { TimePicker } from "@/components/TimePicker";
 import { Header } from "@/components/Header";
 import { AiSettingsSection } from "@/components/AiSettingsSection";
 import { useUserStore } from "@/store";
 import { updateUserDayEndTime } from "@/db/services";
-import { SUPPORTED_LANGUAGES } from "@/libs/i18n";
-import type { SupportedLanguage } from "@/db/types";
 
 export function Settings() {
   const navigate = useNavigate();
-  const { t, i18n } = useTranslation();
-  const { user, refreshUser, updateUser } = useUserStore();
+  const { user, refreshUser } = useUserStore();
 
   const [dayEndTime, setDayEndTime] = useState(user?.dayEndTime || "00:00");
   const [showTimePicker, setShowTimePicker] = useState(false);
@@ -40,74 +36,26 @@ export function Settings() {
     }
   };
 
-  const handleLanguageChange = async (lang: SupportedLanguage) => {
-    try {
-      await updateUser({ language: lang });
-      i18n.changeLanguage(lang);
-    } catch (error) {
-      console.error("Failed to update language:", error);
-    }
-  };
-
   const getTimeDescription = (time: string) => {
-    if (time === "00:00") return t("settings.timeDescriptions.naturalDay");
+    if (time === "00:00") return "Natural day (midnight)";
     const [hour] = time.split(":").map(Number);
-    if (hour < 6) return `${t("settings.timeDescriptions.dawn")} ${time}`;
-    if (hour < 12) return `${t("settings.timeDescriptions.morning")} ${time}`;
-    if (hour === 12) return `${t("settings.timeDescriptions.noon")} ${time}`;
-    if (hour < 18) return `${t("settings.timeDescriptions.afternoon")} ${time}`;
-    return `${t("settings.timeDescriptions.evening")} ${time}`;
+    if (hour < 6) return `Dawn ${time}`;
+    if (hour < 12) return `Morning ${time}`;
+    if (hour === 12) return `Noon ${time}`;
+    if (hour < 18) return `Afternoon ${time}`;
+    return `Evening ${time}`;
   };
 
   return (
     <div className="bg-background min-h-screen">
-      <Header title={t("settings.title")} back />
+      <Header title="Settings" back />
 
       <div className="p-4">
-        <div className="mb-6">
-          <h2 className="text-text-secondary text-sm font-medium px-2 mb-3">
-            {t("settings.general")}
-          </h2>
-          <div
-            className="w-full flex items-center gap-4 rounded-xl bg-surface p-4 border border-border hover:bg-surface-light transition-colors"
-          >
-            <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
-              <Globe className="w-5 h-5 text-primary" />
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-text-primary font-medium">
-                {t("settings.language")}
-              </p>
-              <p className="text-text-secondary text-sm truncate">
-                {t("settings.languageDescription")}
-              </p>
-            </div>
-            <div className="flex gap-1">
-              {SUPPORTED_LANGUAGES.map((lang) => (
-                <button
-                  key={lang.code}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleLanguageChange(lang.code);
-                  }}
-                  className={`px-3 py-1 rounded-lg text-sm font-medium transition-colors ${
-                    (user?.language || "zh") === lang.code
-                      ? "bg-primary text-white"
-                      : "bg-surface-light text-text-secondary hover:bg-border"
-                  }`}
-                >
-                  {lang.name}
-                </button>
-              ))}
-            </div>
-          </div>
-        </div>
-
         <AiSettingsSection />
 
         <div className="mb-6">
           <h2 className="text-text-secondary text-sm font-medium px-2 mb-3">
-            {t("settings.timeSettings")}
+            Time Settings
           </h2>
           <button
             onClick={() => setShowTimePicker(true)}
@@ -119,11 +67,11 @@ export function Settings() {
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-text-primary font-medium">
-                {t("settings.dayEndTime")}
+                Day End Time
               </p>
               <p className="text-text-secondary text-sm truncate">
                 {getTimeDescription(dayEndTime)} ·{" "}
-                {t("settings.dayEndTimeDescription")}
+                Tasks won't expire before this time
               </p>
             </div>
             <span className="text-primary font-medium">{dayEndTime}</span>
@@ -132,7 +80,7 @@ export function Settings() {
 
         <div className="flex flex-col gap-3 mb-6">
           <h2 className="text-text-secondary text-sm font-medium px-2">
-            {t("settings.dataManagement")}
+            Data Management
           </h2>
           <button
             onClick={() => navigate("/data-import-export")}
@@ -143,10 +91,10 @@ export function Settings() {
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-text-primary font-medium">
-                {t("settings.dataImportExport")}
+                Import & Export
               </p>
               <p className="text-text-secondary text-sm truncate">
-                {t("settings.dataImportExportDescription")}
+                Backup or restore your tasks and rewards
               </p>
             </div>
             <ChevronLeft className="w-5 h-5 text-text-secondary rotate-180 shrink-0" />
@@ -155,7 +103,7 @@ export function Settings() {
 
         <div>
           <h2 className="text-text-secondary text-sm font-medium px-2 mb-3">
-            {t("settings.about")}
+            About
           </h2>
           <div className="flex items-center gap-4 rounded-xl bg-surface p-4 border border-border">
             <div className="w-10 h-10 rounded-lg bg-surface-light flex items-center justify-center shrink-0">
@@ -163,7 +111,7 @@ export function Settings() {
             </div>
             <div className="flex-1">
               <p className="text-text-primary font-medium">
-                {t("settings.version")}
+                Version
               </p>
               <p className="text-text-secondary text-sm">v0.1.0</p>
             </div>
@@ -176,7 +124,7 @@ export function Settings() {
         value={dayEndTime}
         onChange={handleTimeChange}
         onClose={() => setShowTimePicker(false)}
-        title={t("settings.dayEndTime")}
+        title="Day End Time"
         minuteInterval={15}
       />
     </div>

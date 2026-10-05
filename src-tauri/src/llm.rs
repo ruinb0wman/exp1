@@ -80,7 +80,7 @@ fn settings_path(app: &tauri::AppHandle) -> Result<PathBuf, String> {
     let dir = app
         .path()
         .app_data_dir()
-        .map_err(|e| format!("无法定位应用数据目录：{e}"))?;
+        .map_err(|e| format!("Could not locate the app data directory: {e}"))?;
     Ok(dir.join(SETTINGS_FILE))
 }
 
@@ -93,21 +93,21 @@ fn load_settings(app: &tauri::AppHandle) -> Result<LlmSettingsFile, String> {
             api_key: String::new(),
         });
     }
-    let content = fs::read_to_string(&path).map_err(|e| format!("读取 LLM 配置失败：{e}"))?;
+    let content = fs::read_to_string(&path).map_err(|e| format!("Failed to read LLM config: {e}"))?;
     if content.trim().is_empty() {
         return Ok(LlmSettingsFile::default());
     }
-    serde_json::from_str(&content).map_err(|e| format!("解析 LLM 配置失败：{e}"))
+    serde_json::from_str(&content).map_err(|e| format!("Failed to parse LLM config: {e}"))
 }
 
 fn save_settings(app: &tauri::AppHandle, settings: &LlmSettingsFile) -> Result<(), String> {
     let path = settings_path(app)?;
     if let Some(parent) = path.parent() {
-        fs::create_dir_all(parent).map_err(|e| format!("创建配置目录失败：{e}"))?;
+        fs::create_dir_all(parent).map_err(|e| format!("Failed to create the config directory: {e}"))?;
     }
     let content =
-        serde_json::to_string_pretty(settings).map_err(|e| format!("序列化配置失败：{e}"))?;
-    fs::write(&path, content).map_err(|e| format!("写入 LLM 配置失败：{e}"))?;
+        serde_json::to_string_pretty(settings).map_err(|e| format!("Failed to serialize LLM config: {e}"))?;
+    fs::write(&path, content).map_err(|e| format!("Failed to write LLM config: {e}"))?;
     Ok(())
 }
 
@@ -137,12 +137,12 @@ fn map_http_error(status: u16, body: &str) -> String {
         format!("：{detail}")
     };
     match status {
-        401 => format!("API Key 无效或已过期{detail}"),
-        403 => format!("无权限访问该模型{detail}"),
-        404 => format!("Base URL 或模型名不存在{detail}"),
-        429 => format!("请求过于频繁或额度不足{detail}"),
-        500..=599 => format!("模型服务端错误（{status}）{detail}"),
-        _ => format!("请求失败（{status}）{detail}"),
+        401 => format!("API key is invalid or expired{detail}"),
+        403 => format!("No permission to access this model{detail}"),
+        404 => format!("Base URL or model name not found{detail}"),
+        429 => format!("Too many requests or quota exceeded{detail}"),
+        500..=599 => format!("Model server error ({status}){detail}"),
+        _ => format!("Request failed ({status}){detail}"),
     }
 }
 
@@ -150,7 +150,7 @@ fn build_client() -> Result<reqwest::Client, String> {
     reqwest::Client::builder()
         .timeout(Duration::from_secs(REQUEST_TIMEOUT_SECS))
         .build()
-        .map_err(|e| format!("创建 HTTP 客户端失败：{e}"))
+        .map_err(|e| format!("Failed to create the HTTP client: {e}"))
 }
 
 async fn request_chat(
@@ -162,10 +162,10 @@ async fn request_chat(
     let settings = load_settings(app)?;
 
     if settings.api_key.trim().is_empty() {
-        return Err("尚未配置 API Key".to_string());
+        return Err("API key is not configured".to_string());
     }
     if settings.model.trim().is_empty() {
-        return Err("尚未配置模型名称".to_string());
+        return Err("Model name is not configured".to_string());
     }
 
     let url = normalize_chat_url(&settings.base_url);
@@ -188,11 +188,11 @@ async fn request_chat(
         .await
         .map_err(|e| {
             if e.is_timeout() {
-                "请求超时".to_string()
+                "Request timed out".to_string()
             } else if e.is_connect() {
-                "无法连接到 API 服务，请检查 Base URL 与网络".to_string()
+                "Cannot reach the API service; check the Base URL and your network".to_string()
             } else {
-                format!("请求失败：{e}")
+                format!("Request failed: {e}")
             }
         })?;
 
@@ -200,14 +200,14 @@ async fn request_chat(
     let body = response
         .text()
         .await
-        .map_err(|e| format!("读取响应失败：{e}"))?;
+        .map_err(|e| format!("Failed to read the response: {e}"))?;
 
     if !status.is_success() {
         return Err(map_http_error(status.as_u16(), &body));
     }
 
     let parsed: ChatCompletionResponse =
-        serde_json::from_str(&body).map_err(|e| format!("解析模型响应失败：{e}"))?;
+        serde_json::from_str(&body).map_err(|e| format!("Failed to parse the model response: {e}"))?;
 
     let content = parsed
         .choices
@@ -217,7 +217,7 @@ async fn request_chat(
         .unwrap_or_default();
 
     if content.trim().is_empty() {
-        return Err("模型返回了空内容".to_string());
+        return Err("The model returned empty content".to_string());
     }
 
     Ok(LlmChatResult {

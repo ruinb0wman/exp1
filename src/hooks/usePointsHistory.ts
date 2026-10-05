@@ -110,7 +110,7 @@ export function usePointsHistory(options: UsePointsHistoryOptions): UsePointsHis
       setStats(statsData);
       pageRef.current = 1;
     } catch (err) {
-      setError(err instanceof Error ? err.message : '加载积分历史失败');
+      setError(err instanceof Error ? err.message : 'Failed to load points history');
     } finally {
       setIsLoading(false);
     }
@@ -136,7 +136,7 @@ export function usePointsHistory(options: UsePointsHistoryOptions): UsePointsHis
       setHasMore(result.hasMore);
       pageRef.current = nextPage;
     } catch (err) {
-      setError(err instanceof Error ? err.message : '加载更多数据失败');
+      setError(err instanceof Error ? err.message : 'Failed to load more data');
     } finally {
       setIsLoadingMore(false);
     }

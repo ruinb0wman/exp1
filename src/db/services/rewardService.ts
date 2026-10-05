@@ -180,7 +180,7 @@ export async function purchaseReward(
   const db = getDB();
 
   if (!Number.isInteger(quantity) || quantity <= 0) {
-    throw new Error('数量不合法');
+    throw new Error('Invalid quantity');
   }
 
   // 归一化放在事务外：纯函数、与校验无关，失败也不该占用事务
@@ -192,10 +192,10 @@ export async function purchaseReward(
     async () => {
       const template = await db.rewardTemplates.get(templateId);
       if (!template) {
-        throw new Error('商品不存在');
+        throw new Error('Reward not found');
       }
       if (!template.enabled) {
-        throw new Error('商品已下架');
+        throw new Error('Reward is no longer available');
       }
 
       // 关闭「计入消费统计」的奖品：不写金额，也不计入消费统计
@@ -203,7 +203,7 @@ export async function purchaseReward(
       const pointsCost = template.pointsCost;
       // 0 积分是合法值（如每日免费额度），只拒绝负数与非法值
       if (!Number.isFinite(pointsCost) || pointsCost < 0) {
-        throw new Error('商品积分价格无效');
+        throw new Error('Invalid reward price');
       }
       const moneyCost = normalizeMoneyCost(template.moneyCost);
 
@@ -211,7 +211,7 @@ export async function purchaseReward(
       const hasQuota = template.replenishmentMode !== 'none';
       const currentStock = template.currentStock ?? 0;
       if (hasQuota && currentStock < quantity) {
-        throw new Error('消费额度不足');
+        throw new Error('Insufficient spending limit');
       }
 
       // 积分检查
@@ -220,7 +220,7 @@ export async function purchaseReward(
       const balance = pointsRecords.reduce((sum, record) => sum + record.amount, 0);
 
       if (balance < totalCost) {
-        throw new Error(`积分不足。需要: ${totalCost}, 当前: ${balance}`);
+        throw new Error(`Insufficient points. Required: ${totalCost}, current: ${balance}`);
       }
 
       const purchaseId = generateUUID();
@@ -245,7 +245,7 @@ export async function purchaseReward(
       if (totalCost > 0) {
         // 备注写进流水描述，积分明细与报告无需额外查询即可展示
         // （换行压成空格，保持描述是单行文本）
-        const purchaseLabel = `购买 ${template.title} ×${quantity}`;
+        const purchaseLabel = `Purchased ${template.title} ×${quantity}`;
         const description = normalizedNote
           ? `${purchaseLabel} · ${normalizedNote.replace(/\s+/g, ' ')}`
           : purchaseLabel;

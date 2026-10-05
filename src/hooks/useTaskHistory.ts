@@ -80,7 +80,7 @@ export function useTaskHistory({ userId, pageSize = DEFAULT_PAGE_SIZE }: UseTask
       setTotal(result.total);
       setOffset(newOffset + result.items.length);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "加载失败");
+      setError(err instanceof Error ? err.message : "Failed to load");
     } finally {
       setIsLoading(false);
       setIsLoadingMore(false);

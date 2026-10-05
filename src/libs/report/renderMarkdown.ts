@@ -1,6 +1,57 @@
-import type { PointsHistory } from '@/db/types';
-import { buildAnalysisPrompt, type ReportTranslate } from './prompt';
+import type { PointsHistory, PointsHistoryType, TaskType } from '@/db/types';
+import type { PomoMode } from '@/db/types';
+import { buildAnalysisPrompt } from './prompt';
 import type { MetricSet, ReportModel, ReportNote, TemplateBucket } from './types';
+
+/** 枚举标签（原 i18n 的 reports.taskType / pomo.mode / points.type / weekday 系列） */
+const TASK_TYPE_LABEL: Record<TaskType, string> = {
+	simple: 'simple',
+	time: 'timed',
+	count: 'counted',
+	subtask: 'subtask',
+};
+
+const POMO_MODE_LABEL: Record<PomoMode, string> = {
+	focus: 'Focus',
+	shortBreak: 'Short break',
+	longBreak: 'Long break',
+};
+
+const POINTS_TYPE_LABEL: Record<PointsHistoryType, string> = {
+	task_undo: 'Task undo',
+	task_stage: 'Task stage',
+	task_reward: 'Task completion',
+	task_completion: 'Task completion',
+	task_deduction: 'Task progress rollback',
+	reward_exchange: 'Purchase',
+	achievement: 'Achievement reward',
+	admin_adjustment: 'Manual adjustment',
+};
+
+const WEEKDAY_LABEL: Record<number, string> = {
+	0: 'Sunday',
+	1: 'Monday',
+	2: 'Tuesday',
+	3: 'Wednesday',
+	4: 'Thursday',
+	5: 'Friday',
+	6: 'Saturday',
+};
+
+/** 提示项文案 */
+const NOTE_TEXT: Record<
+	ReportNote['code'],
+	(params: Record<string, string | number>) => string
+> = {
+	noData: () => 'No tasks, pomodoro sessions or points in this period.',
+	partialPeriod: ({ date }) => `This period is still in progress; data is as of ${date}.`,
+	noPreviousData: () =>
+		'The previous period has no comparable data, so change columns show —.',
+	carriedOver: ({ count, start }) =>
+		`${count} task(s) were completed during this period but were scheduled before ${start} (carried over).`,
+	noDateTasks: ({ count }) =>
+		`${count} undated task(s) were completed in this period and are excluded from the completion-rate denominator.`,
+};
 
 export interface RenderMarkdownOptions {
 	/** 是否附加「分析提示词」段落，默认 true */
@@ -50,73 +101,77 @@ function hasPreviousData(previous: MetricSet): boolean {
 }
 
 /** 渲染提示项 */
-function renderNote(note: ReportNote, t: ReportTranslate): string {
-	const params = note.params ? { ...note.params } : undefined;
-	return `- ${t(`reports.notes.${note.code}`, params)}`;
+/** 提示项文案（供渲染层与页面复用） */
+export function noteText(note: ReportNote): string {
+	return NOTE_TEXT[note.code](note.params ?? {});
+}
+
+function renderNote(note: ReportNote): string {
+	return `- ${noteText(note)}`;
 }
 
 /** 渲染总览指标表 */
-function renderOverview(model: ReportModel, t: ReportTranslate): string {
+function renderOverview(model: ReportModel): string {
 	const { metrics, previousMetrics } = model;
 	const hasPrev = hasPreviousData(previousMetrics);
 
 	const rows: [string, string, string, string][] = [
 		[
-			t('reports.metric.planned'),
+			"Planned tasks",
 			String(metrics.plannedCount),
 			String(previousMetrics.plannedCount),
 			formatDelta(metrics.plannedCount, previousMetrics.plannedCount, hasPrev),
 		],
 		[
-			t('reports.metric.completed'),
+			"Completed tasks",
 			String(metrics.completedCount),
 			String(previousMetrics.completedCount),
 			formatDelta(metrics.completedCount, previousMetrics.completedCount, hasPrev),
 		],
 		[
-			t('reports.metric.skipped'),
+			"Skipped tasks",
 			String(metrics.skippedCount),
 			String(previousMetrics.skippedCount),
 			formatDelta(metrics.skippedCount, previousMetrics.skippedCount, hasPrev),
 		],
 		[
-			t('reports.metric.pending'),
+			"Pending tasks",
 			String(metrics.pendingCount),
 			String(previousMetrics.pendingCount),
 			formatDelta(metrics.pendingCount, previousMetrics.pendingCount, hasPrev),
 		],
 		[
-			t('reports.metric.overdue'),
+			"Overdue tasks",
 			String(metrics.overdueCount),
 			String(previousMetrics.overdueCount),
 			formatDelta(metrics.overdueCount, previousMetrics.overdueCount, hasPrev),
 		],
 		[
-			t('reports.metric.completionRate'),
+			"Completion rate",
 			formatRate(metrics.completionRate),
 			formatRate(previousMetrics.completionRate),
 			formatRateDelta(metrics.completionRate, previousMetrics.completionRate, hasPrev),
 		],
 		[
-			t('reports.metric.activeDays'),
+			"Active days",
 			String(metrics.activeDays),
 			String(previousMetrics.activeDays),
 			formatDelta(metrics.activeDays, previousMetrics.activeDays, hasPrev),
 		],
 		[
-			t('reports.metric.longestStreak'),
+			"Longest streak",
 			String(metrics.longestStreak),
 			String(previousMetrics.longestStreak),
 			formatDelta(metrics.longestStreak, previousMetrics.longestStreak, hasPrev),
 		],
 		[
-			t('reports.metric.endStreak'),
+			"Streak at period end",
 			String(metrics.endStreak),
 			String(previousMetrics.endStreak),
 			formatDelta(metrics.endStreak, previousMetrics.endStreak, hasPrev),
 		],
 		[
-			t('reports.metric.focusMinutes'),
+			"Focus minutes",
 			String(metrics.pomoFocusMinutes),
 			String(previousMetrics.pomoFocusMinutes),
 			formatDelta(
@@ -126,7 +181,7 @@ function renderOverview(model: ReportModel, t: ReportTranslate): string {
 			),
 		],
 		[
-			t('reports.metric.focusSessions'),
+			"Focus sessions",
 			String(metrics.pomoFocusSessions),
 			String(previousMetrics.pomoFocusSessions),
 			formatDelta(
@@ -136,7 +191,7 @@ function renderOverview(model: ReportModel, t: ReportTranslate): string {
 			),
 		],
 		[
-			t('reports.metric.interruptions'),
+			"Interruptions",
 			String(metrics.pomoInterruptions),
 			String(previousMetrics.pomoInterruptions),
 			formatDelta(
@@ -146,25 +201,25 @@ function renderOverview(model: ReportModel, t: ReportTranslate): string {
 			),
 		],
 		[
-			t('reports.metric.pointsEarned'),
+			"Points earned",
 			String(metrics.pointsEarned),
 			String(previousMetrics.pointsEarned),
 			formatDelta(metrics.pointsEarned, previousMetrics.pointsEarned, hasPrev),
 		],
 		[
-			t('reports.metric.pointsSpent'),
+			"Points spent",
 			String(metrics.pointsSpent),
 			String(previousMetrics.pointsSpent),
 			formatDelta(metrics.pointsSpent, previousMetrics.pointsSpent, hasPrev),
 		],
 		[
-			t('reports.metric.pointsNet'),
+			"Points net",
 			String(metrics.pointsNet),
 			String(previousMetrics.pointsNet),
 			formatDelta(metrics.pointsNet, previousMetrics.pointsNet, hasPrev),
 		],
 		[
-			t('reports.metric.carriedOver'),
+			"Carried over",
 			String(metrics.carriedOverCompletedCount),
 			String(previousMetrics.carriedOverCompletedCount),
 			formatDelta(
@@ -174,7 +229,7 @@ function renderOverview(model: ReportModel, t: ReportTranslate): string {
 			),
 		],
 		[
-			t('reports.metric.noDateCompleted'),
+			"Undated completions",
 			String(metrics.noDateCompletedCount),
 			String(previousMetrics.noDateCompletedCount),
 			formatDelta(
@@ -185,7 +240,7 @@ function renderOverview(model: ReportModel, t: ReportTranslate): string {
 		],
 	];
 
-	const header = `| ${t('reports.col.metric')} | ${t('reports.col.current')} | ${t('reports.col.previous')} | ${t('reports.col.change')} |`;
+	const header = `| Metric | Current | Previous | Change |`;
 	const divider = '| --- | ---: | ---: | ---: |';
 	const body = rows.map((row) => `| ${cell(row[0])} | ${row[1]} | ${row[2]} | ${row[3]} |`);
 
@@ -193,10 +248,10 @@ function renderOverview(model: ReportModel, t: ReportTranslate): string {
 }
 
 /** 渲染趋势表 */
-function renderTrend(model: ReportModel, t: ReportTranslate): string {
-	if (model.trend.length === 0) return t('reports.empty');
+function renderTrend(model: ReportModel): string {
+	if (model.trend.length === 0) return "No data for this period";
 
-	const header = `| ${t('reports.trend.col.bucket')} | ${t('reports.trend.col.planned')} | ${t('reports.trend.col.completed')} | ${t('reports.trend.col.skipped')} | ${t('reports.trend.col.completionRate')} | ${t('reports.trend.col.focusMinutes')} | ${t('reports.trend.col.pointsNet')} |`;
+	const header = `| Date | Planned | Completed | Skipped | Rate | Focus min | Points net |`;
 	const divider = '| --- | ---: | ---: | ---: | ---: | ---: | ---: |';
 	const body = model.trend.map((bucket) => {
 		const rate = bucket.planned > 0 ? bucket.completed / bucket.planned : null;
@@ -207,25 +262,25 @@ function renderTrend(model: ReportModel, t: ReportTranslate): string {
 }
 
 /** 渲染任务明细表 */
-function renderTemplates(model: ReportModel, t: ReportTranslate): string {
-	if (model.templates.length === 0) return t('reports.empty');
+function renderTemplates(model: ReportModel): string {
+	if (model.templates.length === 0) return "No data for this period";
 
-	const header = `| ${t('reports.tasks.col.title')} | ${t('reports.tasks.col.type')} | ${t('reports.tasks.col.planned')} | ${t('reports.tasks.col.completed')} | ${t('reports.tasks.col.skipped')} | ${t('reports.tasks.col.overdue')} | ${t('reports.tasks.col.completionRate')} | ${t('reports.tasks.col.points')} | ${t('reports.tasks.col.focusMinutes')} |`;
+	const header = `| Task | Type | Planned | Completed | Skipped | Overdue | Rate | Points | Focus min |`;
 	const divider = '| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |';
 	const body = model.templates.map((bucket: TemplateBucket) =>
-		`| ${cell(bucket.title)} | ${cell(t(`reports.taskType.${bucket.type}`))} | ${bucket.planned} | ${bucket.completed} | ${bucket.skipped} | ${bucket.overdue} | ${formatRate(bucket.completionRate)} | ${bucket.pointsEarned} | ${bucket.focusMinutes} |`
+		`| ${cell(bucket.title)} | ${cell(TASK_TYPE_LABEL[bucket.type])} | ${bucket.planned} | ${bucket.completed} | ${bucket.skipped} | ${bucket.overdue} | ${formatRate(bucket.completionRate)} | ${bucket.pointsEarned} | ${bucket.focusMinutes} |`
 	);
 
 	return [header, divider, ...body].join('\n');
 }
 
 /** 渲染按等级小节 */
-function renderLevels(model: ReportModel, t: ReportTranslate): string {
-	if (model.levels.length === 0) return t('reports.empty');
+function renderLevels(model: ReportModel): string {
+	if (model.levels.length === 0) return "No data for this period";
 
-	const header = `| ${t('reports.levels.col.level')} | ${t('reports.levels.col.planned')} | ${t('reports.levels.col.completed')} | ${t('reports.levels.col.completionRate')} | ${t('reports.levels.col.activeDays')} | ${t('reports.levels.col.clearedDays')} | ${t('reports.levels.col.survivalRate')} |`;
+	const header = `| Level | Planned | Completed | Completion rate | Days with tasks | Cleared days | Survival rate |`;
 	const divider = '| --- | ---: | ---: | ---: | ---: | ---: | ---: |';
-	// 「L{level}」与列表页卡片上的徽标一致，不做 i18n
+	// 「L{level}」与列表页卡片上的徽标一致，不做本地化
 	const body = model.levels.map(
 		(bucket) =>
 			`| L${bucket.level} | ${bucket.planned} | ${bucket.completed} | ${formatRate(bucket.completionRate)} | ${bucket.activeDays} | ${bucket.clearedDays} | ${formatRate(bucket.survivalRate)} |`
@@ -235,46 +290,46 @@ function renderLevels(model: ReportModel, t: ReportTranslate): string {
 }
 
 /** 渲染番茄钟小节 */
-function renderPomo(model: ReportModel, t: ReportTranslate): string {
+function renderPomo(model: ReportModel): string {
 	const totalSessions = model.pomo.byMode.reduce((sum, bucket) => sum + bucket.sessions, 0);
-	if (totalSessions === 0) return t('reports.empty');
+	if (totalSessions === 0) return "No data for this period";
 
-	const header = `| ${t('reports.pomo.col.mode')} | ${t('reports.pomo.col.sessions')} | ${t('reports.pomo.col.minutes')} | ${t('reports.pomo.col.interruptions')} |`;
+	const header = `| Mode | Sessions | Minutes | Interruptions |`;
 	const divider = '| --- | ---: | ---: | ---: |';
 	const body = model.pomo.byMode.map(
 		(bucket) =>
-			`| ${cell(t(`reports.pomo.mode.${bucket.mode}`))} | ${bucket.sessions} | ${bucket.minutes} | ${bucket.interruptions} |`
+			`| ${cell(POMO_MODE_LABEL[bucket.mode])} | ${bucket.sessions} | ${bucket.minutes} | ${bucket.interruptions} |`
 	);
 
 	return [header, divider, ...body].join('\n');
 }
 
 /** 渲染积分小节 */
-function renderPoints(model: ReportModel, t: ReportTranslate): string {
+function renderPoints(model: ReportModel): string {
 	const { byType, topEarn, topSpend } = model.points;
-	if (byType.length === 0) return t('reports.empty');
+	if (byType.length === 0) return "No data for this period";
 
-	const header = `| ${t('reports.points.col.type')} | ${t('reports.points.col.amount')} | ${t('reports.points.col.count')} |`;
+	const header = `| Type | Amount | Count |`;
 	const divider = '| --- | ---: | ---: |';
 	const rows = byType.map(
 		(bucket) =>
-			`| ${cell(t(`reports.points.type.${bucket.type}`))} | ${bucket.amount} | ${bucket.count} |`
+			`| ${cell(POINTS_TYPE_LABEL[bucket.type])} | ${bucket.amount} | ${bucket.count} |`
 	);
 
 	const renderRecord = (record: PointsHistory): string =>
-		`| ${record.createdAt.slice(0, 10)} | ${cell(t(`reports.points.type.${record.type}`))} | ${record.amount} | ${cell(record.description ?? '')} |`;
+		`| ${record.createdAt.slice(0, 10)} | ${cell(POINTS_TYPE_LABEL[record.type])} | ${record.amount} | ${cell(record.description ?? '')} |`;
 
 	const blocks = [[header, divider, ...rows].join('\n')];
 
-	const recordHeader = `| ${t('reports.points.col.date')} | ${t('reports.points.col.type')} | ${t('reports.points.col.amount')} | ${t('reports.points.col.description')} |`;
+	const recordHeader = `| Date | Type | Amount | Description |`;
 	const recordDivider = '| --- | --- | ---: | --- |';
 
 	if (topEarn.length > 0) {
-		blocks.push(`### ${t('reports.points.topEarn')}`);
+		blocks.push(`### Top income`);
 		blocks.push([recordHeader, recordDivider, ...topEarn.map(renderRecord)].join('\n'));
 	}
 	if (topSpend.length > 0) {
-		blocks.push(`### ${t('reports.points.topSpend')}`);
+		blocks.push(`### Top spending`);
 		blocks.push([recordHeader, recordDivider, ...topSpend.map(renderRecord)].join('\n'));
 	}
 
@@ -282,67 +337,50 @@ function renderPoints(model: ReportModel, t: ReportTranslate): string {
 }
 
 /** 渲染习惯洞察小节 */
-function renderInsights(model: ReportModel, t: ReportTranslate): string {
+function renderInsights(model: ReportModel): string {
 	const { insights } = model;
 	const lines: string[] = [];
 
 	lines.push(
-		`- ${t('reports.insights.bestWeekday')}: ${
+		`- Most active weekday: ${
 			insights.bestWeekday
-				? t('reports.insights.weekdayValue', {
-						weekday: t(`reports.weekday.${insights.bestWeekday.weekday}`),
-						count: insights.bestWeekday.completed,
-					})
-				: t('reports.insights.none')
+				? `${WEEKDAY_LABEL[insights.bestWeekday.weekday]} (${insights.bestWeekday.completed} completions)`
+				: "None"
 		}`
 	);
 	lines.push(
-		`- ${t('reports.insights.bestHour')}: ${
+		`- Most active hour: ${
 			insights.bestHour
-				? t('reports.insights.hourValue', {
-						hour: insights.bestHour.hour,
-						count: insights.bestHour.completed,
-					})
-				: t('reports.insights.none')
+				? `${insights.bestHour.hour}:00 - ${insights.bestHour.hour}:59 (${insights.bestHour.completed} completions)`
+				: "None"
 		}`
 	);
 	lines.push(
-		`- ${t('reports.insights.topTask')}: ${
+		`- Most completed task: ${
 			insights.topTask
-				? t('reports.insights.taskValue', {
-						title: insights.topTask.title,
-						count: insights.topTask.completed,
-					})
-				: t('reports.insights.none')
+				? `${insights.topTask.title} (${insights.topTask.completed} times)`
+				: "None"
 		}`
 	);
 	lines.push(
-		`- ${t('reports.insights.mostSkipped')}: ${
+		`- Most skipped task: ${
 			insights.mostSkippedTask
-				? t('reports.insights.skippedValue', {
-						title: insights.mostSkippedTask.title,
-						count: insights.mostSkippedTask.skipped,
-					})
-				: t('reports.insights.none')
+				? `${insights.mostSkippedTask.title} (skipped ${insights.mostSkippedTask.skipped} times)`
+				: "None"
 		}`
 	);
 	lines.push(
-		`- ${t('reports.insights.avgDailyCompleted')}: ${insights.avgDailyCompleted}`
+		`- Average per day: ${insights.avgDailyCompleted}`
 	);
 
 	lines.push('');
-	lines.push(`### ${t('reports.insights.chronicallyOverdue')}`);
+	lines.push(`### Chronically overdue`);
 	lines.push('');
 	if (insights.chronicallyOverdue.length === 0) {
-		lines.push(t('reports.empty'));
+		lines.push("No data for this period");
 	} else {
 		for (const item of insights.chronicallyOverdue) {
-			lines.push(
-				`- ${t('reports.insights.taskValue', {
-					title: item.title,
-					count: item.overdue,
-				})}`
-			);
+			lines.push(`- ${item.title} (${item.overdue} times)`);
 		}
 	}
 
@@ -354,108 +392,103 @@ function renderInsights(model: ReportModel, t: ReportTranslate): string {
  */
 export function renderReportMarkdown(
 	model: ReportModel,
-	t: ReportTranslate,
 	options: RenderMarkdownOptions = {}
 ): string {
 	const includePrompt = options.includePrompt !== false;
 	const { period, previousPeriod } = model;
 
 	const partialSuffix = period.isPartial
-		? t('reports.meta.partialSuffix', { date: period.end })
+		? ` (as of ${period.end})`
 		: '';
-	const title = t('reports.title', {
-		label: period.label,
-		start: period.start,
-		end: period.end,
-	});
+	const title = `Task Review · ${period.label} (${period.start} ~ ${period.end})`;
 
 	const meta: string[] = [
-		`> ${t('reports.meta.generatedAt')}: ${model.generatedAt}`,
-		`> ${t('reports.meta.range')}: ${period.start} ~ ${period.end}${partialSuffix}`,
-		`> ${t('reports.meta.previousRange')}: ${previousPeriod.start} ~ ${previousPeriod.end}`,
-		`> ${t('reports.meta.dayEndTime')}: ${model.dayEndTime}`,
-		`> ${t('reports.meta.timeZone')}: ${model.timeZone}`,
-		`> ${t('reports.meta.appVersion')}: ${model.appVersion}`,
-		`> ${t('reports.meta.user')}: ${cell(model.user.name)} (#${model.user.id})`,
+		`> Generated at: ${model.generatedAt}`,
+		`> Range: ${period.start} ~ ${period.end}${partialSuffix}`,
+		`> Previous range: ${previousPeriod.start} ~ ${previousPeriod.end}`,
+		`> Day end time: ${model.dayEndTime}`,
+		`> Time zone: ${model.timeZone}`,
+		`> App version: ${model.appVersion}`,
+		`> User: ${cell(model.user.name)} (#${model.user.id})`,
 	];
 
 	const sections: string[] = [`# ${title}`, '', meta.join('\n'), ''];
 
 	if (model.notes.length > 0) {
-		sections.push(`### ${t('reports.notes.title')}`);
+		sections.push(`### Notes`);
 		sections.push('');
-		sections.push(model.notes.map((note) => renderNote(note, t)).join('\n'));
+		sections.push(model.notes.map((note) => renderNote(note)).join('\n'));
 		sections.push('');
 	}
 
 	// 口径说明
-	sections.push(`## ${t('reports.caliber.title')}`);
+	sections.push(`## Definitions`);
 	sections.push('');
 	sections.push(
 		[
-			t('reports.caliber.item1', { dayEndTime: model.dayEndTime }),
-			t('reports.caliber.item2'),
-			t('reports.caliber.item3'),
-			t('reports.caliber.item4'),
-			t('reports.caliber.item5'),
-			t('reports.caliber.item6'),
-			t('reports.caliber.item7'),
+			`All dates are split by "user day": a day starts at your configured day end time (${model.dayEndTime}) and ends just before the same time the next day.`,
+			"Planned = task instances generated within the period (completed / pending / skipped); completion rate = completed ÷ planned.",
+			"Overdue = still pending within the period and past the template's configured expire days.",
+			"Trend and completion rate are attributed by the task's scheduled date (instanceDate); streaks, active days and peak hours are attributed by actual completion time.",
+			"Undated tasks are excluded from the completion-rate denominator; completions in this period whose scheduled date is earlier are counted as carried over.",
+			"Focus minutes only count completed pomodoro sessions, floored to minutes per session; points income/spending are attributed by record creation time.",
+			"By-level table: the level is the task's current level setting (changing it recomputes past reports too); completion rate = completed instances ÷ planned instances; cleared days = days where every planned instance of that level was completed (skips do not count), survival rate = cleared days ÷ days with tasks; instances without a date are excluded.",
 		]
 			.map((line) => `- ${line}`)
 			.join('\n')
 	);
 	sections.push('');
 
-	sections.push(`## 1. ${t('reports.section.overview')}`);
+	sections.push(`## 1. Overview`);
 	sections.push('');
-	sections.push(renderOverview(model, t));
-	sections.push('');
-
-	sections.push(`## 2. ${t('reports.section.trend')}`);
-	sections.push('');
-	sections.push(renderTrend(model, t));
+	sections.push(renderOverview(model));
 	sections.push('');
 
-	sections.push(`## 3. ${t('reports.section.tasks')}`);
+	sections.push(`## 2. Trend`);
 	sections.push('');
-	sections.push(renderTemplates(model, t));
-	sections.push('');
-
-	sections.push(`## 4. ${t('reports.section.pomo')}`);
-	sections.push('');
-	sections.push(renderPomo(model, t));
+	sections.push(renderTrend(model));
 	sections.push('');
 
-	sections.push(`## 5. ${t('reports.section.points')}`);
+	sections.push(`## 3. Task breakdown`);
 	sections.push('');
-	sections.push(renderPoints(model, t));
-	sections.push('');
-
-	sections.push(`## 6. ${t('reports.section.insights')}`);
-	sections.push('');
-	sections.push(renderInsights(model, t));
+	sections.push(renderTemplates(model));
 	sections.push('');
 
-	sections.push(`## 7. ${t('reports.section.extras')}`);
+	sections.push(`## 4. Pomodoro`);
+	sections.push('');
+	sections.push(renderPomo(model));
+	sections.push('');
+
+	sections.push(`## 5. Points`);
+	sections.push('');
+	sections.push(renderPoints(model));
+	sections.push('');
+
+	sections.push(`## 6. Habit insights`);
+	sections.push('');
+	sections.push(renderInsights(model));
+	sections.push('');
+
+	sections.push(`## 7. Extras`);
 	sections.push('');
 	sections.push(
 		[
-			`- ${t('reports.extras.templatesCreated')}: ${model.extras.templatesCreated}`,
-			`- ${t('reports.extras.achievementsUnlocked')}: ${model.extras.achievementsUnlocked}`,
-			`- ${t('reports.extras.rewardsRedeemed')}: ${model.extras.rewardsRedeemed}`,
+			`- Templates created: ${model.extras.templatesCreated}`,
+			`- Achievements unlocked: ${model.extras.achievementsUnlocked}`,
+			`- Purchases: ${model.extras.rewardsRedeemed}`,
 		].join('\n')
 	);
 	sections.push('');
 
 	// 追加在末尾（而不是插在趋势之后）：知识库里的年报模板按节号引用 1/2/4/6/7 节，
 	// 追加不会打破那些引用。
-	sections.push(`## 8. ${t('reports.section.levels')}`);
+	sections.push(`## 8. By level`);
 	sections.push('');
-	sections.push(renderLevels(model, t));
+	sections.push(renderLevels(model));
 	sections.push('');
 
 	if (includePrompt) {
-		sections.push(buildAnalysisPrompt(model, t));
+		sections.push(buildAnalysisPrompt(model));
 		sections.push('');
 	}
 

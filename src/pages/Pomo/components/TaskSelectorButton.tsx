@@ -1,4 +1,3 @@
-import { useTranslation } from 'react-i18next';
 import { CheckCircle2, Circle, ChevronDown } from 'lucide-react';
 import type { TaskWithTemplate } from '@/hooks/useTasks';
 
@@ -20,7 +19,6 @@ export function TaskSelectorButton({
   disabled = false,
   onClick,
 }: TaskSelectorButtonProps) {
-  const { t } = useTranslation();
   return (
     <button
       onClick={onClick}
@@ -35,9 +33,9 @@ export function TaskSelectorButton({
         )}
       </div>
       <div className="flex-1 text-left">
-        <p className="text-sm text-text-secondary">{t('pomo.currentTask')}</p>
+        <p className="text-sm text-text-secondary">Current Focus Task</p>
         <p className="text-white font-medium truncate">
-          {selectedTask ? selectedTask.template.title : t('pomo.noTaskSelected')}
+          {selectedTask ? selectedTask.template.title : "No task selected"}
         </p>
       </div>
       {!disabled && <ChevronDown className="w-5 h-5 text-text-muted" />}

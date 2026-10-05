@@ -9,36 +9,36 @@ export function buildPresetProposals(
 ): AchievementProposal[] {
   const base: AchievementProposal[] = [
     {
-      title: '小步快跑',
-      description: '先完成 10 个任务，找回节奏。',
+      title: 'Baby Steps',
+      description: 'Complete 10 tasks and get back into rhythm.',
       icon: 'Target',
       condition: { type: 'task_complete_count', target: 10 },
       rewardPoints: 50,
     },
     {
-      title: '专注一小时',
-      description: '累计专注 60 分钟，把注意力收回来。',
+      title: 'One Hour of Focus',
+      description: 'Focus for 60 minutes in total and reclaim your attention.',
       icon: 'Timer',
       condition: { type: 'pomo_focus_minutes', target: 60 },
       rewardPoints: 40,
     },
     {
-      title: '番茄达人',
-      description: '累计专注 600 分钟，让专注变成习惯。',
+      title: 'Pomodoro Pro',
+      description: 'Focus for 600 minutes in total and make it a habit.',
       icon: 'Flame',
       condition: { type: 'pomo_focus_minutes', target: 600 },
       rewardPoints: 200,
     },
     {
-      title: '连击一周',
-      description: '连续 7 天都有任务完成记录。',
+      title: 'Seven-Day Streak',
+      description: 'Complete at least one task 7 days in a row.',
       icon: 'Zap',
       condition: { type: 'streak_days', target: 7 },
       rewardPoints: 150,
     },
     {
-      title: '势不可挡',
-      description: '连续 30 天持续完成任务，把它变成日常。',
+      title: 'Unstoppable',
+      description: 'Keep completing tasks for 30 days straight and make it routine.',
       icon: 'Rocket',
       condition: { type: 'streak_days', target: 30 },
       rewardPoints: 400,
@@ -47,8 +47,8 @@ export function buildPresetProposals(
 
   if (mostActiveTemplate) {
     base.push({
-      title: `《${mostActiveTemplate.title}》进阶`,
-      description: '把最常做的任务再推进 20 次。',
+      title: `${mostActiveTemplate.title}: Next Level`,
+      description: 'Push your most frequent task 20 more times.',
       icon: 'Star',
       condition: {
         type: 'task_complete_count',
@@ -59,8 +59,8 @@ export function buildPresetProposals(
     });
   } else {
     base.push({
-      title: '渐入佳境',
-      description: '累计完成 50 个任务。',
+      title: 'Getting There',
+      description: 'Complete 50 tasks in total.',
       icon: 'TrendingUp',
       condition: { type: 'task_complete_count', target: 50 },
       rewardPoints: 150,

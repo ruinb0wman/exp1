@@ -1,5 +1,4 @@
 import { useState, useCallback, useEffect, useRef } from "react";
-import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router";
 import { ChartPie, Plus, Pencil, History } from "lucide-react";
 import { Header, HeaderActionButton } from "@/components/Header";
@@ -15,7 +14,6 @@ import { RewardDetailPopup } from "./components/RewardDetailPopup";
 import { filterRewardsBySearch, getMaxQuantity } from "./lib";
 
 export function Store() {
-  const { t } = useTranslation();
   const navigate = useNavigate();
   const { user, currentPoints, calculatePoints } = useUserStore();
 
@@ -89,13 +87,13 @@ export function Store() {
 
     // 检查消费额度
     if (template.replenishmentMode !== 'none' && availableCount < redeemQuantity) {
-      setRedeemError(t("store.stockShortage"));
+      setRedeemError("Not enough quota");
       return;
     }
 
     // 检查积分是否足够
     if (currentPoints < totalCost) {
-      setRedeemError(t("store.pointsShortage"));
+      setRedeemError("Not enough points");
       return;
     }
 
@@ -113,21 +111,21 @@ export function Store() {
       setRedeemQuantity(1);
       setRedeemNote("");
     } catch (err) {
-      setRedeemError(err instanceof Error ? err.message : t("common.error"));
+      setRedeemError(err instanceof Error ? err.message : "Error");
     }
-  }, [selectedReward, user, purchase, refresh, calculatePoints, currentPoints, redeemQuantity, redeemNote, t]);
+  }, [selectedReward, user, purchase, refresh, calculatePoints, currentPoints, redeemQuantity, redeemNote]);
 
   return (
     <div className="min-h-screen pb-24 bg-background">
       {/* Header */}
       <div className="sticky top-0 z-10 bg-background">
         <Header
-          title={t("store.title")}
+          title="Rewards Store"
           leftSlot={
             <HeaderActionButton
               icon={ChartPie}
               side="start"
-              label={t("consumption.title")}
+              label="Spending"
               onClick={() => navigate("/consumption")}
             />
           }
@@ -135,7 +133,7 @@ export function Store() {
             <HeaderActionButton
               icon={Plus}
               side="end"
-              label={t("editReward.createTitle")}
+              label="Create Reward"
               onClick={() => navigate("/rewards/new")}
             />
           }

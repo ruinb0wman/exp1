@@ -8,9 +8,9 @@ export interface QuickAction {
 }
 
 export const quickActions: QuickAction[] = [
-  { icon: BarChart3, label: "分析报告", path: "/reports" },
+  { icon: BarChart3, label: "Reports", path: "/reports" },
   { icon: Trophy, label: "Achievements", path: "/achievements" },
-  { icon: ChartPie, label: "消费统计", path: "/consumption" },
+  { icon: ChartPie, label: "Spending", path: "/consumption" },
   { icon: History, label: "Task History", path: "/task-history" },
   { icon: Coins, label: "Points History", path: "/points-history" },
 ];

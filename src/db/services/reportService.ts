@@ -30,7 +30,7 @@ export async function loadReportSources(userId: number): Promise<ReportSources> 
 		]);
 
 	if (!user) {
-		throw new Error('未找到用户数据');
+		throw new Error('User data not found');
 	}
 
 	return {

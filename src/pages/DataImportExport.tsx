@@ -1,5 +1,4 @@
 import { useState, useCallback } from "react";
-import { useTranslation } from "react-i18next";
 import {
   Download,
   FileJson,
@@ -22,7 +21,6 @@ import {
 } from "@/db/services";
 
 export function DataImportExport() {
-  const { t } = useTranslation();
   const { refreshUser } = useUserStore();
 
   const [isExporting, setIsExporting] = useState(false);
@@ -55,11 +53,11 @@ export function DataImportExport() {
       }
     } catch (error) {
       console.error("Export failed:", error);
-      alert(t("data.export.failed", { error: error instanceof Error ? error.message : t("common.error") }));
+      alert(`Export failed: ${error instanceof Error ? error.message : "Error"}`);
     } finally {
       setIsExporting(false);
     }
-  }, [t]);
+  }, []);
 
   const handleFileSelect = useCallback(async () => {
     try {
@@ -87,13 +85,13 @@ export function DataImportExport() {
       console.error("Import failed:", error);
       setImportPreview({
         isValid: false,
-        error: error instanceof Error ? error.message : t("common.error"),
+        error: error instanceof Error ? error.message : "Error",
       });
       setShowResultDialog(true);
     } finally {
       setIsImporting(false);
     }
-  }, [t]);
+  }, []);
 
   const executeImport = useCallback(async () => {
     if (!pendingImportData) return;
@@ -112,7 +110,7 @@ export function DataImportExport() {
       } catch (error) {
         setImportResult({
           success: false,
-          message: t("data.import.failed", { error: error instanceof Error ? error.message : t("common.error") }),
+          message: `Import failed: ${error instanceof Error ? error.message : "Error"}`,
         });
         setShowResultDialog(true);
       } finally {
@@ -120,12 +118,12 @@ export function DataImportExport() {
         setPendingImportData(null);
       }
     },
-    [pendingImportData, refreshUser, t]
+    [pendingImportData, refreshUser]
   );
 
   return (
     <div className="bg-background">
-      <Header title={t("data.title")} back />
+      <Header title={"Import & Export"} back />
 
       <div className="p-4">
         <div className="rounded-xl bg-surface p-5 border border-border mb-4">
@@ -135,10 +133,10 @@ export function DataImportExport() {
             </div>
             <div className="flex-1">
               <h2 className="text-text-primary font-bold text-lg mb-1">
-                {t("data.export.title")}
+                Export Data
               </h2>
               <p className="text-text-secondary text-sm mb-4">
-                {t("data.export.description")}
+                Export all your tasks, rewards, and points history as a JSON file for backup or use on another device.
               </p>
               <button
                 onClick={handleExport}
@@ -153,10 +151,10 @@ export function DataImportExport() {
                   <FileJson className="w-4 h-4" />
                 )}
                 {isExporting
-                  ? t("data.export.inProgress")
+                  ? "Exporting..."
                   : exportSuccess
-                  ? t("data.export.success")
-                  : t("data.export.toFile")}
+                  ? "Export successful"
+                  : "Export to File"}
               </button>
             </div>
           </div>
@@ -169,10 +167,10 @@ export function DataImportExport() {
             </div>
             <div className="flex-1">
               <h2 className="text-text-primary font-bold text-lg mb-1">
-                {t("data.import.title")}
+                Import Data
               </h2>
               <p className="text-text-secondary text-sm mb-4">
-                {t("data.import.description")}
+                Restore data from a backup file. You can choose to overwrite existing data.
               </p>
               <button
                 onClick={handleFileSelect}
@@ -184,7 +182,7 @@ export function DataImportExport() {
                 ) : (
                   <FileJson className="w-4 h-4" />
                 )}
-                {isImporting ? t("data.import.reading") : t("data.import.selectFile")}
+                {isImporting ? "Reading..." : "Select File"}
               </button>
             </div>
           </div>
@@ -195,12 +193,12 @@ export function DataImportExport() {
             <AlertTriangle className="w-5 h-5 text-yellow-500 shrink-0 mt-0.5" />
             <div>
               <h3 className="text-yellow-500 font-medium text-sm mb-1">
-                {t("data.warnings.title")}
+                Important Notes
               </h3>
               <ul className="text-text-secondary text-sm space-y-1">
-                <li>• {t("data.warnings.backup")}</li>
-                <li>• {t("data.warnings.backupBeforeImport")}</li>
-                <li>• {t("data.warnings.fullOverwrite")}</li>
+                <li>• {"The exported file contains all your data. Keep it safe."}</li>
+                <li>• {"Export your current data as a backup before importing."}</li>
+                <li>• {"Full overwrite will delete all existing data. Proceed with caution."}</li>
               </ul>
             </div>
           </div>
@@ -214,40 +212,40 @@ export function DataImportExport() {
           setPendingImportData(null);
         }}
         position="center"
-        title={t("data.strategy.title")}
+        title="Choose Import Method"
       >
         <div className="p-4">
           {importPreview?.stats && (
             <div className="mb-4 p-3 rounded-lg bg-surface-light">
-              <p className="text-text-secondary text-sm mb-2">{t("data.import.preview.title")}</p>
+              <p className="text-text-secondary text-sm mb-2">File contents:</p>
               <div className="grid grid-cols-2 gap-2 text-sm">
                 <div className="text-text-secondary">
-                  {t("data.import.preview.taskTemplates")}: <span className="text-text-primary">{importPreview.stats.taskTemplates}</span>
+                  {"Task Templates"}: <span className="text-text-primary">{importPreview.stats.taskTemplates}</span>
                 </div>
                 <div className="text-text-secondary">
-                  {t("data.import.preview.taskInstances")}: <span className="text-text-primary">{importPreview.stats.taskInstances}</span>
+                  {"Task Instances"}: <span className="text-text-primary">{importPreview.stats.taskInstances}</span>
                 </div>
                 <div className="text-text-secondary">
-                  {t("data.import.preview.rewardTemplates")}: <span className="text-text-primary">{importPreview.stats.rewardTemplates}</span>
+                  {"Reward Templates"}: <span className="text-text-primary">{importPreview.stats.rewardTemplates}</span>
                 </div>
                 <div className="text-text-secondary">
-                  {t("data.import.preview.rewardPurchases")}: <span className="text-text-primary">{importPreview.stats.rewardPurchases}</span>
+                  {"Purchases"}: <span className="text-text-primary">{importPreview.stats.rewardPurchases}</span>
                 </div>
                 <div className="text-text-secondary">
-                  {t("data.import.preview.users")}: <span className="text-text-primary">{importPreview.stats.users}</span>
+                  {"User Data"}: <span className="text-text-primary">{importPreview.stats.users}</span>
                 </div>
                 <div className="text-text-secondary">
-                  {t("data.import.preview.pointsHistory")}: <span className="text-text-primary">{importPreview.stats.pointsHistory}</span>
+                  {"Points History"}: <span className="text-text-primary">{importPreview.stats.pointsHistory}</span>
                 </div>
                 <div className="text-text-secondary">
-                  {t("data.import.preview.achievements")}: <span className="text-text-primary">{importPreview.stats.achievements}</span>
+                  {"Achievements"}: <span className="text-text-primary">{importPreview.stats.achievements}</span>
                 </div>
               </div>
             </div>
           )}
 
           <p className="text-text-secondary text-sm mb-4">
-            {t("data.strategy.warning")}
+            Importing will overwrite all existing data. Please confirm before proceeding.
           </p>
 
           <div className="flex flex-col gap-3">
@@ -256,10 +254,10 @@ export function DataImportExport() {
               className="flex flex-col items-start p-4 rounded-xl bg-surface border border-border hover:border-primary transition-colors text-left"
             >
               <span className="text-text-primary font-medium mb-1">
-                {t("data.strategy.confirm")}
+                Confirm Import
               </span>
               <span className="text-text-secondary text-sm">
-                {t("data.strategy.fullOverwrite")}
+                Delete all existing data and use backup file data
               </span>
             </button>
           </div>
@@ -274,7 +272,7 @@ export function DataImportExport() {
           setImportPreview(null);
         }}
         position="center"
-        title={importResult?.success ? t("data.result.success") : t("data.result.failed")}
+        title={importResult?.success ? "Import Successful" : "Import Failed"}
       >
         <div className="p-4">
           {importPreview && !importPreview.isValid ? (
@@ -304,28 +302,28 @@ export function DataImportExport() {
               </p>
               {importResult.stats && (
                 <div className="w-full mt-4 p-3 rounded-lg bg-surface-light text-left">
-                  <p className="text-text-secondary text-sm mb-2">{t("data.result.stats")}</p>
+                  <p className="text-text-secondary text-sm mb-2">Import Stats:</p>
                   <div className="grid grid-cols-2 gap-2 text-sm">
                     <div className="text-text-secondary">
-                      {t("data.import.preview.taskTemplates")}: <span className="text-text-primary">{importResult.stats.taskTemplates}</span>
+                      {"Task Templates"}: <span className="text-text-primary">{importResult.stats.taskTemplates}</span>
                     </div>
                     <div className="text-text-secondary">
-                      {t("data.import.preview.taskInstances")}: <span className="text-text-primary">{importResult.stats.taskInstances}</span>
+                      {"Task Instances"}: <span className="text-text-primary">{importResult.stats.taskInstances}</span>
                     </div>
                     <div className="text-text-secondary">
-                      {t("data.import.preview.rewardTemplates")}: <span className="text-text-primary">{importResult.stats.rewardTemplates}</span>
+                      {"Reward Templates"}: <span className="text-text-primary">{importResult.stats.rewardTemplates}</span>
                     </div>
                     <div className="text-text-secondary">
-                      {t("data.import.preview.rewardPurchases")}: <span className="text-text-primary">{importResult.stats.rewardPurchases}</span>
+                      {"Purchases"}: <span className="text-text-primary">{importResult.stats.rewardPurchases}</span>
                     </div>
                     <div className="text-text-secondary">
-                      {t("data.import.preview.users")}: <span className="text-text-primary">{importResult.stats.users}</span>
+                      {"User Data"}: <span className="text-text-primary">{importResult.stats.users}</span>
                     </div>
                     <div className="text-text-secondary">
-                      {t("data.import.preview.pointsHistory")}: <span className="text-text-primary">{importResult.stats.pointsHistory}</span>
+                      {"Points History"}: <span className="text-text-primary">{importResult.stats.pointsHistory}</span>
                     </div>
                     <div className="text-text-secondary">
-                      {t("data.import.preview.achievements")}: <span className="text-text-primary">{importResult.stats.achievements}</span>
+                      {"Achievements"}: <span className="text-text-primary">{importResult.stats.achievements}</span>
                     </div>
                   </div>
                 </div>
@@ -341,7 +339,7 @@ export function DataImportExport() {
             }}
             className="w-full mt-6 py-3 rounded-xl bg-primary text-white font-medium hover:bg-primary-dark transition-colors"
           >
-            {t("common.confirm")}
+            Confirm
           </button>
         </div>
       </Popup>
