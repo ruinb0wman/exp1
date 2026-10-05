@@ -137,3 +137,52 @@ if (!IconComponent) {
   搜「Paw」过滤出唯一一项；选中→确定→表单图标卡变爪印；
   保存后 IndexedDB `exp-v7.rewardTemplates` 里 `icon: 'PawPrint'`、`iconColor: '#f56565'`；
   `/store` 卡片显示爪印 + 标题「宠物零食」。
+
+---
+
+## 7. 增补：再加「汽车 / 住房」两个图标 + 重新打包安装（2026-10-04）
+
+### 7.1 目标
+
+在已有 31 个预设图标后再加两个：**`Car`（汽车）**、**`House`（住房）**，
+然后重新打 release APK 并用 adb 装到 `192.168.1.3:38999`。
+
+### 7.2 现状（已核实）
+
+- 两个图标本机已装：`node_modules/lucide-react/dist/esm/icons/{car,house}.js` 存在
+  （备选：汽车 `CarFront` / `Truck`；住房 `Building2` / `KeyRound`。默认取最通用的 `Car` / `House`）。
+- **已经跑完过一次 APK 构建**（在本节之前）：
+  `src-tauri/gen/android/app/build/outputs/apk/universal/release/app-universal-release.apk`，
+  但那份产物的前端 dist 是在加 `Car`/`House` **之前**编译的，因此**必须重打**。
+- 设备已连上（`adb connect 192.168.1.3:38999` → `device`）：vivo **V2536A / Android 16**；
+  已装两个包 `com.ruinb0w.exp1`（release，versionCode 1000 / versionName 0.1.0，signature `a595b394`）
+  和 `com.ruinb0w.exp1.debug`。签名 `~/.android/debug.keystore`（`app/build.gradle.kts:32`），
+  与已装 release 包一致 ⇒ 可以直接 `install -r` 原地升级（**保留数据**）。
+
+### 7.3 改动清单（与上次完全同构）
+
+| 文件 | 改什么 |
+| --- | --- |
+| `src/db/types/reward.ts` | `REWARD_ICONS` 末尾再追加 `'Car'`、`'House'` |
+| `src/components/DynamicIcon.tsx` | import 与 `iconMap` 各加 `Car`、`House` |
+
+`src/components/DynamicIcon.test.tsx` **不需要改**：它遍历 `REWARD_ICONS ∪ ACHIEVEMENT_ICONS`，
+新名字会自动纳入「渲染结果必须与 lucide-react 同名导出一致」的校验。
+
+### 7.4 步骤
+
+1. 改上述两个文件（各 +2 行 / +4 行）。
+2. `bunx tsc --noEmit`、`bunx vitest run`（预期 25 文件 / 333 例，`DynamicIcon.test.tsx` 自动 +2）、
+   `bun run build`。
+3. `bun run build:android`（= `tauri android build --target aarch64 --apk`）—— 前台跑或后台 + 轮询
+   `/tmp/android-build.log`，产物同上路径。
+4. `adb -s 192.168.1.3:38999 install -r <apk>`；失败时看是不是签名不符
+   （`INSTALL_FAILED_UPDATE_INCOMPATIBLE`）或 `INSTALL_FAILED_VERSION_DOWNGRADE`。
+5. 真机确认：图标选择器应变成 **33 格**（28+5），能搜到 `Car` / `House` 且不是奖杯图标；
+   顺便看启动到首页的时间（`-r` 升级保留数据，会跑一遍迁移链路）。
+
+### 7.5 风险
+
+- 重打包耗时（Rust release 编译）：上一次约 2 分钟（依赖已缓存）。
+- `House` 与底部导航「首页」用的 `lucide-house` 是同一个字形（只是视觉重复，不影响功能）。
+- `install -r` 不卸载、不丢数据；若真要全新安装才用 `-r -d` / 先 `uninstall`（**不需要**）。

@@ -382,7 +382,9 @@
     "moneyCostHint": "Money value of one item. Free rewards with 0 point cost (e.g. a daily free quota) are recorded with it, e.g. ¥1 each.",
     "moneyCostPreview": "{cost} points / item equals",
     "moneyCostOffHint": "No money value — excluded from spending stats",
-    "invalidMoneyCost": "Unit value must be a number greater than or equal to 0"
+    "invalidMoneyCost": "Unit value must be a number greater than or equal to 0",
+    "confirmDelete": "Delete \"{title}\"? Spending records will be kept; restock history will be deleted.",
+    "deleteFailed": "Failed to delete"
   },
   "popup": {
     "close": "Close"

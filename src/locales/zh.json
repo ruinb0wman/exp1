@@ -382,7 +382,9 @@
     "moneyCostHint": "单件折合金额。积分价为 0 的免费额度（如每日送的份数）也按它记账，例如 ¥1/份。",
     "moneyCostPreview": "{cost} 积分 / 份 折合",
     "moneyCostOffHint": "不折合金额，不计入消费统计",
-    "invalidMoneyCost": "单件金额必须是大于或等于 0 的数字"
+    "invalidMoneyCost": "单件金额必须是大于或等于 0 的数字",
+    "confirmDelete": "确定删除「{title}」？消费记录会保留，补货记录会被一并删除。",
+    "deleteFailed": "删除失败"
   },
   "popup": {
     "close": "关闭"

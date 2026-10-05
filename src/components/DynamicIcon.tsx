@@ -44,6 +44,8 @@ import {
   PawPrint,
   Wifi,
   SoapDispenserDroplet,
+  Car,
+  House,
 } from 'lucide-react';
 import type { RewardIconName, RewardIconColor, AchievementIconName } from '@/db/types';
 
@@ -93,6 +95,8 @@ const iconMap: Record<string, React.ComponentType<LucideProps>> = {
   PawPrint,
   Wifi,
   SoapDispenserDroplet,
+  Car,
+  House,
 };
 
 export type DynamicIconName = RewardIconName | AchievementIconName | (string & {});

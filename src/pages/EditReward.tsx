@@ -1,17 +1,18 @@
 import { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { useParams, useNavigate } from "react-router";
-import { Header } from "@/components/Header";
+import { Header, HeaderActionButton } from "@/components/Header";
 import { RadioGroup } from "@/components/RadioGroup";
 import { IconPicker } from "@/components/IconPicker";
 import { DynamicIcon } from "@/components/DynamicIcon";
 import { MultiSelectGrid } from "@/components/MultiSelectGrid";
-import { Package, Sparkles, Scale } from "lucide-react";
+import { Package, Sparkles, Scale, Trash2 } from "lucide-react";
 import { NumberInput } from "@/components/NumberInput";
 import type { RewardTemplate, RewardIconName, RewardIconColor, ReplenishmentMode } from "@/db/types";
 import { REWARD_ICON_COLORS } from "@/db/types";
 import { isValidMoneyCost, formatMoney } from "@/libs/reward";
 import { useRewardTemplate, useRewardTemplateActions } from "@/hooks/useRewards";
+import { useConfirm } from "@/hooks/useConfirm";
 import { useUserStore } from "@/store";
 
 const restockOptions = ["None", "Daily", "Weekly", "Monthly"];
@@ -41,7 +42,8 @@ export function EditReward() {
   
   // 使用 hook 获取奖励模板数据
   const { template, isLoading: isLoadingTemplate } = useRewardTemplate(rewardId);
-  const { create, update, isLoading: isSubmitting } = useRewardTemplateActions();
+  const { create, update, remove, isLoading: isSubmitting } = useRewardTemplateActions();
+  const confirm = useConfirm();
   
   const isEditing = Boolean(rewardId);
 
@@ -151,6 +153,26 @@ export function EditReward() {
 
   const restockMode = restockValues[restockIndex];
 
+  // 删除商品：只删模板与补货记录，消费记录靠快照保留
+  const handleDelete = async () => {
+    if (!rewardId || !template) return;
+
+    const ok = await confirm({
+      title: t("common.delete"),
+      message: t("editReward.confirmDelete", { title: template.title }),
+      confirmLabel: t("common.delete"),
+      variant: "danger",
+    });
+    if (!ok) return;
+
+    try {
+      await remove(rewardId);
+      navigate(-1);
+    } catch (err) {
+      alert(err instanceof Error ? err.message : t("editReward.deleteFailed"));
+    }
+  };
+
   // 加载中状态
   if (isEditing && isLoadingTemplate) {
     return (
@@ -165,6 +187,16 @@ export function EditReward() {
       <Header
         title={isEditing ? t("editReward.title") : t("editReward.createTitle")}
         back
+        rightSlot={
+          isEditing ? (
+            <HeaderActionButton
+              icon={Trash2}
+              side="end"
+              label={t("common.delete")}
+              onClick={handleDelete}
+            />
+          ) : null
+        }
       />
 
       <main className="flex-1 px-4 py-6 space-y-6">

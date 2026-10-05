@@ -97,6 +97,18 @@ describe('rewardService - 购买即消费', () => {
     expect(await currentPoints()).toBe(200);
   });
 
+  it('不限制单次购买数量（99 上限只在 UI 层）', async () => {
+    await seedPoints(100000);
+    const templateId = await createRewardTemplate(template({ pointsCost: 1 }));
+
+    const purchaseId = await purchaseReward(templateId, USER_ID, 5000);
+
+    const purchase = await getRewardPurchaseById(purchaseId);
+    expect(purchase!.quantity).toBe(5000);
+    expect(purchase!.pointsSpent).toBe(5000);
+    expect(await currentPoints()).toBe(95000);
+  });
+
   it('按单件金额累计：¥50/份 时单价不变，数量倍增金额', async () => {
     await seedPoints(300);
     const templateId = await createRewardTemplate(

@@ -37,7 +37,7 @@ export function getMaxQuantity(
 
   const maxByStock = template.replenishmentMode === 'none' ? Infinity : availableCount;
 
-  return Math.max(1, Math.min(maxByPoints, maxByStock, 99));
+  return Math.max(1, Math.min(maxByPoints, maxByStock));
 }
 
 /**
