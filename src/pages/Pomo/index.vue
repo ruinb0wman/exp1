@@ -4,6 +4,7 @@ import { storeToRefs } from "pinia";
 import { usePomoStore } from "@/store/pomoStore";
 import { useUserStore } from "@/store/userStore";
 import { useTodayTasks } from "@/composables/useTasks";
+import { useConfirm } from "@/composables/useConfirm";
 import PomoTimer from "@/components/PomoTimer.vue";
 import PomoHeader from "./components/PomoHeader.vue";
 import ModeSwitcher from "./components/ModeSwitcher.vue";
@@ -26,6 +27,10 @@ const {
 } = storeToRefs(pomoStore);
 
 const { tasks } = useTodayTasks(() => userId.value);
+
+// 不用原生 window.confirm()：Android WebView 没实现 onJsConfirm，它直接返回 false
+// （按钮会变成死的），在 Electron 里又会阻塞渲染进程。一律用应用内确认框。
+const confirmDialog = useConfirm();
 
 const showTaskSelector = ref(false);
 const showSettings = ref(false);
@@ -55,16 +60,36 @@ const selectedTask = computed(() =>
 );
 
 // 放弃按钮
-function handleStop() {
-	if (confirm("Are you sure you want to give up the current timer?")) {
-		void pomoStore.stopTimer(false);
+async function handleStop() {
+	const ok = await confirmDialog({
+		title: "Give Up",
+		message: "Are you sure you want to give up the current timer?",
+		confirmLabel: "Give Up",
+		variant: "danger",
+	});
+	if (!ok) return;
+
+	try {
+		await pomoStore.stopTimer(false);
+	} catch (error) {
+		console.error("Failed to give up pomodoro session:", error);
 	}
 }
 
 // 完成按钮（提前完成）
-function handleComplete() {
-	if (confirm("Complete the current timer early?")) {
-		void pomoStore.stopTimer(true);
+async function handleComplete() {
+	const ok = await confirmDialog({
+		title: "Complete Early",
+		message: "Complete the current timer early?",
+		confirmLabel: "Complete",
+		variant: "info",
+	});
+	if (!ok) return;
+
+	try {
+		await pomoStore.stopTimer(true);
+	} catch (error) {
+		console.error("Failed to complete pomodoro session early:", error);
 	}
 }
 </script>
