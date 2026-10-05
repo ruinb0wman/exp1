@@ -1,5 +1,5 @@
 import type { TaskHistoryItem } from "@/db/services";
-import type { TaskHistoryFilterStatus } from "@/hooks/useTaskHistory";
+import type { TaskHistoryFilterStatus } from "@/composables/useTaskHistory";
 
 // 过滤标签配置
 export const filterTabs: { key: TaskHistoryFilterStatus; label: string }[] = [

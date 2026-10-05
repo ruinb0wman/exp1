@@ -4,9 +4,9 @@
 
 ```mermaid
 flowchart TB
-    subgraph Frontend["前端 React + Zustand"]
+    subgraph Frontend["前端 Vue + Pinia"]
         PS[pomoStore\n状态管理 + DB 操作]
-        UGPT[useGlobalPomoTimer\n桥接 Hook]
+        UGPT[useGlobalPomoTimer\n桥接 Composable]
     end
 
     subgraph Rust["Rust 后端 — 所有平台"]

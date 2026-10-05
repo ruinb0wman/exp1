@@ -1,5 +1,6 @@
-import { create } from "zustand";
-import { liveQuery } from "dexie";
+import { defineStore } from "pinia";
+import { ref } from "vue";
+import { liveQuery, type Subscription } from "dexie";
 import type { TaskInstance, TaskTemplate } from "@/db/types";
 import {
 	getTodayTaskInstances,
@@ -7,114 +8,99 @@ import {
 } from "@/db/services";
 import { useUserStore } from "@/store/userStore";
 
-interface TaskWithTemplate {
+export interface TaskWithTemplate {
 	instance: TaskInstance;
 	template: TaskTemplate;
 }
 
-interface TaskState {
-	todayTasks: TaskWithTemplate[];
-	noDateTasks: TaskWithTemplate[];
-	isLoading: boolean;
-	error: string | null;
+// 订阅句柄放模块级（store 单例）
+let todayTasksSubscription: Subscription | null = null;
+let noDateTasksSubscription: Subscription | null = null;
 
-	todayTasksSubscription: (() => void) | null;
-	noDateTasksSubscription: (() => void) | null;
+export const useTaskStore = defineStore("task", () => {
+	const todayTasks = ref<TaskWithTemplate[]>([]);
+	const noDateTasks = ref<TaskWithTemplate[]>([]);
+	const isLoading = ref(false);
+	const error = ref<string | null>(null);
 
-	subscribeToTodayTasks: (userId: number) => void;
-	subscribeToNoDateTasks: (userId: number) => void;
-	unsubscribeFromTodayTasks: () => void;
-	unsubscribeFromNoDateTasks: () => void;
-	refreshTodayTasks: () => Promise<void>;
-	refreshNoDateTasks: () => Promise<void>;
-}
+	function subscribeToTodayTasks(userId: number) {
+		unsubscribeFromTodayTasks();
 
-export const useTaskStore = create<TaskState>((set, get) => ({
-	todayTasks: [],
-	noDateTasks: [],
-	isLoading: false,
-	error: null,
-	todayTasksSubscription: null,
-	noDateTasksSubscription: null,
-
-	subscribeToTodayTasks: (userId) => {
-		get().unsubscribeFromTodayTasks();
-
-		const user = useUserStore.getState().user;
-		const dayEndTime = user?.dayEndTime ?? "00:00";
+		const userStore = useUserStore();
+		const dayEndTime = userStore.user?.dayEndTime ?? "00:00";
 
 		const observable = liveQuery(() =>
 			getTodayTaskInstances(userId, dayEndTime),
 		);
 
-		const subscription = observable.subscribe({
+		todayTasksSubscription = observable.subscribe({
 			next: (data) => {
-				set({ todayTasks: data, isLoading: false, error: null });
+				todayTasks.value = data;
+				isLoading.value = false;
+				error.value = null;
 			},
 			error: (err) => {
-				set({
-					error:
-						err instanceof Error
-							? err.message
-							: "Failed to load today tasks",
-					isLoading: false,
-				});
+				error.value =
+					err instanceof Error ? err.message : "Failed to load today tasks";
+				isLoading.value = false;
 			},
 		});
 
-		set({
-			todayTasksSubscription: () => subscription.unsubscribe(),
-			isLoading: true,
-		});
-	},
+		isLoading.value = true;
+	}
 
-	subscribeToNoDateTasks: (userId) => {
-		get().unsubscribeFromNoDateTasks();
+	function subscribeToNoDateTasks(userId: number) {
+		unsubscribeFromNoDateTasks();
 
 		const observable = liveQuery(() => getNoDateTaskInstances(userId));
 
-		const subscription = observable.subscribe({
+		noDateTasksSubscription = observable.subscribe({
 			next: (data) => {
-				set({ noDateTasks: data, isLoading: false, error: null });
+				noDateTasks.value = data;
+				isLoading.value = false;
+				error.value = null;
 			},
 			error: (err) => {
-				set({
-					error:
-						err instanceof Error
-							? err.message
-							: "Failed to load no date tasks",
-					isLoading: false,
-				});
+				error.value =
+					err instanceof Error
+						? err.message
+						: "Failed to load no date tasks";
+				isLoading.value = false;
 			},
 		});
 
-		set({
-			noDateTasksSubscription: () => subscription.unsubscribe(),
-			isLoading: true,
-		});
-	},
+		isLoading.value = true;
+	}
 
-	unsubscribeFromTodayTasks: () => {
-		const { todayTasksSubscription } = get();
-		if (todayTasksSubscription) {
-			todayTasksSubscription();
-			set({ todayTasksSubscription: null });
-		}
-	},
+	function unsubscribeFromTodayTasks() {
+		todayTasksSubscription?.unsubscribe();
+		todayTasksSubscription = null;
+	}
 
-	unsubscribeFromNoDateTasks: () => {
-		const { noDateTasksSubscription } = get();
-		if (noDateTasksSubscription) {
-			noDateTasksSubscription();
-			set({ noDateTasksSubscription: null });
-		}
-	},
+	function unsubscribeFromNoDateTasks() {
+		noDateTasksSubscription?.unsubscribe();
+		noDateTasksSubscription = null;
+	}
 
-	refreshTodayTasks: async () => {
+	async function refreshTodayTasks() {
 		// liveQuery 会自动更新，这里可以留空
-	},
+	}
 
-	refreshNoDateTasks: async () => {
+	async function refreshNoDateTasks() {
 		// liveQuery 会自动更新，这里可以留空
-	},
-}));
+	}
+
+	return {
+		todayTasks,
+		noDateTasks,
+		isLoading,
+		error,
+
+		subscribeToTodayTasks,
+		subscribeToNoDateTasks,
+		unsubscribeFromTodayTasks,
+		unsubscribeFromNoDateTasks,
+		refreshTodayTasks,
+		refreshNoDateTasks,
+	};
+});

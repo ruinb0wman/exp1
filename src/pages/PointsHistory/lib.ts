@@ -1,4 +1,4 @@
-import type { PointsHistoryFilterType } from "@/hooks/usePointsHistory";
+import type { PointsHistoryFilterType } from "@/composables/usePointsHistory";
 
 export const filterTabKeys: PointsHistoryFilterType[] = [
   "all",

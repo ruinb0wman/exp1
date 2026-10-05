@@ -1,3 +1,3 @@
-export { BaseLayout } from "./BaseLayout";
-export { MainLayout } from "./MainLayout";
-export { SimpleLayout } from "./SimpleLayout";
+export { default as BaseLayout } from "./BaseLayout.vue";
+export { default as MainLayout } from "./MainLayout.vue";
+export { default as SimpleLayout } from "./SimpleLayout.vue";

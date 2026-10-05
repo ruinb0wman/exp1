@@ -26,13 +26,13 @@
 
 ## 技术栈
 
-- **框架**: Tauri v2 + React 19 + Vite
-- **路由**: react-router
+- **框架**: Tauri v2 + Vue 3 + Vite
+- **路由**: vue-router
 - **数据库**: dexie.js (IndexedDB)
-- **状态管理**: Zustand
+- **状态管理**: Pinia
 - **样式**: Tailwind CSS v4
 - **语言**: TypeScript
-- **图标**: lucide-react
+- **图标**: lucide-vue-next
 - **包管理器**: bun
 
 ### 视觉风格

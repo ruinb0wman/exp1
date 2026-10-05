@@ -1,7 +1,10 @@
-import { CheckCircle2, Circle, XCircle, type LucideIcon } from "lucide-react";
+import { CheckCircle2, Circle, XCircle } from "lucide-vue-next";
+import type { Component } from "vue";
 import type { TaskHistoryItem } from "@/db/services";
 
-export function getStatusIcon(status: TaskHistoryItem["instance"]["status"]): LucideIcon {
+export function getStatusIcon(
+  status: TaskHistoryItem["instance"]["status"],
+): Component {
   switch (status) {
     case "completed":
       return CheckCircle2;

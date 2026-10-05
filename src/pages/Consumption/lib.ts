@@ -1,4 +1,4 @@
-import type { PurchaseScope } from '@/hooks/useRewardPurchases';
+import type { PurchaseScope } from '@/composables/useRewardPurchases';
 import { formatLocalDate } from '@/libs/time';
 
 /** 消费统计周期：记账只需要月 / 年 / 自定义 */

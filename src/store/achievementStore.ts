@@ -1,31 +1,28 @@
-import { create } from 'zustand';
-import type { Achievement } from '@/db/types';
+import { defineStore } from "pinia";
+import type { Achievement } from "@/db/types";
+import { ref } from "vue";
 
-interface AchievementState {
-  /** 待展示的解锁通知队列 */
-  pendingUnlocks: Achievement[];
-  pushUnlocks: (items: Achievement[]) => void;
-  shiftUnlock: () => void;
-  clearUnlocks: () => void;
-}
+export const useAchievementStore = defineStore("achievement", () => {
+	/** 待展示的解锁通知队列 */
+	const pendingUnlocks = ref<Achievement[]>([]);
 
-export const useAchievementStore = create<AchievementState>((set) => ({
-  pendingUnlocks: [],
+	function pushUnlocks(items: Achievement[]) {
+		if (items.length === 0) return;
+		const existing = new Set(pendingUnlocks.value.map((item) => item.id));
+		const merged = [
+			...pendingUnlocks.value,
+			...items.filter((item) => !existing.has(item.id)),
+		];
+		pendingUnlocks.value = merged;
+	}
 
-  pushUnlocks: (items) => {
-    if (items.length === 0) return;
-    set((state) => {
-      const existing = new Set(state.pendingUnlocks.map((item) => item.id));
-      const merged = [
-        ...state.pendingUnlocks,
-        ...items.filter((item) => !existing.has(item.id)),
-      ];
-      return { pendingUnlocks: merged };
-    });
-  },
+	function shiftUnlock() {
+		pendingUnlocks.value = pendingUnlocks.value.slice(1);
+	}
 
-  shiftUnlock: () =>
-    set((state) => ({ pendingUnlocks: state.pendingUnlocks.slice(1) })),
+	function clearUnlocks() {
+		pendingUnlocks.value = [];
+	}
 
-  clearUnlocks: () => set({ pendingUnlocks: [] }),
-}));
+	return { pendingUnlocks, pushUnlocks, shiftUnlock, clearUnlocks };
+});

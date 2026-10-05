@@ -1,10 +1,11 @@
-import type { LucideIcon } from "lucide-react";
-import { ChartPie, BarChart3, History, Coins, Trophy } from "lucide-react";
+import type { Component } from "vue";
+import { BarChart3, ChartPie, Coins, History, Trophy } from "lucide-vue-next";
 
 export interface QuickAction {
-  icon: LucideIcon;
+  icon: Component;
   label: string;
   path: string;
+  badge?: number;
 }
 
 export const quickActions: QuickAction[] = [
