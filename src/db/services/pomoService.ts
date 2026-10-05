@@ -66,6 +66,34 @@ export async function incrementInterruptions(id: number): Promise<void> {
   }
 }
 
+/**
+ * 收尾「僵尸会话」。
+ *
+ * 进程被杀/设备重启后，后端计时器会重置为 Idle，但 DB 里 status 为 running/paused 的会话
+ * 永远不会被结算，会一直污染统计。应用启动时把它们标记为 aborted，
+ * 实际时长按已过时间反推（封顶设定时长）。
+ */
+export async function abortStalePomoSessions(): Promise<number> {
+  const db = getDB();
+  const now = Date.now();
+  const stale = await db.pomoSessions.where('status').anyOf('running', 'paused').toArray();
+
+  for (const session of stale) {
+    const startedAt = new Date(session.startedAt).getTime();
+    const elapsed = Number.isFinite(startedAt)
+      ? Math.max(0, Math.min(session.duration, Math.round((now - startedAt) / 1000)))
+      : 0;
+
+    await db.pomoSessions.update(session.id!, {
+      status: 'aborted' as PomoStatus,
+      actualDuration: elapsed,
+      endedAt: new Date(now).toISOString(),
+    });
+  }
+
+  return stale.length;
+}
+
 // 获取今日的番茄钟会话（基于UTC时间）
 export async function getTodayPomoSessions(userId: number): Promise<PomoSession[]> {
   const db = getDB();

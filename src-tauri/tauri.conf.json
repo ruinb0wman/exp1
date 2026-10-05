@@ -22,7 +22,9 @@
     }
   },
   "plugins": {
-    "background-service": {}
+    "background-service": {
+      "androidForegroundServiceTypes": ["specialUse", "dataSync"]
+    }
   },
   "bundle": {
     "active": true,

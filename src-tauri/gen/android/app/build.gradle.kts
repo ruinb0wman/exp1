@@ -15,6 +15,9 @@ val tauriProperties = Properties().apply {
 
 android {
     compileSdk = 36
+    // 显式指定已安装的 build-tools，避免 AGP 8.11.0 回落到默认的 35.0.0
+    // （本机只有 36.0.0，缺失的 35.0.0 又因 /opt/android-sdk 不可写 + 无 licenses 而无法自动下载）
+    buildToolsVersion = "36.0.0"
     namespace = "com.ruinb0w.exp1"
     defaultConfig {
         manifestPlaceholders["usesCleartextTraffic"] = "false"

@@ -1,10 +1,10 @@
 use tauri::Manager;
-#[cfg(mobile)]
-use tauri::{Emitter, Listener};
 use std::sync::Arc;
 
 mod pomo_timer;
 use pomo_timer::{PomoTimerManager, PomoMode, PomoTimerData};
+
+mod pomo_native;
 
 mod llm;
 
@@ -26,6 +26,7 @@ async fn start_pomo_timer(
     mode: String,
     duration: i64,
     session_id: Option<i64>,
+    task_id: Option<String>,
 ) -> Result<(), String> {
     let mode = match mode.as_str() {
         "focus" => PomoMode::Focus,
@@ -34,7 +35,9 @@ async fn start_pomo_timer(
         _ => return Err("无效的模式".to_string()),
     };
     let manager = pomo_timer::get_timer_manager(&app);
-    manager.start_timer(app, mode, duration, session_id).await
+    manager
+        .start_timer(app, mode, duration, session_id, task_id)
+        .await
 }
 
 /// 暂停番茄钟计时器
@@ -55,7 +58,7 @@ async fn resume_pomo_timer(app: tauri::AppHandle) -> Result<(), String> {
 #[tauri::command]
 async fn stop_pomo_timer(app: tauri::AppHandle) -> Result<PomoTimerData, String> {
     let manager = pomo_timer::get_timer_manager(&app);
-    Ok(manager.stop_timer().await)
+    Ok(manager.stop_timer(&app).await)
 }
 
 /// 获取番茄钟计时器状态
@@ -63,6 +66,21 @@ async fn stop_pomo_timer(app: tauri::AppHandle) -> Result<PomoTimerData, String>
 async fn get_pomo_timer_state(app: tauri::AppHandle) -> Result<PomoTimerData, String> {
     let manager = pomo_timer::get_timer_manager(&app);
     Ok(manager.get_data().await)
+}
+
+/// 取出上次计时的记录（取完即清空），用于「进程被杀」后的补记：
+/// 已过点 → 前端按正常完成收尾；未过点 → 前端按残留会话收尾。
+///
+/// 只在计时器处于 Idle 时才查（页面刷新时后端还在跑，不该动这份记录）。
+#[tauri::command]
+async fn take_pending_pomo_completion(
+    app: tauri::AppHandle,
+) -> Result<Option<pomo_native::PendingCompletion>, String> {
+    let manager = pomo_timer::get_timer_manager(&app);
+    if manager.get_data().await.state != pomo_timer::TimerState::Idle {
+        return Ok(None);
+    }
+    Ok(pomo_native::take_pending_completion(&app).await)
 }
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
@@ -81,6 +99,11 @@ pub fn run() {
         tauri_plugin_background_service::init_with_service(|| PomoBackgroundService)
     );
 
+    // Android 端：注册原生能力插件（partial wake lock + 到点提醒通知）。
+    // 只由 Rust 侧调用，前端不需要 capability 授权。
+    #[cfg(target_os = "android")]
+    let builder = builder.plugin(pomo_native::init());
+
     builder
         .invoke_handler(tauri::generate_handler![
             greet,
@@ -89,6 +112,7 @@ pub fn run() {
             resume_pomo_timer,
             stop_pomo_timer,
             get_pomo_timer_state,
+            take_pending_pomo_completion,
             llm::get_llm_settings,
             llm::set_llm_settings,
             llm::test_llm_connection,
@@ -102,14 +126,10 @@ pub fn run() {
             // 托管共享数据，供 Android BackgroundService run() 读取
             app.manage(timer_data.clone());
 
-            // 移动端：监听应用恢复事件，同步计时器状态
-            #[cfg(mobile)]
-            {
-                let app_handle = app.handle().clone();
-                app.listen("AppEvent::Resumed", move |_event| {
-                    let _ = app_handle.emit("app:resumed", ());
-                });
-            }
+            // 说明：从后台恢复时不再依赖事件通知 ——
+            // 旧的 `app.listen("AppEvent::Resumed")` 监听的事件名在 tauri 2.10 里根本不存在（从不触发）；
+            // 现在 `time_left` 由截止时间戳重算，并且前端在页面重新可见时会主动拉取权威快照，
+            // 所以「回到前台即自愈」不依赖任何生命周期钩子。
 
             Ok(())
         })

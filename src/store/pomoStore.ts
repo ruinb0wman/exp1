@@ -32,7 +32,7 @@ interface PomoState {
   startTimer: () => Promise<void>;
   pauseTimer: () => void;
   resumeTimer: () => void;
-  stopTimer: (completed: boolean) => Promise<void>;
+  stopTimer: (completed: boolean, actualDurationOverride?: number) => Promise<void>;
   tick: () => void;
   loadTodayCount: (userId: number) => Promise<void>;
   resetTimer: () => void;
@@ -181,13 +181,14 @@ export const usePomoStore = create<PomoState>((set, get) => ({
   },
 
   // 停止计时
-  stopTimer: async (completed: boolean) => {
+  stopTimer: async (completed: boolean, actualDurationOverride?: number) => {
     const { currentSessionId, totalTime, timeLeft, mode, settings, selectedTaskId } = get();
     const userStore = useUserStore.getState();
 
     if (!currentSessionId) return;
 
-    const actualDuration = totalTime - timeLeft;
+    // 实际时长优先用后端给出的 elapsed：漏 tick（灭屏/被冻结）时用 totalTime - timeLeft 会算少
+    const actualDuration = actualDurationOverride ?? (totalTime - timeLeft);
 
     if (completed) {
       await completePomoSession(currentSessionId, actualDuration);

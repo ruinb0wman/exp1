@@ -26,6 +26,7 @@
       "resume_pomo_timer",
       "stop_pomo_timer",
       "get_pomo_timer_state",
+      "take_pending_pomo_completion",
       "get_llm_settings",
       "set_llm_settings",
       "test_llm_connection",

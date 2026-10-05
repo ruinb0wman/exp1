@@ -5,6 +5,9 @@
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <!-- 番茄钟到点提醒需要精确闹钟：灭屏/被冻结时只有 AlarmManager 能把设备唤醒并按点提醒。
+         USE_EXACT_ALARM 对「计时器/闹钟」类应用自动授予（Android 13+） -->
+    <uses-permission android:name="android.permission.USE_EXACT_ALARM" />
     <uses-feature android:name="android.hardware.camera" android:required="false" />
 
     <!-- AndroidTV support -->
@@ -39,5 +42,10 @@
             android:name="android.support.FILE_PROVIDER_PATHS"
             android:resource="@xml/file_paths" />
         </provider>
+
+        <!-- 番茄钟「到点」闹钟的接收器（由 PomoNativePlugin 通过 AlarmManager 唤起） -->
+        <receiver
+            android:name=".PomoAlarmReceiver"
+            android:exported="false" />
     </application>
 </manifest>
