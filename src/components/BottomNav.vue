@@ -1,14 +1,20 @@
 <script setup lang="ts">
 import { BarChart3, Home, Store, Timer, User } from "lucide-vue-next";
-import { RouterLink } from "vue-router";
+import { RouterLink, useRoute } from "vue-router";
+
+const route = useRoute();
 
 const items = [
-	{ to: "/", icon: Home, label: "Home" },
-	{ to: "/pomo", icon: Timer, label: "Pomo" },
-	{ to: "/store", icon: Store, label: "Store" },
-	{ to: "/stats", icon: BarChart3, label: "Stats" },
-	{ to: "/profile", icon: User, label: "Profile" },
-];
+	{ name: "home", to: "/", icon: Home, label: "Home" },
+	{ name: "pomo", to: "/pomo", icon: Timer, label: "Pomo" },
+	{ name: "store", to: "/store", icon: Store, label: "Store" },
+	{ name: "stats", to: "/stats", icon: BarChart3, label: "Stats" },
+	{ name: "profile", to: "/profile", icon: User, label: "Profile" },
+] as const;
+
+// 不用 RouterLink 的 isActive：Home 的路由 path 是 ""（解析后与父级 "/" 同值），会被
+// vue-router 的「父记录回退」判定为所有 tab 页都激活。tab 路由名唯一，直接比 name。
+const isActive = (name: string) => route.name === name;
 </script>
 
 <template>
@@ -16,7 +22,7 @@ const items = [
 		<RouterLink
 			v-for="item in items"
 			:key="item.to"
-			v-slot="{ isActive, navigate }"
+			v-slot="{ navigate }"
 			:to="item.to"
 			replace
 			custom
@@ -24,7 +30,7 @@ const items = [
 			<!-- replace：底部 tab 页不参与返回手势的历史（否则 Home → Profile 再按返回会回到 Home） -->
 			<a
 				:class="`flex flex-col landscape:flex-row landscape:w-full landscape:px-4 landscape:py-3 landscape:rounded-lg landscape:gap-3 items-center gap-1 w-16 transition-colors ${
-					isActive
+					isActive(item.name)
 						? 'text-primary landscape:bg-primary/10'
 						: 'text-text-secondary hover:text-text-primary landscape:hover:bg-surface-light'
 				}`"
@@ -34,7 +40,7 @@ const items = [
 					<component
 						:is="item.icon"
 						:stroke-width="1.5"
-						:fill="isActive ? 'currentColor' : 'none'"
+						:fill="isActive(item.name) ? 'currentColor' : 'none'"
 					/>
 				</div>
 				<span class="text-xs landscape:text-sm font-medium font-display landscape:font-normal">{{ item.label }}</span>
