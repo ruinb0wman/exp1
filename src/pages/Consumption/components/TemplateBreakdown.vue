@@ -10,7 +10,11 @@ defineProps<{
 	buckets: PurchaseTemplateBucket[];
 	/** 周期内计入统计的消费总额（元），作为占比分母 */
 	totalMoney: number;
+	/** 当前选中的奖品（与记录区分组联动） */
+	selectedId?: string | null;
 }>();
+
+const emit = defineEmits<{ select: [templateId: string] }>();
 </script>
 
 <template>
@@ -23,7 +27,11 @@ defineProps<{
 
 	<div v-else class="rounded-xl bg-surface p-4 border border-border space-y-4">
 		<div v-for="bucket in buckets" :key="bucket.templateId" class="space-y-2">
-			<div class="flex items-center gap-3">
+			<button
+				class="w-full flex items-center gap-3 text-left rounded-lg transition-colors"
+				:class="{ 'ring-1 ring-primary': selectedId === bucket.templateId }"
+				@click="emit('select', bucket.templateId)"
+			>
 				<div
 					class="w-9 h-9 shrink-0 rounded-lg flex items-center justify-center"
 					:style="{ backgroundColor: `${bucket.iconColor ?? '#f56565'}20` }"
@@ -49,7 +57,7 @@ defineProps<{
 						</span>
 					</p>
 				</div>
-			</div>
+			</button>
 			<div class="h-1.5 rounded-full bg-surface-light overflow-hidden">
 				<div
 					class="h-full rounded-full transition-all"
