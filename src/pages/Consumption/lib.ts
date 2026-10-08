@@ -38,26 +38,7 @@ export function shiftAnchor(scope: PurchaseScope, anchor: Date, delta: number): 
 }
 
 /**
- * 商品金额占总额的百分比（商品占比与排名都以金额为准）
- * 总额为 0（全是不记金额的奖品）时返回 0，不产生 NaN
- */
-export function getMoneySharePercent(moneyAmount: number, totalMoney: number): number {
-	if (!Number.isFinite(moneyAmount) || !Number.isFinite(totalMoney) || totalMoney <= 0) {
-		return 0;
-	}
-	return (moneyAmount / totalMoney) * 100;
-}
-
-/**
- * 占比文案：10% 及以上取整（41%），10% 以下保留 1 位小数（3.4%），避免小项全部显示成 0%
- */
-export function formatPercent(percent: number): string {
-	if (!Number.isFinite(percent) || percent <= 0) return '0%';
-	return percent >= 10 ? `${Math.round(percent)}%` : `${percent.toFixed(1)}%`;
-}
-
-/**
- * 按奖品分组的兑换记录（记录视角；与 By item 的金额排名是两个维度）
+ * 按奖品分组的兑换记录（记录视角）
  */
 export interface RewardRecordGroup {
 	templateId: string;
@@ -139,7 +120,7 @@ export function groupPurchasesByReward(
 			),
 			moneyAmount: roundMoney(group.moneyAmount),
 		}))
-		// 记录视角：最近兑换过的奖品排最前（By item 那套金额排名不受影响）
+		// 记录视角：最近兑换过的奖品排最前
 		.sort(
 			(a, b) =>
 				b.lastAt.localeCompare(a.lastAt) || a.title.localeCompare(b.title),

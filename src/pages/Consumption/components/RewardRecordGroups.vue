@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, watch } from "vue";
+import { ref } from "vue";
 import { ChevronDown, ReceiptText } from "lucide-vue-next";
 import DynamicIcon from "@/components/DynamicIcon.vue";
 import EmptyState from "@/components/EmptyState.vue";
@@ -9,36 +9,24 @@ import PurchaseRow from "./PurchaseRow.vue";
 
 const props = defineProps<{
 	groups: RewardRecordGroup[];
-	/** 外部选中的奖品：该组强制展开并滚动到位（null = 全部） */
-	expandedTemplateId?: string | null;
 }>();
 
 const emit = defineEmits<{ delete: [purchaseId: string] }>();
 
-/** 折叠的组 id；不在集合里 = 默认展开（不隐藏现有可见的明细） */
-const collapsed = ref(new Set<string>());
+/** 展开的组 id；不在集合里 = 默认折叠 */
+const expanded = ref(new Set<string>());
 
-function isCollapsed(templateId: string): boolean {
-	return collapsed.value.has(templateId);
+function isExpanded(templateId: string): boolean {
+	return expanded.value.has(templateId);
 }
 
 function toggle(templateId: string) {
 	// 替换整个 Set，避免依赖 Set 的响应式追踪
-	const next = new Set(collapsed.value);
+	const next = new Set(expanded.value);
 	if (next.has(templateId)) next.delete(templateId);
 	else next.add(templateId);
-	collapsed.value = next;
+	expanded.value = next;
 }
-
-// 外部选中（点 By item 或筛选 chip）→ 展开该组
-watch(
-	() => props.expandedTemplateId,
-	(templateId) => {
-		if (templateId && collapsed.value.has(templateId)) {
-			toggle(templateId);
-		}
-	},
-);
 </script>
 
 <template>
@@ -55,7 +43,7 @@ watch(
 		>
 			<button
 				class="w-full flex items-center gap-3 p-3 text-left hover:bg-surface-light transition-colors"
-				:aria-expanded="!isCollapsed(group.templateId)"
+				:aria-expanded="isExpanded(group.templateId)"
 				@click="toggle(group.templateId)"
 			>
 				<div
@@ -86,11 +74,11 @@ watch(
 
 				<ChevronDown
 					class="w-4 h-4 shrink-0 text-text-muted transition-transform"
-					:class="{ '-rotate-90': isCollapsed(group.templateId) }"
+					:class="{ '-rotate-90': !isExpanded(group.templateId) }"
 				/>
 			</button>
 
-			<div v-if="!isCollapsed(group.templateId)" class="px-3 pb-3 flex flex-col gap-2">
+			<div v-if="isExpanded(group.templateId)" class="px-3 pt-2 pb-3 flex flex-col gap-2">
 				<PurchaseRow
 					v-for="purchase in group.records"
 					:key="purchase.id"

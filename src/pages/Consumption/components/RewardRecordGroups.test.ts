@@ -38,12 +38,9 @@ function makePurchase(
 	};
 }
 
-function mountGroups(
-	groups: ReturnType<typeof groupPurchasesByReward>,
-	expandedTemplateId: string | null = null,
-) {
+function mountGroups(groups: ReturnType<typeof groupPurchasesByReward>) {
 	return mount(RewardRecordGroups, {
-		props: { groups, expandedTemplateId },
+		props: { groups },
 		global: { stubs: { PurchaseRow: PurchaseRowStub } },
 	});
 }
@@ -55,39 +52,34 @@ const groups = groupPurchasesByReward([
 ]);
 
 describe("RewardRecordGroups", () => {
-	it("每个奖品一个分组，默认展开并渲染组内记录", () => {
+	it("每个奖品一个分组，默认全部折叠只显示组头", () => {
 		const wrapper = mountGroups(groups);
 
 		expect(wrapper.findAll("[data-record-group]")).toHaveLength(2);
 		expect(wrapper.text()).toContain("Coffee");
 		expect(wrapper.text()).toContain("2 purchases · 3 items");
 		expect(wrapper.text()).toContain("Game");
-		// 默认展开：3 条记录全在
-		expect(wrapper.findAll(".purchase-row")).toHaveLength(3);
+		// 默认折叠：一条记录都不渲染
+		expect(wrapper.findAll(".purchase-row")).toHaveLength(0);
 	});
 
-	it("点组头折叠、再点展开", async () => {
+	it("点组头展开、再点折叠，且各组的展开状态互不影响", async () => {
 		const wrapper = mountGroups(groups);
-		const header = wrapper.findAll("button")[0];
+		const [coffee, game] = wrapper.findAll("button");
 
-		await header.trigger("click");
-		expect(wrapper.findAll(".purchase-row")).toHaveLength(1);
+		await coffee.trigger("click");
+		expect(wrapper.findAll(".purchase-row")).toHaveLength(2);
 
-		await header.trigger("click");
+		await game.trigger("click");
 		expect(wrapper.findAll(".purchase-row")).toHaveLength(3);
-	});
 
-	it("外部选中（expandedTemplateId）会把已折叠的组重新展开", async () => {
-		const wrapper = mountGroups(groups);
-		await wrapper.findAll("button")[0].trigger("click");
+		await coffee.trigger("click");
 		expect(wrapper.findAll(".purchase-row")).toHaveLength(1);
-
-		await wrapper.setProps({ expandedTemplateId: groups[0].templateId });
-		expect(wrapper.findAll(".purchase-row")).toHaveLength(3);
 	});
 
 	it("把记录行的删除事件带上 purchaseId 转发出去", async () => {
 		const wrapper = mountGroups(groups);
+		await wrapper.findAll("button")[0].trigger("click");
 		const rows = wrapper.findAllComponents(PurchaseRowStub);
 
 		rows[0].vm.$emit("delete", "purchase-1");
