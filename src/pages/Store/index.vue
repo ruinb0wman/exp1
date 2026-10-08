@@ -2,7 +2,7 @@
 import { computed, onMounted, ref } from "vue";
 import { useRouter } from "vue-router";
 import { storeToRefs } from "pinia";
-import { ChartPie, History, Pencil, Plus } from "lucide-vue-next";
+import { ChartPie, History, ListChecks, Pencil, Plus } from "lucide-vue-next";
 import Header from "@/components/Header.vue";
 import HeaderActionButton from "@/components/HeaderActionButton.vue";
 import Popup from "@/components/Popup.vue";
@@ -176,9 +176,18 @@ function goToEditReward() {
 				<PointsCard :current-points="currentPoints" />
 			</div>
 
-			<!-- Search -->
-			<div class="px-4 pb-2">
-				<SearchBar v-model="searchQuery" placeholder="Search for rewards" />
+			<!-- Search + Manage -->
+			<div class="px-4 pb-2 flex items-center gap-2">
+				<div class="flex-1 min-w-0">
+					<SearchBar v-model="searchQuery" placeholder="Search for rewards" />
+				</div>
+				<button
+					class="flex items-center gap-1.5 rounded-full px-3 h-12 text-sm font-medium text-primary hover:bg-surface transition-colors shrink-0"
+					@click="router.push('/rewards/manage')"
+				>
+					<ListChecks class="w-4 h-4" />
+					<span>Manage</span>
+				</button>
 			</div>
 		</div>
 

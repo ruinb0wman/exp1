@@ -14,6 +14,7 @@ import Consumption from "@/pages/Consumption/index.vue";
 import TaskHistory from "@/pages/TaskHistory/index.vue";
 import Reports from "@/pages/Reports/index.vue";
 import ReplenishmentHistory from "@/pages/ReplenishmentHistory.vue";
+import RewardsManage from "@/pages/RewardsManage/index.vue";
 import Achievements from "@/pages/Achievements/index.vue";
 import Settings from "@/pages/Settings.vue";
 import DataImportExport from "@/pages/DataImportExport.vue";
@@ -40,6 +41,8 @@ const routes: RouteRecordRaw[] = [
 			{ path: "tasks/new", name: "task-new", component: EditTask },
 			{ path: "tasks/:id", name: "task-edit", component: EditTask },
 			{ path: "rewards/new", name: "reward-new", component: EditReward },
+			// 必须排在 rewards/:id 之前，否则 "manage" 会被当成模板 id
+			{ path: "rewards/manage", name: "reward-manage", component: RewardsManage },
 			{ path: "rewards/:id", name: "reward-edit", component: EditReward },
 			{
 				path: "replenishment/:templateId",

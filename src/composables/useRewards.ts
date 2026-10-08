@@ -5,7 +5,6 @@ import {
 	getRewardTemplateById,
 	createRewardTemplate,
 	updateRewardTemplate,
-	deleteRewardTemplate,
 	toggleRewardTemplateEnabled,
 	getStoreRewardTemplates,
 	getReplenishmentRecordsByTemplateId,
@@ -111,20 +110,6 @@ export function useRewardTemplateActions() {
 		}
 	}
 
-	async function remove(id: string) {
-		isLoading.value = true;
-		error.value = null;
-		try {
-			await deleteRewardTemplate(id);
-		} catch (err) {
-			error.value =
-				err instanceof Error ? err.message : "Failed to delete reward";
-			throw err;
-		} finally {
-			isLoading.value = false;
-		}
-	}
-
 	async function toggleEnabled(id: string, enabled?: boolean) {
 		isLoading.value = true;
 		error.value = null;
@@ -139,7 +124,7 @@ export function useRewardTemplateActions() {
 		}
 	}
 
-	return { create, update, remove, toggleEnabled, isLoading, error };
+	return { create, update, toggleEnabled, isLoading, error };
 }
 
 // ==================== Store Composables ====================

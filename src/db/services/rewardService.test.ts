@@ -9,7 +9,6 @@ import {
   getRewardPurchaseStats,
   getRewardPurchaseCount,
   deleteRewardPurchase,
-  deleteRewardTemplate,
   createRewardTemplate,
   getStoreRewardTemplates,
   toggleRewardTemplateEnabled,
@@ -423,25 +422,26 @@ describe('rewardService - 删除消费记录并回滚', () => {
     await expect(deleteRewardPurchase('not-exist')).resolves.toBeUndefined();
   });
 
-  it('商品已删除时仍可回滚积分', async () => {
+  it('模板行已不在（旧版本删过的奖品）时仍可回滚积分', async () => {
     await seedPoints(300);
     const templateId = await createRewardTemplate(template());
     const purchaseId = await purchaseReward(templateId, USER_ID, 1);
 
-    await deleteRewardTemplate(templateId);
+    // 应用内已无删除奖品的入口，但旧版本删过的库仍可能留下这种数据
+    await db.rewardTemplates.delete(templateId);
 
     await deleteRewardPurchase(purchaseId);
     expect(await currentPoints()).toBe(300);
   });
 
-  it('删除商品不会删除消费记录（记账历史保留）', async () => {
+  it('模板行缺失时消费记录仍可读（快照自足）', async () => {
     await seedPoints(300);
     const templateId = await createRewardTemplate(template());
     await purchaseReward(templateId, USER_ID, 1);
 
-    await deleteRewardTemplate(templateId);
+    // 应用内已无删除奖品的入口；这里只验证「记录不依赖模板存在」
+    await db.rewardTemplates.delete(templateId);
 
-    expect(await db.rewardTemplates.get(templateId)).toBeUndefined();
     expect(await db.rewardPurchases.count()).toBe(1);
     const purchases = await getRewardPurchases(USER_ID);
     expect(purchases[0].template.title).toBe('吃饭');

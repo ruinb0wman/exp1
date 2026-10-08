@@ -3,13 +3,12 @@ import { computed, ref, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { storeToRefs } from "pinia";
 import Header from "@/components/Header.vue";
-import HeaderActionButton from "@/components/HeaderActionButton.vue";
 import RadioGroup from "@/components/RadioGroup.vue";
 import IconPicker from "@/components/IconPicker.vue";
 import DynamicIcon from "@/components/DynamicIcon.vue";
 import MultiSelectGrid from "@/components/MultiSelectGrid.vue";
 import NumberInput from "@/components/NumberInput.vue";
-import { Package, Scale, Sparkles, Trash2 } from "lucide-vue-next";
+import { Package, Scale, Sparkles } from "lucide-vue-next";
 import type {
 	RewardTemplate,
 	RewardIconName,
@@ -20,7 +19,7 @@ import { REWARD_ICON_COLORS } from "@/db/types";
 import { isValidMoneyCost, formatMoney } from "@/libs/reward";
 import { toPlain } from "@/libs/plain";
 import { useRewardTemplate, useRewardTemplateActions } from "@/composables/useRewards";
-import { useAlert, useConfirm } from "@/composables/useConfirm";
+import { useAlert } from "@/composables/useConfirm";
 import { useUserStore } from "@/store";
 
 const restockOptions = ["None", "Daily", "Weekly", "Monthly"];
@@ -62,10 +61,8 @@ const { template, isLoading: isLoadingTemplate } = useRewardTemplate(
 const {
 	create,
 	update,
-	remove,
 	isLoading: isSubmitting,
 } = useRewardTemplateActions();
-const confirmDialog = useConfirm();
 
 // 不用原生 alert()：Android WebView 会静默丢弃、Electron 里会阻塞渲染进程
 const alertDialog = useAlert();
@@ -213,29 +210,8 @@ const moneyPreview = computed(() =>
 	isValidMoneyCost(moneyCost.value) ? formatMoney(moneyCost.value) : "-",
 );
 
-// 删除商品：只删模板与补货记录，消费记录靠快照保留
-async function handleDelete() {
-	if (!rewardId.value || !template.value) return;
-
-	const ok = await confirmDialog({
-		title: "Delete",
-		message: `Delete "${template.value.title}"? Spending records will be kept; restock history will be deleted.`,
-		confirmLabel: "Delete",
-		variant: "danger",
-	});
-	if (!ok) return;
-
-	try {
-		await remove(rewardId.value);
-		router.back();
-	} catch (err) {
-		await alertDialog({
-			title: "Delete Failed",
-			message: err instanceof Error ? err.message : "Failed to delete",
-			confirmLabel: "OK",
-		});
-	}
-}
+// 停用（enabled = false）就是「下架」：奖品不再出现在商店、也不再参与补货，
+// 但消费记录与补货记录都保留，且可以随时重新启用（/rewards/manage）
 </script>
 
 <template>
@@ -248,13 +224,7 @@ async function handleDelete() {
 	</div>
 
 	<div v-else class="relative min-h-screen bg-background pb-32">
-		<Header :title="isEditing ? 'Edit Reward' : 'Create Reward'" back>
-			<template v-if="isEditing" #right>
-				<HeaderActionButton side="end" label="Delete" @click="handleDelete">
-					<Trash2 class="w-5 h-5" />
-				</HeaderActionButton>
-			</template>
-		</Header>
+		<Header :title="isEditing ? 'Edit Reward' : 'Create Reward'" back />
 
 		<main class="flex-1 px-4 py-6 space-y-6">
 			<!-- Icon Selector Card -->

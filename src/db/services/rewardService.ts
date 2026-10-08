@@ -113,19 +113,6 @@ export async function updateRewardTemplate(
 }
 
 /**
- * 删除奖励模板（同时删除关联的补货记录）
- * 注意：消费记录必须保留 —— 删掉商品不能抹掉记账历史
- */
-export async function deleteRewardTemplate(id: string): Promise<void> {
-  const db = getDB();
-
-  await db.transaction('rw', db.rewardTemplates, db.replenishmentRecords, async () => {
-    await db.replenishmentRecords.where('templateId').equals(id).delete();
-    await db.rewardTemplates.delete(id);
-  });
-}
-
-/**
  * 切换奖励模板启用状态
  */
 export async function toggleRewardTemplateEnabled(
