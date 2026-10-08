@@ -5,8 +5,6 @@ import type {
   ReplenishmentRecord,
   RewardPurchase,
   RewardPurchaseSnapshot,
-  RewardIconName,
-  RewardIconColor,
   PointsHistory,
 } from '../types';
 import { getUserCurrentDate } from '@/libs/time';
@@ -327,20 +325,6 @@ export async function deleteRewardPurchase(id: string): Promise<void> {
 
 // ==================== 消费统计 ====================
 
-/** 按商品聚合的消费统计 */
-export interface PurchaseTemplateBucket {
-  templateId: string;
-  title: string;
-  icon: RewardIconName;
-  iconColor?: RewardIconColor;
-  /** 笔数 */
-  count: number;
-  /** 件数 */
-  quantity: number;
-  pointsSpent: number;
-  moneyAmount: number;
-}
-
 export interface RewardPurchaseStats {
   pointsSpent: number;
   moneyAmount: number;
@@ -348,8 +332,6 @@ export interface RewardPurchaseStats {
   count: number;
   /** 件数（仅计入消费统计的记录） */
   quantity: number;
-  /** 按金额倒序（仅计入消费统计的记录）：商品占比与排名都以金额为准 */
-  byTemplate: PurchaseTemplateBucket[];
   /** 区间内明细，按时间倒序；**含**不计入消费统计的记录（明细保留撤销入口） */
   purchases: RewardPurchase[];
 }
@@ -357,10 +339,11 @@ export interface RewardPurchaseStats {
 /**
  * 统计指定时间窗内的消费
  *
- * 汇总（积分 / 金额 / 笔数 / 件数 / 商品占比）只累加「计入消费统计」的记录；
+ * 汇总（积分 / 金额 / 笔数 / 件数）只累加「计入消费统计」的记录；
  * 「是否计入」按购买时的快照判定（`purchase.template.countInConsumption`），
  * 因此事后关闭奖品比例不会回算历史统计。
- * 明细 `purchases` 仍返回窗口内全部记录，由 UI 标注不计入的行。
+ * 明细 `purchases` 仍返回窗口内全部记录，由 UI 标注不计入的行；
+ * 需要「按奖品分组」时由 UI 用 `purchases` 自己分（`Consumption/lib.ts`）。
  *
  * @param startISO 起始 ISO 时间（含）
  * @param endExclusiveISO 结束 ISO 时间（不含）
@@ -377,12 +360,11 @@ export async function getRewardPurchaseStats(
     .filter((p) => p.createdAt >= startISO && p.createdAt < endExclusiveISO)
     .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
 
-  // 明细保留全部，汇总与占比只算计入统计的
+  // 明细保留全部，汇总只算计入统计的
   const counted = purchases.filter((purchase) =>
     isCountedInConsumption(purchase.template.countInConsumption)
   );
 
-  const bucketMap = new Map<string, PurchaseTemplateBucket>();
   let pointsSpent = 0;
   let moneyAmount = 0;
   let quantity = 0;
@@ -391,38 +373,13 @@ export async function getRewardPurchaseStats(
     pointsSpent += purchase.pointsSpent;
     moneyAmount += purchase.moneyAmount ?? 0;
     quantity += purchase.quantity;
-
-    const existing = bucketMap.get(purchase.templateId);
-    if (existing) {
-      existing.count += 1;
-      existing.quantity += purchase.quantity;
-      existing.pointsSpent += purchase.pointsSpent;
-      existing.moneyAmount += purchase.moneyAmount ?? 0;
-    } else {
-      // purchases 已按时间倒序，首条即该商品最近的快照
-      bucketMap.set(purchase.templateId, {
-        templateId: purchase.templateId,
-        title: purchase.template.title,
-        icon: purchase.template.icon,
-        iconColor: purchase.template.iconColor,
-        count: 1,
-        quantity: purchase.quantity,
-        pointsSpent: purchase.pointsSpent,
-        moneyAmount: purchase.moneyAmount ?? 0,
-      });
-    }
   }
-
-  const byTemplate = Array.from(bucketMap.values()).sort(
-    (a, b) => b.moneyAmount - a.moneyAmount
-  );
 
   return {
     pointsSpent,
-    moneyAmount: Math.round(moneyAmount * 100) / 100,
+    moneyAmount: roundMoney(moneyAmount),
     count: counted.length,
     quantity,
-    byTemplate,
     purchases,
   };
 }

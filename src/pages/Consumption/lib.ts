@@ -42,7 +42,7 @@ export function shiftAnchor(scope: PurchaseScope, anchor: Date, delta: number): 
  */
 export interface RewardRecordGroup {
 	templateId: string;
-	/** 组内最近一次购买的快照标题：奖品改名后显示新名字（与 byTemplate 同一取舍） */
+	/** 组内最近一次购买的快照标题：奖品改名后显示新名字 */
 	title: string;
 	icon: RewardIconName;
 	iconColor?: RewardIconColor;
@@ -52,7 +52,7 @@ export interface RewardRecordGroup {
 	count: number;
 	quantity: number;
 	pointsSpent: number;
-	/** 只累加「计入消费统计」的金额，与 stats.moneyAmount / byTemplate 同口径 */
+	/** 只累加「计入消费统计」的金额，与 stats.moneyAmount 同口径 */
 	moneyAmount: number;
 	/** 组内「不计入统计」的笔数，> 0 时组头提示 */
 	uncountedCount: number;
@@ -63,7 +63,7 @@ export interface RewardRecordGroup {
 /**
  * 把兑换记录按奖品分组
  *
- * key 用记录上的 `templateId`（与 rewardService 的 byTemplate 一致），所以奖品被删除、
+ * key 用记录上的 `templateId`（= `RewardTemplate.id`），所以奖品被删除、
  * 改名都不影响分组：标题/图标取自购买快照。
  *
  * 金额口径与消费统计完全对齐（只算计入统计的记录），积分/件数则含全部记录 ——

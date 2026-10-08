@@ -457,7 +457,7 @@ describe('rewardService - 消费统计', () => {
     await db.replenishmentRecords.clear();
   });
 
-  it('按时间窗过滤（含头不含尾）并聚合总数与按商品分组', async () => {
+  it('按时间窗过滤（含头不含尾）并聚合总数', async () => {
     await db.rewardPurchases.bulkAdd([
       {
         id: 'p1',
@@ -518,25 +518,6 @@ describe('rewardService - 消费统计', () => {
     expect(stats.pointsSpent).toBe(220);
     expect(stats.moneyAmount).toBe(210);
 
-    expect(stats.byTemplate).toHaveLength(2);
-    // 按积分消耗倒序：吃饭 200 > 香烟 40
-    expect(stats.byTemplate[0]).toMatchObject({
-      templateId: 't1',
-      title: '吃饭',
-      count: 1,
-      quantity: 2,
-      pointsSpent: 200,
-      moneyAmount: 200,
-    });
-    expect(stats.byTemplate[1]).toMatchObject({
-      templateId: 't2',
-      title: '香烟',
-      count: 1,
-      quantity: 1,
-      pointsSpent: 20,
-      moneyAmount: 10,
-    });
-
     // 明细按时间倒序
     expect(stats.purchases.map((purchase) => purchase.id)).toEqual(['p2', 'p1']);
   });
@@ -551,47 +532,10 @@ describe('rewardService - 消费统计', () => {
     expect(stats.count).toBe(0);
     expect(stats.pointsSpent).toBe(0);
     expect(stats.moneyAmount).toBe(0);
-    expect(stats.byTemplate).toEqual([]);
+    expect(stats.purchases).toEqual([]);
   });
 
-  it('商品改名后统计使用最近一次购买的快照标题', async () => {
-    await db.rewardPurchases.bulkAdd([
-      {
-        id: 'p1',
-        userId: USER_ID,
-        templateId: 't1',
-        template: { templateId: 't1', title: '旧名字', icon: 'Pizza', pointsCost: 10, moneyCost: 10 },
-        quantity: 1,
-        pointsCost: 10,
-        pointsSpent: 10,
-        moneyAmount: 10,
-        createdAt: '2026-09-01T00:00:00.000Z',
-      },
-      {
-        id: 'p2',
-        userId: USER_ID,
-        templateId: 't1',
-        template: { templateId: 't1', title: '新名字', icon: 'Pizza', pointsCost: 10, moneyCost: 10 },
-        quantity: 1,
-        pointsCost: 10,
-        pointsSpent: 10,
-        moneyAmount: 10,
-        createdAt: '2026-09-05T00:00:00.000Z',
-      },
-    ] as never);
-
-    const stats = await getRewardPurchaseStats(
-      USER_ID,
-      '2026-09-01T00:00:00.000Z',
-      '2026-10-01T00:00:00.000Z'
-    );
-
-    expect(stats.byTemplate).toHaveLength(1);
-    expect(stats.byTemplate[0].title).toBe('新名字');
-    expect(stats.byTemplate[0].count).toBe(2);
-  });
-
-  it('不计入统计的购买：汇总与商品占比不含，但明细仍保留', async () => {
+  it('不计入统计的购买：汇总不含，但明细仍保留', async () => {
     await db.rewardPurchases.bulkAdd([
       {
         id: 'p1',
@@ -640,8 +584,6 @@ describe('rewardService - 消费统计', () => {
     expect(stats.quantity).toBe(2);
     expect(stats.pointsSpent).toBe(200);
     expect(stats.moneyAmount).toBe(200);
-    expect(stats.byTemplate).toHaveLength(1);
-    expect(stats.byTemplate[0].templateId).toBe('t1');
 
     // 明细保留全部（含不计入统计的那条），否则就没了撤销入口
     expect(stats.purchases.map((purchase) => purchase.id)).toEqual(['p2', 'p1']);
@@ -667,8 +609,6 @@ describe('rewardService - 消费统计', () => {
     expect(stats.count).toBe(1);
     expect(stats.pointsSpent).toBe(100);
     expect(stats.moneyAmount).toBe(100);
-    expect(stats.byTemplate).toHaveLength(1);
-    expect(stats.byTemplate[0].count).toBe(1);
   });
 
   it('旧记录没有 countInConsumption 字段时视为计入统计', async () => {
@@ -694,59 +634,6 @@ describe('rewardService - 消费统计', () => {
 
     expect(stats.count).toBe(1);
     expect(stats.moneyAmount).toBe(5);
-  });
-
-  it('商品占比与排名按金额倒序（与积分序不一致时以金额为准）', async () => {
-    await db.rewardPurchases.bulkAdd([
-      {
-        id: 'p1',
-        userId: USER_ID,
-        templateId: 'points-heavy',
-        template: {
-          templateId: 'points-heavy',
-          title: '积分王',
-          icon: 'Crown',
-          pointsCost: 1000,
-          moneyCost: 1,
-        },
-        quantity: 1,
-        pointsCost: 1000,
-        pointsSpent: 1000,
-        moneyAmount: 1,
-        createdAt: '2026-09-02T00:00:00.000Z',
-      },
-      {
-        id: 'p2',
-        userId: USER_ID,
-        templateId: 'money-heavy',
-        template: {
-          templateId: 'money-heavy',
-          title: '小钱多',
-          icon: 'Gift',
-          pointsCost: 10,
-          moneyCost: 50,
-        },
-        quantity: 1,
-        pointsCost: 10,
-        pointsSpent: 10,
-        moneyAmount: 50,
-        createdAt: '2026-09-03T00:00:00.000Z',
-      },
-    ] as never);
-
-    const stats = await getRewardPurchaseStats(
-      USER_ID,
-      '2026-09-01T00:00:00.000Z',
-      '2026-10-01T00:00:00.000Z'
-    );
-
-    // 金额多的在前；若改成按积分排序会得到 ['points-heavy', 'money-heavy']
-    expect(stats.byTemplate.map((bucket) => bucket.templateId)).toEqual([
-      'money-heavy',
-      'points-heavy',
-    ]);
-    expect(stats.byTemplate[0].moneyAmount).toBe(50);
-    expect(stats.byTemplate[1].moneyAmount).toBe(1);
   });
 
   it('getRewardPurchaseCount 只统计当前用户', async () => {

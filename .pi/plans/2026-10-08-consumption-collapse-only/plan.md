@@ -51,6 +51,8 @@
 
 ---
 
-## 4. 遗留（留给用户决定）
+## 4. 遗留（已清理）
 
-`getRewardPurchaseStats()` 的 `byTemplate: PurchaseTemplateBucket[]` 现在**没有 UI 消费者**了（只有 `rewardService.test.ts` 的 6 条用例在用）。它是一份仍然正确的数据层聚合（「按金额倒序的商品占比桶」），删掉能少算一点、但要动服务层与那些测试；暂时**保留**，等确认以后不再需要占比视图再删。
+`getRewardPurchaseStats()` 的 `byTemplate: PurchaseTemplateBucket[]`（按金额倒序的商品占比桶）在 `7dd3de2` 后已无 UI 消费者。**已在后续一次清理中删掉**：接口、`bucketMap` 循环与 `byTemplate` 字段一并移除，`Consumption/lib.ts` 里指向它的注释同步改掉；`rewardService.test.ts` 里 2 条纯 `byTemplate` 用例（改名取最新快照标题、占比按金额倒序）随之删除，其余 4 条只去掉 `byTemplate` 断言、保留汇总/明细断言。
+
+**净效果**：`getRewardPurchaseStats()` 现在只返回 `{ pointsSpent, moneyAmount, count, quantity, purchases }` —— 汇总 + 明细，“按奖品分组”由 UI 用 `purchases` 自己分（`Consumption/lib.ts`），职责不再重叠。
