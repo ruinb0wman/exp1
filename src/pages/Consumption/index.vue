@@ -3,6 +3,7 @@ import { computed, ref } from "vue";
 import { storeToRefs } from "pinia";
 import { BarChart3 } from "lucide-vue-next";
 import Header from "@/components/Header.vue";
+import FilterTabs from "@/components/FilterTabs.vue";
 import EmptyState from "@/components/EmptyState.vue";
 import ErrorState from "@/components/ErrorState.vue";
 import LoadingState from "@/components/LoadingState.vue";
@@ -16,7 +17,7 @@ import { formatLocalDate } from "@/libs/time";
 import PeriodSelector from "./components/PeriodSelector.vue";
 import SummaryCards from "./components/SummaryCards.vue";
 import RewardRecordGroups from "./components/RewardRecordGroups.vue";
-import { groupPurchasesByReward } from "./lib";
+import { groupPurchasesByReward, REWARD_RECORD_SORTS, type RewardRecordSortKey } from "./lib";
 
 /**
  * 消费统计页：月/年/自定义的消费积分、折合金额与兑换记录
@@ -29,6 +30,8 @@ const { user } = storeToRefs(userStore);
 
 const scope = ref<PurchaseScope>("month");
 const anchor = ref<Date>(new Date());
+/** 兑换记录排序口径，默认按折合金额 */
+const sortBy = ref<RewardRecordSortKey>("money");
 const customStart = ref<Date>(
 	(() => {
 		const date = new Date();
@@ -53,8 +56,13 @@ const { remove } = useRewardPurchaseActions();
 
 /** 按奖品分组的兑换记录（含不计入消费统计的） */
 const groups = computed(() =>
-	stats.value ? groupPurchasesByReward(stats.value.purchases) : [],
+	stats.value ? groupPurchasesByReward(stats.value.purchases, sortBy.value) : [],
 );
+
+const SORT_LABEL: Record<RewardRecordSortKey, string> = {
+	money: "By money",
+	points: "By points",
+};
 
 function handleCustomRangeChange(start: Date, end: Date) {
 	customStart.value = start;
@@ -118,6 +126,13 @@ const rangeText = computed(() => {
 
 					<section>
 						<h2 class="text-text-primary font-bold mb-3">Records by reward</h2>
+						<FilterTabs
+							:options="REWARD_RECORD_SORTS"
+							:active-filter="sortBy"
+							@change="(s) => (sortBy = s)"
+						>
+							<template #label="{ option }">{{ SORT_LABEL[option] }}</template>
+						</FilterTabs>
 						<RewardRecordGroups :groups="groups" @delete="handleDelete" />
 					</section>
 				</div>

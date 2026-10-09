@@ -91,13 +91,66 @@ describe('groupPurchasesByReward', () => {
 		expect(groups[0].title).toBe('Deleted reward');
 	});
 
-	it('按最近一次兑换时间倒序，与金额大小无关', () => {
+	it('默认按折合金额降序，与最近兑换时间无关', () => {
 		const groups = groupPurchasesByReward([
 			makePurchase({ templateId: 'cheap', title: 'Cheap', createdAt: '2026-09-14T05:00:00.000Z', pointsSpent: 1, moneyAmount: 0 }),
 			makePurchase({ templateId: 'pricey', title: 'Pricey', createdAt: '2026-09-10T05:00:00.000Z', pointsSpent: 999, moneyAmount: 999 }),
 		]);
 
-		expect(groups.map((g) => g.templateId)).toEqual(['cheap', 'pricey']);
+		expect(groups.map((g) => g.templateId)).toEqual(['pricey', 'cheap']);
+	});
+
+	it('sortBy 为 points 时改用消耗积分降序', () => {
+		const purchases = [
+			makePurchase({ templateId: 'moneyFirst', title: 'Money first', createdAt: '2026-09-14T05:00:00.000Z', pointsSpent: 1, moneyAmount: 999 }),
+			makePurchase({ templateId: 'pointsFirst', title: 'Points first', createdAt: '2026-09-12T05:00:00.000Z', pointsSpent: 999, moneyAmount: 1 }),
+		];
+
+		expect(groupPurchasesByReward(purchases).map((g) => g.templateId)).toEqual([
+			'moneyFirst',
+			'pointsFirst',
+		]);
+		expect(
+			groupPurchasesByReward(purchases, 'points').map((g) => g.templateId),
+		).toEqual(['pointsFirst', 'moneyFirst']);
+	});
+
+	it('口径值相同时按最近兑换降序，再相同按标题升序', () => {
+		const groups = groupPurchasesByReward([
+			makePurchase({ templateId: 'old', title: 'Old', createdAt: '2026-09-10T05:00:00.000Z', moneyAmount: 50, pointsSpent: 50 }),
+			makePurchase({ templateId: 'new', title: 'New', createdAt: '2026-09-14T05:00:00.000Z', moneyAmount: 50, pointsSpent: 50 }),
+		]);
+
+		expect(groups.map((g) => g.templateId)).toEqual(['new', 'old']);
+	});
+
+	it('金额口径下不计入统计的奖品（金额 0）排最后，积分口径不受影响', () => {
+		const purchases = [
+			makePurchase({
+				templateId: 'free',
+				title: 'Free',
+				createdAt: '2026-09-16T05:00:00.000Z',
+				pointsSpent: 500,
+				template: {
+					templateId: 'free',
+					title: 'Free',
+					icon: 'Coffee',
+					pointsCost: 500,
+					moneyCost: 0,
+					countInConsumption: false,
+				},
+				moneyAmount: undefined,
+			}),
+			makePurchase({ templateId: 'paid', title: 'Paid', createdAt: '2026-09-10T05:00:00.000Z', pointsSpent: 1, moneyAmount: 1 }),
+		];
+
+		expect(groupPurchasesByReward(purchases).map((g) => g.templateId)).toEqual([
+			'paid',
+			'free',
+		]);
+		expect(
+			groupPurchasesByReward(purchases, 'points').map((g) => g.templateId),
+		).toEqual(['free', 'paid']);
 	});
 
 	it('空输入返回空数组', () => {

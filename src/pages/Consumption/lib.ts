@@ -56,9 +56,15 @@ export interface RewardRecordGroup {
 	moneyAmount: number;
 	/** 组内「不计入统计」的笔数，> 0 时组头提示 */
 	uncountedCount: number;
-	/** 组内最近一次兑换时间（ISO），排序用 */
+	/** 组内最近一次兑换时间（ISO），口径值相同时的次级排序 */
 	lastAt: string;
 }
+
+/** 兑换记录分组的排序口径：折合金额 / 消耗积分 */
+export type RewardRecordSortKey = 'money' | 'points';
+
+/** 排序口径的展示顺序，第一个为默认（金额） */
+export const REWARD_RECORD_SORTS: readonly RewardRecordSortKey[] = ['money', 'points'];
 
 /**
  * 把兑换记录按奖品分组
@@ -68,9 +74,13 @@ export interface RewardRecordGroup {
  *
  * 金额口径与消费统计完全对齐（只算计入统计的记录），积分/件数则含全部记录 ——
  * 组头既能当「这个奖品花了多少钱」，也能当「兑换了几次」。
+ *
+ * `sortBy` 决定组间排序口径（默认折合金额）：金额口径下关闭「计入消费统计」的
+ * 奖品金额恒为 0，会排在最后。
  */
 export function groupPurchasesByReward(
 	purchases: RewardPurchase[],
+	sortBy: RewardRecordSortKey = 'money',
 ): RewardRecordGroup[] {
 	const groupMap = new Map<string, RewardRecordGroup>();
 
@@ -112,19 +122,27 @@ export function groupPurchasesByReward(
 		}
 	}
 
-	return Array.from(groupMap.values())
-		.map((group) => ({
-			...group,
-			records: [...group.records].sort((a, b) =>
-				b.createdAt.localeCompare(a.createdAt),
-			),
-			moneyAmount: roundMoney(group.moneyAmount),
-		}))
-		// 记录视角：最近兑换过的奖品排最前
-		.sort(
-			(a, b) =>
-				b.lastAt.localeCompare(a.lastAt) || a.title.localeCompare(b.title),
-		);
+	// 排序口径取哪个组头数字由调用方决定
+	const metricOf = (group: RewardRecordGroup): number =>
+		sortBy === 'points' ? group.pointsSpent : group.moneyAmount;
+
+	return (
+		Array.from(groupMap.values())
+			.map((group) => ({
+				...group,
+				records: [...group.records].sort((a, b) =>
+					b.createdAt.localeCompare(a.createdAt),
+				),
+				moneyAmount: roundMoney(group.moneyAmount),
+			}))
+			// 记录视角：该口径花得多的奖品排最前；口径值相同再按最近兑换、最后按标题
+			.sort(
+				(a, b) =>
+					metricOf(b) - metricOf(a) ||
+					b.lastAt.localeCompare(a.lastAt) ||
+					a.title.localeCompare(b.title),
+			)
+	);
 }
 
 /**
