@@ -3,10 +3,11 @@ import { createPinia } from "pinia";
 import { isTauri } from "@tauri-apps/api/core";
 import { onBackButtonPress } from "@tauri-apps/api/app";
 import { setBackButtonAdapter } from "@ruinb0w/ui";
-import "@ruinb0w/ui/style.css";
 import App from "./App.vue";
 import router from "./router";
+// Tailwind 先引：它的 @layer 顺序先落地，库的 @layer base 才能被 utilities 正常覆盖
 import "./index.css";
+import "@ruinb0w/ui/style.css";
 
 // 主题/密度在挂载前定好，避免首帧闪一下默认主题
 document.documentElement.dataset.theme = "exp1-dark";
