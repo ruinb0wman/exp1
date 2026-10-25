@@ -3,7 +3,7 @@ import { computed, ref } from "vue";
 import { useRouter } from "vue-router";
 import { storeToRefs } from "pinia";
 import Header from "@/components/Header.vue";
-import FilterTabs from "@/components/FilterTabs.vue";
+import { BChipGroup } from "@ruinb0w/ui";
 import { useUserStore } from "@/store";
 import {
 	useRewardTemplates,
@@ -63,10 +63,10 @@ async function handleToggleEnabled(id: string, currentEnabled: boolean) {
 
 		<!-- Filter Tabs -->
 		<div class="px-4 pb-4">
-			<FilterTabs
-				:options="rewardFilters"
-				:active-filter="filter"
-				@change="(f) => (filter = f)"
+			<BChipGroup
+				:options="rewardFilters.map((o) => ({ label: o, value: o }))"
+				:model-value="filter"
+				@change="(v) => (filter = v as RewardFilter)"
 			/>
 		</div>
 

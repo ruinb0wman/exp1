@@ -1,9 +1,9 @@
 <script setup lang="ts">
 import { computed } from "vue";
 import { storeToRefs } from "pinia";
-import { Sparkles } from "lucide-vue-next";
+import { Sparkles } from "@lucide/vue";
 import DynamicIcon from "@/components/DynamicIcon.vue";
-import Popup from "@/components/Popup.vue";
+import { BaseModal } from "@ruinb0w/ui";
 import { useAchievementStore } from "@/store/achievementStore";
 
 /** 全局解锁提示：依次展示本次新解锁的成就 */
@@ -18,13 +18,12 @@ function handleClose() {
 </script>
 
 <template>
-	<Popup
+	<BaseModal
 		v-if="current"
-		:is-open="true"
-		position="center"
-		:show-close-button="false"
-		:mask-closable="false"
-		:hide-mask="false"
+		:visible="true"
+		direction="center"
+		:closable="false"
+		:close-on-overlay="false"
 		width="320px"
 		@close="handleClose"
 	>
@@ -58,5 +57,5 @@ function handleClose() {
 				{{ pendingUnlocks.length > 1 ? `Next (${pendingUnlocks.length - 1} more)` : "Awesome" }}
 			</button>
 		</div>
-	</Popup>
+	</BaseModal>
 </template>

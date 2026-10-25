@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { CheckCircle2, ChevronDown, Circle } from "lucide-vue-next";
+import { CheckCircle2, ChevronDown, Circle } from "@lucide/vue";
 import type { TaskWithTemplate } from "@/composables/useTasks";
 
 withDefaults(

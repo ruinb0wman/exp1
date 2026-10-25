@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { onMounted, ref } from "vue";
-import { Bot, CheckCircle2, KeyRound, Loader2, Plug } from "lucide-vue-next";
+import { Bot, CheckCircle2, KeyRound, Loader2, Plug } from "@lucide/vue";
 import {
 	getLlmSettings,
 	setLlmSettings,

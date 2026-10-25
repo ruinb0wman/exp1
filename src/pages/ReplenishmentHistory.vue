@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed } from "vue";
 import { useRoute } from "vue-router";
-import { ArrowUpDown, Loader2, Package } from "lucide-vue-next";
+import { ArrowUpDown, Loader2, Package } from "@lucide/vue";
 import Header from "@/components/Header.vue";
 import { useReplenishmentHistory, useRewardTemplate } from "@/composables/useRewards";
 

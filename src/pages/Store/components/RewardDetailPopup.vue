@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed } from "vue";
-import { Banknote, Sparkles } from "lucide-vue-next";
-import NumberInput from "@/components/NumberInput.vue";
+import { Banknote, Sparkles } from "@lucide/vue";
+import { BInputNumber } from "@ruinb0w/ui";
 import DynamicIcon from "@/components/DynamicIcon.vue";
 import {
 	formatMoney,
@@ -117,12 +117,13 @@ const notEnoughQuota = computed(
 		<div class="bg-surface rounded-xl p-4">
 			<div class="flex items-center justify-between mb-3">
 				<span class="text-text-secondary text-sm">Quantity</span>
-				<NumberInput
+				<BInputNumber
 					:model-value="quantity"
 					:min="1"
 					:max="maxQuantity"
-					size="md"
-					@update:model-value="(v) => emit('update:quantity', v)"
+					:allow-decimal="false"
+					:value-on-clear="1"
+					@update:model-value="(v) => emit('update:quantity', v ?? 1)"
 				/>
 			</div>
 			<div class="flex items-center justify-between pt-3 border-t border-border">

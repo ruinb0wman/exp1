@@ -133,11 +133,28 @@ try {
 - Use `type` for unions, `interface` for objects
 - Mark optional fields with `?`
 
-### Tailwind CSS
-- Use custom theme colors: `primary`, `background`, `surface`, `text-primary`, `text-secondary`
-- Class order: layout → sizing → spacing → background → border → text → interactive → animation
-- Use `pt-safe`, `pb-safe` for mobile safe areas
-- Global scrollbar hidden with `::-webkit-scrollbar { display: none }`
+### UI 组件库：`@ruinb0w/ui`
+
+**首选库组件，不要自己再写一遍。**
+
+```ts
+import { BButton, BaseModal, MobileHeader, MobileDatePicker, BChipGroup, useConfirm } from "@ruinb0w/ui";
+import "@ruinb0w/ui/style.css";        // 入口引一次（main.ts 已引）
+```
+
+- 主题/密度在 `main.ts` 挂载前设置：`data-theme="exp1-dark"`、`data-density="touch"`。
+- 库源码直连（`vite.config.ts` 的 alias 指向 `../ui/src`），改库即时生效；`dedupe: ["vue", "@lucide/vue"]` 不能删，否则图标渲染会挂。
+- **浮层一律用 `BaseModal`**：`direction="center|bottom|top|left|right"`，底部弹出自动带拖动条与安全区；不要再写 `fixed inset-0` 的遮罩。
+- **返回手势**：`main.ts` 里 `setBackButtonAdapter(onBackButtonPress)` 注册一次，库内所有浮层与 `useBackButtonHandler` 共用同一个层栈。
+- **确认框/提示框**用 `useConfirm()` / `useAlert()`（`App.vue` 挂了 `<BConfirmHost />`），**不要用 `window.alert`**：Android WebView 会静默丢弃，Electron 会阻塞渲染。
+- 路由胶水留在项目侧：`Header.vue` 把 `@back` 接到 `router.back()`，`useTabNav.ts` 给 `BTabBar` 提供 items/激活判定。
+- 只有库没盖住的样式才在项目里手写，并只用语义变量（`--bg-*` / `--text-*` / `--color-*` / `--space-*`），禁止裸 px 与硬编码色值。
+
+### Tailwind（历史包袱，正在拆）
+- Tailwind v4 仍在 `src/index.css`（`@import "tailwindcss"` + `@theme`），存量页面的 utility class **还在**。
+- 规矩：**碰到哪个文件就在那次把它改成语义 class**，不要新增 Tailwind utility，不要再往 `@theme` 里加东西。
+- 迁移对照：`bg-background→--bg-page`、`bg-surface→--bg-card`、`bg-surface-light→--bg-elevated`、`text-text-primary/secondary/muted→--text-primary/secondary/tertiary`、`border-border→--border-default`、`text-primary→--color-primary`、`green-500→--color-success`、`yellow-600→--color-warning`、`red-500→--color-danger`、`rounded-xl→--radius-md`、`rounded-lg→--radius-sm`。
+- 全部搬完后删掉 `@tailwindcss/vite` + `@theme` + `custom-checkbox`。
 
 ### Rust (src-tauri/)
 - Functions/variables: `snake_case`

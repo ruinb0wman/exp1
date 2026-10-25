@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref } from "vue";
 import { storeToRefs } from "pinia";
-import { Loader2 } from "lucide-vue-next";
+import { Loader2 } from "@lucide/vue";
 import Header from "@/components/Header.vue";
 import TaskDetailPopup from "@/components/TaskDetailPopup.vue";
 import { useUserStore } from "@/store";

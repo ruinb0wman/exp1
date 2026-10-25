@@ -2,10 +2,10 @@
 import { computed, onMounted, ref } from "vue";
 import { useRouter } from "vue-router";
 import { storeToRefs } from "pinia";
-import { ChartPie, History, ListChecks, Pencil, Plus } from "lucide-vue-next";
+import { ChartPie, History, ListChecks, Pencil, Plus } from "@lucide/vue";
 import Header from "@/components/Header.vue";
 import HeaderActionButton from "@/components/HeaderActionButton.vue";
-import Popup from "@/components/Popup.vue";
+import { BaseModal } from "@ruinb0w/ui";
 import { useUserStore } from "@/store";
 import { useStoreRewards, type StoreReward } from "@/composables/useRewards";
 import { useRewardPurchaseActions } from "@/composables/useRewardPurchases";
@@ -201,14 +201,14 @@ function goToEditReward() {
 		</main>
 
 		<!-- Reward Detail Popup -->
-		<Popup
-			:is-open="isPopupOpen"
-			position="bottom"
+		<BaseModal
+			:visible="isPopupOpen"
+			direction="bottom"
 			max-height="80vh"
 			title="Reward Details"
 			@close="isPopupOpen = false"
 		>
-			<template v-if="selectedReward" #headerRight>
+			<template v-if="selectedReward" #header-right>
 				<div class="flex items-center gap-3">
 					<button
 						v-if="selectedReward.template.replenishmentMode !== 'none'"
@@ -237,6 +237,6 @@ function goToEditReward() {
 				:redeem-error="redeemError"
 				@redeem="handlePurchase"
 			/>
-		</Popup>
+		</BaseModal>
 	</div>
 </template>

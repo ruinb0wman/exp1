@@ -1,10 +1,10 @@
 import { mount } from "@vue/test-utils";
-import * as Lucide from "lucide-vue-next";
+import * as Lucide from "@lucide/vue";
 import { describe, expect, it } from "vitest";
 import DynamicIcon from "./DynamicIcon.vue";
 import { ACHIEVEMENT_ICONS, REWARD_ICONS } from "@/db/types";
 
-/** 拿真实的 lucide-vue-next 导出做参照：名字打错或未注册都会露馅 */
+/** 拿真实的 @lucide/vue 导出做参照：名字打错或未注册都会露馅 */
 const lucideExports = Lucide as unknown as Record<string, unknown>;
 
 /** 渲染一次并把 <svg> 的 outerHTML 抄出来（副本比较，避免只比 className 漏掉别的属性） */
@@ -29,9 +29,9 @@ function renderExpected(component: unknown): string {
 describe("DynamicIcon 图标注册表", () => {
 	const allNames = [...new Set([...REWARD_ICONS, ...ACHIEVEMENT_ICONS])];
 
-	it.each(allNames)("%s 渲染出的就是 lucide-vue-next 的同名图标", (name) => {
+	it.each(allNames)("%s 渲染出的就是 @lucide/vue 的同名图标", (name) => {
 		const Expected = lucideExports[name];
-		if (!Expected) throw new Error(`lucide-vue-next 没有导出 ${name}`);
+		if (!Expected) throw new Error(`@lucide/vue 没有导出 ${name}`);
 
 		// 注册表里漏了某个名字时，DynamicIcon 会静默回退 Trophy —— 这里用「和真身逐字节一致」卡死
 		expect(renderDynamic(name)).toBe(renderExpected(Expected));

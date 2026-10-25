@@ -1,12 +1,12 @@
 <script setup lang="ts">
 import { computed, ref } from "vue";
 import { storeToRefs } from "pinia";
-import { BarChart3 } from "lucide-vue-next";
+import { BarChart3 } from "@lucide/vue";
 import Header from "@/components/Header.vue";
-import FilterTabs from "@/components/FilterTabs.vue";
-import EmptyState from "@/components/EmptyState.vue";
-import ErrorState from "@/components/ErrorState.vue";
-import LoadingState from "@/components/LoadingState.vue";
+import { BChipGroup } from "@ruinb0w/ui";
+import { BEmptyState } from "@ruinb0w/ui";
+import { BErrorState } from "@ruinb0w/ui";
+import { BLoadingState } from "@ruinb0w/ui";
 import { useUserStore } from "@/store";
 import {
 	useRewardPurchaseActions,
@@ -88,9 +88,9 @@ const rangeText = computed(() => {
 		<Header title="Spending" back />
 
 		<main class="px-4 pb-24">
-			<EmptyState v-if="!user" title="Spending">
+			<BEmptyState v-if="!user" title="Spending">
 				<BarChart3 class="w-8 h-8" />
-			</EmptyState>
+			</BEmptyState>
 
 			<template v-else>
 				<p class="text-text-muted text-xs mb-4">
@@ -107,9 +107,9 @@ const rangeText = computed(() => {
 					@custom-range-change="handleCustomRangeChange"
 				/>
 
-				<LoadingState v-if="isLoading && !stats" message="Loading..." />
+				<BLoadingState v-if="isLoading && !stats" message="Loading..." />
 
-				<ErrorState
+				<BErrorState
 					v-else-if="error"
 					:title="error"
 					retry-label="Retry"
@@ -126,13 +126,11 @@ const rangeText = computed(() => {
 
 					<section>
 						<h2 class="text-text-primary font-bold mb-3">Records by reward</h2>
-						<FilterTabs
-							:options="REWARD_RECORD_SORTS"
-							:active-filter="sortBy"
-							@change="(s) => (sortBy = s)"
-						>
-							<template #label="{ option }">{{ SORT_LABEL[option] }}</template>
-						</FilterTabs>
+						<BChipGroup
+							:options="REWARD_RECORD_SORTS.map((o) => ({ label: SORT_LABEL[o], value: o }))"
+							:model-value="sortBy"
+							@change="(v) => (sortBy = v as RewardRecordSortKey)"
+						/>
 						<RewardRecordGroups :groups="groups" @delete="handleDelete" />
 					</section>
 				</div>

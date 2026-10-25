@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { ref } from "vue";
-import { Trash2 } from "lucide-vue-next";
+import { Trash2 } from "@lucide/vue";
 import DynamicIcon from "@/components/DynamicIcon.vue";
-import { useConfirm } from "@/composables/useConfirm";
+import { useConfirm } from "@ruinb0w/ui";
 import type { RewardPurchase } from "@/db/types";
 import { formatMoney, isCountedInConsumption } from "@/libs/reward";
 import { formatPurchaseDateTime } from "../lib";

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, useAttrs } from "vue";
-import { Calendar } from "lucide-vue-next";
+import { Calendar } from "@lucide/vue";
 
 defineProps<{
 	enabledCount: number;

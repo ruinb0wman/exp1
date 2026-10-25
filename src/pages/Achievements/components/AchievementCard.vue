@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, useAttrs } from "vue";
-import { CheckCircle2, Sparkles, Trash2 } from "lucide-vue-next";
+import { CheckCircle2, Sparkles, Trash2 } from "@lucide/vue";
 import type { Achievement } from "@/db/types";
 import DynamicIcon from "@/components/DynamicIcon.vue";
 import { formatCondition } from "@/libs/achievement/formatCondition";

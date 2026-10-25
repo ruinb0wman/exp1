@@ -1,11 +1,11 @@
 <script setup lang="ts">
 import { computed, ref } from "vue";
 import { storeToRefs } from "pinia";
-import { BarChart3 } from "lucide-vue-next";
+import { BarChart3 } from "@lucide/vue";
 import Header from "@/components/Header.vue";
-import EmptyState from "@/components/EmptyState.vue";
-import ErrorState from "@/components/ErrorState.vue";
-import LoadingState from "@/components/LoadingState.vue";
+import { BEmptyState } from "@ruinb0w/ui";
+import { BErrorState } from "@ruinb0w/ui";
+import { BLoadingState } from "@ruinb0w/ui";
 import { useUserStore } from "@/store/userStore";
 import { useReport } from "@/composables/useReport";
 import { noteText } from "@/libs/report/renderMarkdown";
@@ -68,9 +68,9 @@ const rangeText = computed(() => {
 		<Header title="Reports" back />
 
 		<main class="px-4 pb-24">
-			<EmptyState v-if="!user" title="Reports">
+			<BEmptyState v-if="!user" title="Reports">
 				<BarChart3 class="w-8 h-8" />
-			</EmptyState>
+			</BEmptyState>
 
 			<template v-else>
 				<p class="text-text-muted text-xs mb-4">
@@ -87,9 +87,9 @@ const rangeText = computed(() => {
 					@custom-range-change="handleCustomRangeChange"
 				/>
 
-				<LoadingState v-if="isLoading && !model" message="Generating report…" />
+				<BLoadingState v-if="isLoading && !model" message="Generating report…" />
 
-				<ErrorState
+				<BErrorState
 					v-else-if="error"
 					:title="error"
 					retry-label="Retry"

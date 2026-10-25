@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted } from "vue";
 import { storeToRefs } from "pinia";
-import { Loader2 } from "lucide-vue-next";
+import { Loader2 } from "@lucide/vue";
 import Header from "@/components/Header.vue";
 import PointsHistoryCard from "@/components/PointsHistoryCard.vue";
 import { useUserStore } from "@/store";

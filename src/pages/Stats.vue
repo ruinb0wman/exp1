@@ -1,9 +1,9 @@
 <script setup lang="ts">
+import { MobileCalendar } from "@ruinb0w/ui";
 import { computed, onUnmounted, ref, watch } from "vue";
 import { useRouter } from "vue-router";
 import { storeToRefs } from "pinia";
-import { Plus } from "lucide-vue-next";
-import Calendar from "@/components/Calendar.vue";
+import { Plus } from "@lucide/vue";
 import Header from "@/components/Header.vue";
 import HeaderActionButton from "@/components/HeaderActionButton.vue";
 import TaskInstanceCard from "@/components/TaskInstanceCard/index.vue";
@@ -230,7 +230,7 @@ function monthLabel(date: Date) {
 		<main class="px-4">
 			<!-- Calendar - 使用默认配置 -->
 			<div class="mx-auto">
-				<Calendar
+				<MobileCalendar
 					mode="single"
 					:model-value="selectedDate"
 					:show-year-switcher="false"

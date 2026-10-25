@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed } from "vue";
-import { ChevronRight, Power } from "lucide-vue-next";
+import { ChevronRight, Power } from "@lucide/vue";
 import type { RepeatMode, CompleteRule } from "@/db/types";
 import { calculateMaxPoints } from "@/db/types/task";
 import {

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed } from "vue";
-import { CheckCircle, Flame, Gift, TrendingUp } from "lucide-vue-next";
+import { CheckCircle, Flame, Gift, TrendingUp } from "@lucide/vue";
 import type { Component } from "vue";
 import type { ProfileStats } from "@/composables/useProfileStats";
 

@@ -3,7 +3,7 @@ import { computed, onMounted, onUnmounted, ref, watch } from "vue";
 import { useRouter } from "vue-router";
 import { storeToRefs } from "pinia";
 import { liveQuery, type Subscription } from "dexie";
-import { Loader2, Sparkles, Trophy } from "lucide-vue-next";
+import { Loader2, Sparkles, Trophy } from "@lucide/vue";
 import { getDB } from "@/db";
 import {
 	abandonAchievement,
@@ -14,13 +14,13 @@ import {
 	type AcceptAchievementOverrides,
 } from "@/db/services";
 import type { Achievement } from "@/db/types";
-import { useConfirm } from "@/composables/useConfirm";
+import { useConfirm } from "@ruinb0w/ui";
 import { useUserStore } from "@/store";
 import { useAchievementStore } from "@/store/achievementStore";
 import Header from "@/components/Header.vue";
-import FilterTabs from "@/components/FilterTabs.vue";
-import EmptyState from "@/components/EmptyState.vue";
-import Popup from "@/components/Popup.vue";
+import { BChipGroup } from "@ruinb0w/ui";
+import { BEmptyState } from "@ruinb0w/ui";
+import { BaseModal } from "@ruinb0w/ui";
 import {
 	generateAchievements,
 	generatePresetAchievements,
@@ -124,6 +124,13 @@ const counts = computed<Record<AchievementTab, number>>(() => ({
 	active: achievements.value.filter((item) => item.status === "active").length,
 	unlocked: achievements.value.filter((item) => item.status === "unlocked").length,
 }));
+
+const tabOptions = computed(() =>
+	ACHIEVEMENT_TABS.map((t) => ({
+		label: `${ACHIEVEMENT_TAB_LABEL[t]} (${counts.value[t]})`,
+		value: t,
+	})),
+);
 
 const visible = computed(() =>
 	achievements.value
@@ -252,15 +259,11 @@ async function handleAbandon(achievement: Achievement) {
 		</div>
 
 		<div class="px-4">
-			<FilterTabs
-				:options="ACHIEVEMENT_TABS"
-				:active-filter="tab"
-				@change="(t) => (tab = t)"
-			>
-				<template #label="{ option }">
-					{{ `${ACHIEVEMENT_TAB_LABEL[option]} (${counts[option]})` }}
-				</template>
-			</FilterTabs>
+			<BChipGroup
+				:options="tabOptions"
+				:model-value="tab"
+				@change="(v) => (tab = v as AchievementTab)"
+			/>
 
 			<div v-if="tab === 'proposed' && counts.proposed > 1" class="flex justify-end mb-2">
 				<button
@@ -273,7 +276,7 @@ async function handleAbandon(achievement: Achievement) {
 		</div>
 
 		<div class="px-4">
-			<EmptyState
+			<BEmptyState
 				v-if="visible.length === 0"
 				:title="ACHIEVEMENT_EMPTY_TEXT[tab]"
 				:description="
@@ -283,7 +286,7 @@ async function handleAbandon(achievement: Achievement) {
 				"
 			>
 				<Trophy class="w-8 h-8" />
-			</EmptyState>
+			</BEmptyState>
 
 			<template v-else-if="tab === 'proposed'">
 				<AchievementProposalCard
@@ -315,9 +318,11 @@ async function handleAbandon(achievement: Achievement) {
 			@confirm="handleAccept"
 		/>
 
-		<Popup
-			:is-open="showFallback"
-			position="center"
+		<BaseModal
+			:visible="showFallback"
+			direction="center"
+			width="92%"
+			height="auto"
 			title="Generate Achievements"
 			@close="showFallback = false"
 		>
@@ -349,6 +354,6 @@ async function handleAbandon(achievement: Achievement) {
 					</button>
 				</div>
 			</div>
-		</Popup>
+		</BaseModal>
 	</div>
 </template>

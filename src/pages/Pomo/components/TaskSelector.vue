@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed } from "vue";
-import Popup from "@/components/Popup.vue";
-import { CheckCircle2, Circle } from "lucide-vue-next";
+import { BaseModal } from "@ruinb0w/ui";
+import { CheckCircle2, Circle } from "@lucide/vue";
 import type { TaskWithTemplate } from "@/composables/useTasks";
 
 const props = defineProps<{
@@ -31,9 +31,9 @@ const pendingTasks = computed(() =>
 </script>
 
 <template>
-	<Popup
-		:is-open="isOpen"
-		position="bottom"
+	<BaseModal
+		:visible="isOpen"
+		direction="bottom"
 		title="Select Focus Task"
 		@close="emit('close')"
 	>
@@ -82,5 +82,5 @@ const pendingTasks = computed(() =>
 				No pending tasks for today
 			</p>
 		</div>
-	</Popup>
+	</BaseModal>
 </template>

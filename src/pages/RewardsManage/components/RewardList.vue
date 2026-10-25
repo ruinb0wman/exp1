@@ -1,8 +1,8 @@
 <script setup lang="ts">
-import { Package } from "lucide-vue-next";
-import EmptyState from "@/components/EmptyState.vue";
-import ErrorState from "@/components/ErrorState.vue";
-import LoadingState from "@/components/LoadingState.vue";
+import { Package } from "@lucide/vue";
+import { BEmptyState } from "@ruinb0w/ui";
+import { BErrorState } from "@ruinb0w/ui";
+import { BLoadingState } from "@ruinb0w/ui";
 import type { RewardTemplate } from "@/db/types";
 import RewardTemplateRow from "./RewardTemplateRow.vue";
 
@@ -22,16 +22,16 @@ const emit = defineEmits<{
 </script>
 
 <template>
-	<LoadingState v-if="props.isLoading" message="Loading rewards..." />
+	<BLoadingState v-if="props.isLoading" message="Loading rewards..." />
 
-	<ErrorState
+	<BErrorState
 		v-else-if="props.error"
 		title="Failed to load rewards"
 		retry-label="Retry"
 		@retry="emit('refresh')"
 	/>
 
-	<EmptyState
+	<BEmptyState
 		v-else-if="props.templates.length === 0"
 		title="No rewards found"
 		:description="
@@ -41,7 +41,7 @@ const emit = defineEmits<{
 		"
 	>
 		<Package class="w-8 h-8" />
-	</EmptyState>
+	</BEmptyState>
 
 	<div v-else class="flex flex-col gap-3">
 		<RewardTemplateRow

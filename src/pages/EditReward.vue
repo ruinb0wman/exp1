@@ -3,23 +3,24 @@ import { computed, ref, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { storeToRefs } from "pinia";
 import Header from "@/components/Header.vue";
-import RadioGroup from "@/components/RadioGroup.vue";
-import IconPicker from "@/components/IconPicker.vue";
 import DynamicIcon from "@/components/DynamicIcon.vue";
-import MultiSelectGrid from "@/components/MultiSelectGrid.vue";
-import NumberInput from "@/components/NumberInput.vue";
-import { Package, Scale, Sparkles } from "lucide-vue-next";
+import { Package, Scale, Sparkles } from "@lucide/vue";
 import type {
 	RewardTemplate,
 	RewardIconName,
 	RewardIconColor,
 	ReplenishmentMode,
 } from "@/db/types";
-import { REWARD_ICON_COLORS } from "@/db/types";
+import { REWARD_ICON_COLORS, REWARD_ICONS } from "@/db/types";
 import { isValidMoneyCost, formatMoney } from "@/libs/reward";
 import { toPlain } from "@/libs/plain";
 import { useRewardTemplate, useRewardTemplateActions } from "@/composables/useRewards";
-import { useAlert } from "@/composables/useConfirm";
+import {
+	BChipGroup,
+	BInputNumber,
+	MobileIconPicker,
+	useAlert,
+} from "@ruinb0w/ui";
 import { useUserStore } from "@/store";
 
 const restockOptions = ["None", "Daily", "Weekly", "Monthly"];
@@ -121,16 +122,12 @@ function handleIconSelect(icon: RewardIconName, color: RewardIconColor) {
 	selectedColor.value = color;
 }
 
-function handleWeekDayChange(day: number) {
-	repeatDaysOfWeek.value = repeatDaysOfWeek.value.includes(day)
-		? repeatDaysOfWeek.value.filter((d) => d !== day)
-		: [...repeatDaysOfWeek.value, day].sort((a, b) => a - b);
+function handleWeekDayChange(days: number[]) {
+	repeatDaysOfWeek.value = [...days].sort((a, b) => a - b);
 }
 
-function handleMonthDayChange(day: number) {
-	repeatDaysOfMonth.value = repeatDaysOfMonth.value.includes(day)
-		? repeatDaysOfMonth.value.filter((d) => d !== day)
-		: [...repeatDaysOfMonth.value, day].sort((a, b) => a - b);
+function handleMonthDayChange(days: number[]) {
+	repeatDaysOfMonth.value = [...days].sort((a, b) => a - b);
 }
 
 async function handleSubmit() {
@@ -282,7 +279,7 @@ const moneyPreview = computed(() =>
 							Point Cost
 						</p>
 					</div>
-					<NumberInput v-model="pointsCost" :min="0" :step="10" size="lg" />
+					<BInputNumber :model-value="pointsCost" :min="0" :step="10" :allow-decimal="false" :value-on-clear="0" @update:model-value="(v) => (pointsCost = v ?? 0)" />
 				</div>
 
 				<!-- Enabled Toggle -->
@@ -336,12 +333,12 @@ const moneyPreview = computed(() =>
 									Unit value (¥)
 								</p>
 							</div>
-							<NumberInput
-								v-model="moneyCost"
+							<BInputNumber
+								:model-value="moneyCost"
 								:min="0"
 								:step="1"
-								:allow-decimal="true"
-								size="lg"
+								:value-on-clear="0"
+								@update:model-value="(v) => (moneyCost = v ?? 0)"
 							/>
 						</div>
 
@@ -368,10 +365,12 @@ const moneyPreview = computed(() =>
 					Auto Restock
 				</h3>
 				<div class="rounded-xl bg-surface p-4 space-y-4">
-					<RadioGroup
-						:list="restockOptions"
+					<BChipGroup
+						layout="grid"
+						:columns="4"
+						:options="restockOptions.map((label, i) => ({ label, value: i }))"
 						:model-value="restockIndex"
-						@update:model-value="(index) => (restockIndex = index)"
+						@update:model-value="(v) => (restockIndex = Number(v))"
 					/>
 
 					<!-- Restock Interval -->
@@ -379,33 +378,40 @@ const moneyPreview = computed(() =>
 						v-if="restockMode !== 'none'"
 						class="flex items-center gap-4 pt-2 border-t border-surface-light"
 					>
-						<NumberInput
-							v-model="repeatInterval"
+						<span class="text-text-secondary text-sm shrink-0">Every</span>
+						<BInputNumber
+							:model-value="repeatInterval"
 							:min="1"
-							label="Every"
-							:suffix="restockIntervalSuffix"
+							:allow-decimal="false"
+							:value-on-clear="1"
+							@update:model-value="(v) => (repeatInterval = v ?? 1)"
 						/>
+						<span class="text-text-secondary text-sm shrink-0">{{ restockIntervalSuffix }}</span>
 					</div>
 
 					<!-- Weekly Restock Days -->
 					<div v-if="restockMode === 'weekly'" class="pt-2 border-t border-surface-light">
 						<p class="text-text-secondary text-sm mb-3">Restock on</p>
-						<MultiSelectGrid
-							:list="weekDays"
-							:value="repeatDaysOfWeek"
-							:max-col="7"
-							@change="handleWeekDayChange"
+						<BChipGroup
+							multiple
+							layout="grid"
+							:columns="7"
+							:options="weekDays"
+							:model-value="repeatDaysOfWeek"
+							@update:model-value="(v) => handleWeekDayChange(v as number[])"
 						/>
 					</div>
 
 					<!-- Monthly Restock Days -->
 					<div v-if="restockMode === 'monthly'" class="pt-2 border-t border-surface-light">
 						<p class="text-text-secondary text-sm mb-3">Restock on</p>
-						<MultiSelectGrid
-							:list="monthDays"
-							:value="repeatDaysOfMonth"
-							:max-col="7"
-							@change="handleMonthDayChange"
+						<BChipGroup
+							multiple
+							layout="grid"
+							:columns="7"
+							:options="monthDays"
+							:model-value="repeatDaysOfMonth"
+							@update:model-value="(v) => handleMonthDayChange(v as number[])"
 						/>
 					</div>
 
@@ -414,10 +420,13 @@ const moneyPreview = computed(() =>
 						v-if="restockMode !== 'none'"
 						class="flex items-center gap-4 pt-2 border-t border-surface-light"
 					>
-						<NumberInput
-							v-model="replenishmentNum"
+						<span class="text-text-secondary text-sm shrink-0">Restock amount</span>
+						<BInputNumber
+							:model-value="replenishmentNum"
 							:min="1"
-							label="Restock amount"
+							:allow-decimal="false"
+							:value-on-clear="1"
+							@update:model-value="(v) => (replenishmentNum = v ?? 1)"
 						/>
 					</div>
 
@@ -450,10 +459,13 @@ const moneyPreview = computed(() =>
 						</div>
 
 						<div v-if="hasStockLimit" class="flex items-center gap-4">
-							<NumberInput
-								v-model="replenishmentLimit"
+							<span class="text-text-secondary text-sm shrink-0">Max stock</span>
+							<BInputNumber
+								:model-value="replenishmentLimit"
 								:min="1"
-								label="Max stock"
+								:allow-decimal="false"
+								:value-on-clear="1"
+								@update:model-value="(v) => (replenishmentLimit = v ?? 1)"
 							/>
 						</div>
 					</div>
@@ -477,12 +489,14 @@ const moneyPreview = computed(() =>
 		</div>
 
 		<!-- Icon Picker Modal -->
-		<IconPicker
+		<MobileIconPicker
 			:is-open="isIconPickerOpen"
-			:selected-icon="selectedIcon"
-			:selected-color="selectedColor"
+			:icons="REWARD_ICONS"
+			:colors="REWARD_ICON_COLORS"
+			:icon="selectedIcon"
+			:color="selectedColor"
 			@close="isIconPickerOpen = false"
-			@select="handleIconSelect"
+			@confirm="(i, c) => handleIconSelect(i as RewardIconName, c as RewardIconColor)"
 		/>
 	</div>
 </template>

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ChevronRight, Power } from "lucide-vue-next";
+import { ChevronRight, Power } from "@lucide/vue";
 import DynamicIcon from "@/components/DynamicIcon.vue";
 import type { RewardTemplate } from "@/db/types";
 import { formatRewardSubtitle } from "../lib";

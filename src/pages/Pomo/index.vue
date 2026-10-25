@@ -4,7 +4,7 @@ import { storeToRefs } from "pinia";
 import { usePomoStore } from "@/store/pomoStore";
 import { useUserStore } from "@/store/userStore";
 import { useTodayTasks } from "@/composables/useTasks";
-import { useConfirm } from "@/composables/useConfirm";
+import { useConfirm } from "@ruinb0w/ui";
 import PomoTimer from "@/components/PomoTimer.vue";
 import PomoHeader from "./components/PomoHeader.vue";
 import ModeSwitcher from "./components/ModeSwitcher.vue";

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import Popup from "@/components/Popup.vue";
+import { BaseModal } from "@ruinb0w/ui";
 import DurationSlider from "./DurationSlider.vue";
 import type { PomoSettings } from "@/db/types/pomo";
 
@@ -15,9 +15,11 @@ const emit = defineEmits<{
 </script>
 
 <template>
-	<Popup
-		:is-open="isOpen"
-		position="center"
+	<BaseModal
+		:visible="isOpen"
+		direction="center"
+		width="92%"
+		height="auto"
 		title="Pomodoro Settings"
 		@close="emit('close')"
 	>
@@ -94,5 +96,5 @@ const emit = defineEmits<{
 				</label>
 			</div>
 		</div>
-	</Popup>
+	</BaseModal>
 </template>

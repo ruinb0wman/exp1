@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Pause, Play, RotateCcw, Square } from "lucide-vue-next";
+import { Pause, Play, RotateCcw, Square } from "@lucide/vue";
 
 const props = defineProps<{
 	isRunning: boolean;

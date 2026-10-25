@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { History, ListTodo } from "lucide-vue-next";
+import { History, ListTodo } from "@lucide/vue";
 import { useRouter } from "vue-router";
 import type { TaskInstance, TaskTemplate } from "@/db/types";
 import TaskInstanceCard from "@/components/TaskInstanceCard/index.vue";

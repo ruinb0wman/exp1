@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, watch } from "vue";
-import { Loader2 } from "lucide-vue-next";
+import { Loader2 } from "@lucide/vue";
 import {
 	ACHIEVEMENT_ICONS,
 	type Achievement,
@@ -8,8 +8,7 @@ import {
 } from "@/db/types";
 import type { AcceptAchievementOverrides } from "@/db/services";
 import DynamicIcon from "@/components/DynamicIcon.vue";
-import Popup from "@/components/Popup.vue";
-import NumberInput from "@/components/NumberInput.vue";
+import { BaseModal, BInputNumber } from "@ruinb0w/ui";
 import { formatCondition } from "@/libs/achievement/formatCondition";
 
 const props = defineProps<{
@@ -69,10 +68,10 @@ function handleDescriptionInput(event: Event) {
 </script>
 
 <template>
-	<Popup
+	<BaseModal
 		v-if="achievement"
-		:is-open="isOpen"
-		position="bottom"
+		:visible="isOpen"
+		direction="bottom"
 		title="Accept Achievement"
 		max-height="85vh"
 		@close="emit('close')"
@@ -121,12 +120,14 @@ function handleDescriptionInput(event: Event) {
 			</div>
 
 			<label class="block text-text-secondary text-sm mb-2">Reward Points</label>
-			<NumberInput
-				v-model="rewardPoints"
+			<BInputNumber
+				:model-value="rewardPoints"
 				:min="1"
 				:max="1000"
 				:step="5"
-				size="lg"
+				:allow-decimal="false"
+				:value-on-clear="1"
+				@update:model-value="(v) => (rewardPoints = v ?? 1)"
 			/>
 		</div>
 
@@ -140,5 +141,5 @@ function handleDescriptionInput(event: Event) {
 				Accept
 			</button>
 		</template>
-	</Popup>
+	</BaseModal>
 </template>

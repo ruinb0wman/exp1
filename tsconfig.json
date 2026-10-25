@@ -22,7 +22,9 @@
     /* Path alias */
     "baseUrl": ".",
     "paths": {
-      "@/*": ["src/*"]
+      "@/*": ["src/*"],
+      "@ruinb0w/ui": ["../ui/src/index.ts"],
+      "@ruinb0w/ui/style.css": ["../ui/src/index.css"]
     }
   },
   "include": ["src"],

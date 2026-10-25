@@ -1,53 +1,7 @@
 <script setup lang="ts">
 import { computed } from "vue";
-import {
-	Award,
-	Beer,
-	Bike,
-	BookOpen,
-	CakeSlice,
-	CalendarCheck,
-	Car,
-	Cigarette,
-	Coffee,
-	Compass,
-	Cookie,
-	Crown,
-	Dumbbell,
-	Film,
-	Flame,
-	Gamepad2,
-	Gem,
-	Gift,
-	GraduationCap,
-	Heart,
-	House,
-	IceCream,
-	Lightbulb,
-	Medal,
-	Mountain,
-	Music,
-	Package,
-	PawPrint,
-	Pizza,
-	Plane,
-	Rocket,
-	Shield,
-	ShoppingBag,
-	ShoppingCart,
-	SoapDispenserDroplet,
-	Sparkles,
-	Star,
-	Swords,
-	Target,
-	Ticket,
-	Timer,
-	TrendingUp,
-	Trophy,
-	Tv,
-	Wifi,
-	Zap,
-} from "lucide-vue-next";
+import { LucideIcon } from "@ruinb0w/ui";
+import { ACHIEVEMENT_ICONS, REWARD_ICONS } from "@/db/types";
 
 defineOptions({ inheritAttrs: false });
 
@@ -56,59 +10,16 @@ const props = defineProps<{
 	color?: string;
 }>();
 
-/** 奖励图标 ∪ 成就图标的合并注册表 */
-const iconMap: Record<string, unknown> = {
-	Gift,
-	Coffee,
-	Beer,
-	Cigarette,
-	Gamepad2,
-	ShoppingBag,
-	BookOpen,
-	Dumbbell,
-	Pizza,
-	IceCream,
-	Cookie,
-	CakeSlice,
-	Film,
-	Music,
-	Ticket,
-	Tv,
-	ShoppingCart,
-	Package,
-	Bike,
-	Plane,
-	Mountain,
-	GraduationCap,
-	Lightbulb,
-	Heart,
-	Star,
-	Zap,
-	Trophy,
-	Crown,
-	Medal,
-	Flame,
-	Target,
-	Rocket,
-	Award,
-	Shield,
-	Swords,
-	Gem,
-	Compass,
-	Timer,
-	CalendarCheck,
-	TrendingUp,
-	Sparkles,
-	PawPrint,
-	Wifi,
-	SoapDispenserDroplet,
-	Car,
-	House,
-};
+/**
+ * 白名单 = 奖励图标 ∪ 成就图标（业务边界在项目里，库的 LucideIcon 认全部 Lucide 图标）。
+ * 未注册的名字回落到 Trophy，避免脏数据把界面渲染成空白。
+ */
+const KNOWN_ICONS = new Set<string>([...REWARD_ICONS, ...ACHIEVEMENT_ICONS]);
 
-const iconComponent = computed(() => iconMap[props.name] ?? Trophy);
+const iconName = computed(() => (KNOWN_ICONS.has(props.name) ? props.name : "Trophy"));
 </script>
 
 <template>
-	<component :is="iconComponent" v-bind="$attrs" :color="color" />
+	<!-- size 24 = 项目既有默认；调用方用 w-5/h-5 或 size 属性覆盖 -->
+	<LucideIcon :name="iconName" :color="color" :size="24" v-bind="$attrs" />
 </template>

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref } from "vue";
-import { Plus } from "lucide-vue-next";
+import { Plus } from "@lucide/vue";
 import { useRouter } from "vue-router";
 import { storeToRefs } from "pinia";
 import { useUserStore } from "@/store";
@@ -10,8 +10,8 @@ import {
 	useTodayTasks,
 } from "@/composables/useTasks";
 import { usePageInitializer } from "@/composables/usePageInitializer";
+import { BProgress } from "@ruinb0w/ui";
 import HomeHeader from "@/components/HomeHeader.vue";
-import Progress from "@/components/Progress.vue";
 import TaskList from "@/components/TaskList.vue";
 import TaskDetailPopup from "@/components/TaskDetailPopup.vue";
 import type { TaskInstance, TaskTemplate } from "@/db/types";
@@ -204,12 +204,19 @@ const isLoading = computed(
 		<!-- Header -->
 		<header class="px-4 pb-4">
 			<HomeHeader :user="user" :current-points="currentPoints" />
-			<Progress
-				:completed-count="taskStats.completedCount"
-				:total-count="taskStats.totalCount"
-				:earned-points="earnedPoints"
-				:estimated-total-points="estimatedTotalPoints"
-			/>
+			<div class="mb-2">
+				<div class="flex items-center justify-between mb-2">
+					<p class="text-text-primary text-base font-normal">
+						You've completed {{ taskStats.completedCount }} of {{ taskStats.totalCount }} tasks today.
+					</p>
+					<p class="text-base font-normal">
+						<span class="text-white">{{ earnedPoints }}</span>
+						<span class="text-text-secondary mx-1">/</span>
+						<span class="text-primary">{{ estimatedTotalPoints }}</span>
+					</p>
+				</div>
+				<BProgress :value="taskStats.completedCount" :max="taskStats.totalCount" />
+			</div>
 		</header>
 
 		<!-- Tasks List -->

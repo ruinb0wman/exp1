@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed } from "vue";
-import { Check, X } from "lucide-vue-next";
+import { Check, X } from "@lucide/vue";
 import type { Achievement } from "@/db/types";
 import DynamicIcon from "@/components/DynamicIcon.vue";
 import { formatCondition } from "@/libs/achievement/formatCondition";

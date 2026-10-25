@@ -1,7 +1,6 @@
 <script setup lang="ts">
-import { ChevronLeft, ChevronRight } from "lucide-vue-next";
-import DatePicker from "@/components/DatePicker.vue";
-import FilterTabs from "@/components/FilterTabs.vue";
+import { ChevronLeft, ChevronRight } from "@lucide/vue";
+import { BChipGroup, MobileDatePicker } from "@ruinb0w/ui";
 import type { ReportScope } from "@/libs/report/types";
 import { REPORT_SCOPES, formatAnchorLabel, shiftAnchor } from "../lib";
 
@@ -29,31 +28,29 @@ const emit = defineEmits<{
 
 <template>
 	<div class="mb-4">
-		<FilterTabs
-			:options="REPORT_SCOPES"
-			:active-filter="scope"
-			@change="(s) => emit('scopeChange', s)"
-		>
-			<template #label="{ option }">{{ SCOPE_LABEL[option] }}</template>
-		</FilterTabs>
+		<BChipGroup
+			:options="REPORT_SCOPES.map((o) => ({ label: SCOPE_LABEL[o], value: o }))"
+			:model-value="scope"
+			@change="(v) => emit('scopeChange', v as ReportScope)"
+		/>
 
 		<div v-if="scope === 'custom'" class="flex items-center gap-3">
 			<div class="flex-1">
 				<p class="text-text-secondary text-xs mb-1">Start date</p>
-				<DatePicker
+				<MobileDatePicker
 					:model-value="customStart"
 					:max-date="customEnd"
 					:week-starts-on="1"
-					@change="(date) => date && emit('customRangeChange', date, customEnd)"
+					@change="(date: Date | null) => date && emit('customRangeChange', date, customEnd)"
 				/>
 			</div>
 			<div class="flex-1">
 				<p class="text-text-secondary text-xs mb-1">End date</p>
-				<DatePicker
+				<MobileDatePicker
 					:model-value="customEnd"
 					:min-date="customStart"
 					:week-starts-on="1"
-					@change="(date) => date && emit('customRangeChange', customStart, date)"
+					@change="(date: Date | null) => date && emit('customRangeChange', customStart, date)"
 				/>
 			</div>
 		</div>

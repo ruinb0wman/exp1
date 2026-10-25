@@ -15,10 +15,10 @@ import {
 	Timer,
 	Trash2,
 	XCircle,
-} from "lucide-vue-next";
-import Popup from "./Popup.vue";
+} from "@lucide/vue";
+import { BaseModal } from "@ruinb0w/ui";
 import TaskContributionGraph from "./TaskContributionGraph.vue";
-import { useConfirm } from "@/composables/useConfirm";
+import { useConfirm } from "@ruinb0w/ui";
 import type { TaskInstance, TaskTemplate } from "@/db/types";
 import {
 	isExpiredByInstanceDate,
@@ -285,15 +285,15 @@ const instanceDateText = computed(() =>
 </script>
 
 <template>
-	<Popup
-		:is-open="isOpen"
-		position="bottom"
+	<BaseModal
+		:visible="isOpen"
+		direction="bottom"
 		title="Task Detail"
-		:mask-closable="true"
+		:close-on-overlay="true"
 		max-height="80vh"
 		@close="emit('close')"
 	>
-		<template #headerRight>
+		<template #header-right>
 			<div class="flex items-center gap-1">
 				<button
 					v-if="hasDelete"
@@ -504,5 +504,5 @@ const instanceDateText = computed(() =>
 		</div>
 
 		<div v-else class="py-8 text-center text-text-secondary">Loading...</div>
-	</Popup>
+	</BaseModal>
 </template>

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed } from "vue";
-import { Banknote, ReceiptText, Sparkles } from "lucide-vue-next";
+import { Banknote, ReceiptText, Sparkles } from "@lucide/vue";
 import type { RewardPurchaseStats } from "@/db/services";
 import { formatMoney } from "@/libs/reward";
 

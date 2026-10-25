@@ -6,7 +6,7 @@ import {
 	RotateCcw,
 	Settings,
 	Trophy,
-} from "lucide-vue-next";
+} from "@lucide/vue";
 import type { PointsHistory, PointsHistoryType } from "@/db/types";
 import { formatRelativeDate } from "@/libs/time";
 import {

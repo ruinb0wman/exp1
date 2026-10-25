@@ -6,12 +6,12 @@ import {
 	Download,
 	FileJson,
 	Loader2,
-} from "lucide-vue-next";
+} from "@lucide/vue";
 import Header from "@/components/Header.vue";
-import Popup from "@/components/Popup.vue";
+import { BaseModal } from "@ruinb0w/ui";
 import { fileSystem } from "@/libs/fileSystem";
 import { toPlain } from "@/libs/plain";
-import { useAlert } from "@/composables/useConfirm";
+import { useAlert } from "@ruinb0w/ui";
 import { useUserStore } from "@/store/userStore";
 import {
 	exportAllData,
@@ -209,9 +209,11 @@ function closeResultDialog() {
 			</div>
 		</div>
 
-		<Popup
-			:is-open="showStrategyDialog"
-			position="center"
+		<BaseModal
+			:visible="showStrategyDialog"
+			direction="center"
+			width="92%"
+			height="auto"
 			title="Choose Import Method"
 			@close="closeStrategyDialog"
 		>
@@ -266,11 +268,13 @@ function closeResultDialog() {
 					</button>
 				</div>
 			</div>
-		</Popup>
+		</BaseModal>
 
-		<Popup
-			:is-open="showResultDialog"
-			position="center"
+		<BaseModal
+			:visible="showResultDialog"
+			direction="center"
+			width="92%"
+			height="auto"
 			:title="importResult?.success ? 'Import Successful' : 'Import Failed'"
 			@close="closeResultDialog"
 		>
@@ -334,6 +338,6 @@ function closeResultDialog() {
 					Confirm
 				</button>
 			</div>
-		</Popup>
+		</BaseModal>
 	</div>
 </template>

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Settings, Timer, Volume2, VolumeX } from "lucide-vue-next";
+import { Settings, Timer, Volume2, VolumeX } from "@lucide/vue";
 
 defineProps<{
 	/** 今日完成的番茄数 */

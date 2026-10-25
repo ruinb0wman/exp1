@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { History } from "lucide-vue-next";
+import { History } from "@lucide/vue";
 import type { PointsHistory } from "@/db/types";
 import PointsHistoryCard from "@/components/PointsHistoryCard.vue";
 

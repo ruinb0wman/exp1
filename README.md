@@ -1,4 +1,7 @@
-# exp1 - 任务+积分工具
+# exp1
+
+> UI 组件来自本地组件库 [`@ruinb0w/ui`](../ui)（源码 alias 直连）：
+> `bun run dev` 前确保 `~/Workspace/ui` 存在。主题 `exp1-dark`、密度 `touch`，见 `src/main.ts`。 - 任务+积分工具
 
 一个用于激励用户培养习惯的游戏化任务管理应用。
 

@@ -1,5 +1,5 @@
 import type { Component } from "vue";
-import { BarChart3, ChartPie, Coins, History, Trophy } from "lucide-vue-next";
+import { BarChart3, ChartPie, Coins, History, Trophy } from "@lucide/vue";
 
 export interface QuickAction {
   icon: Component;

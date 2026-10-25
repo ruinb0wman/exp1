@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed } from "vue";
-import { AlertCircle, Eye, Flag } from "lucide-vue-next";
+import { AlertCircle, Eye, Flag } from "@lucide/vue";
 import type { TaskHistoryItem } from "@/db/services";
 import type { TaskTemplate, TaskInstance } from "@/db/types";
 import { getTaskProgressPercent, getTotalPointsEarned } from "@/db/services";

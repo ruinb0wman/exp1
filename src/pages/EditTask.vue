@@ -3,11 +3,7 @@ import { computed, ref, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { storeToRefs } from "pinia";
 import Header from "@/components/Header.vue";
-import RadioGroup from "@/components/RadioGroup.vue";
-import MultiSelectGrid from "@/components/MultiSelectGrid.vue";
-import DatePicker from "@/components/DatePicker.vue";
-import NumberInput from "@/components/NumberInput.vue";
-import { Loader2, Plus, Trash2 } from "lucide-vue-next";
+import { Loader2, Plus, Trash2 } from "@lucide/vue";
 import { useUserStore } from "@/store";
 import { useTaskTemplate, useTaskTemplateActions } from "@/composables/useTasks";
 import type {
@@ -21,7 +17,7 @@ import type {
 } from "@/db/types/task";
 import { toLocalDateString } from "@/libs/time";
 import { toPlain } from "@/libs/plain";
-import { useAlert } from "@/composables/useConfirm";
+import { BChipGroup, BInputNumber, MobileDatePicker, useAlert } from "@ruinb0w/ui";
 
 const repeatOptions = ["None", "Daily", "Weekly", "Monthly"];
 const repeatValues: RepeatMode[] = ["none", "daily", "weekly", "monthly"];
@@ -176,16 +172,12 @@ function handleDeleteSubtask(index: number) {
 	pointsPerSubtask.value = pointsPerSubtask.value.filter((_, i) => i !== index);
 }
 
-function handleWeekDayChange(day: number) {
-	repeatDaysOfWeek.value = repeatDaysOfWeek.value.includes(day)
-		? repeatDaysOfWeek.value.filter((d) => d !== day)
-		: [...repeatDaysOfWeek.value, day].sort((a, b) => a - b);
+function handleWeekDayChange(days: number[]) {
+	repeatDaysOfWeek.value = [...days].sort((a, b) => a - b);
 }
 
-function handleMonthDayChange(day: number) {
-	repeatDaysOfMonth.value = repeatDaysOfMonth.value.includes(day)
-		? repeatDaysOfMonth.value.filter((d) => d !== day)
-		: [...repeatDaysOfMonth.value, day].sort((a, b) => a - b);
+function handleMonthDayChange(days: number[]) {
+	repeatDaysOfMonth.value = [...days].sort((a, b) => a - b);
 }
 
 // 阶段管理
@@ -451,7 +443,7 @@ const maxPointsForSubtasks = computed(() => {
 						<p class="text-text-primary text-base font-normal leading-normal">Level</p>
 						<p class="text-text-muted text-xs mt-0.5">Lower runs first</p>
 					</div>
-					<NumberInput v-model="level" :min="1" size="md" input-width="w-12" />
+					<BInputNumber :model-value="level" :min="1" :allow-decimal="false" :value-on-clear="1" @update:model-value="(v) => (level = v ?? 1)" />
 				</div>
 
 				<!-- Enabled Toggle -->
@@ -478,17 +470,19 @@ const maxPointsForSubtasks = computed(() => {
 					Task Type
 				</h3>
 				<div class="rounded-xl bg-surface p-4 space-y-4">
-					<RadioGroup
-						:list="taskTypeOptions"
+					<BChipGroup
+						layout="grid"
+						:columns="4"
+						:options="taskTypeOptions.map((label, i) => ({ label, value: i }))"
 						:model-value="taskTypeIndex"
-						@update:model-value="handleTaskTypeChange"
+						@update:model-value="(v) => handleTaskTypeChange(Number(v))"
 					/>
 
 					<!-- Simple 类型积分设置 -->
 					<div v-if="taskType === 'simple'" class="pt-4 border-t border-surface-light">
 						<div class="flex items-center justify-between">
 							<div class="text-text-secondary text-sm">Completion Points</div>
-							<NumberInput v-model="completionPoints" :min="0" size="md" />
+							<BInputNumber :model-value="completionPoints" :min="0" :allow-decimal="false" :value-on-clear="0" @update:model-value="(v) => (completionPoints = v ?? 0)" />
 						</div>
 					</div>
 
@@ -530,13 +524,14 @@ const maxPointsForSubtasks = computed(() => {
 								<label class="flex-1 min-w-0 truncate text-xs text-text-muted">
 									Reach{{ taskType === "time" ? "(min)" : "(times)" }}
 								</label>
-								<NumberInput
+								<BInputNumber
 									:model-value="stage.threshold"
 									:min="1"
-									size="sm"
-									input-width="w-16"
+									size="small"
+									:allow-decimal="false"
+									:value-on-clear="1"
 									class="shrink-0"
-									@update:model-value="(v) => updateStage(index, 'threshold', v)"
+									@update:model-value="(v) => updateStage(index, 'threshold', v ?? 1)"
 								/>
 							</div>
 
@@ -544,13 +539,14 @@ const maxPointsForSubtasks = computed(() => {
 								<label class="flex-1 min-w-0 truncate text-xs text-text-muted">
 									Earn Points
 								</label>
-								<NumberInput
+								<BInputNumber
 									:model-value="stage.points"
 									:min="0"
-									size="sm"
-									input-width="w-16"
+									size="small"
+									:allow-decimal="false"
+									:value-on-clear="0"
 									class="shrink-0"
-									@update:model-value="(v) => updateStage(index, 'points', v)"
+									@update:model-value="(v) => updateStage(index, 'points', v ?? 0)"
 								/>
 							</div>
 						</div>
@@ -558,11 +554,12 @@ const maxPointsForSubtasks = computed(() => {
 						<!-- 完成额外积分 -->
 						<div class="flex items-center justify-between pt-2 border-t border-surface-light">
 							<div class="text-text-secondary text-sm">Completion Bonus</div>
-							<NumberInput
-								v-model="completionPoints"
+							<BInputNumber
+								:model-value="completionPoints"
 								:min="0"
-								size="md"
-								input-width="w-12"
+								:allow-decimal="false"
+								:value-on-clear="0"
+								@update:model-value="(v) => (completionPoints = v ?? 0)"
 							/>
 						</div>
 
@@ -611,12 +608,13 @@ const maxPointsForSubtasks = computed(() => {
 									class="flex-1 min-w-0 bg-transparent text-text-primary focus:outline-none border-b-2 border-transparent focus:border-primary text-base font-normal leading-normal py-1"
 									@input="(e) => (subtasks[index] = (e.target as HTMLInputElement).value)"
 								/>
-								<NumberInput
+								<BInputNumber
 									:model-value="pointsPerSubtask[index] || 0"
 									:min="0"
-									size="sm"
-									input-width="w-10"
-									@update:model-value="(v) => (pointsPerSubtask[index] = v)"
+									size="small"
+									:allow-decimal="false"
+									:value-on-clear="0"
+									@update:model-value="(v) => (pointsPerSubtask[index] = v ?? 0)"
 								/>
 								<button
 									class="text-text-muted hover:text-primary transition-colors p-1"
@@ -656,14 +654,15 @@ const maxPointsForSubtasks = computed(() => {
 						<!-- Partial 模式：设置需要完成的数量 -->
 						<div v-if="subtaskMode === 'partial'" class="flex items-center gap-2">
 							<span class="text-text-secondary text-sm">Complete</span>
-							<NumberInput
+							<BInputNumber
 								:model-value="requiredCount"
 								:min="1"
 								:max="subtasks.length || 1"
-								size="sm"
-								input-width="w-14"
+								size="small"
+								:allow-decimal="false"
+								:value-on-clear="1"
 								@update:model-value="
-									(v) => (requiredCount = Math.min(subtasks.length, Math.max(1, v)))
+									(v) => (requiredCount = Math.min(subtasks.length, Math.max(1, v ?? 1)))
 								"
 							/>
 							<span class="text-text-secondary text-sm">items to complete</span>
@@ -672,11 +671,12 @@ const maxPointsForSubtasks = computed(() => {
 						<!-- 完成额外积分 -->
 						<div class="flex items-center justify-between pt-2 border-t border-surface-light">
 							<div class="text-text-secondary text-sm">Completion Bonus</div>
-							<NumberInput
-								v-model="completionPoints"
+							<BInputNumber
+								:model-value="completionPoints"
 								:min="0"
-								size="md"
-								input-width="w-12"
+								:allow-decimal="false"
+								:value-on-clear="0"
+								@update:model-value="(v) => (completionPoints = v ?? 0)"
 							/>
 						</div>
 
@@ -713,7 +713,7 @@ const maxPointsForSubtasks = computed(() => {
 					>
 						<p class="text-text-secondary text-sm min-w-[80px]">Start from</p>
 						<div class="flex-1">
-							<DatePicker
+							<MobileDatePicker
 								:model-value="startAtDate"
 								placeholder="Today (default)"
 								:min-date="minToday"
@@ -726,11 +726,12 @@ const maxPointsForSubtasks = computed(() => {
 						:class="`flex items-center gap-4 pt-4 border-t border-surface-light ${!isScheduleEnabled ? 'opacity-50 pointer-events-none' : ''}`"
 					>
 						<p class="text-text-secondary text-sm min-w-[80px]">Expire after</p>
-						<NumberInput
-							v-model="completeExpireDays"
+						<BInputNumber
+							:model-value="completeExpireDays"
 							:min="0"
-							size="md"
-							input-width="w-14"
+							:allow-decimal="false"
+							:value-on-clear="0"
+							@update:model-value="(v) => (completeExpireDays = v ?? 0)"
 						/>
 						<p class="text-text-secondary text-sm">days (0 = never)</p>
 					</div>
@@ -746,12 +747,14 @@ const maxPointsForSubtasks = computed(() => {
 					Repeat
 				</h3>
 				<div :class="`rounded-xl bg-surface p-4 space-y-4 ${!isScheduleEnabled ? 'opacity-50' : ''}`">
-					<RadioGroup
-						:list="repeatOptions"
+					<BChipGroup
+						layout="grid"
+						:columns="4"
+						:options="repeatOptions.map((label, i) => ({ label, value: i }))"
 						:model-value="repeatIndex"
 						@update:model-value="
-							(index) => {
-								if (isScheduleEnabled) repeatIndex = index;
+							(v) => {
+								if (isScheduleEnabled) repeatIndex = Number(v);
 							}
 						"
 					/>
@@ -764,11 +767,12 @@ const maxPointsForSubtasks = computed(() => {
 						class="flex items-center gap-4 pt-2 border-t border-surface-light"
 					>
 						<p class="text-text-secondary text-sm">Every</p>
-						<NumberInput
-							v-model="repeatInterval"
+						<BInputNumber
+							:model-value="repeatInterval"
 							:min="1"
-							size="md"
-							input-width="w-10"
+							:allow-decimal="false"
+							:value-on-clear="1"
+							@update:model-value="(v) => (repeatInterval = v ?? 1)"
 						/>
 						<p class="text-text-secondary text-sm">
 							<template v-if="repeatMode === 'daily'">days</template>
@@ -779,33 +783,40 @@ const maxPointsForSubtasks = computed(() => {
 
 					<div v-if="repeatMode === 'weekly'" class="pt-2 border-t border-surface-light">
 						<p class="text-text-secondary text-sm mb-3">On days</p>
-						<MultiSelectGrid
-							:list="weekDays"
-							:value="repeatDaysOfWeek"
-							:max-col="7"
-							@change="handleWeekDayChange"
+						<BChipGroup
+							multiple
+							layout="grid"
+							:columns="7"
+							:options="weekDays"
+							:model-value="repeatDaysOfWeek"
+							@update:model-value="(v) => handleWeekDayChange(v as number[])"
 						/>
 					</div>
 
 					<div v-if="repeatMode === 'monthly'" class="pt-2 border-t border-surface-light">
 						<p class="text-text-secondary text-sm mb-3">On days</p>
-						<MultiSelectGrid
-							:list="monthDays"
-							:value="repeatDaysOfMonth"
-							:max-col="7"
-							@change="handleMonthDayChange"
+						<BChipGroup
+							multiple
+							layout="grid"
+							:columns="7"
+							:options="monthDays"
+							:model-value="repeatDaysOfMonth"
+							@update:model-value="(v) => handleMonthDayChange(v as number[])"
 						/>
 					</div>
 
 					<div v-if="repeatMode !== 'none'" class="pt-4 border-t border-surface-light space-y-4">
 						<p class="text-text-primary text-sm font-medium">Ends</p>
-						<RadioGroup
-							:list="endOptions"
-							v-model="endIndex"
+						<BChipGroup
+							layout="grid"
+							:columns="4"
+							:options="endOptions.map((label, i) => ({ label, value: i }))"
+							:model-value="endIndex"
+							@update:model-value="(v) => (endIndex = Number(v))"
 						/>
 
 						<div v-if="endCondition === 'date'" class="pt-2 border-t border-surface-light">
-							<DatePicker
+							<MobileDatePicker
 								:model-value="endValueDate"
 								placeholder="Select end date"
 								:min-date="minToday"
@@ -818,12 +829,12 @@ const maxPointsForSubtasks = computed(() => {
 							class="flex items-center gap-4 pt-2 border-t border-surface-light"
 						>
 							<p class="text-text-secondary text-sm">After</p>
-							<NumberInput
+							<BInputNumber
 								:model-value="parseInt(endValue, 10) || 1"
 								:min="1"
-								size="md"
-								input-width="w-12"
-								@update:model-value="(v) => (endValue = String(v))"
+								:allow-decimal="false"
+								:value-on-clear="1"
+								@update:model-value="(v) => (endValue = String(v ?? 1))"
 							/>
 							<p class="text-text-secondary text-sm">times</p>
 						</div>

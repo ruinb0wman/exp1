@@ -1,9 +1,9 @@
 <script setup lang="ts">
+import { MobileTimePicker } from "@ruinb0w/ui";
 import { computed, ref, watch } from "vue";
 import { useRouter } from "vue-router";
 import { storeToRefs } from "pinia";
-import { ChevronLeft, Clock, Download, Info } from "lucide-vue-next";
-import TimePicker from "@/components/TimePicker.vue";
+import { ChevronLeft, Clock, Download, Info } from "@lucide/vue";
 import Header from "@/components/Header.vue";
 import AiSettingsSection from "@/components/AiSettingsSection.vue";
 import { useUserStore } from "@/store";
@@ -116,7 +116,7 @@ const timeDescription = computed(() => getTimeDescription(dayEndTime.value));
 			</div>
 		</div>
 
-		<TimePicker
+		<MobileTimePicker
 			v-model="dayEndTime"
 			:is-open="showTimePicker"
 			title="Day End Time"

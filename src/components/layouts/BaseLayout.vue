@@ -19,7 +19,7 @@ const topPadding = computed(() => insets.value.top || 32);
 </script>
 
 <template>
-	<div class="h-screen flex flex-col bg-background landscape:pl-56 overflow-hidden">
+	<div class="layout h-screen flex flex-col bg-background overflow-hidden">
 		<!-- 固定安全区域 - 状态栏占位（透明背景） -->
 		<div
 			class="flex-shrink-0 z-50"
@@ -39,3 +39,12 @@ const topPadding = computed(() => insets.value.top || 32);
 		<div v-if="showBottomNav" class="flex-shrink-0 landscape:hidden" />
 	</div>
 </template>
+
+<style scoped>
+/* 横屏时给左侧竖栏让位（BTabBar 的宽度由库里的 --rail 决定，这里是同一份 224px） */
+@media (orientation: landscape) {
+	.layout {
+		padding-left: 224px;
+	}
+}
+</style>

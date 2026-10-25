@@ -2,7 +2,7 @@
 import { computed, onMounted } from "vue";
 import { useRouter } from "vue-router";
 import { storeToRefs } from "pinia";
-import { Settings } from "lucide-vue-next";
+import { Settings } from "@lucide/vue";
 import Header from "@/components/Header.vue";
 import HeaderActionButton from "@/components/HeaderActionButton.vue";
 import { useUserStore } from "@/store";

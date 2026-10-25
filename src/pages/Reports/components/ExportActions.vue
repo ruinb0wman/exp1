@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, ref } from "vue";
-import { CheckCircle2, FileJson, FileText, Loader2 } from "lucide-vue-next";
+import { CheckCircle2, FileJson, FileText, Loader2 } from "@lucide/vue";
 import { fileSystem } from "@/libs/fileSystem";
 import { generateReportFilename, renderReportJson } from "@/db/services";
 import { renderReportMarkdown } from "@/libs/report/renderMarkdown";
