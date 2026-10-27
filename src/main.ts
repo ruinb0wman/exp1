@@ -5,6 +5,8 @@ import { onBackButtonPress } from "@tauri-apps/api/app";
 import { setBackButtonAdapter } from "@ruinb0w/ui";
 import App from "./App.vue";
 import router from "./router";
+// 图标登记表：库的 RLucideIcon 只认注册过的名字（副作用导入，必须在挂载前）
+import "@/libs/icons";
 // Tailwind 先引：它的 @layer 顺序先落地，库的 @layer base 才能被 utilities 正常覆盖
 import "./index.css";
 import "@ruinb0w/ui/style.css";

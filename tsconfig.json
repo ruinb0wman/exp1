@@ -23,6 +23,8 @@
     "baseUrl": ".",
     "paths": {
       "@/*": ["src/*"],
+      // 与 vite 的 dedupe 一致：库源码在仓外，不锁到项目这份 vue 会出现两套类型
+      "vue": ["./node_modules/vue"],
       "@ruinb0w/ui": ["../ui/src/index.ts"],
       "@ruinb0w/ui/style.css": ["../ui/src/index.css"]
     }
