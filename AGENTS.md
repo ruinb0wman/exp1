@@ -138,16 +138,16 @@ try {
 **首选库组件，不要自己再写一遍。**
 
 ```ts
-import { BButton, BaseModal, MobileHeader, MobileDatePicker, BChipGroup, useConfirm } from "@ruinb0w/ui";
+import { RButton, RModal, RMobileHeader, RMobileDatePicker, RChipGroup, useConfirm } from "@ruinb0w/ui";
 import "@ruinb0w/ui/style.css";        // 入口引一次（main.ts 已引）
 ```
 
 - 主题/密度在 `main.ts` 挂载前设置：`data-theme="exp1-dark"`、`data-density="touch"`。
 - 库源码直连（`vite.config.ts` 的 alias 指向 `../ui/src`），改库即时生效；`dedupe: ["vue", "@lucide/vue"]` 不能删，否则图标渲染会挂。
-- **浮层一律用 `BaseModal`**：`direction="center|bottom|top|left|right"`，底部弹出自动带拖动条与安全区；不要再写 `fixed inset-0` 的遮罩。
+- **浮层一律用 `RModal`**：`direction="center|bottom|top|left|right"`，底部弹出自动带拖动条与安全区；不要再写 `fixed inset-0` 的遮罩。
 - **返回手势**：`main.ts` 里 `setBackButtonAdapter(onBackButtonPress)` 注册一次，库内所有浮层与 `useBackButtonHandler` 共用同一个层栈。
-- **确认框/提示框**用 `useConfirm()` / `useAlert()`（`App.vue` 挂了 `<BConfirmHost />`），**不要用 `window.alert`**：Android WebView 会静默丢弃，Electron 会阻塞渲染。
-- 路由胶水留在项目侧：`Header.vue` 把 `@back` 接到 `router.back()`，`useTabNav.ts` 给 `BTabBar` 提供 items/激活判定。
+- **确认框/提示框**用 `useConfirm()` / `useAlert()`（`App.vue` 挂了 `<RConfirmHost />`），**不要用 `window.alert`**：Android WebView 会静默丢弃，Electron 会阻塞渲染。
+- 路由胶水留在项目侧：`Header.vue` 把 `@back` 接到 `router.back()`，`useTabNav.ts` 给 `RTabBar` 提供 items/激活判定。
 - 只有库没盖住的样式才在项目里手写，并只用语义变量（`--bg-*` / `--text-*` / `--color-*` / `--space-*`），禁止裸 px 与硬编码色值。
 
 ### Tailwind（历史包袱，正在拆）

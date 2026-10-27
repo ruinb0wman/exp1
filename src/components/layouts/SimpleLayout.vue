@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { RouterView } from "vue-router";
-import { BTabBar } from "@ruinb0w/ui";
+import { RTabBar } from "@ruinb0w/ui";
 import { useTabNav } from "@/composables/useTabNav";
 import BaseLayout from "./BaseLayout.vue";
 
@@ -14,7 +14,7 @@ const { items, isActive, select } = useTabNav();
 <template>
 	<BaseLayout :show-bottom-nav="false">
 		<RouterView />
-		<BTabBar
+		<RTabBar
 			class="app-tabbar app-tabbar--wide-only"
 			:items="items"
 			:is-active="isActive"

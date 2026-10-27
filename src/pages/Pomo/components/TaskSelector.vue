@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed } from "vue";
-import { BaseModal } from "@ruinb0w/ui";
+import { RModal } from "@ruinb0w/ui";
 import { CheckCircle2, Circle } from "@lucide/vue";
 import type { TaskWithTemplate } from "@/composables/useTasks";
 
@@ -31,7 +31,7 @@ const pendingTasks = computed(() =>
 </script>
 
 <template>
-	<BaseModal
+	<RModal
 		:visible="isOpen"
 		direction="bottom"
 		title="Select Focus Task"
@@ -82,5 +82,5 @@ const pendingTasks = computed(() =>
 				No pending tasks for today
 			</p>
 		</div>
-	</BaseModal>
+	</RModal>
 </template>

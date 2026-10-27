@@ -2,7 +2,7 @@
 import { ref } from "vue";
 import { ChevronDown, ReceiptText } from "@lucide/vue";
 import DynamicIcon from "@/components/DynamicIcon.vue";
-import { BEmptyState } from "@ruinb0w/ui";
+import { REmptyState } from "@ruinb0w/ui";
 import { formatMoney } from "@/libs/reward";
 import type { RewardRecordGroup } from "../lib";
 import PurchaseRow from "./PurchaseRow.vue";
@@ -30,9 +30,9 @@ function toggle(templateId: string) {
 </script>
 
 <template>
-	<BEmptyState v-if="props.groups.length === 0" title="No spending in this period">
+	<REmptyState v-if="props.groups.length === 0" title="No spending in this period">
 		<ReceiptText class="w-8 h-8" />
-	</BEmptyState>
+	</REmptyState>
 
 	<div v-else class="flex flex-col gap-3">
 		<div

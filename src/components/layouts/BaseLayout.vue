@@ -41,7 +41,7 @@ const topPadding = computed(() => insets.value.top || 32);
 </template>
 
 <style scoped>
-/* 横屏时给左侧竖栏让位（BTabBar 的宽度由库里的 --rail 决定，这里是同一份 224px） */
+/* 横屏时给左侧竖栏让位（RTabBar 的宽度由库里的 --rail 决定，这里是同一份 224px） */
 @media (orientation: landscape) {
 	.layout {
 		padding-left: 224px;

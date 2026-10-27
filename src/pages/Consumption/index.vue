@@ -3,10 +3,10 @@ import { computed, ref } from "vue";
 import { storeToRefs } from "pinia";
 import { BarChart3 } from "@lucide/vue";
 import Header from "@/components/Header.vue";
-import { BChipGroup } from "@ruinb0w/ui";
-import { BEmptyState } from "@ruinb0w/ui";
-import { BErrorState } from "@ruinb0w/ui";
-import { BLoadingState } from "@ruinb0w/ui";
+import { RChipGroup } from "@ruinb0w/ui";
+import { REmptyState } from "@ruinb0w/ui";
+import { RErrorState } from "@ruinb0w/ui";
+import { RLoadingState } from "@ruinb0w/ui";
 import { useUserStore } from "@/store";
 import {
 	useRewardPurchaseActions,
@@ -88,9 +88,9 @@ const rangeText = computed(() => {
 		<Header title="Spending" back />
 
 		<main class="px-4 pb-24">
-			<BEmptyState v-if="!user" title="Spending">
+			<REmptyState v-if="!user" title="Spending">
 				<BarChart3 class="w-8 h-8" />
-			</BEmptyState>
+			</REmptyState>
 
 			<template v-else>
 				<p class="text-text-muted text-xs mb-4">
@@ -107,9 +107,9 @@ const rangeText = computed(() => {
 					@custom-range-change="handleCustomRangeChange"
 				/>
 
-				<BLoadingState v-if="isLoading && !stats" message="Loading..." />
+				<RLoadingState v-if="isLoading && !stats" message="Loading..." />
 
-				<BErrorState
+				<RErrorState
 					v-else-if="error"
 					:title="error"
 					retry-label="Retry"
@@ -126,7 +126,7 @@ const rangeText = computed(() => {
 
 					<section>
 						<h2 class="text-text-primary font-bold mb-3">Records by reward</h2>
-						<BChipGroup
+						<RChipGroup
 							:options="REWARD_RECORD_SORTS.map((o) => ({ label: SORT_LABEL[o], value: o }))"
 							:model-value="sortBy"
 							@change="(v) => (sortBy = v as RewardRecordSortKey)"

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ChevronLeft, ChevronRight } from "@lucide/vue";
-import { BChipGroup, MobileDatePicker } from "@ruinb0w/ui";
+import { RChipGroup, RMobileDatePicker } from "@ruinb0w/ui";
 import type { ReportScope } from "@/libs/report/types";
 import { REPORT_SCOPES, formatAnchorLabel, shiftAnchor } from "../lib";
 
@@ -28,7 +28,7 @@ const emit = defineEmits<{
 
 <template>
 	<div class="mb-4">
-		<BChipGroup
+		<RChipGroup
 			:options="REPORT_SCOPES.map((o) => ({ label: SCOPE_LABEL[o], value: o }))"
 			:model-value="scope"
 			@change="(v) => emit('scopeChange', v as ReportScope)"
@@ -37,7 +37,7 @@ const emit = defineEmits<{
 		<div v-if="scope === 'custom'" class="flex items-center gap-3">
 			<div class="flex-1">
 				<p class="text-text-secondary text-xs mb-1">Start date</p>
-				<MobileDatePicker
+				<RMobileDatePicker
 					:model-value="customStart"
 					:max-date="customEnd"
 					:week-starts-on="1"
@@ -46,7 +46,7 @@ const emit = defineEmits<{
 			</div>
 			<div class="flex-1">
 				<p class="text-text-secondary text-xs mb-1">End date</p>
-				<MobileDatePicker
+				<RMobileDatePicker
 					:model-value="customEnd"
 					:min-date="customStart"
 					:week-starts-on="1"

@@ -3,7 +3,7 @@ import { computed } from "vue";
 import { storeToRefs } from "pinia";
 import { Sparkles } from "@lucide/vue";
 import DynamicIcon from "@/components/DynamicIcon.vue";
-import { BaseModal } from "@ruinb0w/ui";
+import { RModal } from "@ruinb0w/ui";
 import { useAchievementStore } from "@/store/achievementStore";
 
 /** 全局解锁提示：依次展示本次新解锁的成就 */
@@ -18,7 +18,7 @@ function handleClose() {
 </script>
 
 <template>
-	<BaseModal
+	<RModal
 		v-if="current"
 		:visible="true"
 		direction="center"
@@ -57,5 +57,5 @@ function handleClose() {
 				{{ pendingUnlocks.length > 1 ? `Next (${pendingUnlocks.length - 1} more)` : "Awesome" }}
 			</button>
 		</div>
-	</BaseModal>
+	</RModal>
 </template>

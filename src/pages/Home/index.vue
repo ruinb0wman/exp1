@@ -10,7 +10,7 @@ import {
 	useTodayTasks,
 } from "@/composables/useTasks";
 import { usePageInitializer } from "@/composables/usePageInitializer";
-import { BProgress } from "@ruinb0w/ui";
+import { RProgress } from "@ruinb0w/ui";
 import HomeHeader from "@/components/HomeHeader.vue";
 import TaskList from "@/components/TaskList.vue";
 import TaskDetailPopup from "@/components/TaskDetailPopup.vue";
@@ -215,7 +215,7 @@ const isLoading = computed(
 						<span class="text-primary">{{ estimatedTotalPoints }}</span>
 					</p>
 				</div>
-				<BProgress :value="taskStats.completedCount" :max="taskStats.totalCount" />
+				<RProgress :value="taskStats.completedCount" :max="taskStats.totalCount" />
 			</div>
 		</header>
 

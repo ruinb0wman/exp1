@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { MobileTimePicker } from "@ruinb0w/ui";
+import { RMobileTimePicker } from "@ruinb0w/ui";
 import { computed, ref, watch } from "vue";
 import { useRouter } from "vue-router";
 import { storeToRefs } from "pinia";
@@ -116,7 +116,7 @@ const timeDescription = computed(() => getTimeDescription(dayEndTime.value));
 			</div>
 		</div>
 
-		<MobileTimePicker
+		<RMobileTimePicker
 			v-model="dayEndTime"
 			:is-open="showTimePicker"
 			title="Day End Time"

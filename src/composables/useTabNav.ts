@@ -3,7 +3,7 @@ import type { TabBarItem } from "@ruinb0w/ui";
 
 /**
  * 底部标签栏的路由胶水。
- * 库的 BTabBar 只认 items / isActive / select 三个参数，路由与 replace 语义留在这里
+ * 库的 RTabBar 只认 items / isActive / select 三个参数，路由与 replace 语义留在这里
  * （见 @ruinb0w/ui DESIGN.md「壳在库、容器在项目」）。
  */
 const items: TabBarItem[] = [

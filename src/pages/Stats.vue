@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { MobileCalendar } from "@ruinb0w/ui";
+import { RCalendar } from "@ruinb0w/ui";
 import { computed, onUnmounted, ref, watch } from "vue";
 import { useRouter } from "vue-router";
 import { storeToRefs } from "pinia";
@@ -230,7 +230,7 @@ function monthLabel(date: Date) {
 		<main class="px-4">
 			<!-- Calendar - 使用默认配置 -->
 			<div class="mx-auto">
-				<MobileCalendar
+				<RCalendar
 					mode="single"
 					:model-value="selectedDate"
 					:show-year-switcher="false"

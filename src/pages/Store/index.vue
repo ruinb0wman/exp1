@@ -5,7 +5,7 @@ import { storeToRefs } from "pinia";
 import { ChartPie, History, ListChecks, Pencil, Plus } from "@lucide/vue";
 import Header from "@/components/Header.vue";
 import HeaderActionButton from "@/components/HeaderActionButton.vue";
-import { BaseModal } from "@ruinb0w/ui";
+import { RModal } from "@ruinb0w/ui";
 import { useUserStore } from "@/store";
 import { useStoreRewards, type StoreReward } from "@/composables/useRewards";
 import { useRewardPurchaseActions } from "@/composables/useRewardPurchases";
@@ -201,7 +201,7 @@ function goToEditReward() {
 		</main>
 
 		<!-- Reward Detail Popup -->
-		<BaseModal
+		<RModal
 			:visible="isPopupOpen"
 			direction="bottom"
 			max-height="80vh"
@@ -237,6 +237,6 @@ function goToEditReward() {
 				:redeem-error="redeemError"
 				@redeem="handlePurchase"
 			/>
-		</BaseModal>
+		</RModal>
 	</div>
 </template>

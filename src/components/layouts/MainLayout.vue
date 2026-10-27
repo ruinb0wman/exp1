@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { RouterView } from "vue-router";
-import { BTabBar } from "@ruinb0w/ui";
+import { RTabBar } from "@ruinb0w/ui";
 import { useTabNav } from "@/composables/useTabNav";
 import BaseLayout from "./BaseLayout.vue";
 
@@ -9,12 +9,12 @@ const { items, isActive, select } = useTabNav();
 
 <!--
   主布局组件
-  带底部导航栏（横屏时库里的 BTabBar 自己变成左侧竖栏），用于主要页面
+  带底部导航栏（横屏时库里的 RTabBar 自己变成左侧竖栏），用于主要页面
 -->
 <template>
 	<BaseLayout :show-bottom-nav="true">
 		<RouterView />
-		<BTabBar
+		<RTabBar
 			class="app-tabbar"
 			:items="items"
 			:is-active="isActive"

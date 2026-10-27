@@ -18,9 +18,9 @@ import { useConfirm } from "@ruinb0w/ui";
 import { useUserStore } from "@/store";
 import { useAchievementStore } from "@/store/achievementStore";
 import Header from "@/components/Header.vue";
-import { BChipGroup } from "@ruinb0w/ui";
-import { BEmptyState } from "@ruinb0w/ui";
-import { BaseModal } from "@ruinb0w/ui";
+import { RChipGroup } from "@ruinb0w/ui";
+import { REmptyState } from "@ruinb0w/ui";
+import { RModal } from "@ruinb0w/ui";
 import {
 	generateAchievements,
 	generatePresetAchievements,
@@ -259,7 +259,7 @@ async function handleAbandon(achievement: Achievement) {
 		</div>
 
 		<div class="px-4">
-			<BChipGroup
+			<RChipGroup
 				:options="tabOptions"
 				:model-value="tab"
 				@change="(v) => (tab = v as AchievementTab)"
@@ -276,7 +276,7 @@ async function handleAbandon(achievement: Achievement) {
 		</div>
 
 		<div class="px-4">
-			<BEmptyState
+			<REmptyState
 				v-if="visible.length === 0"
 				:title="ACHIEVEMENT_EMPTY_TEXT[tab]"
 				:description="
@@ -286,7 +286,7 @@ async function handleAbandon(achievement: Achievement) {
 				"
 			>
 				<Trophy class="w-8 h-8" />
-			</BEmptyState>
+			</REmptyState>
 
 			<template v-else-if="tab === 'proposed'">
 				<AchievementProposalCard
@@ -318,7 +318,7 @@ async function handleAbandon(achievement: Achievement) {
 			@confirm="handleAccept"
 		/>
 
-		<BaseModal
+		<RModal
 			:visible="showFallback"
 			direction="center"
 			width="92%"
@@ -354,6 +354,6 @@ async function handleAbandon(achievement: Achievement) {
 					</button>
 				</div>
 			</div>
-		</BaseModal>
+		</RModal>
 	</div>
 </template>

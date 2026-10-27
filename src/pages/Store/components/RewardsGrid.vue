@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { Package, Sparkles } from "@lucide/vue";
 import DynamicIcon from "@/components/DynamicIcon.vue";
-import { BEmptyState } from "@ruinb0w/ui";
+import { REmptyState } from "@ruinb0w/ui";
 import { formatMoney, isCountedInConsumption } from "@/libs/reward";
 import type { StoreReward } from "@/composables/useRewards";
 
@@ -18,13 +18,13 @@ const emit = defineEmits<{ rewardClick: [reward: StoreReward] }>();
 		<div class="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
 	</div>
 
-	<BEmptyState
+	<REmptyState
 		v-else-if="rewards.length === 0"
 		title="No Rewards"
 		description="Tap + to create a new reward"
 	>
 		<Package class="w-8 h-8" />
-	</BEmptyState>
+	</REmptyState>
 
 	<div v-else class="grid gap-3 grid-cols-[repeat(auto-fill,minmax(100px,1fr))]">
 		<button

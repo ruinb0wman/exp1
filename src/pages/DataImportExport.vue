@@ -8,7 +8,7 @@ import {
 	Loader2,
 } from "@lucide/vue";
 import Header from "@/components/Header.vue";
-import { BaseModal } from "@ruinb0w/ui";
+import { RModal } from "@ruinb0w/ui";
 import { fileSystem } from "@/libs/fileSystem";
 import { toPlain } from "@/libs/plain";
 import { useAlert } from "@ruinb0w/ui";
@@ -209,7 +209,7 @@ function closeResultDialog() {
 			</div>
 		</div>
 
-		<BaseModal
+		<RModal
 			:visible="showStrategyDialog"
 			direction="center"
 			width="92%"
@@ -268,9 +268,9 @@ function closeResultDialog() {
 					</button>
 				</div>
 			</div>
-		</BaseModal>
+		</RModal>
 
-		<BaseModal
+		<RModal
 			:visible="showResultDialog"
 			direction="center"
 			width="92%"
@@ -338,6 +338,6 @@ function closeResultDialog() {
 					Confirm
 				</button>
 			</div>
-		</BaseModal>
+		</RModal>
 	</div>
 </template>

@@ -16,7 +16,7 @@ import {
 	Trash2,
 	XCircle,
 } from "@lucide/vue";
-import { BaseModal } from "@ruinb0w/ui";
+import { RModal } from "@ruinb0w/ui";
 import TaskContributionGraph from "./TaskContributionGraph.vue";
 import { useConfirm } from "@ruinb0w/ui";
 import type { TaskInstance, TaskTemplate } from "@/db/types";
@@ -285,7 +285,7 @@ const instanceDateText = computed(() =>
 </script>
 
 <template>
-	<BaseModal
+	<RModal
 		:visible="isOpen"
 		direction="bottom"
 		title="Task Detail"
@@ -504,5 +504,5 @@ const instanceDateText = computed(() =>
 		</div>
 
 		<div v-else class="py-8 text-center text-text-secondary">Loading...</div>
-	</BaseModal>
+	</RModal>
 </template>

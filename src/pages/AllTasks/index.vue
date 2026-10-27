@@ -5,7 +5,7 @@ import { storeToRefs } from "pinia";
 import { History } from "@lucide/vue";
 import Header from "@/components/Header.vue";
 import HeaderActionButton from "@/components/HeaderActionButton.vue";
-import { BChipGroup } from "@ruinb0w/ui";
+import { RChipGroup } from "@ruinb0w/ui";
 import { useTaskTemplateActions, useTaskTemplates } from "@/composables/useTasks";
 import { useUserStore } from "@/store";
 import {
@@ -74,7 +74,7 @@ function setFilter(next: Category) {
 
 		<!-- Filter Tabs -->
 		<div class="px-4 pb-4">
-			<BChipGroup
+			<RChipGroup
 				:options="categories.map((c) => ({ label: c, value: c }))"
 				:model-value="filter"
 				@change="(v) => setFilter(v as Category)"

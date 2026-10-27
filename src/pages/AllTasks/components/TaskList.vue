@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import TaskTemplateCard from "@/components/TaskTemplateCard.vue";
-import { BLoadingState } from "@ruinb0w/ui";
-import { BErrorState } from "@ruinb0w/ui";
-import { BEmptyState } from "@ruinb0w/ui";
+import { RLoadingState } from "@ruinb0w/ui";
+import { RErrorState } from "@ruinb0w/ui";
+import { REmptyState } from "@ruinb0w/ui";
 import type { TaskTemplate } from "@/db/types";
 
 defineProps<{
@@ -21,16 +21,16 @@ const emit = defineEmits<{
 </script>
 
 <template>
-	<BLoadingState v-if="isLoading" message="Loading tasks..." />
+	<RLoadingState v-if="isLoading" message="Loading tasks..." />
 
-	<BErrorState
+	<RErrorState
 		v-else-if="error"
 		title="Failed to load tasks"
 		retry-label="Retry"
 		@retry="emit('refresh')"
 	/>
 
-	<BEmptyState
+	<REmptyState
 		v-else-if="templates.length === 0"
 		title="No tasks found"
 		:description="

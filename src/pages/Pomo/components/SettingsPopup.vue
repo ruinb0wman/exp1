@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { BaseModal } from "@ruinb0w/ui";
+import { RModal } from "@ruinb0w/ui";
 import DurationSlider from "./DurationSlider.vue";
 import type { PomoSettings } from "@/db/types/pomo";
 
@@ -15,7 +15,7 @@ const emit = defineEmits<{
 </script>
 
 <template>
-	<BaseModal
+	<RModal
 		:visible="isOpen"
 		direction="center"
 		width="92%"
@@ -96,5 +96,5 @@ const emit = defineEmits<{
 				</label>
 			</div>
 		</div>
-	</BaseModal>
+	</RModal>
 </template>

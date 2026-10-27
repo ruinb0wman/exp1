@@ -16,9 +16,9 @@ import { isValidMoneyCost, formatMoney } from "@/libs/reward";
 import { toPlain } from "@/libs/plain";
 import { useRewardTemplate, useRewardTemplateActions } from "@/composables/useRewards";
 import {
-	BChipGroup,
-	BInputNumber,
-	MobileIconPicker,
+	RChipGroup,
+	RInputNumber,
+	RMobileIconPicker,
 	useAlert,
 } from "@ruinb0w/ui";
 import { useUserStore } from "@/store";
@@ -279,7 +279,7 @@ const moneyPreview = computed(() =>
 							Point Cost
 						</p>
 					</div>
-					<BInputNumber :model-value="pointsCost" :min="0" :step="10" :allow-decimal="false" :value-on-clear="0" @update:model-value="(v) => (pointsCost = v ?? 0)" />
+					<RInputNumber :model-value="pointsCost" :min="0" :step="10" :allow-decimal="false" :value-on-clear="0" @update:model-value="(v) => (pointsCost = v ?? 0)" />
 				</div>
 
 				<!-- Enabled Toggle -->
@@ -333,7 +333,7 @@ const moneyPreview = computed(() =>
 									Unit value (¥)
 								</p>
 							</div>
-							<BInputNumber
+							<RInputNumber
 								:model-value="moneyCost"
 								:min="0"
 								:step="1"
@@ -365,7 +365,7 @@ const moneyPreview = computed(() =>
 					Auto Restock
 				</h3>
 				<div class="rounded-xl bg-surface p-4 space-y-4">
-					<BChipGroup
+					<RChipGroup
 						layout="grid"
 						:columns="4"
 						:options="restockOptions.map((label, i) => ({ label, value: i }))"
@@ -379,7 +379,7 @@ const moneyPreview = computed(() =>
 						class="flex items-center gap-4 pt-2 border-t border-surface-light"
 					>
 						<span class="text-text-secondary text-sm shrink-0">Every</span>
-						<BInputNumber
+						<RInputNumber
 							:model-value="repeatInterval"
 							:min="1"
 							:allow-decimal="false"
@@ -392,7 +392,7 @@ const moneyPreview = computed(() =>
 					<!-- Weekly Restock Days -->
 					<div v-if="restockMode === 'weekly'" class="pt-2 border-t border-surface-light">
 						<p class="text-text-secondary text-sm mb-3">Restock on</p>
-						<BChipGroup
+						<RChipGroup
 							multiple
 							layout="grid"
 							:columns="7"
@@ -405,7 +405,7 @@ const moneyPreview = computed(() =>
 					<!-- Monthly Restock Days -->
 					<div v-if="restockMode === 'monthly'" class="pt-2 border-t border-surface-light">
 						<p class="text-text-secondary text-sm mb-3">Restock on</p>
-						<BChipGroup
+						<RChipGroup
 							multiple
 							layout="grid"
 							:columns="7"
@@ -421,7 +421,7 @@ const moneyPreview = computed(() =>
 						class="flex items-center gap-4 pt-2 border-t border-surface-light"
 					>
 						<span class="text-text-secondary text-sm shrink-0">Restock amount</span>
-						<BInputNumber
+						<RInputNumber
 							:model-value="replenishmentNum"
 							:min="1"
 							:allow-decimal="false"
@@ -460,7 +460,7 @@ const moneyPreview = computed(() =>
 
 						<div v-if="hasStockLimit" class="flex items-center gap-4">
 							<span class="text-text-secondary text-sm shrink-0">Max stock</span>
-							<BInputNumber
+							<RInputNumber
 								:model-value="replenishmentLimit"
 								:min="1"
 								:allow-decimal="false"
@@ -489,7 +489,7 @@ const moneyPreview = computed(() =>
 		</div>
 
 		<!-- Icon Picker Modal -->
-		<MobileIconPicker
+		<RMobileIconPicker
 			:is-open="isIconPickerOpen"
 			:icons="REWARD_ICONS"
 			:colors="REWARD_ICON_COLORS"

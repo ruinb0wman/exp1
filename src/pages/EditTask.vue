@@ -17,7 +17,7 @@ import type {
 } from "@/db/types/task";
 import { toLocalDateString } from "@/libs/time";
 import { toPlain } from "@/libs/plain";
-import { BChipGroup, BInputNumber, MobileDatePicker, useAlert } from "@ruinb0w/ui";
+import { RChipGroup, RInputNumber, RMobileDatePicker, useAlert } from "@ruinb0w/ui";
 
 const repeatOptions = ["None", "Daily", "Weekly", "Monthly"];
 const repeatValues: RepeatMode[] = ["none", "daily", "weekly", "monthly"];
@@ -443,7 +443,7 @@ const maxPointsForSubtasks = computed(() => {
 						<p class="text-text-primary text-base font-normal leading-normal">Level</p>
 						<p class="text-text-muted text-xs mt-0.5">Lower runs first</p>
 					</div>
-					<BInputNumber :model-value="level" :min="1" :allow-decimal="false" :value-on-clear="1" @update:model-value="(v) => (level = v ?? 1)" />
+					<RInputNumber :model-value="level" :min="1" :allow-decimal="false" :value-on-clear="1" @update:model-value="(v) => (level = v ?? 1)" />
 				</div>
 
 				<!-- Enabled Toggle -->
@@ -470,7 +470,7 @@ const maxPointsForSubtasks = computed(() => {
 					Task Type
 				</h3>
 				<div class="rounded-xl bg-surface p-4 space-y-4">
-					<BChipGroup
+					<RChipGroup
 						layout="grid"
 						:columns="4"
 						:options="taskTypeOptions.map((label, i) => ({ label, value: i }))"
@@ -482,7 +482,7 @@ const maxPointsForSubtasks = computed(() => {
 					<div v-if="taskType === 'simple'" class="pt-4 border-t border-surface-light">
 						<div class="flex items-center justify-between">
 							<div class="text-text-secondary text-sm">Completion Points</div>
-							<BInputNumber :model-value="completionPoints" :min="0" :allow-decimal="false" :value-on-clear="0" @update:model-value="(v) => (completionPoints = v ?? 0)" />
+							<RInputNumber :model-value="completionPoints" :min="0" :allow-decimal="false" :value-on-clear="0" @update:model-value="(v) => (completionPoints = v ?? 0)" />
 						</div>
 					</div>
 
@@ -524,7 +524,7 @@ const maxPointsForSubtasks = computed(() => {
 								<label class="flex-1 min-w-0 truncate text-xs text-text-muted">
 									Reach{{ taskType === "time" ? "(min)" : "(times)" }}
 								</label>
-								<BInputNumber
+								<RInputNumber
 									:model-value="stage.threshold"
 									:min="1"
 									size="small"
@@ -539,7 +539,7 @@ const maxPointsForSubtasks = computed(() => {
 								<label class="flex-1 min-w-0 truncate text-xs text-text-muted">
 									Earn Points
 								</label>
-								<BInputNumber
+								<RInputNumber
 									:model-value="stage.points"
 									:min="0"
 									size="small"
@@ -554,7 +554,7 @@ const maxPointsForSubtasks = computed(() => {
 						<!-- 完成额外积分 -->
 						<div class="flex items-center justify-between pt-2 border-t border-surface-light">
 							<div class="text-text-secondary text-sm">Completion Bonus</div>
-							<BInputNumber
+							<RInputNumber
 								:model-value="completionPoints"
 								:min="0"
 								:allow-decimal="false"
@@ -608,7 +608,7 @@ const maxPointsForSubtasks = computed(() => {
 									class="flex-1 min-w-0 bg-transparent text-text-primary focus:outline-none border-b-2 border-transparent focus:border-primary text-base font-normal leading-normal py-1"
 									@input="(e) => (subtasks[index] = (e.target as HTMLInputElement).value)"
 								/>
-								<BInputNumber
+								<RInputNumber
 									:model-value="pointsPerSubtask[index] || 0"
 									:min="0"
 									size="small"
@@ -654,7 +654,7 @@ const maxPointsForSubtasks = computed(() => {
 						<!-- Partial 模式：设置需要完成的数量 -->
 						<div v-if="subtaskMode === 'partial'" class="flex items-center gap-2">
 							<span class="text-text-secondary text-sm">Complete</span>
-							<BInputNumber
+							<RInputNumber
 								:model-value="requiredCount"
 								:min="1"
 								:max="subtasks.length || 1"
@@ -671,7 +671,7 @@ const maxPointsForSubtasks = computed(() => {
 						<!-- 完成额外积分 -->
 						<div class="flex items-center justify-between pt-2 border-t border-surface-light">
 							<div class="text-text-secondary text-sm">Completion Bonus</div>
-							<BInputNumber
+							<RInputNumber
 								:model-value="completionPoints"
 								:min="0"
 								:allow-decimal="false"
@@ -713,7 +713,7 @@ const maxPointsForSubtasks = computed(() => {
 					>
 						<p class="text-text-secondary text-sm min-w-[80px]">Start from</p>
 						<div class="flex-1">
-							<MobileDatePicker
+							<RMobileDatePicker
 								:model-value="startAtDate"
 								placeholder="Today (default)"
 								:min-date="minToday"
@@ -726,7 +726,7 @@ const maxPointsForSubtasks = computed(() => {
 						:class="`flex items-center gap-4 pt-4 border-t border-surface-light ${!isScheduleEnabled ? 'opacity-50 pointer-events-none' : ''}`"
 					>
 						<p class="text-text-secondary text-sm min-w-[80px]">Expire after</p>
-						<BInputNumber
+						<RInputNumber
 							:model-value="completeExpireDays"
 							:min="0"
 							:allow-decimal="false"
@@ -747,7 +747,7 @@ const maxPointsForSubtasks = computed(() => {
 					Repeat
 				</h3>
 				<div :class="`rounded-xl bg-surface p-4 space-y-4 ${!isScheduleEnabled ? 'opacity-50' : ''}`">
-					<BChipGroup
+					<RChipGroup
 						layout="grid"
 						:columns="4"
 						:options="repeatOptions.map((label, i) => ({ label, value: i }))"
@@ -767,7 +767,7 @@ const maxPointsForSubtasks = computed(() => {
 						class="flex items-center gap-4 pt-2 border-t border-surface-light"
 					>
 						<p class="text-text-secondary text-sm">Every</p>
-						<BInputNumber
+						<RInputNumber
 							:model-value="repeatInterval"
 							:min="1"
 							:allow-decimal="false"
@@ -783,7 +783,7 @@ const maxPointsForSubtasks = computed(() => {
 
 					<div v-if="repeatMode === 'weekly'" class="pt-2 border-t border-surface-light">
 						<p class="text-text-secondary text-sm mb-3">On days</p>
-						<BChipGroup
+						<RChipGroup
 							multiple
 							layout="grid"
 							:columns="7"
@@ -795,7 +795,7 @@ const maxPointsForSubtasks = computed(() => {
 
 					<div v-if="repeatMode === 'monthly'" class="pt-2 border-t border-surface-light">
 						<p class="text-text-secondary text-sm mb-3">On days</p>
-						<BChipGroup
+						<RChipGroup
 							multiple
 							layout="grid"
 							:columns="7"
@@ -807,7 +807,7 @@ const maxPointsForSubtasks = computed(() => {
 
 					<div v-if="repeatMode !== 'none'" class="pt-4 border-t border-surface-light space-y-4">
 						<p class="text-text-primary text-sm font-medium">Ends</p>
-						<BChipGroup
+						<RChipGroup
 							layout="grid"
 							:columns="4"
 							:options="endOptions.map((label, i) => ({ label, value: i }))"
@@ -816,7 +816,7 @@ const maxPointsForSubtasks = computed(() => {
 						/>
 
 						<div v-if="endCondition === 'date'" class="pt-2 border-t border-surface-light">
-							<MobileDatePicker
+							<RMobileDatePicker
 								:model-value="endValueDate"
 								placeholder="Select end date"
 								:min-date="minToday"
@@ -829,7 +829,7 @@ const maxPointsForSubtasks = computed(() => {
 							class="flex items-center gap-4 pt-2 border-t border-surface-light"
 						>
 							<p class="text-text-secondary text-sm">After</p>
-							<BInputNumber
+							<RInputNumber
 								:model-value="parseInt(endValue, 10) || 1"
 								:min="1"
 								:allow-decimal="false"

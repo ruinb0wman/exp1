@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { RouterView } from "vue-router";
-import { BConfirmHost } from "@ruinb0w/ui";
+import { RConfirmHost } from "@ruinb0w/ui";
 import AchievementUnlockDialog from "@/pages/Achievements/components/AchievementUnlockDialog.vue";
 import { useAppBootstrap } from "@/composables/useAppBootstrap";
 
@@ -12,7 +12,7 @@ useAppBootstrap();
 	<RouterView />
 
 	<!-- 应用级确认框/提示框宿主：useConfirm() / useAlert() 的界面挂在这里 -->
-	<BConfirmHost />
+	<RConfirmHost />
 
 	<AchievementUnlockDialog />
 </template>

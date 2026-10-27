@@ -8,7 +8,7 @@ import {
 } from "@/db/types";
 import type { AcceptAchievementOverrides } from "@/db/services";
 import DynamicIcon from "@/components/DynamicIcon.vue";
-import { BaseModal, BInputNumber } from "@ruinb0w/ui";
+import { RModal, RInputNumber } from "@ruinb0w/ui";
 import { formatCondition } from "@/libs/achievement/formatCondition";
 
 const props = defineProps<{
@@ -68,7 +68,7 @@ function handleDescriptionInput(event: Event) {
 </script>
 
 <template>
-	<BaseModal
+	<RModal
 		v-if="achievement"
 		:visible="isOpen"
 		direction="bottom"
@@ -120,7 +120,7 @@ function handleDescriptionInput(event: Event) {
 			</div>
 
 			<label class="block text-text-secondary text-sm mb-2">Reward Points</label>
-			<BInputNumber
+			<RInputNumber
 				:model-value="rewardPoints"
 				:min="1"
 				:max="1000"
@@ -141,5 +141,5 @@ function handleDescriptionInput(event: Event) {
 				Accept
 			</button>
 		</template>
-	</BaseModal>
+	</RModal>
 </template>
