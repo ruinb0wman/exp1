@@ -1,30 +1,4 @@
-import { CheckCircle2, Circle, XCircle } from "@lucide/vue";
-import type { Component } from "vue";
 import type { TaskHistoryItem } from "@/db/services";
-
-export function getStatusIcon(
-  status: TaskHistoryItem["instance"]["status"],
-): Component {
-  switch (status) {
-    case "completed":
-      return CheckCircle2;
-    case "skipped":
-      return XCircle;
-    default:
-      return Circle;
-  }
-}
-
-export function getStatusStyle(status: TaskHistoryItem["instance"]["status"]) {
-  switch (status) {
-    case "completed":
-      return { color: "text-green-500", bg: "bg-green-500/20" };
-    case "skipped":
-      return { color: "text-text-muted", bg: "bg-text-muted/20" };
-    default:
-      return { color: "text-primary", bg: "bg-primary/20" };
-  }
-}
 
 export type StatusLabelKey = "completed" | "skipped" | "pending";
 export function getStatusLabel(status: TaskHistoryItem["instance"]["status"]): StatusLabelKey {

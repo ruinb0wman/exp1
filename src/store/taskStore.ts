@@ -5,6 +5,7 @@ import type { TaskInstance, TaskTemplate } from "@/db/types";
 import {
 	getTodayTaskInstances,
 	getNoDateTaskInstances,
+	getPendingEarlierTaskInstances,
 } from "@/db/services";
 import { useUserStore } from "@/store/userStore";
 
@@ -16,10 +17,12 @@ export interface TaskWithTemplate {
 // 订阅句柄放模块级（store 单例）
 let todayTasksSubscription: Subscription | null = null;
 let noDateTasksSubscription: Subscription | null = null;
+let earlierTasksSubscription: Subscription | null = null;
 
 export const useTaskStore = defineStore("task", () => {
 	const todayTasks = ref<TaskWithTemplate[]>([]);
 	const noDateTasks = ref<TaskWithTemplate[]>([]);
+	const earlierTasks = ref<TaskWithTemplate[]>([]);
 	const isLoading = ref(false);
 	const error = ref<string | null>(null);
 
@@ -72,6 +75,34 @@ export const useTaskStore = defineStore("task", () => {
 		isLoading.value = true;
 	}
 
+	function subscribeToEarlierTasks(userId: number) {
+		unsubscribeFromEarlierTasks();
+
+		const userStore = useUserStore();
+		const dayEndTime = userStore.user?.dayEndTime ?? "00:00";
+
+		const observable = liveQuery(() =>
+			getPendingEarlierTaskInstances(userId, dayEndTime),
+		);
+
+		earlierTasksSubscription = observable.subscribe({
+			next: (data) => {
+				earlierTasks.value = data;
+				isLoading.value = false;
+				error.value = null;
+			},
+			error: (err) => {
+				error.value =
+					err instanceof Error
+						? err.message
+						: "Failed to load earlier tasks";
+				isLoading.value = false;
+			},
+		});
+
+		isLoading.value = true;
+	}
+
 	function unsubscribeFromTodayTasks() {
 		todayTasksSubscription?.unsubscribe();
 		todayTasksSubscription = null;
@@ -80,6 +111,11 @@ export const useTaskStore = defineStore("task", () => {
 	function unsubscribeFromNoDateTasks() {
 		noDateTasksSubscription?.unsubscribe();
 		noDateTasksSubscription = null;
+	}
+
+	function unsubscribeFromEarlierTasks() {
+		earlierTasksSubscription?.unsubscribe();
+		earlierTasksSubscription = null;
 	}
 
 	async function refreshTodayTasks() {
@@ -93,13 +129,16 @@ export const useTaskStore = defineStore("task", () => {
 	return {
 		todayTasks,
 		noDateTasks,
+		earlierTasks,
 		isLoading,
 		error,
 
 		subscribeToTodayTasks,
 		subscribeToNoDateTasks,
+		subscribeToEarlierTasks,
 		unsubscribeFromTodayTasks,
 		unsubscribeFromNoDateTasks,
+		unsubscribeFromEarlierTasks,
 		refreshTodayTasks,
 		refreshNoDateTasks,
 	};

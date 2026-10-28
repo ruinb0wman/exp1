@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { computed } from "vue";
-import { AlertCircle, Eye, Flag } from "@lucide/vue";
+import { RListCard } from "@ruinb0w/ui";
 import type { TaskHistoryItem } from "@/db/services";
-import type { TaskTemplate, TaskInstance } from "@/db/types";
+import type { RepeatMode, TaskTemplate, TaskInstance, TaskStatus } from "@/db/types";
 import { getTaskProgressPercent, getTotalPointsEarned } from "@/db/services";
 import { useUserStore } from "@/store";
 import {
@@ -10,14 +10,8 @@ import {
 	getExpireTimeTextByInstanceDate,
 	type ExpireTimeResult,
 } from "@/libs/time";
+import { repeatModeMap } from "@/pages/AllTasks/lib";
 import {
-	repeatModeMap,
-	repeatModeColorMap,
-	levelBadgeClass,
-} from "@/pages/AllTasks/lib";
-import {
-	getStatusIcon,
-	getStatusStyle,
 	getStatusLabel,
 	formatDateTime,
 	type StatusLabelKey,
@@ -42,36 +36,35 @@ const emit = defineEmits<{
 
 const userStore = useUserStore();
 
-function getProgressColor(percent: number): string {
-	if (percent >= 100) return "bg-green-500";
-	if (percent >= 60) return "bg-primary";
-	return "bg-yellow-500";
-}
+type Tone = "primary" | "success" | "warning" | "danger" | "info" | "muted";
+
+// 卡片配色/图标全部走语义 tone，配色实现留在 @ruinb0w/ui 的 RListCard
+const STATUS_TONE: Record<TaskStatus, Tone> = {
+	pending: "primary",
+	completed: "success",
+	skipped: "muted",
+};
+const STATUS_ICON: Record<TaskStatus, string> = {
+	pending: "Circle",
+	completed: "CheckCircle2",
+	skipped: "XCircle",
+};
+const LEVEL_TONE: Record<number, Tone> = { 1: "success", 2: "primary", 3: "info" };
+const REPEAT_TONE: Record<RepeatMode, Tone> = {
+	none: "muted",
+	daily: "primary",
+	weekly: "info",
+	monthly: "warning",
+};
 
 const template = computed(() => (props.item?.template ?? props.template)!);
 const instance = computed(() => props.item?.instance ?? props.instance);
 const dayEndTime = computed(() => userStore.user?.dayEndTime ?? "00:00");
 
-const itemStatusIcon = computed(() =>
-	props.isPreview ? Eye : getStatusIcon(instance.value?.status ?? "pending"),
-);
-const itemStatusStyle = computed(() =>
-	props.isPreview
-		? { color: "text-text-muted", bg: "bg-text-muted/20" }
-		: getStatusStyle(instance.value?.status ?? "pending"),
-);
+const status = computed<TaskStatus>(() => instance.value?.status ?? "pending");
 
-const hasCompleteRule = computed(
-	() =>
-		!props.isPreview &&
-		!!template.value.completeRule &&
-		template.value.completeRule.type !== "simple",
-);
 const progressPercent = computed(() =>
 	instance.value ? getTaskProgressPercent(instance.value) : 0,
-);
-const progressColor = computed(() =>
-	getProgressColor(progressPercent.value),
 );
 
 const earnedPoints = computed(() => {
@@ -84,23 +77,33 @@ const earnedPoints = computed(() => {
 });
 
 const expireDays = computed(() => template.value?.completeExpireDays);
+const hasExpireWindow = computed(
+	() => !props.isPreview && !!expireDays.value && expireDays.value > 0,
+);
 const expired = computed(() =>
-	!props.isPreview && expireDays.value && expireDays.value > 0
+	hasExpireWindow.value
 		? isExpiredByInstanceDate(
 				instance.value?.instanceDate ?? "",
-				expireDays.value,
+				expireDays.value!,
 				dayEndTime.value,
 			)
 		: false,
 );
 const expireTimeResult = computed<ExpireTimeResult | null>(() =>
-	!props.isPreview && expireDays.value && expireDays.value > 0
+	hasExpireWindow.value
 		? getExpireTimeTextByInstanceDate(
 				instance.value?.instanceDate ?? "",
-				expireDays.value,
+				expireDays.value!,
 				dayEndTime.value,
 			)
 		: null,
+);
+
+const hasCompleteRule = computed(
+	() =>
+		!props.isPreview &&
+		!!template.value.completeRule &&
+		template.value.completeRule.type !== "simple",
 );
 
 function getProgressText(): string | null {
@@ -129,6 +132,12 @@ function getProgressText(): string | null {
 	const unit = rule.type === "time" ? "min" : "times";
 	return `${progress}/${maxThreshold} ${unit}`;
 }
+
+const progressTone = computed<'primary' | 'success' | 'warning'>(() => {
+	if (progressPercent.value >= 100) return "success";
+	if (progressPercent.value >= 60) return "primary";
+	return "warning";
+});
 
 function renderExpireTime(result: ExpireTimeResult) {
 	switch (result.type) {
@@ -171,14 +180,41 @@ function renderDateTime(result: DateTimeResult | null) {
 	return null;
 }
 
-const statusLabel = computed(() =>
-	renderStatusLabel(getStatusLabel(instance.value?.status ?? "pending")),
+const statusText = computed(() =>
+	renderStatusLabel(getStatusLabel(status.value)),
 );
-const dateTimeText = computed(() =>
-	instance.value?.completedAt
+
+const badges = computed(() => [
+	{ text: `L${template.value.level}`, type: LEVEL_TONE[template.value.level] ?? "muted" },
+	{ text: repeatModeMap[template.value.repeatMode], type: REPEAT_TONE[template.value.repeatMode] },
+]);
+
+const metaItems = computed(() => {
+	if (props.isPreview) return [{ text: "Preview Mode", tone: "muted" as Tone }];
+
+	const items: Array<{ text: string; icon?: string; tone?: Tone }> = [];
+
+	if (expireTimeResult.value) {
+		items.push({
+			text: renderExpireTime(expireTimeResult.value),
+			icon: "AlertCircle",
+			tone: expired.value ? "danger" : "warning",
+		});
+	}
+
+	const dateTimeText = instance.value?.completedAt
 		? renderDateTime(formatDateTime(instance.value.completedAt))
-		: null,
-);
+		: null;
+	if (dateTimeText) {
+		items.push({ text: `Completed ${dateTimeText}`, icon: "Flag", tone: "success" });
+	}
+
+	if (earnedPoints.value > 0) {
+		items.push({ text: `+${earnedPoints.value} exp`, tone: "success" });
+	}
+
+	return items;
+});
 
 function handleClick() {
 	if (props.isPreview) return;
@@ -187,61 +223,19 @@ function handleClick() {
 </script>
 
 <template>
-	<button
-		:disabled="isPreview"
-		:class="`w-full flex items-center gap-4 rounded-xl bg-surface p-4 border border-border text-left transition-colors ${
-			isPreview
-				? 'opacity-70 cursor-not-allowed'
-				: 'hover:bg-surface-light cursor-pointer'
-		}`"
+	<RListCard
+		:title="template.title"
+		:icon="props.isPreview ? 'Eye' : STATUS_ICON[status]"
+		:tone="props.isPreview ? 'muted' : STATUS_TONE[status]"
+		:badges="badges"
+		:meta="metaItems"
+		:progress="
+			hasCompleteRule
+				? { percent: progressPercent, label: getProgressText() ?? '', color: progressTone }
+				: null
+		"
+		:status="props.isPreview ? { text: 'Preview', tone: 'muted' } : { text: statusText, tone: STATUS_TONE[status] }"
+		:disabled="props.isPreview"
 		@click="handleClick"
-	>
-		<div
-			:class="`w-10 h-10 shrink-0 rounded-lg flex items-center justify-center ${itemStatusStyle.bg} ${itemStatusStyle.color}`"
-		>
-			<component :is="itemStatusIcon" class="w-5 h-5" />
-		</div>
-
-		<div class="flex-1 min-w-0">
-			<div class="flex items-center gap-2">
-				<p class="text-text-primary font-medium truncate">{{ template.title }}</p>
-				<span :class="`text-xs px-2 py-0.5 rounded-full ${levelBadgeClass(template.level)}`">
-					L{{ template.level }}
-				</span>
-				<span :class="`text-xs px-2 py-0.5 rounded-full ${repeatModeColorMap[template.repeatMode]}`">
-					{{ repeatModeMap[template.repeatMode] }}
-				</span>
-			</div>
-			<div class="flex flex-wrap items-center gap-x-3 gap-y-1 text-text-secondary text-xs mt-1">
-				<span v-if="isPreview" class="text-xs text-text-muted">Preview Mode</span>
-				<template v-else>
-					<span v-if="expireTimeResult" class="flex items-center gap-1">
-						<AlertCircle :class="`w-3 h-3 ${expired ? 'text-red-500' : 'text-orange-500'}`" />
-						{{ renderExpireTime(expireTimeResult) }}
-					</span>
-					<span v-if="instance?.completedAt && dateTimeText" class="flex items-center gap-1">
-						<Flag class="w-3 h-3 text-green-500" />
-						Completed {{ dateTimeText }}
-					</span>
-					<span v-if="earnedPoints > 0" class="text-green-500">+{{ earnedPoints }} exp</span>
-				</template>
-			</div>
-
-			<div v-if="hasCompleteRule" class="flex items-center gap-2 mt-2">
-				<div class="flex-1 h-1.5 bg-surface-light rounded-full overflow-hidden">
-					<div
-						:class="`h-full ${progressColor} transition-all duration-300`"
-						:style="{ width: `${progressPercent}%` }"
-					/>
-				</div>
-				<span class="text-xs text-text-secondary min-w-[60px] text-right">
-					{{ getProgressText() }}
-				</span>
-			</div>
-		</div>
-
-		<span :class="`text-sm font-medium ${itemStatusStyle.color}`">
-			{{ isPreview ? "Preview" : statusLabel }}
-		</span>
-	</button>
+	/>
 </template>

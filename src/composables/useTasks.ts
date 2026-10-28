@@ -194,6 +194,30 @@ export function useNoDateTasks(userId: MaybeRefOrGetter<number | undefined>) {
 }
 
 /**
+ * 获取逾期待补做（非今日但未过期）的任务列表 - 使用全局 Store
+ */
+export function useEarlierTasks(userId: MaybeRefOrGetter<number | undefined>) {
+	const store = useTaskStore();
+	const { earlierTasks, isLoading, error } = storeToRefs(store);
+
+	watch(
+		() => toValue(userId),
+		(id) => {
+			if (id) {
+				store.subscribeToEarlierTasks(id);
+			}
+		},
+		{ immediate: true },
+	);
+
+	return {
+		tasks: earlierTasks,
+		isLoading,
+		error,
+	};
+}
+
+/**
  * 获取指定日期的任务（支持 dayEndTime）
  */
 export function useTasksByDate(

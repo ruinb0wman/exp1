@@ -13,6 +13,7 @@
 import { registerIcons } from "@ruinb0w/ui";
 import type { Component } from "vue";
 import {
+	AlertCircle,
 	Award,
 	Beer,
 	Bike,
@@ -21,13 +22,16 @@ import {
 	CalendarCheck,
 	Car,
 	ChartColumn,
+	CheckCircle2,
 	Cigarette,
+	Circle,
 	Coffee,
 	Compass,
 	Cookie,
 	Crown,
 	Dumbbell,
 	Film,
+	Flag,
 	Flame,
 	Gamepad2,
 	Gem,
@@ -61,11 +65,13 @@ import {
 	Tv,
 	User,
 	Wifi,
+	XCircle,
 	Zap,
 } from "@lucide/vue";
 
 /** 名字必须与 @lucide/vue 的导出名一致（REWARD_ICONS / ACHIEVEMENT_ICONS / tab / 成就预设都用这名字） */
 export const ICONS: Record<string, Component> = {
+	AlertCircle,
 	Award,
 	Beer,
 	Bike,
@@ -74,13 +80,16 @@ export const ICONS: Record<string, Component> = {
 	CalendarCheck,
 	Car,
 	ChartColumn,
+	CheckCircle2,
 	Cigarette,
+	Circle,
 	Coffee,
 	Compass,
 	Cookie,
 	Crown,
 	Dumbbell,
 	Film,
+	Flag,
 	Flame,
 	Gamepad2,
 	Gem,
@@ -114,6 +123,7 @@ export const ICONS: Record<string, Component> = {
 	Tv,
 	User,
 	Wifi,
+	XCircle,
 	Zap,
 };
 

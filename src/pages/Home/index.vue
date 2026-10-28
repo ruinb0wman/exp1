@@ -5,6 +5,7 @@ import { useRouter } from "vue-router";
 import { storeToRefs } from "pinia";
 import { useUserStore } from "@/store";
 import {
+	useEarlierTasks,
 	useNoDateTasks,
 	useTaskInstanceActions,
 	useTodayTasks,
@@ -56,6 +57,7 @@ const {
 	isLoading: isNoDateTasksLoading,
 	refresh: refreshNoDateTasks,
 } = useNoDateTasks(() => user.value?.id);
+const { tasks: earlierTasks } = useEarlierTasks(() => user.value?.id);
 const { complete, reset, remove: deleteInstance } = useTaskInstanceActions();
 
 // 进入页面时重新计算积分
@@ -184,14 +186,22 @@ async function handleDeleteInPopup() {
 
 const pendingTasks = computed(() => filterTodayTasks(tasks.value));
 const pendingNoDateTasks = computed(() => filterPendingTasks(noDateTasks.value));
+const pendingEarlierTasks = computed(() => filterPendingTasks(earlierTasks.value));
 
-// 计算进度（基于原始任务列表）
-const taskStats = computed(() => calculateTaskStats(tasks.value));
+// 首页统计口径：今日 + 无日期 + 逾期未过期，三者一起算
+const countableTasks = computed(() =>
+	[...tasks.value, ...noDateTasks.value, ...earlierTasks.value].filter(
+		({ instance }) => instance.status !== "skipped",
+	),
+);
+
+// 计算进度（基于合并后的任务列表）
+const taskStats = computed(() => calculateTaskStats(countableTasks.value));
 
 // 计算预估总积分和已获积分
-const earnedPoints = computed(() => calculateTodayEarnedPoints(tasks.value));
+const earnedPoints = computed(() => calculateTodayEarnedPoints(countableTasks.value));
 const estimatedTotalPoints = computed(() =>
-	calculateEstimatedTotalPoints(tasks.value),
+	calculateEstimatedTotalPoints(countableTasks.value),
 );
 
 const isLoading = computed(
@@ -207,7 +217,7 @@ const isLoading = computed(
 			<div class="mb-2">
 				<div class="flex items-center justify-between mb-2">
 					<p class="text-text-primary text-base font-normal">
-						You've completed {{ taskStats.completedCount }} of {{ taskStats.totalCount }} tasks today.
+						You've completed {{ taskStats.completedCount }} of {{ taskStats.totalCount }} tasks.
 					</p>
 					<p class="text-base font-normal">
 						<span class="text-white">{{ earnedPoints }}</span>
@@ -221,6 +231,19 @@ const isLoading = computed(
 
 		<!-- Tasks List -->
 		<main class="px-4">
+			<!-- 非今日但未过期（默认折叠，无则不渲染） -->
+			<div v-if="pendingEarlierTasks.length > 0" class="mb-6">
+				<TaskList
+					:tasks="pendingEarlierTasks"
+					:is-loading="isLoading"
+					:title="'Carried Over'"
+					:show-view-all="false"
+					collapsible
+					default-collapsed
+					@task-click="handleTaskClick"
+				/>
+			</div>
+
 			<TaskList
 				:tasks="pendingTasks"
 				:is-loading="isLoading"

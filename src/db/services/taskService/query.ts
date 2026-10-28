@@ -1,6 +1,6 @@
 import { getDB } from '../../index';
 import type { TaskInstance, TaskTemplate } from '../../types';
-import { getUserCurrentDate } from '@/libs/time';
+import { getUserCurrentDate, isExpiredByInstanceDate } from '@/libs/time';
 import { buildTemplateLevelMap, sortDisplayTasks } from '@/libs/task';
 
 export type TaskHistoryFilterStatus = 'all' | 'pending' | 'completed' | 'skipped';
@@ -86,6 +86,49 @@ export async function getNoDateTaskInstances(
         instance,
         template: withLiveLevel(instance.template, levelMap),
       })),
+    levelMap
+  );
+}
+
+/**
+ * 逾期待补做的实例：非今日、仍 pending、且还落在模板的补做窗口内。
+ *
+ * 排除 completeExpireDays<=0 的模板：这类实例永不过期，收进来只有无限堆积。
+ * 过期刻意不依赖 status —— checkAndUpdateExpiredTasks 只在页面挂载时跑一次，
+ * 页面开着时过期的任务 status 仍是 pending。
+ */
+export async function getPendingEarlierTaskInstances(
+  userId: number,
+  dayEndTime: string = "00:00"
+): Promise<Array<{ instance: TaskInstance; template: TaskTemplate }>> {
+  const db = getDB();
+
+  const todayStr = getUserCurrentDate(dayEndTime);
+
+  const instances = await db.taskInstances
+    .where('userId')
+    .equals(userId)
+    .toArray();
+
+  const earlierInstances = instances.filter((instance) => {
+    const expireDays = instance.template?.completeExpireDays ?? 0;
+    return (
+      instance.status === 'pending' &&
+      !!instance.instanceDate &&
+      instance.instanceDate !== todayStr &&
+      expireDays > 0 &&
+      !isExpiredByInstanceDate(instance.instanceDate, expireDays, dayEndTime)
+    );
+  });
+
+  const templates = await db.taskTemplates.where('userId').equals(userId).toArray();
+  const levelMap = buildTemplateLevelMap(templates);
+
+  return sortDisplayTasks(
+    earlierInstances.map((instance) => ({
+      instance,
+      template: withLiveLevel(instance.template!, levelMap),
+    })),
     levelMap
   );
 }
